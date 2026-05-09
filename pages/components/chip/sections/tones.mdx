@@ -1,0 +1,12 @@
+import { ChipSpecimen } from '../../../../src/components/design/ChipSpecimen'
+
+## Tones
+
+Six tones, no seventh. The neutral chip uses the page's `--color-faint` border
+and `--color-ink` text (no tint); the five tinted tones each pull a single hex
+from the cross-page semantic palette and render as `color-mix(in srgb, <hex>
+12%, var(--color-bg))` background plus the hex as border + text. Per the
+foundations rule, those hexes stay inline at the use site — there is no
+`--ok` or `--error` token to read from.
+
+<ChipSpecimen />
