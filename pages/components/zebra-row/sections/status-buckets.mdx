@@ -1,0 +1,11 @@
+import { ZebraRowStatusSpecimen } from '../../../../src/components/design/ZebraRowSpecimens'
+
+## Status buckets
+
+Five buckets, one hex each, inlined at the use site per the foundations rule
+(no `--ok` / `--error` token — `tokens.css` is for surface chrome only). `run`
+paints `#1f8f4a`, `err` paints `#c8513b`, `warn` paints `#c0922e`. `ok` and
+`idle` keep the muted base — `ok` because a finished-and-fine row shouldn't
+shout, `idle` at 70% opacity because a queued row should read as deferred.
+
+<ZebraRowStatusSpecimen />

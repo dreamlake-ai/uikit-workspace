@@ -1,0 +1,13 @@
+import { ZebraRowStatesSpecimen } from '../../../../src/components/design/ZebraRowSpecimens'
+
+## States
+
+Four bands: `rest`, `hover`, `selected`, `focus`. Hover swaps to the cool
+selectable band; selected swells the radius from 7 to 10px, paints the accent
+fill, and forces every span to the row-selected fg so the bucket-tinted status
+text doesn't bleed through. Focus draws a 2px accent outline inset by 2 so the
+ring sits inside the row's footprint. The states in the specimen are *forced*
+via the `state` prop — for interactive use the consumer wires real `:hover` /
+`:focus` / `aria-selected` and lets the descendant selectors fire on their own.
+
+<ZebraRowStatesSpecimen />
