@@ -1,0 +1,42 @@
+# dev-notes
+
+Engineering notes for this repo — patterns, decisions, and gotchas
+worth keeping. Optimized to be read by both humans (in your editor or
+on GitHub) and AI coding agents (Claude Code, Cursor, etc.) browsing
+the repo for context.
+
+## Format
+
+**MDX by default.** Every doc here is `.mdx`, even when its current
+content is pure Markdown. Two reasons:
+
+1. **Forward-compatible authoring.** Once we land reusable doc
+   components (live code previews, runnable demos, prop tables tied
+   to real types), any existing `.mdx` can adopt them inline without
+   a rename or content migration.
+2. **One renderer, one toolchain.** Future site-side doc rendering
+   only needs to know about MDX, not a mix of Markdown and MDX.
+
+For agents and tools that read the file as plain text, MDX is a
+strict superset of Markdown — the body is identical. Only when JSX
+components appear (later) does the file diverge from "just Markdown".
+
+## Conventions
+
+- **One topic per file.** Cross-link with relative paths
+  (`./other-file.mdx`) when topics depend on each other.
+- **Concrete examples over abstract theory.** Lift snippets from real
+  PRs in the repo when illustrating a pattern. Keep snippets minimal;
+  link to full files for context.
+- **Date-stamp where it matters.** A pattern that's "current best
+  practice as of {month/year}" should say so — toolchain norms shift.
+- **No project-identifying details in shareable docs.** When a doc is
+  meant to leave the repo (gist, blog), keep examples generic enough
+  that they read as patterns, not memoirs.
+
+## Index
+
+- [`migration-patterns.mdx`](./migration-patterns.mdx) — Patterns from
+  taking an HTML/CSS/JS design prototype to a pre-rendered, token-
+  driven React app. Stack choices, CSS migration in stages, JS-to-
+  React patterns, deploy workflow, common gotchas.

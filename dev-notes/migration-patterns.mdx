@@ -1,0 +1,510 @@
+# Prototype → Production: Patterns from One Migration
+
+Notes from taking an HTML/CSS/JS design prototype and shipping it as a
+pre-rendered, token-driven React app — distilled into the patterns
+worth applying again next time. Examples are from a real session, but
+nothing here is project-specific.
+
+> **Format.** This is `.mdx` by default. Today it's plain Markdown with
+> fenced code blocks (readable as text by AI coding agents and humans
+> alike). Reusable components — runnable code previews, live demo
+> harnesses, etc. — get introduced in later stages and become available
+> as JSX inside any `dev-notes/*.mdx` file without a rename. See
+> [`./README.mdx`](./README.mdx).
+
+---
+
+## Context
+
+**Starting point:** a single HTML prototype handed off from a design
+tool — all styles in one `<style>` block (~1500 lines), JS behaviour
+split across four IIFEs at the bottom, no tooling.
+
+**Target:** a real web app — pre-rendered to static HTML for cheap
+CDN hosting, decomposed into proper components, theming via design
+tokens, deploys triggered by `git push` on a branch.
+
+## The asks, in order
+
+1. View the prototype as-is.
+2. Convert it to a real web app — React, Tailwind v4, pnpm, Netlify.
+3. Use Vike (file-based routing + SSG via Vite).
+4. Get to a reviewable version ASAP.
+5. Convert all scripts to React components.
+6. Convert all CSS into Tailwind v4 + global theming variables.
+7. Deploy. Set up `pnpm staging` / `pnpm prod` to push deploy
+   branches; configure Netlify to auto-build from those branches.
+
+---
+
+## Migration strategy
+
+### Small reviewable PRs, never a big-bang rewrite
+
+Each commit leaves the app in a working state. The user (or
+reviewer) can redirect after every step.
+
+A cadence that worked:
+
+1. **Scaffold** + dump prototype body verbatim via
+   `dangerouslySetInnerHTML`. First reviewable surface in ~10 minutes.
+2. **Decompose chrome** (top bar, side nav, right TOC, theme toggle,
+   command palette) into proper React components + hooks.
+3. **Move design tokens** into Tailwind's `@theme` block.
+4. **Convert prose body to JSX** with primitives. Kill
+   `dangerouslySetInnerHTML`.
+5. **Migrate component CSS to Tailwind utilities,** one component
+   per PR.
+6. **Fold cross-cutting body-class rules** into Tailwind custom
+   variants.
+7. **Delete the legacy CSS file** entirely.
+
+The `dangerouslySetInnerHTML` v0 looks embarrassing but bought a
+working surface to iterate against. Don't skip it.
+
+### Visual parity first, refactor second
+
+Don't restyle while you're restructuring. Run dev, eyeball-diff,
+commit. CSS migrations are full of "oh that 13.5px line-height
+actually mattered" surprises — keep the change scope narrow so you
+know which line caused the regression.
+
+---
+
+## Stack choices
+
+### Vike for SSG-first React (over Next.js)
+
+For docs/marketing-style sites, you want **per-page static HTML at
+build time** with React islands of interactivity, not a Node runtime
+serving SSR on every request. Vike's `prerender: true` +
+`vike-react` does this in one config:
+
+```ts
+// pages/+config.ts
+import vikeReact from 'vike-react/config'
+export default { extends: vikeReact, prerender: true, lang: 'en' }
+```
+
+Output is `dist/client/*.html`. Netlify just serves it. No SSR
+redirects, no `_redirects` file.
+
+Next.js would also work; it's heavier than the job for this kind
+of site.
+
+### Tailwind v4
+
+The `@theme` block is the killer feature for token-driven design:
+
+```css
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #fffefa;
+  --color-ink: #1a1a1a;
+  --color-accent: #23aaff;
+  --font-ui: 'Inter Tight', system-ui;
+  --radius-md: 10px;
+}
+```
+
+This generates `bg-bg`, `text-ink`, `border-bg`, `font-ui`,
+`rounded-md` automatically. **The same custom property is the source
+of truth for both Tailwind utilities and any CSS that still uses
+`var(--color-bg)`.** That makes incremental migration cheap — only
+the call site changes, not the values.
+
+### pnpm
+
+Faster installs, content-addressable store, `package.json` scripts
+unchanged from npm.
+
+**Watch out:** `pnpm deploy` is a built-in workspace command. A
+custom script named `deploy` won't run via `pnpm deploy` — you get
+`ERR_PNPM_CANNOT_DEPLOY` outside a workspace. Rename it (`pnpm prod`,
+`pnpm ship`) or use `pnpm run deploy`. Same gotcha for `install`,
+`add`, `remove`, `publish`, `exec`.
+
+### Netlify
+
+For static SSG output, hard to beat. Minimal `netlify.toml`:
+
+```toml
+[build]
+command = "pnpm build"
+publish = "dist/client"
+```
+
+CLI deploys (`netlify deploy --prod --build`) work without GitHub
+linking. Auto-deploys on push require the Netlify GitHub App
+installed once on the org — that step is browser-only, can't be
+scripted via `gh` or `netlify` CLI.
+
+---
+
+## CSS: from prototype to tokens to utilities
+
+### Stage 1 — tokens before utilities
+
+Don't try to migrate component CSS first. **Move all custom
+properties into `@theme` first.** This is foundational and unlocks
+everything else; it lets you keep the existing CSS file working
+unchanged while you migrate components piecemeal.
+
+```css
+@theme {
+  --color-bg: #fffefa;
+  --color-ink: #1a1a1a;
+}
+
+html[data-theme="dark"] {
+  --color-bg: #2e2e35;
+  --color-ink: #ececec;
+}
+```
+
+Now `bg-bg` reads `var(--color-bg)`, which the `[data-theme="dark"]`
+selector overrides at runtime. Theme switching is automatic
+everywhere — utilities AND any plain CSS that still uses the same
+custom properties.
+
+For ergonomics during the transition, alias unprefixed legacy names
+the prototype uses (`--bg: var(--color-bg)`). Delete the aliases once
+components migrate off them.
+
+### Stage 2 — custom variants for global state
+
+Body-class-driven state was common in the prototype:
+
+```css
+body.is-pal-open .doc-search { position: fixed; ... }
+body.is-merged .doc-topcrumbs { opacity: 1; ... }
+```
+
+Folding these into `@custom-variant` lets every component express its
+own state-driven styling inline:
+
+```css
+@custom-variant pal-open (body.is-pal-open &);
+@custom-variant merged (body.is-merged &);
+```
+
+```tsx
+<header className="bg-bg pal-open:bg-transparent" />
+<nav className="opacity-0 merged:opacity-100" />
+```
+
+Better than scattered CSS, better than DOM-walker hooks that toggle
+classes from JS.
+
+### Stage 3 — component-by-component utility migration
+
+One chrome component at a time. For each:
+
+1. Rewrite className with Tailwind utilities. Use named class-string
+   constants when they get long — keep the JSX readable:
+   ```ts
+   const rowBaseCx = 'flex items-center gap-2 px-2.5 py-1 ...'
+   const rowActiveCx = `${rowBaseCx} bg-selected font-semibold`
+   ```
+2. Delete the matching CSS rules.
+3. Build, eyeball-diff, commit.
+
+### Stage 4 — descendant variants for prose
+
+Don't put `className` on every `<h1>`, `<p>`, `<code>` you author.
+Apply Tailwind variants on a wrapper:
+
+```tsx
+const docContentCx = [
+  'min-w-0 max-w-[760px] px-14 pb-[120px]',
+  '[&>h1]:font-ui [&>h1]:text-[32px] [&>h1]:font-bold',
+  '[&>p]:text-[14.5px] [&>p]:leading-[1.65] [&>p]:text-ink',
+  '[&_:not(pre)>code]:font-mono [&_:not(pre)>code]:bg-chip',
+  '[&>table]:w-full [&_thead_th]:font-mono',
+].join(' ')
+```
+
+Verbose but concentrated — one place to tune doc typography, no
+per-element noise in the page.
+
+### What to keep in plain CSS
+
+Not everything benefits from utility-classification:
+
+- **Imperative-driven attributes** — SVG paths, `stroke-dasharray`
+  computed by JS. Tailwind arbitrary values work but read worse than
+  the CSS equivalent.
+- **Base reset** — `* { box-sizing: border-box }`, `html, body` — put
+  in `@layer base`.
+- **`@theme` tokens themselves**.
+
+A 1500-line legacy stylesheet went down to ~190 lines on this pass.
+The remaining lines are exactly the three categories above.
+
+---
+
+## JS → React patterns
+
+### IIFEs become hooks
+
+Each IIFE in the prototype's `<script>` becomes a hook or a
+component-local effect. Keep the same naming: `useTheme`,
+`useTocRail`, `useMergedHeader`, etc.
+
+For state genuinely owned by one component (a code block's "Copy"
+button feedback, palette keyboard nav), use `useState` inside that
+component instead of a global hook. The DOM-walking hook pattern
+the prototype used (find every `.codeblock` and attach a click
+handler) becomes a non-issue once the component renders the button
+itself.
+
+### Don't fight imperative when it fits
+
+Some behaviors are genuinely imperative:
+
+- Animations driven by JS-set custom properties
+- DOM measurement (heights, scroll position, computed bounding boxes)
+- Focus management across mount/unmount
+- SVG path generation from runtime measurements
+
+A `useEffect` that calls `el.style.setProperty('--seg-len', n)` is
+fine. Wrapping it in a state machine because "everything should be
+declarative" is cosplay.
+
+### Pre-hydration script for theme: no FOUC
+
+Reading `localStorage` and applying `data-theme` BEFORE React hydrates
+prevents a flash of wrong theme:
+
+```tsx
+// pages/+Head.tsx
+const themeBootstrap = `(function(){try{
+  var s = localStorage.getItem('theme');
+  var dark = s === 'dark'
+    || (s === 'system' && matchMedia('(prefers-color-scheme: dark)').matches);
+  document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+}catch(e){}})();`
+
+export default function Head() {
+  return <script dangerouslySetInnerHTML={{ __html: themeBootstrap }} />
+}
+```
+
+The corresponding React hook then reconciles state on mount —
+`useState(initial)` paired with a `useEffect` that reads
+`localStorage` (so SSR returns a stable value, no hydration warning).
+
+### Stacking-context escape: `createPortal`
+
+Hit this several times. An element trapped inside an ancestor with
+`position: sticky + z-index`, or `backdrop-filter: <anything>`, can't
+escape its stacking context regardless of its own z-index.
+
+The prototype's vanilla-JS approach: imperatively reparent the DOM
+node to `document.body` via `appendChild`.
+
+The React-native equivalent: `createPortal`.
+
+```tsx
+function SearchInput() {
+  const { isOpen } = useSearch()
+  const content = <label className="...">...</label>
+  if (isOpen) return createPortal(content, document.body)
+  return content
+}
+```
+
+Two notes:
+
+1. The DOM input gets remounted on portal toggle — focus/value are
+   lost. Restore focus in a `useEffect` keyed on `isOpen`. Use a
+   controlled input so the value survives remount via context state.
+2. CSS rules like `body.is-pal-open .my-input` keep working because
+   `<label>` is still a descendant of `<body>` — just a different
+   parent.
+
+---
+
+## Marker classes as a transitional pattern
+
+When migrating CSS to Tailwind utilities one component at a time,
+you often want to keep a class name on the element so unmigrated CSS
+rules elsewhere can still target it. Call these "marker classes":
+
+```tsx
+// Phase 1: chrome migrated, but body.is-pal-open .doc-topbar
+// rule still in CSS. Keep the marker.
+<header className="doc-topbar sticky top-0 z-50 bg-bg ..." />
+
+// Phase 2: cross-cutting rule moved to pal-open: variant.
+// Marker is now load-bearing for nothing — delete.
+<header className="sticky top-0 z-50 bg-bg pal-open:bg-transparent ..." />
+```
+
+Document this in code comments so the next developer knows the
+marker is *transitional*, not part of the styling.
+
+---
+
+## Things that take longer than you think
+
+### CSS specificity in mixed Tailwind + raw CSS
+
+Tailwind utilities live in `@layer utilities`, lower precedence than
+unlayered CSS. A custom CSS rule beats a utility on tied specificity.
+But **specificity itself** can still bite — `body.is-pal-open .x`
+(0,2,0) wins over `.[backdrop-filter:foo]` (0,1,0) regardless of
+layer.
+
+When in doubt, look at the generated `dist/client/assets/*.css` and
+search for both rules. Order tells you what wins.
+
+### `backdrop-filter` creates a stacking context
+
+Independently of `z-index`. Setting `z-index: auto` does **not** clear
+the stacking context if `backdrop-filter` is non-`none`. Either remove
+the filter conditionally, or move the trapped element out via portal.
+
+### Empty `pnpm` script names hide collisions
+
+`pnpm <name>` runs your script unless `<name>` collides with a
+built-in. `pnpm run <name>` always runs your script. Default to
+`pnpm run` in scripts you ship to teammates if you can't audit the
+name yourself.
+
+### Reading before writing
+
+In iterative editing tools, read the file *just before* you edit it.
+Stale snapshots cause silent diffs (the edit succeeds against the
+wrong baseline). Worth a sanity-grep after major edits to confirm the
+output looks right.
+
+---
+
+## Deploy workflow: branch-per-environment
+
+A clean pattern that lets `pnpm staging` and `pnpm prod` be one-line
+git pushes:
+
+```json
+{
+  "scripts": {
+    "staging": "git push origin HEAD:netlify-staging",
+    "prod":    "git push origin HEAD:netlify-production"
+  }
+}
+```
+
+Netlify config (in the dashboard, after linking GitHub once):
+
+- **Production branch:** `netlify-production` (only this branch
+  publishes to the apex domain).
+- **Branch deploys:** enable for `netlify-staging` only — gets a
+  predictable preview URL like `netlify-staging--<site>.netlify.app`.
+- **Disable** branch deploys for `main` so dev pushes don't bake into
+  any URL.
+
+`main` is your dev branch. Deploys are explicit — you fast-forward
+the deploy branches when you're ready to ship. `git log
+netlify-production` becomes "history of what's been deployed."
+
+For the very first deploy (before GitHub is linked), fall back to
+`netlify deploy --prod --build` from the CLI. Same artifact, just
+manually triggered.
+
+---
+
+## Engineering notes that survive the next migration
+
+A short doc-set written *while* you do the work — not retroactively —
+pays back many times over. The conventions that worked here:
+
+### Notes as `.mdx` from day one
+
+Even when the content is plain Markdown, save dev-notes as `.mdx`.
+Two reasons:
+
+1. **Forward-compatible authoring.** Once you land reusable doc
+   components (live code previews, runnable snippets, prop tables
+   tied to real types), any `.mdx` file can adopt them inline without
+   a rename or content migration.
+2. **One renderer, one mental model.** Future site-side rendering
+   only needs to know about MDX, not a mix of `.md` and `.mdx`.
+
+For tools that read the file as plain text — AI coding agents, GitHub
+raw view, `grep` — MDX is a strict Markdown superset. The body reads
+identically until JSX appears.
+
+### Two audiences: humans and AI coding agents
+
+Both are reading the same files. The same things help both:
+
+- **Clear heading hierarchy** (h1 → h2 → h3, no skipped levels). Both
+  use it as an outline; agents use it to slice context windows.
+- **Concrete code examples** lifted from real PRs, not pseudocode.
+- **"Why" lines on every non-obvious rule.** The *reason* matters
+  more than the rule itself when judging edge cases.
+- **No implicit context.** If a snippet relies on a config or token,
+  show or link to it. The agent has only the file in front of it; it
+  can't ask follow-up questions.
+
+### A README.mdx index in every docs folder
+
+Two parts at the top of `dev-notes/README.mdx`:
+
+1. **What this folder is** and what conventions apply.
+2. **Index** of every doc with a one-line hook each.
+
+When a new doc lands, update the index. Humans and agents both find
+their way faster, and the index makes scope drift visible (if the
+hooks start contradicting each other, you have a structure problem).
+
+### Push to a public gist when the lesson is portable
+
+If the patterns generalize beyond your repo, share via
+`gh gist create --public`. Examples lifted from real PRs are fine;
+project-identifying detail (URLs, team names, internal codenames) gets
+scrubbed before sharing. Treat the gist as a different audience — the
+reader doesn't know your stack, your codebase, or your priors.
+
+If `gh gist edit --add` and `--remove` get weird (edits don't show up,
+files vanish unexpectedly), `gh gist delete --yes` + a fresh
+`gh gist create` is the reliable path. Update the share URL when you
+recreate.
+
+---
+
+## Antipatterns we avoided
+
+- **Big-bang rewrite.** Iteratively decomposing one piece at a time
+  beat pausing for a week to do it "right".
+- **Trying to make Tailwind do imperative SVG.** Sometimes the utility
+  form is worse than a tiny CSS rule.
+- **Restyling everything during component decomposition.** Each PR
+  should change *one thing* (structure OR styles, not both). Marker
+  classes let you split cleanly.
+- **Skipping `dangerouslySetInnerHTML` v0.** It's the cheapest
+  visual-parity stepping stone.
+- **Keeping legacy aliases forever.** Once components migrate off
+  them, delete. The next developer shouldn't wonder which name is
+  authoritative.
+
+## What's worth carrying forward
+
+- `@theme` block as the design system. One file, light + dark on the
+  same keys.
+- `@custom-variant` for any global state class.
+- Component-scoped class strings as named constants when they get long.
+- Marker classes as a transitional pattern, with code comments.
+- `pnpm staging` / `pnpm prod` branch-push scripts (don't name them
+  `deploy`).
+- Pre-hydration script in `+Head.tsx` for any theme/preference state
+  that affects initial paint.
+- `createPortal` whenever an element needs to escape a stacking
+  context that's not its parent.
+- Branch-per-environment deploys: dev on `main`, fast-forward to
+  `netlify-staging` / `netlify-production` to ship.
+- Engineering notes as `.mdx` in `dev-notes/`, with a `README.mdx`
+  index and concrete examples. Same files serve humans, AI coding
+  agents, and any future site-side doc rendering — no second migration.
