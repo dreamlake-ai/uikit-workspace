@@ -1,0 +1,19 @@
+## When adding a new concept
+
+1. **Open `pipelines-canvas.jsx`.** `PIPE_KIND_COLOR`, `PIPE_STATUS`, and
+   `PIPE_FLOW_LABEL` are the canonical mappings. The legend (`PipeLegend`) is what users
+   learn the palette from.
+2. **Map by *function*, not vibe.** "Ingest" is a *successful inflow* → green
+   (`#1f8f4a`), not blue. "RC release" is an *active candidate* → blue (`#23aaff`), not
+   amber. "Draft release" is *pre-success* → green. The semantic bucket trumps any
+   aesthetic preference.
+3. **Never invent a near-miss hex.** `#3a7bd5`, `#c08a2a`, `#5a8fbf` were all bugs in
+   earlier timetravel work — they tried to be "a slightly different blue/amber" and
+   just looked broken next to pipelines. If two concepts on the same page need to be
+   distinguishable but both belong in the same bucket, distinguish them with **glyph +
+   label**, not a third color.
+4. **`tokens.css` is for surface chrome, not domain coloring.** `--accent` happens to
+   equal `#23aaff` because the active/running color is also the UI accent — but that's
+   the only token that overlaps with the semantic palette. Don't add `--ok` or
+   `--error` to `tokens.css`; keep the six hex values inline at their use sites so it's
+   obvious from `grep` exactly which buckets a page touches.

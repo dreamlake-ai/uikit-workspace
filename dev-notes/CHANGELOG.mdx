@@ -6,6 +6,18 @@ sections. README copy edits and typo fixes are skipped. See
 [`./README.mdx`](./README.mdx) for the folder convention and
 [`../CLAUDE.md`](../CLAUDE.md) for the release-notes policy.
 
+## 2026-05-09 — Foundations / Semantic palette
+
+- Lands `/foundations/palette` per the per-section-file pattern from
+  the Surfaces PR. Sections: overview (Lede + `<PaletteGrid />`),
+  rule ("When adding a new concept", 4 numbered rules), why ("Why six
+  and not more", 3 bullets).
+- New `<PaletteGrid />` component renders the 6 buckets from a data
+  array. Hex values inline; per-domain concept tags ported verbatim
+  from `staging/dreamlake-design-guide.html` §02 and `staging/design.md`.
+- `src/data/nav.ts` flips palette todo → live; `src/data/toc.ts`
+  registers the new route's TOC.
+
 ## 2026-05-09 — Phase 3 begins: Foundations / Surfaces
 
 - First content-bearing design-guide page lands at `/foundations/surfaces`.
