@@ -1,0 +1,23 @@
+import { Crumbs, Lede } from '../../../src/components/prose'
+import Anatomy from './sections/anatomy.mdx'
+import States from './sections/states.mdx'
+import WithHint from './sections/with-hint.mdx'
+
+<Crumbs trail={[{ href: '/', label: '@dreamlake/uikit' }, { href: '/components', label: 'Components' }]} here="Search bar" />
+
+# Search bar — `--search-bg` fill · no border · mono placeholder · ⌘K focus · accent ring on focus · ⌘K hint chip
+
+<Lede>
+  A small mono input with the dedicated `--search-bg` fill and no border —
+  it sits as a tinted slot in the page rather than a bordered control.
+  Leading 13×13 magnifier in muted ink, mono 11.5px placeholder at 65%
+  opacity, optional trailing hint chip (typically `<Kbd>⌘ K</Kbd>`). Focus
+  paints a 2px accent outline at 50% alpha via `:focus-within`, so the
+  consumer just focuses the underlying input and the chrome reacts.
+</Lede>
+
+<Anatomy />
+
+<States />
+
+<WithHint />

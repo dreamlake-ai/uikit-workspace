@@ -1,0 +1,16 @@
+import { SearchBarAnatomySpecimen } from '../../../../src/components/design/SearchBarSpecimens'
+
+## Anatomy
+
+Three slots, left to right: a leading magnifier glyph, the input itself, and an
+optional trailing hint chip. The wrapper is the `<label>` so clicking anywhere
+inside the bar focuses the input — the `:focus-within` selector then paints the
+accent ring on the wrapper without the input needing its own border.
+
+<SearchBarAnatomySpecimen />
+
+The chrome lives entirely on the wrapper: `--search-bg` fill, radius 6, padding
+7px / 10px, transparent border. The `<input>` itself is borderless and
+outline-less — its job is just to render the typed glyphs. Pulling the focus
+ring up to the wrapper means the magnifier and hint chip stay inside the ring,
+which is the standard atom shape across the design-guide.
