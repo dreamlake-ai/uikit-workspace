@@ -1,0 +1,12 @@
+## Why six and not more
+
+- **Six is the ceiling for a legend.** The pipelines flow legend is already 5 rows tall
+  (`running` / `queued` / `stalled` / `error` / `ok`); adding a 7th hue would push it
+  past the threshold where users can hold the mapping in working memory.
+- **Each hue does double duty.** Every color above carries a status meaning *and* a kind
+  meaning *and* a domain-concept meaning. That collision is the point — if "ingest" and
+  "ok" both mean *data flowed in successfully*, they should look the same. Splitting
+  them into two greens just makes the user learn two greens.
+- **Outliers get caught at review.** A `grep '#[0-9a-f]\{6\}'` across `*.jsx` should
+  return only these six values plus surface tokens. Anything else is either a typo, a
+  leftover from prototyping, or a missed alignment.

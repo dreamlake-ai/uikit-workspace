@@ -24,7 +24,7 @@ export const navGroups: NavGroup[] = [
     count: '03',
     items: [
       { href: '/foundations/surfaces', label: 'Surfaces' },
-      { href: '/foundations/palette', label: 'Semantic palette', todo: true },
+      { href: '/foundations/palette', label: 'Semantic palette' },
       { href: '/foundations/typography', label: 'Typography', todo: true },
     ],
   },

@@ -23,4 +23,8 @@ export const tocByRoute: Record<string, TocItem[]> = {
     { id: 'the-surface-contract', label: 'The surface contract', level: 2 },
     { id: 'why-these-choices', label: 'Why these choices', level: 2 },
   ],
+  '/foundations/palette': [
+    { id: 'when-adding-a-new-concept', label: 'When adding a new concept', level: 2 },
+    { id: 'why-six-and-not-more', label: 'Why six and not more', level: 2 },
+  ],
 }
