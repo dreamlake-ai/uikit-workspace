@@ -1,0 +1,21 @@
+import { NavRailItemWithMetaSpecimen } from '../../../../src/components/design/NavRailItemSpecimens'
+
+## With trailing meta
+
+The optional `meta` slot accepts any node — a count, a branch name, a status
+word, a tiny `<Chip />`. It renders as mono 9px / 500 / muted ink at .55 alpha
+with +0.04em tracking, anchored to the trailing edge so the row's leading
+label keeps priority. Stacked vertically, the rows below approximate how
+the atom appears in `LeftNav` today.
+
+<NavRailItemWithMetaSpecimen />
+
+- **Counts.** A bare integer (`3`, `12`) is the most common meta. Reads as
+  "this many things behind this row".
+- **Refs.** Short mono words (`rc`, `main`, `staging`) work because the meta
+  slot is already mono — the type stays consistent with the chrome.
+- **Status words.** Pair `icon="dot"` with a status word (`running`,
+  `queued`) for a status-pip row; the dot color is up to the caller (it
+  inherits `currentColor`, so a wrapping span can tint it).
+- **Empty.** Omit `meta` entirely — the slot collapses and the label takes
+  the full row width.
