@@ -25,7 +25,7 @@ export const navGroups: NavGroup[] = [
     items: [
       { href: '/foundations/surfaces', label: 'Surfaces' },
       { href: '/foundations/palette', label: 'Semantic palette' },
-      { href: '/foundations/typography', label: 'Typography', todo: true },
+      { href: '/foundations/typography', label: 'Typography' },
     ],
   },
   {
