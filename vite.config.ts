@@ -5,6 +5,7 @@ import mdx from '@mdx-js/rollup'
 import remarkGfm from 'remark-gfm'
 import rehypeSlug from 'rehype-slug'
 import rehypeShiki from '@shikijs/rehype'
+import type { ShikiTransformer } from 'shiki'
 
 // Parse the meta string after a fenced code block's language and lift
 // `file="..."` onto a data attribute the components map can read.
@@ -20,10 +21,10 @@ function parseShikiMeta(meta: string): Record<string, string> {
 // Stamp the original fenced-code language onto <pre data-language="ts">
 // so the CodeBlock chrome's lang label can read it. @shikijs/rehype
 // doesn't add this attribute on its own.
-const stampLanguage = {
+const stampLanguage: ShikiTransformer = {
   name: 'stamp-language',
-  pre(this: { options: { lang?: string } }, node: { properties: Record<string, unknown> }) {
-    if (this.options?.lang) node.properties['data-language'] = this.options.lang
+  pre(node) {
+    if (this.options.lang) node.properties['data-language'] = this.options.lang
   },
 }
 

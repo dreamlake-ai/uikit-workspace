@@ -1,4 +1,5 @@
 import { useRef, useState, type ReactNode } from 'react'
+import { useLocalStorage } from '../hooks/useLocalStorage'
 
 // ── Inline elements ──────────────────────────────────────────────
 
@@ -137,7 +138,7 @@ const WarnIcon = () => (
 )
 
 const calloutBaseCx =
-  'grid grid-cols-[18px_1fr] gap-3 px-3.5 py-3 rounded-md border border-faint my-[18px_0_22px]'
+  'grid grid-cols-[18px_1fr] gap-3 px-3.5 py-3 rounded-md border border-faint [margin:18px_0_22px]'
 const calloutInfoCx = 'bg-[color-mix(in_srgb,var(--color-accent)_5%,var(--color-bg))]'
 const calloutWarnCx = 'bg-[color-mix(in_oklab,oklch(75%_.16_80)_10%,var(--color-bg))]'
 
@@ -159,17 +160,20 @@ export const Callout = ({
 // ── Block: code block with chrome + working copy button ──────────
 //
 // CodeBlock just wraps a syntax-highlighted <pre> from rehype-shiki
-// with the head bar (lang label, file label, copy button). It does
-// NOT add its own <pre><code> any more — children come in already
-// wrapped (shiki's <pre class="shiki"><code>...</code></pre>), so we
-// render them directly. The mdx-components map's `pre` override is
-// what calls this with the right children + props.
+// with the head bar (lang label, file label, copy + line-numbers
+// toggle buttons). The chrome buttons appear only on hover via the
+// Tailwind `group` modifier — see `cbBtnCx` below.
+//
+// The line-numbers toggle is persisted globally via useLocalStorage
+// at `dl:line-numbers`. All CodeBlocks subscribe to the same key, so
+// toggling one updates every other code block on the page.
 
 const cbWrapperCx =
-  // pre.shiki gets its background from theme.css (forced to
-  // --color-code-bg in both modes). Here we just normalize typography
-  // (font-size, line-height, padding) inside the chrome.
-  'relative border border-faint rounded-md [margin:18px_0_22px] overflow-hidden [&_pre.shiki]:m-0 [&_pre.shiki]:px-4 [&_pre.shiki]:py-3.5 [&_pre.shiki]:overflow-x-auto [&_pre.shiki]:text-[12.5px] [&_pre.shiki]:leading-[1.62] [&_pre.shiki_code]:font-mono'
+  // `group` enables `group-hover:` on chrome buttons.
+  // Line-numbers state lives on `data-line-numbers="on|off"`; CSS in
+  // theme.css renders the leading `<span class="line">::before`
+  // counter when the attribute is "on".
+  'group relative border border-faint rounded-md [margin:18px_0_22px] overflow-hidden [&_pre.shiki]:m-0 [&_pre.shiki]:px-4 [&_pre.shiki]:py-3.5 [&_pre.shiki]:overflow-x-auto [&_pre.shiki]:text-[12.5px] [&_pre.shiki]:leading-[1.62] [&_pre.shiki_code]:font-mono'
 
 const cbHeadCx =
   'flex items-center gap-2.5 px-3 py-2 border-b border-faint bg-[color-mix(in_srgb,var(--color-ink)_3%,var(--color-code-bg))]'
@@ -177,9 +181,34 @@ const cbHeadCx =
 const cbLangCx = 'font-mono text-[10px] font-semibold text-muted tracking-[0.14em] uppercase'
 const cbFileCx = 'font-mono text-[10.5px] font-medium text-muted opacity-85 -ml-0.5'
 
-const cbCopyBaseCx =
-  'appearance-none border border-faint bg-transparent text-muted font-mono text-[10px] font-medium tracking-[0.08em] uppercase py-[3px] px-2 rounded-[5px] cursor-pointer transition-[color,border-color] duration-150 hover:text-ink hover:border-ink/[0.22]'
-const cbCopyDoneCx = 'text-accent! border-accent/50!'
+// Shared chrome-button styling: hidden until the user hovers the
+// codeblock (or focuses the button itself for keyboard a11y), then
+// fades in. Both Copy and the line-numbers toggle share this.
+const cbBtnCx =
+  'appearance-none border border-faint bg-transparent text-muted font-mono text-[10px] font-medium tracking-[0.08em] uppercase py-[3px] px-2 rounded-[5px] cursor-pointer transition-[color,border-color,opacity] duration-150 hover:text-ink hover:border-ink/[0.22] ' +
+  'opacity-0 group-hover:opacity-100 focus-visible:opacity-100'
+
+// Shared "active" state for chrome buttons (Copy → "Copied", line-num
+// toggle → "on"). Same accent paint for both.
+const cbBtnActiveCx = 'text-accent! border-accent/50!'
+
+const HashIcon = () => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+    className="w-3 h-3"
+  >
+    <line x1="4" y1="9" x2="20" y2="9" />
+    <line x1="4" y1="15" x2="20" y2="15" />
+    <line x1="10" y1="3" x2="8" y2="21" />
+    <line x1="16" y1="3" x2="14" y2="21" />
+  </svg>
+)
 
 export const CodeBlock = ({
   lang,
@@ -192,6 +221,7 @@ export const CodeBlock = ({
 }) => {
   const wrapperRef = useRef<HTMLDivElement>(null)
   const [copied, setCopied] = useState(false)
+  const [showLines, setShowLines] = useLocalStorage<boolean>('line-numbers', false)
 
   const onCopy = () => {
     const pre = wrapperRef.current?.querySelector('pre')
@@ -202,14 +232,30 @@ export const CodeBlock = ({
   }
 
   return (
-    <div ref={wrapperRef} className={cbWrapperCx} data-lang={lang}>
+    <div
+      ref={wrapperRef}
+      className={cbWrapperCx}
+      data-lang={lang}
+      data-line-numbers={showLines ? 'on' : 'off'}
+    >
       <div className={cbHeadCx}>
         <span className={cbLangCx}>{lang}</span>
         {file && <span className={cbFileCx}>{file}</span>}
         <span className="flex-1" />
         <button
           type="button"
-          className={`${cbCopyBaseCx} ${copied ? cbCopyDoneCx : ''}`}
+          aria-pressed={showLines}
+          aria-label={showLines ? 'Hide line numbers' : 'Show line numbers'}
+          title={showLines ? 'Hide line numbers' : 'Show line numbers'}
+          className={`${cbBtnCx} flex items-center gap-1 ${showLines ? cbBtnActiveCx : ''}`}
+          onClick={() => setShowLines(!showLines)}
+        >
+          <HashIcon />
+          <span>:set {showLines ? 'nonu' : 'nu'}</span>
+        </button>
+        <button
+          type="button"
+          className={`${cbBtnCx} ${copied ? cbBtnActiveCx : ''}`}
           onClick={onCopy}
         >
           {copied ? 'Copied' : 'Copy'}
