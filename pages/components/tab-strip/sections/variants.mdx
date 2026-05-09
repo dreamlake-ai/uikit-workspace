@@ -1,0 +1,15 @@
+import { TabStripVariantsSpecimen } from '../../../../src/components/design/TabStripSpecimens'
+
+## Variants
+
+Two shapes. **Labels only** is the default — five mono-cap labels under a
+single ink underline. **With counts** adds a trailing `.ct` slot per tab, half-
+opacity and a hair lighter than the label so the count reads as metadata, not
+a peer of the label.
+
+<TabStripVariantsSpecimen />
+
+The count slot is per-tab, not all-or-nothing: pass a number for the tabs
+that have a real total and `·` (or omit `count`) for the ones that don't.
+The component treats both `'·'` and the empty string as "no count" sentinels
+— same convention the design-guide lab uses for its `counts` knob.
