@@ -10,6 +10,9 @@ export type NavGroup = {
   items: NavItem[]
 }
 
+// Mirrors the design-guide section structure (staging/dreamlake-design-guide.html).
+// Each group's `count` is the design-guide nav's count; `todo: true` items are
+// placeholders that subsequent Phase 3 PRs will flip to live.
 export const navGroups: NavGroup[] = [
   {
     eyebrow: 'GET STARTED',
@@ -17,37 +20,61 @@ export const navGroups: NavGroup[] = [
     items: [{ href: '/', label: 'Quick start' }],
   },
   {
-    eyebrow: 'COMPONENTS',
+    eyebrow: 'FOUNDATIONS',
+    count: '03',
+    items: [
+      { href: '/foundations/surfaces', label: 'Surfaces' },
+      { href: '/foundations/palette', label: 'Semantic palette', todo: true },
+      { href: '/foundations/typography', label: 'Typography', todo: true },
+    ],
+  },
+  {
+    eyebrow: 'GEOMETRY',
+    count: '01',
+    items: [{ href: '/geometry', label: 'Geometry', todo: true }],
+  },
+  {
+    eyebrow: 'ZEBRA LISTS',
+    count: '01',
+    items: [{ href: '/zebra-lists', label: 'Zebra lists', todo: true }],
+  },
+  {
+    eyebrow: 'COMPONENTS · ATOMS',
+    count: '07',
+    items: [
+      { href: '/components/chip', label: 'chip', todo: true },
+      { href: '/components/status', label: 'status indicator', todo: true },
+      { href: '/components/kbd', label: 'keyboard hint', todo: true },
+      { href: '/components/avatar', label: 'avatar', todo: true },
+      { href: '/components/button', label: 'buttons', todo: true },
+      { href: '/components/timeline', label: 'timeline', todo: true },
+      { href: '/components/dropdown', label: 'dropdown', todo: true },
+    ],
+  },
+  {
+    eyebrow: 'COMPONENTS · CHROME',
+    count: '03',
+    items: [
+      { href: '/components/inspector-panel', label: 'inspector panel', todo: true },
+      { href: '/components/eyebrow-title', label: 'eyebrow + title', todo: true },
+      { href: '/components/tab-strip', label: 'tab strip', todo: true },
+    ],
+  },
+  {
+    eyebrow: 'COMPONENTS · LISTS',
+    count: '03',
+    items: [
+      { href: '/components/zebra-row', label: 'zebra row', todo: true },
+      { href: '/components/nav-rail-item', label: 'nav-rail item', todo: true },
+      { href: '/components/search-bar', label: 'search bar', todo: true },
+    ],
+  },
+  {
+    eyebrow: 'REFERENCE',
     count: '02',
     items: [
-      { href: '/file-tree', label: 'file-tree' },
-      { href: '/video-images', label: 'video / images' },
-    ],
-  },
-  {
-    eyebrow: 'EXAMPLES',
-    count: '01',
-    items: [{ href: '#ex-robot-visualizer', label: 'Robot visualizer', todo: true }],
-  },
-  {
-    eyebrow: 'CONCEPTS',
-    count: '04',
-    items: [
-      { href: '#concept-scene', label: 'Scene & layers', todo: true },
-      { href: '#concept-clock', label: 'Clock & time', todo: true },
-      { href: '#concept-frames', label: 'Frames & TF', todo: true },
-      { href: '#concept-transport', label: 'Transports', todo: true },
-    ],
-  },
-  {
-    eyebrow: 'HOOKS',
-    count: '05',
-    items: [
-      { href: '#hook-useScene', label: 'useScene', todo: true },
-      { href: '#hook-useClock', label: 'useClock', todo: true },
-      { href: '#hook-useTopic', label: 'useTopic', todo: true },
-      { href: '#hook-useFrame', label: 'useFrame', todo: true },
-      { href: '#hook-useSelection', label: 'useSelection', todo: true },
+      { href: '/icons', label: 'Icons', todo: true },
+      { href: '/donts', label: 'Do · don’t', todo: true },
     ],
   },
 ]

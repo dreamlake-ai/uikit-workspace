@@ -6,6 +6,25 @@ sections. README copy edits and typo fixes are skipped. See
 [`./README.mdx`](./README.mdx) for the folder convention and
 [`../CLAUDE.md`](../CLAUDE.md) for the release-notes policy.
 
+## 2026-05-09 — Phase 3 begins: Foundations / Surfaces
+
+- First content-bearing design-guide page lands at `/foundations/surfaces`.
+  Establishes the page-shape pattern for the rest of Phase 3:
+  - One MDX file per `##` section under `pages/<route>/sections/`.
+  - `+Page.mdx` composes the sections via default-export imports.
+  - Live React demos under `src/components/design/` (e.g.
+    `SurfaceDemo`, `SurfaceTokens`) embedded in the relevant section.
+- LeftNav reorganized from the legacy ros-viz groups (COMPONENTS /
+  EXAMPLES / CONCEPTS / HOOKS — all placeholder anchors) to the
+  design-guide structure (FOUNDATIONS / GEOMETRY / ZEBRA LISTS /
+  COMPONENTS · ATOMS / COMPONENTS · CHROME / COMPONENTS · LISTS /
+  REFERENCE). Subsequent Phase 3 PRs flip `todo: true` items to
+  live as their pages land.
+- Right-rail TOC is now per-route via `src/data/toc.ts` (a
+  route → `TocItem[]` map), looked up in `pages/+Layout.tsx` via
+  Vike's `usePageContext().urlPathname`. New pages add their entry
+  here. Resolves the long-standing TODO at the top of `+Layout.tsx`.
+
 ## 2026-05-09 — Sync from viz-workspace: Prose-as-MDX + shiki
 
 - Pulled the *Prose as MDX, components as imports* section into

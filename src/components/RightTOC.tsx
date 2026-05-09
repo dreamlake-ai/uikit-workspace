@@ -31,6 +31,9 @@ const tocFootLinkCx =
 
 export function RightTOC({ items }: { items: TocItem[] }) {
   useTocRail(items)
+  // Routes without entries in tocByRoute opt out of the right rail
+  // entirely — no empty "On this page" card.
+  if (items.length === 0) return null
   return (
     <aside className={asideCx} aria-label="On this page">
       <div className={titleCx}>On this page</div>
