@@ -1,0 +1,16 @@
+import { ZebraRunSpecimen } from '../../../src/components/design/ZebraRunSpecimen'
+
+## Multi-row runs
+
+When two or more rows are selected, **consecutive selected rows merge into one visual block.**
+Non-consecutive selections each form their own block; a singleton selection renders as a bare
+selected row with no wrapper.
+
+Build runs in the data layer, not in CSS. Walk the list, group adjacent selected indices, and
+collapse the inner border-radius on adjoining edges so the run reads as one continuous tile:
+the first selected row keeps its top corners rounded, the last keeps its bottom corners
+rounded, and rows in the middle of the run are flat on every corner. The `2px` row gap
+matches the parent list — without that match, rows inside a run would visibly tighten the
+moment selection happens, which the user reads as a layout-shift bug.
+
+<ZebraRunSpecimen />
