@@ -56,7 +56,7 @@ const searchInputCx =
   'flex-1 appearance-none border-0 outline-0 bg-transparent font-ui text-[13px] text-ink tracking-[-0.005em] placeholder:text-muted placeholder:opacity-70'
 
 const kbdCx =
-  'font-mono text-[10px] font-medium text-muted opacity-80 px-[5px] py-px rounded-[4px] border border-faint bg-bg'
+  'font-mono text-[10px] font-medium text-muted opacity-80 px-[5px] py-px rounded-[6px] border border-faint bg-bg'
 
 export function SearchInput() {
   const { inputRef, query, setQuery, isOpen, open } = useSearch()
