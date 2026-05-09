@@ -6,6 +6,36 @@ sections. README copy edits and typo fixes are skipped. See
 [`./README.mdx`](./README.mdx) for the folder convention and
 [`../CLAUDE.md`](../CLAUDE.md) for the release-notes policy.
 
+## 2026-05-09 — Fix: zebra specimens + revert TopBar crumb
+
+The Zebra-list specimens shipped by the parallel-agent batch diverged
+from `staging/dreamlake-design-guide.html` §05 in three ways. Refactored
+to match the source verbatim:
+
+- **`ZebraSpecimen`** is now the all-in-one live specimen mirroring
+  `#sub-zebra-live`: 8 rows with `rest`, `hover`, `selected`, and
+  `focus` states inline (was: 6 plain zebra rows in isolation), with
+  the rail-search header and the rail-demo box-shadow that the source
+  CSS draws around `.rail-demo`.
+- **`ZebraStatesSpecimen`** is now a state table — one row per band
+  (base / zebra / hover-selectable / hover-warm / selected /
+  focus-visible) with light + dark hex columns (was: a captioned three-
+  row demo, which is the wrong specimen for this anchor).
+- **`ZebraRunSpecimen`** now uses the ring-style selection from the
+  source (transparent wrapper with `::after` accent border around the
+  contiguous run; rows inside keep their zebra parity) instead of the
+  fill-style alternative the agent picked. Updated `sections/multi-
+  row.mdx` prose to describe the ring vs. fill choice and clarify
+  that the specimen is the ring form.
+
+Also reverted `src/components/TopBar.tsx` to the original static
+`@dreamlake/uikit / Quick start` crumb. The route-aware lookup added
+in PR #12 derived labels from `navGroups` (lowercase per design-guide
+nav convention) which conflicted with the `<Crumbs>` casing each page
+declares for itself. Drop the dynamic lookup; keep the original static
+form. The page-level `<Crumbs>` (above each H1) remains the route-
+specific breadcrumb.
+
 ## 2026-05-09 — Phase 3 batch: parallel agents land 4 pages
 
 Four design-guide pages landed concurrently via subagents working in

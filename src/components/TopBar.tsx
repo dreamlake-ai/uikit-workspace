@@ -1,21 +1,5 @@
-import { usePageContext } from 'vike-react/usePageContext'
 import { ThemeToggle } from './ThemeToggle'
 import { SearchInput } from './SearchPalette'
-import { navGroups } from '../data/nav'
-
-// Derive the merged-header crumb label from the current route.
-// Looks up nav data first; falls back to humanizing the last URL
-// segment for routes not in nav (e.g. transient/utility pages).
-function findPageLabel(pathname: string): string {
-  if (pathname === '/') return 'Overview'
-  for (const g of navGroups) {
-    for (const item of g.items) {
-      if (item.href === pathname) return item.label
-    }
-  }
-  const last = pathname.replace(/\/$/, '').split('/').pop() ?? ''
-  return last.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
-}
 
 const GitHubIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className="block">
@@ -102,8 +86,6 @@ const topnavLinkCx =
   'font-ui text-[12.5px] font-medium text-muted no-underline inline-flex items-center justify-center leading-none tracking-[-0.005em] transition-colors duration-150 hover:text-ink'
 
 export function TopBar() {
-  const { urlPathname } = usePageContext()
-  const here = findPageLabel(urlPathname)
   return (
     <header className={headerCx} style={{ height: 39, padding: '4px 0px', margin: '0px 0px -2px' }}>
       <a className={brandCx} href="/">
@@ -129,7 +111,7 @@ export function TopBar() {
           @dreamlake/uikit
         </a>
         <span className="sep opacity-50">/</span>
-        <span className="here text-ink">{here}</span>
+        <span className="here text-ink">Quick start</span>
       </nav>
 
       {/* Owns its own state + portal logic so it can escape the

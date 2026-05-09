@@ -1,64 +1,82 @@
-// Three-row specimen showing how the same row template paints under
-// the three interaction states. Precedence is strict: selected >
-// hover > zebra > base. Ports the per-state color cells from
-// staging/dreamlake-design-guide.html §05 #sub-zebra-states (light
-// values; dark theme picks up automatically via @theme overrides).
-//
-// Each row uses the same grid as ZebraSpecimen so the columns line
-// up between specimens. The hover row uses bg-row-hover (cool blue
-// tint of the eventual selected color — see §3 of the long-form
-// guide for why hover and selected share a hue axis). The selected
-// row uses bg-row-selected with text-row-selected-fg forcing white
-// on every span.
+// State table — mirrors staging/dreamlake-design-guide.html §05
+// #sub-zebra-states. One row per band (base / zebra / hover-selectable /
+// hover-warm / selected / focus-visible), each showing the canonical
+// hex in light + dark. The hex values are inline literals (not
+// utilities) because the point of this specimen is the literal
+// contract — what `grep '#[0-9a-f]\{6\}'` should turn up.
 
-type State = 'rest' | 'hover' | 'selected'
+type Cell =
+  | { kind: 'fill'; hex: string; fg?: string }
+  | { kind: 'outline'; label: string }
 
-type Row = {
-  id: string
+type State = {
   label: string
-  meta: string
-  state: State
-  caption: string
+  light: Cell
+  dark: Cell
 }
 
-const rows: Row[] = [
-  { id: 'r_8a13', label: 'normalize-batch',   meta: '4m 12s', state: 'rest',     caption: 'rest · base'           },
-  { id: 'r_8a12', label: 'filter-acme',       meta: '12s',    state: 'hover',    caption: 'hover · pointer here'  },
-  { id: 'r_8a10', label: 'classify-staging',  meta: '8m 47s', state: 'selected', caption: 'selected · committed'  },
+const states: State[] = [
+  { label: 'base · even',        light: { kind: 'fill', hex: '#fffefa' },               dark: { kind: 'fill', hex: '#2b2b31' } },
+  { label: 'zebra · odd',        light: { kind: 'fill', hex: '#f3f2ee' },               dark: { kind: 'fill', hex: '#36363c' } },
+  { label: 'hover · selectable', light: { kind: 'fill', hex: '#d9e6f7' },               dark: { kind: 'fill', hex: '#3d4856' } },
+  { label: 'hover · warm',       light: { kind: 'fill', hex: '#f3e6cc' },               dark: { kind: 'fill', hex: '#3d4856' } },
+  { label: 'selected',           light: { kind: 'fill', hex: '#2174d9', fg: '#fff' },   dark: { kind: 'fill', hex: '#2f86e6', fg: '#fff' } },
+  { label: 'focus-visible',      light: { kind: 'outline', label: '--accent · inset 2px' }, dark: { kind: 'outline', label: '--accent · inset 2px' } },
 ]
 
-// Resting row radius is 7px; selected steps up to 10px so the tile
-// reads as lifting out of the list (§4 of the long-form guide).
-const baseRowCx =
-  'grid grid-cols-[80px_minmax(0,1fr)_72px] items-center gap-3 ' +
-  'px-3 h-7 font-mono text-[12px] leading-none text-ink'
+const headCellCx =
+  'px-3.5 py-2 font-mono text-[9.5px] font-semibold tracking-[0.12em] uppercase text-muted bg-bg border-b border-faint'
 
-const stateCx: Record<State, string> = {
-  rest:     'rounded-[7px] bg-row-base',
-  hover:    'rounded-[7px] bg-row-hover',
-  selected: 'rounded-[10px] bg-row-selected text-row-selected-fg',
+const rowCellCx =
+  'flex items-center gap-2.5 px-3.5 py-[11px] border-b border-faint [&:where(.last-row_*)]:border-b-0'
+
+const swatchFillCx = 'shrink-0 w-14 h-6 rounded-[5px] border border-[rgba(0,0,0,0.08)]'
+const swatchOutlineCx =
+  'shrink-0 w-14 h-6 rounded-[5px] outline-2 outline-accent -outline-offset-2 bg-transparent'
+
+const labelCx = 'font-mono text-[10.5px] font-semibold text-ink tracking-[0.02em]'
+const hexCx = 'font-mono text-[10px] text-muted'
+
+function CellView({ c }: { c: Cell }) {
+  if (c.kind === 'outline') {
+    return (
+      <>
+        <div className={swatchOutlineCx} aria-hidden="true" />
+        <span className={hexCx}>{c.label}</span>
+      </>
+    )
+  }
+  return (
+    <>
+      <div className={swatchFillCx} style={{ background: c.hex }} aria-hidden="true" />
+      <span className={hexCx}>{c.hex}{c.fg ? ` · fg ${c.fg}` : ''}</span>
+    </>
+  )
 }
 
-const captionCx =
-  'font-mono text-[10px] font-medium tracking-[0.1em] uppercase text-muted'
-
 export const ZebraStatesSpecimen = () => (
-  <div className="flex flex-col gap-3 my-6">
-    {rows.map((r) => (
-      <div key={r.id} className="grid grid-cols-[140px_minmax(0,1fr)] items-center gap-4">
-        <div className={captionCx}>{r.caption}</div>
-        <div className={`${baseRowCx} ${stateCx[r.state]}`}>
-          <span className={r.state === 'selected' ? '' : 'text-muted'}>{r.id}</span>
-          <span className="truncate">{r.label}</span>
-          <span
-            className={`text-[11px] tracking-[0.04em] text-right ${
-              r.state === 'selected' ? '' : 'text-muted'
-            }`}
-          >
-            {r.meta}
-          </span>
+  <div className="my-6 border border-faint rounded-[8px] overflow-hidden bg-panel shadow-[0_1px_2px_var(--shadow-tint-1)]">
+    <div className="grid grid-cols-[140px_1fr_1fr]">
+      <div className={headCellCx}>state</div>
+      <div className={headCellCx}>light</div>
+      <div className={headCellCx}>dark</div>
+    </div>
+    {states.map((s, i) => {
+      const isLast = i === states.length - 1
+      const cellCx = isLast ? rowCellCx + ' border-b-0' : rowCellCx
+      return (
+        <div key={s.label} className="grid grid-cols-[140px_1fr_1fr]">
+          <div className={cellCx}>
+            <span className={labelCx}>{s.label}</span>
+          </div>
+          <div className={cellCx}>
+            <CellView c={s.light} />
+          </div>
+          <div className={cellCx}>
+            <CellView c={s.dark} />
+          </div>
         </div>
-      </div>
-    ))}
+      )
+    })}
   </div>
 )

@@ -3,14 +3,23 @@ import { ZebraRunSpecimen } from '../../../src/components/design/ZebraRunSpecime
 ## Multi-row runs
 
 When two or more rows are selected, **consecutive selected rows merge into one visual block.**
-Non-consecutive selections each form their own block; a singleton selection renders as a bare
-selected row with no wrapper.
+Non-consecutive selections each form their own block. The two ways to draw the block are not
+interchangeable; pick by what the selection *means*:
 
-Build runs in the data layer, not in CSS. Walk the list, group adjacent selected indices, and
-collapse the inner border-radius on adjoining edges so the run reads as one continuous tile:
-the first selected row keeps its top corners rounded, the last keeps its bottom corners
-rounded, and rows in the middle of the run are flat on every corner. The `2px` row gap
-matches the parent list — without that match, rows inside a run would visibly tighten the
-moment selection happens, which the user reads as a layout-shift bug.
+- **Ring** — a 2px accent border around the run, rows underneath keep their own zebra parity
+  showing through. Use for **transient** selection (bulk-delete, bulk-tag, bulk-move). Loud
+  and short-lived.
+- **Fill** — every selected row paints `--color-row-selected`, optionally with a left rail.
+  Use for **persistent** selection that drives downstream UI (compare panel, side-by-side
+  charts, batch editor). Commits visually.
+
+The specimen below renders the **ring** form, mirroring the design-guide source. The wrapper
+is transparent — its `::after` pseudo-element draws the 2px accent border, sitting at `z:2`
+above the rows so the stroke isn't occluded by row backgrounds. Rows inside the run keep
+their zebra parity uninterrupted; the ring is purely an outer indicator.
+
+The `2px` row gap inside the run matches the parent list — without that match, rows inside a
+run would visibly tighten the moment selection happens, which the user reads as a
+layout-shift bug.
 
 <ZebraRunSpecimen />
