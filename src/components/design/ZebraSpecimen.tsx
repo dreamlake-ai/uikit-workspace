@@ -35,7 +35,7 @@ const rows: Row[] = [
 // resting radius (selected state will override to 10px).
 const rowBaseCx =
   'grid grid-cols-[56px_minmax(0,1fr)_auto_auto] items-center gap-3 ' +
-  'px-2.5 py-1.5 rounded-[7px] font-mono text-[11.5px] text-ink ' +
+  'px-2.5 py-1.5 rounded-[12px] font-mono text-[11.5px] text-ink ' +
   'transition-[background-color,border-radius] duration-[120ms] ' +
   'bg-row-base data-[zebra=odd]:bg-row-zebra'
 
