@@ -110,6 +110,18 @@
   --color-accent: #23aaff;
   --color-accent-soft: rgba(35, 170, 255, 0.09);
 
+  /* Zebra-list row backgrounds ──────────────────────────────────────
+     Canonical hex from staging/zebra-list-style-guide.md §11. The
+     four-band model: base, zebra, hover, selected. Hover is split
+     into cool (default) + warm (job-rows) per design.md row-color
+     scheme. */
+  --color-row-base: #fffefa;
+  --color-row-zebra: #f3f2ee;
+  --color-row-hover: #d9e6f7;
+  --color-row-hover-warm: #f3e6cc;
+  --color-row-selected: #2174d9;
+  --color-row-selected-fg: #ffffff;
+
   /* Code-token colors ───────────────────────────────────────────── */
   --color-kw: #2e6f9e;
   --color-str: #8a6a2e;
@@ -144,6 +156,12 @@ html[data-theme="dark"] {
 
   --color-selected: #3d4856;
   --color-accent-soft: rgba(35, 170, 255, 0.18);
+
+  --color-row-base: #2b2b31;
+  --color-row-zebra: #36363c;
+  --color-row-hover: #3d4856;
+  --color-row-hover-warm: #3d4856;
+  --color-row-selected: #2f86e6;
 
   --color-kw: #7fc1ff;
   --color-str: #d6b170;
