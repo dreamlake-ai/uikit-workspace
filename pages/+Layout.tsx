@@ -30,14 +30,16 @@ const docContentCx = [
 
 // TODO(per-page-toc): once we add more pages, hoist this into pageContext
 // (vike) or read from MDX frontmatter so each page declares its own TOC.
+// IDs come from rehype-slug — pin them to slugs, not magic strings;
+// renaming a heading renames its anchor.
 const tocItems: TocItem[] = [
   { id: 'install', label: 'Install', level: 2 },
-  { id: 'first-scene', label: 'Your first scene', level: 2 },
-  { id: 'markup', label: 'HTML scaffold', level: 3 },
-  { id: 'from-bag', label: 'Replay a recorded bag', level: 2 },
-  { id: 'layers', label: 'Built-in layers', level: 2 },
-  { id: 'react', label: 'React binding', level: 2 },
-  { id: 'next', label: 'Where to go next', level: 2 },
+  { id: 'your-first-scene', label: 'Your first scene', level: 2 },
+  { id: 'html-scaffold', label: 'HTML scaffold', level: 3 },
+  { id: 'replay-a-recorded-bag', label: 'Replay a recorded bag', level: 2 },
+  { id: 'built-in-layers', label: 'Built-in layers', level: 2 },
+  { id: 'react-binding', label: 'React binding', level: 2 },
+  { id: 'where-to-go-next', label: 'Where to go next', level: 2 },
 ]
 
 export default function Layout({ children }: { children: ReactNode }) {

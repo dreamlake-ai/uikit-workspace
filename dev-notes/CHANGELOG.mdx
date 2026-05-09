@@ -6,6 +6,27 @@ sections. README copy edits and typo fixes are skipped. See
 [`./README.mdx`](./README.mdx) for the folder convention and
 [`../CLAUDE.md`](../CLAUDE.md) for the release-notes policy.
 
+## 2026-05-09 — Sync from viz-workspace: Prose-as-MDX + shiki
+
+- Pulled the *Prose as MDX, components as imports* section into
+  `migration-patterns.mdx` from `dreamlake-ai/viz-workspace`. Adds the
+  one-time MDX wiring (compiler + components map + wrapper), the
+  components-map vs inline-import decision rule, the second/third-page
+  tipping-point heuristic, and the "pin the TOC to slugs, not magic
+  strings" warning.
+- Pulled the *Land syntax highlighting in the same milestone* sub-
+  section: the three-knob shiki wiring (defaultColor:false +
+  parseMetaString + custom data-language transformer) that lets fenced
+  code blocks slot into `<CodeBlock>` chrome without the page knowing
+  shiki exists.
+- Updated step 4 of the *Small reviewable PRs* sequence and added
+  step 8 (MDX conversion) so the order matches what the upstream now
+  recommends.
+- This repo's matching infrastructure landed in PR — same shiki + MDX
+  conversion, applied to our quick-start placeholder page (still
+  ros-viz prose at the time of writing, will be replaced wholesale by
+  the design-guide migration in Phase 3).
+
 ## 2026-05-09 — Adopt PR workflow + changelog policy
 
 - Pulled `CLAUDE.md` (PR-based workflow, no direct pushes to `main`)

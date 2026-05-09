@@ -51,13 +51,19 @@ A cadence that worked:
 2. **Decompose chrome** (top bar, side nav, right TOC, theme toggle,
    command palette) into proper React components + hooks.
 3. **Move design tokens** into Tailwind's `@theme` block.
-4. **Convert prose body to JSX** with primitives. Kill
-   `dangerouslySetInnerHTML`.
+4. **Convert prose body to JSX** with primitives (CodeBlock,
+   Callout, etc.). Kills `dangerouslySetInnerHTML` and exposes the
+   structure.
 5. **Migrate component CSS to Tailwind utilities,** one component
    per PR.
 6. **Fold cross-cutting body-class rules** into Tailwind custom
    variants.
 7. **Delete the legacy CSS file** entirely.
+8. **Convert prose JSX to MDX** once content density warrants it
+   (typically when adding the 2nd or 3rd page). Components stay
+   TSX; prose becomes Markdown with JSX components imported as
+   references at the top of each `.mdx`. See *Prose as MDX,
+   components as imports* below.
 
 The `dangerouslySetInnerHTML` v0 looks embarrassing but bought a
 working surface to iterate against. Don't skip it.
@@ -325,6 +331,137 @@ Two notes:
    parent.
 
 ---
+
+## Prose as MDX, components as imports
+
+Once the app has more than one prose-heavy page, the architectural
+split that pays off is:
+
+- **Prose lives in `.mdx`** — Markdown for headings, paragraphs,
+  lists, tables, inline code; JSX only where Markdown can't express
+  the structure (code blocks with chrome, callouts, tabs, demos).
+- **JSX is for component implementations only** — `src/components/*`
+  contains the React. No prose.
+- **Components are imported as references** at the top of each
+  `.mdx` file:
+
+  ```mdx
+  import { CodeBlock, Callout, Lede } from '../../src/components/prose'
+
+  # Quick start
+
+  <Lede>...</Lede>
+
+  ## Install
+
+  Some prose with `inline code`.
+
+  <CodeBlock lang="bash" file="terminal">npm install ...</CodeBlock>
+
+  <Callout type="info">**Heads up.** ...</Callout>
+  ```
+
+### Wiring (one-time)
+
+Three pieces:
+
+1. **The compiler.** `@mdx-js/rollup` compiles `.mdx` to JSX. Add
+   `remark-gfm` for GitHub-flavored Markdown (tables, strikethrough,
+   task lists) and `rehype-slug` so every heading gets a stable
+   GitHub-style id at compile time (TOC anchors then derive directly
+   from heading text — no per-page id bookkeeping). The MDX plugin
+   must run **before** the framework plugin (Vike, Next, etc.) so
+   `.mdx` is JSX by the time the framework sees the page:
+
+   ```ts
+   plugins: [
+     mdx({
+       remarkPlugins: [remarkGfm],
+       rehypePlugins: [rehypeSlug],
+       providerImportSource: '@mdx-js/react',
+     }),
+     vike(),
+     tailwindcss(),
+   ]
+   ```
+
+   **Pin the TOC to slugs, not magic strings.** A TOC component
+   that hard-codes `id: 'first-scene'` against an MDX heading
+   `## Your first scene` will silently break — the slug is
+   `your-first-scene`, not what someone typed by hand. Either source
+   the TOC from frontmatter, or accept that renaming a heading
+   renames its anchor and update consumers in lockstep.
+
+2. **The components map.** A small file that overrides the HTML
+   elements MDX emits when you want a *transformed* version (e.g.
+   `h2` → your anchored variant). Pass via `<MDXProvider components>`
+   in your top-level layout. **Don't override everything** — h1, h3,
+   p, ul, table all render fine as plain HTML when descendant
+   Tailwind variants on the page wrapper handle their styling.
+
+3. **The wrapper.** Move the prose wrapper (`<main className="...">`
+   with the descendant typography variants) into the Layout, not the
+   page. MDX bodies don't ship their own wrapper.
+
+### What stays in the page (.mdx) vs the components map
+
+| Goes in components map | Stays inline in .mdx |
+|---|---|
+| Element transformations (h2 → anchored H2) | Structured chrome (Crumbs, Lede, CodeBlock) |
+| Project-wide overrides (e.g. all `a` opens new tab) | One-off layout (a banner above the lede) |
+
+Rule of thumb: if every page should get the same treatment, override
+in the components map. If the call site decides, import and use
+explicitly.
+
+### When to introduce MDX
+
+Not for the first page. Authoring overhead and zero payoff vs plain
+JSX. The tipping point is the **second or third prose-heavy page** —
+each new page is a one-file change once MDX is wired up, vs another
+~150 lines of JSX-with-prose.
+
+If your project will only ever have one page (a marketing landing,
+a single docs page), skip MDX and keep the JSX.
+
+### Land syntax highlighting in the same milestone
+
+The MDX win only fully shows up once fenced code blocks (` ```ts ` …)
+*also* drop the manual JSX-span syntax highlighting they replace. A
+mixed `.mdx` where prose is Markdown but code blocks are still
+verbose `<CodeBlock>` JSX with `<Kw>/<Str>/<Fn>` spans is barely
+shorter than the `.tsx` it replaced — the reviewer of the MDX-
+conversion PR caught exactly this regression in scope.
+
+The clean wiring is `@shikijs/rehype` with three knobs:
+
+```ts
+mdx({
+  rehypePlugins: [
+    rehypeSlug,
+    [rehypeShiki, {
+      themes: { light: 'github-light', dark: 'github-dark' },
+      defaultColor: false,
+      parseMetaString: parseFileMeta,    // → data-file="scene.ts"
+      transformers: [stampLanguage],     // → data-language="ts"
+    }],
+  ],
+})
+```
+
+- `defaultColor: false` makes shiki emit dual-theme inline styles
+  (`color: <light>; --shiki-dark: <dark>`). One CSS rule under
+  `[data-theme="dark"]` swaps the visible color across all spans.
+- `parseMetaString` lifts `file="..."` from the fence's meta string
+  onto a data attribute on the `<pre>`.
+- A custom transformer (~5 lines) stamps `data-language` on the same
+  `<pre>` so the chrome's lang label can render it. Shiki doesn't
+  add this attribute by default.
+
+The MDX components map's `pre` override then reads both data
+attributes and wraps shiki's pre in the existing `<CodeBlock>`
+chrome. No file knows shiki is involved beyond `vite.config.ts` and
+the components map — pages just write fenced code.
 
 ## Marker classes as a transitional pattern
 

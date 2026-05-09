@@ -71,6 +71,21 @@
 }
 .doc-toc-rail .rail-dot.is-on { opacity: 1; }
 
+/* ── Shiki dual-theme switch ───────────────────────────────────────
+   rehype-shiki with defaultColor:false emits inline
+     style="color: <light>; --shiki-dark: <dark>"
+   on every span. We swap the visible color under [data-theme=dark]
+   so syntax highlighting tracks the page theme. The pre's background
+   is forced to our themed --color-code-bg in both modes, so code
+   blocks visually match the rest of the surface palette instead of
+   shiki's stock white / GitHub-dark backgrounds. */
+.shiki {
+  background-color: var(--color-code-bg) !important;
+}
+html[data-theme="dark"] .shiki span {
+  color: var(--shiki-dark) !important;
+}
+
 /* `dark:` works against [data-theme="dark"], including nested elements. */
 @custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
 
