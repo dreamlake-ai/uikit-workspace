@@ -1,0 +1,2552 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>@dreamlake/ros-viz — Quick start</title>
+<template id="__bundler_thumbnail" data-bg-color="#fffefa">
+  <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+    <rect x="60" y="60" width="220" height="680" rx="12" fill="#f6f4ee"></rect>
+    <rect x="310" y="60" width="600" height="680" rx="12" fill="#fcfbf7"></rect>
+    <rect x="940" y="60" width="200" height="680" rx="12" fill="#f6f4ee"></rect>
+    <rect x="350" y="120" width="380" height="22" rx="4" fill="#1a1a1a"></rect>
+    <rect x="350" y="170" width="520" height="8" rx="2" fill="#cfcabd"></rect>
+    <rect x="350" y="190" width="480" height="8" rx="2" fill="#cfcabd"></rect>
+    <rect x="350" y="240" width="520" height="120" rx="8" fill="#efece2"></rect>
+    <circle cx="855" cy="125" r="6" fill="#23aaff"></circle>
+  </svg>
+</template>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="tokens.css?v=2" />
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); }
+  body {
+    font-family: 'Inter Tight', ui-sans-serif, system-ui, sans-serif;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: 'ss01', 'cv11';
+  }
+  :root {
+    --f-ui:   'Inter Tight', ui-sans-serif, system-ui, sans-serif;
+    --f-mono: 'JetBrains Mono', ui-monospace, monospace;
+    --code-bg-light: #faf8f1;
+    --code-bg-dark:  #2c2c33;
+    --code-bg: var(--code-bg-light);
+    --kw:      #2e6f9e;   /* keyword blue (slightly muted vs accent) */
+    --str:     #8a6a2e;   /* warm string */
+    --num:     #6b4ea0;   /* purple num */
+    --com:     #999487;   /* comment */
+    --fn:      #1f6b48;   /* function green */
+    --tag:     #b14d3a;   /* tag red */
+  }
+  html[data-theme="dark"] {
+    --code-bg: var(--code-bg-dark);
+    --kw:  #7fc1ff;
+    --str: #d6b170;
+    --num: #c2a3ff;
+    --fn:  #8edcab;
+    --com: #6a6a72;
+    --tag: #f0a48c;
+  }
+
+  /* ── Top bar ──────────────────────────────────────────────────── */
+  .doc-topbar {
+    position: sticky; top: 0; z-index: 50;
+    display: grid;
+    grid-template-columns: 240px minmax(0, 1fr) 240px;
+    align-items: center;
+    height: 44px;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    border-bottom: 1px solid var(--faint);
+    backdrop-filter: saturate(140%) blur(8px);
+    -webkit-backdrop-filter: saturate(140%) blur(8px);
+  }
+  .doc-brand {
+    display: flex; align-items: center; gap: 10px;
+    font-family: var(--f-ui);
+    font-size: 14px; font-weight: 700;
+    letter-spacing: -.04em;
+    color: var(--ink);
+    text-decoration: none;
+    padding-left: 18px;
+    transition: opacity .15s ease;
+    white-space: nowrap;
+    min-width: 0;
+  }
+  .doc-brand > span:first-child { white-space: nowrap; }
+  .doc-brand:hover { opacity: .8; }
+  .doc-brand .dot {
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 1.4em;
+    line-height: 0;
+    margin-left: 1px;
+    vertical-align: baseline;
+  }
+  .doc-brand .ver {
+    display: inline-flex; align-items: stretch;
+    font-family: var(--f-mono); font-size: 10px; font-weight: 500;
+    letter-spacing: .02em;
+    margin-left: 6px;
+    border: 1px solid var(--faint);
+    border-radius: 4px;
+  }
+  .doc-brand .ver .v {
+    display: inline-flex; align-items: center;
+    padding: 2px 6px;
+    color: var(--ink);
+    background: color-mix(in srgb, var(--ink) 5%, var(--bg));
+    font-weight: 600;
+    border-top-left-radius: 3px;
+    border-bottom-left-radius: 3px;
+  }
+  .doc-brand .ver .sha {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 2px 7px;
+    color: var(--muted);
+    border-left: 1px solid var(--faint);
+    border-top-right-radius: 3px;
+    border-bottom-right-radius: 3px;
+  }
+  .doc-brand .ver .sha::before {
+    content: '';
+    width: 9px; height: 9px;
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><circle cx='18' cy='18' r='3'/><circle cx='6' cy='6' r='3'/><path d='M6 9v6'/><path d='M18 9a9 9 0 0 1-9 9'/></svg>") center/contain no-repeat;
+            mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><circle cx='18' cy='18' r='3'/><circle cx='6' cy='6' r='3'/><path d='M6 9v6'/><path d='M18 9a9 9 0 0 1-9 9'/></svg>") center/contain no-repeat;
+    opacity: .8;
+    flex-shrink: 0;
+  }
+  .doc-brand .slash {
+    color: var(--muted); font-weight: 400; opacity: .55;
+    margin-left: -4px; margin-right: -4px;
+  }
+  .doc-brand .docs  { color: var(--muted); font-weight: 500; letter-spacing: -.01em; }
+
+  .doc-search {
+    display: flex; align-items: center; gap: 8px;
+    width: 320px; max-width: 100%;
+    padding: 6px 10px;
+    background: var(--search-bg);
+    border-radius: 8px;
+    border: 1px solid transparent;
+    transition: border-color .18s ease, background .18s ease;
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+    align-self: center;
+    /* align right edge with the content column's text right edge
+       (.doc-content has padding-right: 56px) */
+    margin-right: 56px;
+  }
+  .doc-topcrumbs {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: center;
+    justify-self: start;
+    margin-left: 56px;
+    display: flex; align-items: center; gap: 6px;
+    font-family: var(--f-mono); font-size: 10px; font-weight: 500;
+    color: var(--muted); letter-spacing: .04em;
+    text-transform: uppercase;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity .25s ease, transform .25s cubic-bezier(.4,.7,.3,1);
+  }
+  .doc-topcrumbs a { color: inherit; text-decoration: none; transition: color .15s ease; }
+  .doc-topcrumbs a:hover { color: var(--ink); }
+  .doc-topcrumbs .sep { opacity: .5; }
+  .doc-topcrumbs .here { color: var(--ink); }
+  body.is-merged .doc-topcrumbs {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+  body.is-merged .doc-content > .crumbs {
+    opacity: 0;
+    transform: translateY(-6px);
+    pointer-events: none;
+  }
+  body.is-merged .doc-brand .ver,
+  body.is-merged .doc-brand .slash,
+  body.is-merged .doc-brand .docs {
+    opacity: 0;
+    transform: translateX(-4px);
+    pointer-events: none;
+    width: 0;
+    margin: 0; padding: 0;
+    overflow: hidden;
+  }
+  .doc-brand .ver, .doc-brand .slash, .doc-brand .docs {
+    transition: opacity .25s ease, transform .25s cubic-bezier(.4,.7,.3,1);
+  }
+  .doc-content > .crumbs {
+    transition: opacity .25s ease, transform .25s cubic-bezier(.4,.7,.3,1);
+  }
+  .doc-search:focus-within { border-color: color-mix(in srgb, var(--accent) 50%, transparent); }
+  .doc-search svg { width: 14px; height: 14px; color: var(--muted); flex-shrink: 0; }
+  .doc-search input {
+    flex: 1; appearance: none; -webkit-appearance: none;
+    border: 0; outline: 0; background: transparent;
+    font-family: var(--f-ui); font-size: 13px; color: var(--ink);
+    letter-spacing: -.005em;
+  }
+  .doc-search input::placeholder { color: var(--muted); opacity: .7; }
+  .doc-search .kbd {
+    font-family: var(--f-mono); font-size: 10px; font-weight: 500;
+    color: var(--muted); opacity: .8;
+    padding: 1px 5px; border-radius: 4px;
+    border: 1px solid var(--faint);
+    background: var(--bg);
+  }
+
+  .doc-topnav-actions {
+    display: flex; align-items: center; gap: 14px;
+    justify-self: end;
+    padding-right: 22px;
+  }
+  .doc-topnav-actions a {
+    font-family: var(--f-ui); font-size: 12.5px; font-weight: 500;
+    color: var(--muted); text-decoration: none;
+    display: inline-flex; align-items: center; justify-content: center;
+    line-height: 1;
+    letter-spacing: -.005em;
+    transition: color .15s ease;
+  }
+  .doc-topnav-actions a svg { display: block; }
+  .doc-topnav-actions a:hover { color: var(--ink); }
+
+  /* ── 3-segment theme toggle ───────────────────────────────────── */
+  .theme3 {
+    --t3-size: 24px;
+    --t3-pad: 2px;
+    --t3-pos: 0; /* segment index 0/1/2 */
+    position: relative;
+    display: inline-flex; align-items: center;
+    background: var(--panel-bg);
+    border: 1px solid var(--faint);
+    border-radius: 999px;
+    padding: var(--t3-pad);
+    isolation: isolate;
+  }
+  .theme3::before {
+    content: '';
+    position: absolute;
+    top: var(--t3-pad); left: var(--t3-pad);
+    width: var(--t3-size); height: var(--t3-size);
+    border-radius: 999px;
+    background: var(--chip-bg);
+    transform: translateX(calc(var(--t3-pos) * var(--t3-size)));
+    transition: transform .42s cubic-bezier(.34, 1.45, .55, 1);
+    z-index: 0;
+    will-change: transform;
+  }
+  .theme3 button {
+    appearance: none;
+    position: relative; z-index: 1;
+    width: var(--t3-size); height: var(--t3-size);
+    display: inline-flex; align-items: center; justify-content: center;
+    background: transparent; border: 0; border-radius: 999px;
+    color: var(--muted); cursor: pointer;
+    padding: 0; margin: 0;
+    transition: color .25s ease;
+  }
+  .theme3 button svg { width: 13px; height: 13px; transition: transform .42s cubic-bezier(.34,1.45,.55,1), opacity .25s ease; }
+  .theme3 button:hover { color: var(--ink); }
+  .theme3 button[aria-pressed="true"] { color: var(--ink); }
+  .theme3 button[aria-pressed="false"] svg { transform: scale(.85); opacity: .65; }
+  .theme3 #t3-light[aria-pressed="false"] svg { transform: scale(.85) rotate(-18deg); }
+  .theme3 #t3-dark[aria-pressed="false"]  svg { transform: scale(.85) rotate(18deg); }
+  @media (prefers-reduced-motion: reduce) {
+    .theme3::before, .theme3 button, .theme3 button svg { transition: none; }
+  }
+
+  /* ── 3-column layout ──────────────────────────────────────────── */
+  .doc-shell {
+    display: grid;
+    grid-template-columns: 240px minmax(0, 1fr) 240px;
+    max-width: 1320px;
+    margin: 0 auto;
+    align-items: start;
+  }
+
+  /* ── Left nav ─────────────────────────────────────────────────── */
+  .doc-nav {
+    position: sticky; top: 40px;
+    height: calc(100vh - 40px);
+    overflow-y: auto;
+    padding: 22px 12px 32px 18px;
+    display: flex; flex-direction: column; gap: 2px;
+  }
+  .doc-nav .group {
+    display: flex; flex-direction: column; gap: 1px;
+    margin-bottom: 14px;
+  }
+  .doc-nav .eyebrow {
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 10px 4px;
+    font-family: var(--f-mono); font-size: 9px; font-weight: 600;
+    color: var(--muted); opacity: .7;
+    letter-spacing: .14em; text-transform: uppercase;
+  }
+  .doc-nav .eyebrow .ct { margin-left: auto; opacity: .85; }
+  .doc-nav a.row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 5px 10px;
+    margin: 0 0;
+    border-radius: var(--radius);
+    font-family: var(--f-ui); font-size: 12.5px; font-weight: 500;
+    color: var(--ink);
+    text-decoration: none;
+    letter-spacing: -.005em;
+    line-height: 1.25;
+    transition: background .12s ease, color .12s ease;
+  }
+  .doc-nav a.row:hover {
+    background: color-mix(in srgb, var(--ink) 5%, transparent);
+  }
+  .doc-nav a.row.is-active {
+    background: var(--selected-bg);
+    color: var(--ink);
+    font-weight: 600;
+  }
+  .doc-nav a.row.is-child {
+    padding: 3px 10px 3px 22px;
+    font-family: var(--f-mono);
+    font-size: 12px; font-weight: 500;
+    color: var(--muted);
+    text-transform: lowercase;
+    letter-spacing: .01em;
+  }
+  .doc-nav a.row.is-child:hover { color: var(--ink); background: transparent; }
+  /* Not-yet-implemented nav rows: muted text + strikethrough; ignore on hover. */
+  .doc-nav a.row.is-todo,
+  .doc-nav a.row.is-todo:hover {
+    color: var(--muted); opacity: .42;
+    text-decoration: line-through;
+    text-decoration-color: color-mix(in srgb, var(--muted) 70%, transparent);
+    text-decoration-thickness: 1px;
+    background: transparent;
+    cursor: not-allowed;
+  }
+  .doc-nav a.row.is-todo .meta { opacity: .55; }
+  .doc-nav a.row.is-child.is-active {
+    color: var(--ink); font-weight: 600;
+    background: color-mix(in srgb, var(--selected-bg) 55%, transparent);
+  }
+  .doc-nav a.row .meta {
+    margin-left: auto;
+    font-family: var(--f-mono); font-size: 9px; font-weight: 500;
+    color: var(--muted); opacity: .55; letter-spacing: .04em;
+  }
+
+  /* ── Center reading column ────────────────────────────────────── */
+  .doc-content {
+    padding: 0 56px 120px;
+    min-width: 0;
+    max-width: 760px;
+  }
+  .doc-content .crumbs {
+    display: flex; align-items: center; gap: 6px;
+    font-family: var(--f-mono); font-size: 10px; font-weight: 500;
+    color: var(--muted); letter-spacing: .04em;
+    text-transform: uppercase;
+    height: 36px;
+    margin: 8px 0 0;
+  }
+  .doc-content .crumbs .sep { opacity: .5; }
+  .doc-content .crumbs .here { color: var(--ink); }
+  .doc-content .crumbs a {
+    color: inherit; text-decoration: none;
+    transition: color .15s ease;
+  }
+  .doc-content .crumbs a:hover { color: var(--ink); }
+
+  .doc-content h1 {
+    font-family: var(--f-ui);
+    font-size: 32px; font-weight: 700;
+    letter-spacing: -.025em;
+    margin: 18px 0 10px;
+    color: var(--ink);
+    line-height: 1.1;
+  }
+  .doc-content .lede {
+    font-family: var(--f-ui);
+    font-size: 16px; font-weight: 400;
+    line-height: 1.6;
+    color: var(--muted);
+    margin: 0 0 28px;
+    text-wrap: pretty;
+    max-width: 620px;
+  }
+  .doc-content h2 {
+    position: sticky; top: 38px;
+    z-index: 3;
+    font-family: var(--f-ui);
+    font-size: 22px; font-weight: 600;
+    letter-spacing: -.018em;
+    margin: 48px -56px 12px;
+    padding: 12px 56px 8px;
+    color: var(--ink);
+    scroll-margin-top: 64px;
+    line-height: 1.2;
+    display: flex; align-items: center; gap: 8px;
+    background: color-mix(in srgb, var(--bg) 92%, transparent);
+    backdrop-filter: saturate(140%) blur(8px);
+    -webkit-backdrop-filter: saturate(140%) blur(8px);
+  }
+  .doc-content h2 .anchor {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 18px; height: 18px;
+    color: var(--muted); opacity: 0;
+    text-decoration: none;
+    border-radius: 4px;
+    transition: opacity .15s ease, background .15s ease, color .15s ease;
+  }
+  .doc-content h2 .anchor svg { width: 14px; height: 14px; display: block; }
+  .doc-content h2:hover .anchor { opacity: .7; }
+  .doc-content h2 .anchor:hover {
+    opacity: 1; color: var(--ink);
+    background: var(--chip-bg);
+  }
+  .doc-content h3 {
+    font-family: var(--f-ui);
+    font-size: 15px; font-weight: 600;
+    letter-spacing: -.005em;
+    margin: 28px 0 8px;
+    color: var(--ink);
+    scroll-margin-top: 124px;
+  }
+  .doc-content p {
+    font-family: var(--f-ui);
+    font-size: 14.5px; line-height: 1.65;
+    color: var(--ink);
+    margin: 0 0 14px;
+    text-wrap: pretty;
+  }
+  .doc-content a.in {
+    color: var(--accent);
+    text-decoration: none;
+    border-bottom: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+    transition: border-color .15s ease;
+  }
+  .doc-content a.in:hover { border-bottom-color: var(--accent); }
+
+  .doc-content ul, .doc-content ol {
+    margin: 0 0 14px;
+    padding-left: 22px;
+    font-family: var(--f-ui);
+    font-size: 14.5px; line-height: 1.65;
+    color: var(--ink);
+  }
+  .doc-content li { margin-bottom: 4px; }
+  .doc-content li::marker { color: var(--muted); }
+
+  /* inline code */
+  .doc-content :not(pre) > code {
+    font-family: var(--f-mono);
+    font-size: .88em;
+    background: var(--chip-bg);
+    color: var(--ink);
+    padding: 1px 5px;
+    border-radius: 4px;
+    border: 1px solid var(--faint);
+    letter-spacing: -.005em;
+  }
+
+  /* code block */
+  .codeblock {
+    position: relative;
+    background: var(--code-bg);
+    border: 1px solid var(--faint);
+    border-radius: 10px;
+    margin: 18px 0 22px;
+    overflow: hidden;
+  }
+  .codeblock .cb-head {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--faint);
+    background: color-mix(in srgb, var(--ink) 3%, var(--code-bg));
+  }
+  .codeblock .cb-lang {
+    font-family: var(--f-mono); font-size: 10px; font-weight: 600;
+    color: var(--muted); letter-spacing: .14em;
+    text-transform: uppercase;
+  }
+  .codeblock .cb-file {
+    font-family: var(--f-mono); font-size: 10.5px; font-weight: 500;
+    color: var(--muted); opacity: .85;
+    margin-left: -2px;
+  }
+  .codeblock .cb-spacer { flex: 1; }
+  .codeblock .cb-copy {
+    appearance: none;
+    border: 1px solid var(--faint);
+    background: transparent;
+    color: var(--muted);
+    font-family: var(--f-mono); font-size: 10px; font-weight: 500;
+    letter-spacing: .08em; text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: color .15s ease, border-color .15s ease;
+  }
+  .codeblock .cb-copy:hover { color: var(--ink); border-color: color-mix(in srgb, var(--ink) 22%, transparent); }
+  .codeblock .cb-copy.is-done { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 50%, transparent); }
+  .codeblock pre {
+    margin: 0;
+    padding: 14px 16px;
+    overflow-x: auto;
+    font-family: var(--f-mono);
+    font-size: 12.5px;
+    line-height: 1.62;
+    color: var(--ink);
+  }
+  .codeblock pre code { font-family: inherit; background: transparent; border: 0; padding: 0; }
+  .codeblock .tk-kw  { color: var(--kw); font-weight: 600; }
+  .codeblock .tk-str { color: var(--str); }
+  .codeblock .tk-num { color: var(--num); }
+  .codeblock .tk-com { color: var(--com); font-style: italic; }
+  .codeblock .tk-fn  { color: var(--fn); font-weight: 500; }
+  .codeblock .tk-tag { color: var(--tag); }
+  .codeblock .tk-pun { color: var(--muted); }
+
+  /* callout */
+  .callout {
+    display: grid;
+    grid-template-columns: 18px 1fr;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--faint);
+    background: color-mix(in srgb, var(--accent) 5%, var(--bg));
+    margin: 18px 0 22px;
+  }
+  .callout.is-warn { background: color-mix(in oklab, oklch(75% .16 80) 10%, var(--bg)); }
+  .callout .ic {
+    width: 18px; height: 18px;
+    color: var(--accent);
+    margin-top: 2px;
+  }
+  .callout.is-warn .ic { color: oklch(58% .16 60); }
+  .callout .body {
+    font-family: var(--f-ui); font-size: 13.5px; line-height: 1.55;
+    color: var(--ink);
+  }
+  .callout .body strong {
+    display: block;
+    font-weight: 600; font-size: 12px;
+    color: var(--ink);
+    letter-spacing: -.005em;
+    margin-bottom: 2px;
+  }
+
+  /* tables */
+  .doc-content table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--f-ui); font-size: 13px;
+    margin: 14px 0 22px;
+  }
+  .doc-content thead th {
+    text-align: left;
+    font-family: var(--f-mono); font-size: 10px; font-weight: 600;
+    color: var(--muted); letter-spacing: .12em; text-transform: uppercase;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--faint);
+    background: color-mix(in srgb, var(--ink) 2%, var(--bg));
+  }
+  .doc-content tbody td {
+    padding: 9px 12px;
+    border-bottom: 1px solid var(--faint);
+    color: var(--ink);
+    vertical-align: top;
+    line-height: 1.5;
+  }
+  .doc-content tbody tr:last-child td { border-bottom: 0; }
+  .doc-content tbody td code {
+    font-family: var(--f-mono); font-size: 12px;
+  }
+
+  /* footer pagination */
+  .doc-pagination {
+    position: sticky; bottom: 0;
+    z-index: 3;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin: 56px -56px 0;
+    padding: 14px 56px 18px;
+    background: color-mix(in srgb, var(--bg) 92%, transparent);
+    backdrop-filter: saturate(140%) blur(8px);
+    -webkit-backdrop-filter: saturate(140%) blur(8px);
+  }
+  .doc-pagination a {
+    display: flex; flex-direction: column; gap: 4px;
+    padding: 14px 16px;
+    border-radius: 10px;
+    border: 1px solid var(--faint);
+    background: var(--panel-bg);
+    text-decoration: none;
+    transition: border-color .15s ease, background .15s ease;
+  }
+  .doc-pagination a:hover { border-color: color-mix(in srgb, var(--ink) 18%, transparent); }
+  .doc-pagination a.next { text-align: right; }
+  .doc-pagination .pp {
+    font-family: var(--f-mono); font-size: 10px; font-weight: 600;
+    color: var(--muted); letter-spacing: .14em; text-transform: uppercase;
+  }
+  .doc-pagination .tt {
+    font-family: var(--f-ui); font-size: 14px; font-weight: 600;
+    color: var(--ink);
+    letter-spacing: -.01em;
+  }
+
+  /* ── Component-doc primitives ────────────────────────────────── */
+  /* Section header that introduces a component. Sits flush with h2's
+     sticky band — the eyebrow + name + import row reads as a chip
+     above the prose. */
+  .cmp-head {
+    display: flex; align-items: baseline; gap: 10px;
+    flex-wrap: wrap;
+    margin: -2px 0 6px;
+  }
+  .cmp-head .cmp-eyebrow {
+    font-family: var(--f-mono); font-size: 9.5px; font-weight: 600;
+    color: var(--muted); letter-spacing: .14em; text-transform: uppercase;
+  }
+  .cmp-head .cmp-tag {
+    font-family: var(--f-mono); font-size: 9.5px; font-weight: 600;
+    color: var(--accent); letter-spacing: .04em;
+    padding: 2px 6px;
+    border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+    border-radius: 4px;
+    background: var(--accent-soft);
+  }
+  .cmp-head .cmp-import {
+    font-family: var(--f-mono); font-size: 11px; font-weight: 500;
+    color: var(--muted);
+    margin-left: auto;
+    background: var(--chip-bg);
+    border: 1px solid var(--faint);
+    padding: 2px 8px;
+    border-radius: 5px;
+    white-space: nowrap;
+  }
+  .cmp-head .cmp-import b { color: var(--ink); font-weight: 600; }
+
+  /* Live demo frame that holds an interactive sample. The frame uses
+     a subtle dotted "canvas" backdrop — same dot pattern used in
+     pipelines/timetravel — so demos read as live surfaces, not
+     cards on the page. */
+  .demo-frame {
+    position: relative;
+    border: 1px solid var(--faint);
+    border-radius: 12px;
+    background:
+      radial-gradient(circle at 1px 1px, var(--canvas-dot) 1px, transparent 0) 0 0/14px 14px,
+      var(--canvas-bg);
+    margin: 18px 0 6px;
+    overflow: hidden;
+  }
+  html[data-theme="dark"] .demo-frame {
+    background:
+      radial-gradient(circle at 1px 1px, var(--canvas-dot) 1px, transparent 0) 0 0/14px 14px,
+      var(--canvas-bg);
+  }
+  .demo-frame .demo-bar {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--faint);
+    background: color-mix(in srgb, var(--bg) 86%, transparent);
+    backdrop-filter: blur(6px);
+  }
+  .demo-frame .demo-bar .demo-label {
+    font-family: var(--f-mono); font-size: 10px; font-weight: 600;
+    color: var(--muted); letter-spacing: .12em; text-transform: uppercase;
+  }
+  .demo-frame .demo-bar .demo-spacer { flex: 1; }
+  .demo-frame .demo-bar .demo-pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-family: var(--f-mono); font-size: 10px; font-weight: 500;
+    color: var(--muted);
+    padding: 2px 7px;
+    border: 1px solid var(--faint);
+    border-radius: 999px;
+    background: var(--bg);
+  }
+  .demo-frame .demo-bar .demo-pill .live-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: oklch(70% .15 145);
+    box-shadow: 0 0 0 3px color-mix(in srgb, oklch(70% .15 145) 28%, transparent);
+    animation: dl-live-pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes dl-live-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: .7; transform: scale(.85); }
+  }
+  .demo-frame .demo-body {
+    position: relative;
+    padding: 0;
+  }
+
+  /* Prop tables — denser than the docs' standard table; each row reads
+     as one prop. The first column is monospace + bold so prop names
+     scan vertically. */
+  .prop-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--f-ui); font-size: 12.5px;
+    margin: 14px 0 22px;
+  }
+  .prop-table thead th {
+    text-align: left;
+    font-family: var(--f-mono); font-size: 9.5px; font-weight: 600;
+    color: var(--muted); letter-spacing: .12em; text-transform: uppercase;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--faint);
+  }
+  .prop-table tbody td {
+    padding: 9px 12px;
+    border-bottom: 1px solid var(--faint);
+    vertical-align: top;
+    line-height: 1.5;
+    color: var(--ink);
+  }
+  .prop-table tbody tr:last-child td { border-bottom: 0; }
+  .prop-table .pn {
+    font-family: var(--f-mono); font-size: 12px; font-weight: 600;
+    color: var(--ink);
+    white-space: nowrap;
+  }
+  .prop-table .pn .pn-req {
+    display: inline-block;
+    color: oklch(58% .18 25);
+    font-weight: 700;
+    margin-left: 2px;
+  }
+  .prop-table .pt {
+    font-family: var(--f-mono); font-size: 11.5px;
+    color: var(--accent);
+    white-space: nowrap;
+  }
+  .prop-table .pd { color: var(--muted); width: 100%; }
+  .prop-table .pdef {
+    font-family: var(--f-mono); font-size: 11.5px;
+    color: var(--muted); opacity: .85;
+    white-space: nowrap;
+  }
+
+  /* Color palette — shared across timeline-ribbon and time-series.
+     Each swatch is an interactive chip; click to copy hex. */
+  .palette {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+    gap: 10px;
+    margin: 14px 0 22px;
+  }
+  .palette .swatch {
+    display: flex; flex-direction: column;
+    border: 1px solid var(--faint);
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--panel-bg);
+  }
+  .palette .swatch .chip {
+    height: 56px;
+    border-bottom: 1px solid var(--faint);
+  }
+  .palette .swatch .label {
+    display: flex; flex-direction: column;
+    padding: 7px 10px 8px;
+    gap: 1px;
+  }
+  .palette .swatch .name {
+    font-family: var(--f-ui); font-size: 11.5px; font-weight: 600;
+    color: var(--ink);
+    letter-spacing: -.005em;
+  }
+  .palette .swatch .hex {
+    font-family: var(--f-mono); font-size: 10.5px;
+    color: var(--muted);
+  }
+
+  /* ── 3D-Stage demo ──────────────────────────────────────────── */
+  .stage3d {
+    position: relative;
+    height: 320px;
+    perspective: 900px;
+    perspective-origin: 50% 38%;
+    overflow: hidden;
+  }
+  .stage3d .floor {
+    position: absolute;
+    left: 50%; top: 70%;
+    width: 1400px; height: 800px;
+    margin-left: -700px;
+    transform: rotateX(70deg);
+    background:
+      linear-gradient(to right,  color-mix(in srgb, var(--ink) 11%, transparent) 1px, transparent 1px) 0 0/40px 40px,
+      linear-gradient(to bottom, color-mix(in srgb, var(--ink) 11%, transparent) 1px, transparent 1px) 0 0/40px 40px;
+    -webkit-mask-image: radial-gradient(ellipse at center, #000 0%, transparent 65%);
+            mask-image: radial-gradient(ellipse at center, #000 0%, transparent 65%);
+    pointer-events: none;
+  }
+  .stage3d .axes {
+    position: absolute;
+    left: 50%; top: 60%;
+    width: 0; height: 0;
+    transform-style: preserve-3d;
+  }
+  .stage3d .axis {
+    position: absolute;
+    left: 0; top: 0;
+    width: 80px; height: 2px;
+    transform-origin: 0 50%;
+    border-radius: 2px;
+  }
+  .stage3d .axis.x { background: oklch(62% .19 25); transform: rotateX(0deg); }
+  .stage3d .axis.y { background: oklch(70% .17 145); transform: rotateZ(-90deg); }
+  .stage3d .axis.z { background: oklch(60% .15 250); transform: rotateY(-90deg) rotateX(0deg); }
+  .stage3d .axis-tip {
+    position: absolute;
+    right: -3px; top: -3px;
+    width: 8px; height: 8px; border-radius: 50%;
+    background: inherit;
+  }
+  .stage3d .robot {
+    position: absolute;
+    left: 50%; top: 56%;
+    width: 0; height: 0;
+    transform-style: preserve-3d;
+    animation: dl-robot-spin 16s linear infinite;
+  }
+  @keyframes dl-robot-spin { to { transform: rotateZ(360deg); } }
+  .stage3d .robot .body {
+    position: absolute;
+    width: 70px; height: 50px;
+    left: -35px; top: -25px;
+    background: linear-gradient(135deg, oklch(48% .04 250), oklch(38% .04 250));
+    border: 1px solid color-mix(in srgb, var(--ink) 40%, transparent);
+    border-radius: 6px;
+    transform: translateZ(20px);
+    box-shadow: 0 8px 18px color-mix(in srgb, #000 35%, transparent);
+  }
+  .stage3d .robot .head {
+    position: absolute;
+    width: 30px; height: 22px;
+    left: -15px; top: -11px;
+    background: oklch(62% .04 250);
+    border: 1px solid color-mix(in srgb, var(--ink) 40%, transparent);
+    border-radius: 4px;
+    transform: translateZ(48px);
+  }
+  .stage3d .robot .head::before {
+    content: '';
+    position: absolute;
+    inset: 4px 6px auto 6px;
+    height: 4px;
+    background: var(--accent);
+    border-radius: 2px;
+    box-shadow: 0 0 6px var(--accent);
+  }
+  .stage3d .pointcloud {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+  .stage3d .pt {
+    position: absolute;
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    box-shadow: 0 0 4px currentColor;
+  }
+  .stage3d .gizmo {
+    position: absolute;
+    top: 12px; right: 12px;
+    width: 56px; height: 56px;
+    border: 1px solid var(--faint);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--bg) 70%, transparent);
+    backdrop-filter: blur(6px);
+    display: grid;
+    place-items: center;
+    font-family: var(--f-mono); font-size: 9px; color: var(--muted);
+    letter-spacing: .12em;
+  }
+  .stage3d .gizmo .gz-axis {
+    position: absolute;
+    width: 16px; height: 1.5px;
+    top: 50%; left: 50%;
+    transform-origin: 0 50%;
+  }
+  .stage3d .gizmo .gz-x { background: oklch(62% .19 25); transform: rotate(0deg); }
+  .stage3d .gizmo .gz-y { background: oklch(70% .17 145); transform: rotate(-90deg); }
+  .stage3d .gizmo .gz-z { background: oklch(60% .15 250); transform: rotate(135deg); }
+  .stage3d .gz-label {
+    position: absolute;
+    font-family: var(--f-mono); font-size: 8.5px; font-weight: 600;
+  }
+  .stage3d .gz-label.x { right: 6px; top: 50%; transform: translateY(-50%); color: oklch(62% .19 25); }
+  .stage3d .gz-label.y { top: 4px; left: 50%; transform: translateX(-50%); color: oklch(70% .17 145); }
+  .stage3d .gz-label.z { bottom: 6px; left: 6px; color: oklch(60% .15 250); }
+  .stage3d .corner-coord {
+    position: absolute;
+    bottom: 10px; left: 12px;
+    font-family: var(--f-mono); font-size: 10px; font-weight: 500;
+    color: var(--muted);
+    letter-spacing: .04em;
+  }
+  .stage3d .corner-coord b { color: var(--ink); font-weight: 600; }
+
+  /* ── Timeline component demo ─────────────────────────────────── */
+  .timeline-demo {
+    padding: 18px 18px 14px;
+    background: var(--panel-bg);
+  }
+  .timeline-demo .tl-head {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 10px;
+  }
+  .timeline-demo .tl-head .tl-time {
+    font-family: var(--f-mono); font-size: 12px; font-weight: 600;
+    color: var(--ink);
+    letter-spacing: -.005em;
+  }
+  .timeline-demo .tl-head .tl-time .tl-time-frac { color: var(--muted); }
+  .timeline-demo .tl-head .tl-controls {
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .timeline-demo .tl-btn {
+    appearance: none; border: 1px solid var(--faint);
+    background: var(--bg);
+    width: 26px; height: 26px;
+    border-radius: 6px;
+    display: inline-flex; align-items: center; justify-content: center;
+    color: var(--ink);
+    cursor: pointer;
+    transition: background .12s ease, border-color .12s ease;
+  }
+  .timeline-demo .tl-btn:hover { border-color: color-mix(in srgb, var(--ink) 22%, transparent); }
+  .timeline-demo .tl-btn.is-primary {
+    background: var(--ink); color: var(--bg); border-color: var(--ink);
+  }
+  .timeline-demo .tl-btn svg { width: 12px; height: 12px; }
+  .timeline-demo .tl-rate {
+    font-family: var(--f-mono); font-size: 10.5px; font-weight: 600;
+    color: var(--muted);
+    padding: 3px 7px;
+    border: 1px solid var(--faint);
+    border-radius: 5px;
+    background: var(--bg);
+    letter-spacing: .02em;
+  }
+  .timeline-demo .tl-spacer { flex: 1; }
+  .timeline-demo .tl-range {
+    font-family: var(--f-mono); font-size: 10.5px;
+    color: var(--muted);
+  }
+  .timeline-demo .tl-track {
+    position: relative;
+    height: 64px;
+    border: 1px solid var(--faint);
+    border-radius: 6px;
+    background:
+      linear-gradient(to bottom, color-mix(in srgb, var(--bg) 50%, transparent), var(--bg));
+    overflow: hidden;
+  }
+  .timeline-demo .tl-ticks {
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 14px;
+    border-bottom: 1px solid var(--faint);
+    background: color-mix(in srgb, var(--ink) 2%, var(--bg));
+  }
+  .timeline-demo .tl-tick {
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 1px;
+    background: color-mix(in srgb, var(--ink) 18%, transparent);
+  }
+  .timeline-demo .tl-tick.is-major { background: color-mix(in srgb, var(--ink) 35%, transparent); }
+  .timeline-demo .tl-tick-label {
+    position: absolute;
+    top: 0;
+    transform: translateX(3px);
+    font-family: var(--f-mono); font-size: 9px; font-weight: 500;
+    color: var(--muted);
+    line-height: 14px;
+    letter-spacing: .04em;
+  }
+  .timeline-demo .tl-lanes {
+    position: absolute;
+    left: 0; right: 0; top: 14px; bottom: 0;
+    display: flex; flex-direction: column;
+    padding: 4px 0;
+  }
+  .timeline-demo .tl-lane {
+    flex: 1;
+    position: relative;
+    margin: 1px 0;
+  }
+  .timeline-demo .tl-lane-label {
+    position: absolute;
+    left: 8px; top: 50%;
+    transform: translateY(-50%);
+    z-index: 2;
+    font-family: var(--f-mono); font-size: 9.5px; font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    pointer-events: none;
+    text-shadow: 0 0 4px var(--bg);
+  }
+  .timeline-demo .tl-seg {
+    position: absolute;
+    top: 4px; bottom: 4px;
+    border-radius: 3px;
+    opacity: .85;
+  }
+  .timeline-demo .tl-seg.kind-rec { background: oklch(70% .15 145); }
+  .timeline-demo .tl-seg.kind-evt { background: oklch(72% .14 75); }
+  .timeline-demo .tl-seg.kind-msg { background: oklch(70% .12 250); }
+  .timeline-demo .tl-seg.kind-err { background: oklch(64% .19 25); }
+  .timeline-demo .tl-event {
+    position: absolute;
+    top: 50%;
+    width: 7px; height: 7px;
+    transform: translate(-50%, -50%) rotate(45deg);
+    background: oklch(64% .19 25);
+    border: 1.5px solid var(--bg);
+  }
+  .timeline-demo .tl-playhead {
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 2px;
+    background: var(--accent);
+    transform: translateX(-1px);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 18%, transparent);
+    pointer-events: none;
+  }
+  .timeline-demo .tl-playhead::before {
+    content: '';
+    position: absolute;
+    top: -1px; left: 50%;
+    width: 10px; height: 10px;
+    transform: translateX(-50%) rotate(45deg);
+    background: var(--accent);
+    border-radius: 1px;
+  }
+  .timeline-demo .tl-region {
+    position: absolute;
+    top: 0; bottom: 0;
+    background: color-mix(in srgb, var(--accent) 9%, transparent);
+    border-left: 1px dashed color-mix(in srgb, var(--accent) 60%, transparent);
+    border-right: 1px dashed color-mix(in srgb, var(--accent) 60%, transparent);
+    pointer-events: none;
+  }
+  .timeline-demo .tl-foot {
+    display: flex; align-items: center; gap: 14px;
+    margin-top: 10px;
+    font-family: var(--f-mono); font-size: 10px;
+    color: var(--muted);
+  }
+  .timeline-demo .tl-foot .legend {
+    display: inline-flex; align-items: center; gap: 5px;
+  }
+  .timeline-demo .tl-foot .legend .sw {
+    width: 9px; height: 9px; border-radius: 2px;
+  }
+
+  /* ── Right TOC ────────────────────────────────────────────────── */
+  .doc-toc {
+    position: sticky; top: 40px;
+    height: calc(100vh - 40px);
+    overflow-y: auto;
+    padding: 32px 22px 32px 18px;
+  }
+  .doc-toc .toc-title {
+    font-family: var(--f-mono); font-size: 9px; font-weight: 600;
+    color: var(--muted); opacity: .7;
+    letter-spacing: .14em; text-transform: uppercase;
+    padding: 0 0 10px;
+    margin-bottom: 6px;
+    border-bottom: 1px solid var(--faint);
+  }
+  /* TOC list — continuous SVG rail draws the left line; links lose
+     individual borders so the rail can curve smoothly across indents. */
+  .doc-toc-body { position: relative; }
+  .doc-toc-rail {
+    position: absolute;
+    top: 0; bottom: 0; left: 0;
+    width: 28px;
+    height: 100%;
+    pointer-events: none;
+    overflow: visible;
+  }
+  .doc-toc-rail .rail-base { stroke: var(--toc-rail-stroke); stroke-width: 1.5; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+  .doc-toc-rail .rail-end {
+    fill: var(--toc-rail-stroke);
+  }
+  :root      { --toc-rail-stroke: #d8d4c8; }
+  html[data-theme="dark"] { --toc-rail-stroke: #45454d; }
+  .doc-toc-rail .rail-active {
+    stroke: var(--accent); stroke-width: 2; fill: none;
+    stroke-linecap: round; stroke-linejoin: round;
+    stroke-dasharray: var(--seg-len, 0) 99999;
+    stroke-dashoffset: calc(-1 * var(--seg-start, 0));
+  }
+  .doc-toc-rail .rail-dot {
+    fill: var(--accent);
+    opacity: 0;
+    transition: opacity .2s ease;
+  }
+  .doc-toc-rail .rail-dot.is-on { opacity: 1; }
+  .doc-toc ul { list-style: none; padding: 0; margin: 0 0 0 14px; display: flex; flex-direction: column; gap: 1px; }
+  .doc-toc li.lvl-3 { padding-left: 12px; }
+  .doc-toc a {
+    display: block;
+    padding: 5px 10px 5px 8px;
+    font-family: var(--f-ui); font-size: 12.5px; font-weight: 500;
+    color: var(--muted);
+    text-decoration: none;
+    line-height: 1.35;
+    letter-spacing: -.005em;
+    transition: color .15s ease;
+  }
+  .doc-toc li.lvl-3 a {
+    font-family: var(--f-mono); font-size: 10.5px; font-weight: 500;
+    text-transform: lowercase; letter-spacing: .005em;
+  }
+  .doc-toc a:hover { color: var(--ink); }
+  .doc-toc a.is-active {
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .doc-toc .toc-foot {
+    margin-top: 18px; padding-top: 14px;
+    border-top: 1px solid var(--faint);
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .doc-toc .toc-foot a {
+    padding: 4px 10px 4px 12px;
+    font-family: var(--f-mono); font-size: 10px; font-weight: 500;
+    color: var(--muted);
+    border-left: 2px solid transparent;
+    margin-left: -2px;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+  }
+  .doc-toc .toc-foot a:hover { color: var(--ink); }
+
+  /* responsive: collapse TOC under 1100px, nav under 880px */
+  @media (max-width: 1100px) {
+    .doc-shell { grid-template-columns: 240px 1fr; }
+    .doc-toc { display: none; }
+    .doc-content { max-width: 100%; }
+  }
+  @media (max-width: 880px) {
+    .doc-shell { grid-template-columns: 1fr; }
+    .doc-nav { display: none; }
+    .doc-topbar { grid-template-columns: 1fr auto; padding: 0; }
+    .doc-brand { padding-left: 14px; }
+    .doc-topnav-actions { padding-right: 14px; }
+    .doc-search { width: 200px; margin: 0 12px; }
+    .doc-content { padding: 24px 18px 80px; }
+  }
+
+  /* scrollbars in left/right rails */
+  .doc-nav::-webkit-scrollbar, .doc-toc::-webkit-scrollbar { width: 6px; }
+  .doc-nav::-webkit-scrollbar-thumb, .doc-toc::-webkit-scrollbar-thumb {
+    background: transparent; border-radius: 3px;
+  }
+  .doc-nav:hover::-webkit-scrollbar-thumb, .doc-toc:hover::-webkit-scrollbar-thumb { background: var(--faint); }
+
+  /* ── Search palette ──────────────────────────────────────────── */
+  .doc-palette-bd {
+    position: fixed; inset: 0;
+    background: color-mix(in srgb, #000 28%, transparent);
+    backdrop-filter: blur(6px) saturate(105%);
+    -webkit-backdrop-filter: blur(6px) saturate(105%);
+    z-index: 40; /* below topbar (50) so topbar stays clear */
+    opacity: 0; pointer-events: none;
+    transition: opacity .22s ease;
+  }
+  .doc-palette-bd.is-open { opacity: 1; pointer-events: auto; }
+
+  /* Results panel that unfurls below the topbar.
+     The input itself stays inside the topbar (.doc-search) — only this
+     panel animates open. */
+  .doc-palette {
+    position: fixed;
+    top: 41px; /* sits below the search input with a small gap */
+    left: calc(max(240px, calc((100vw - 1320px) / 2 + 240px)) + 56px);
+    right: calc(max(240px, calc((100vw - 1320px) / 2 + 240px)) + 56px);
+    margin: 0;
+    width: auto;
+    max-height: 0;
+    z-index: 49; /* below topbar but above backdrop */
+    background: var(--bg);
+    border: 1px solid var(--faint);
+    border-radius: 14px; /* rounded on all four corners */
+    box-shadow:
+      0 24px 60px var(--shadow-tint-3),
+      0 6px 18px var(--shadow-tint-2);
+    display: flex; flex-direction: column;
+    overflow: hidden;
+    opacity: 0; pointer-events: none;
+    transform: translateY(-6px);
+    transition:
+      opacity .2s ease,
+      max-height .25s ease-in-out,
+      transform .25s ease-in-out;
+  }
+  .doc-palette.is-open {
+    opacity: 1; pointer-events: auto;
+    max-height: min(70vh, 540px);
+    transform: translateY(0);
+  }
+
+
+  .doc-search {
+    transition:
+      background .2s ease,
+      border-color .2s ease;
+  }
+
+  /* When palette is open, hide every chunk of topbar chrome EXCEPT
+     the search input (the brand wordmark, breadcrumbs, theme toggle,
+     and topbar backdrop all fade out). The left nav and right TOC
+     also fade. The search input stays put and remains in front. */
+  .doc-topbar          { transition: background .25s ease, border-color .25s ease; }
+  .doc-brand,
+  .doc-topcrumbs,
+  .doc-topnav-actions  { transition: opacity .25s ease; }
+
+  body.is-pal-open .doc-topbar {
+    background: transparent;
+    border-bottom-color: transparent;
+    /* drop the stacking context so the search input's z-index can
+       reach above the backdrop. */
+    z-index: auto;
+  }
+  body.is-pal-open .doc-brand,
+  body.is-pal-open .doc-topcrumbs,
+  body.is-pal-open .doc-topnav-actions {
+    opacity: 0;
+    pointer-events: none;
+  }
+  body.is-pal-open .doc-nav,
+  body.is-pal-open .doc-toc,
+  body.is-pal-open .doc-content {
+    /* Content stays in DOM but is visually behind the blur. No z-index
+       hack needed — backdrop z=60 is above everything in the page flow. */
+  }
+  body.is-pal-open .doc-search {
+    /* Pull the search input OUT of the topbar's stacking context so
+       its z-index can sit above the backdrop. Match the palette's
+       width by computing it explicitly from viewport. */
+    position: fixed;
+    top: 6px;
+    /* anchor right edge at the content column's right text edge,
+       which is content_padding (56px) inside the right sidebar. */
+    right: calc(max(240px, calc((100vw - 1320px) / 2 + 240px)) + 56px);
+    /* width spans the content text column */
+    width: calc(100vw - 2 * (max(240px, calc((100vw - 1320px) / 2 + 240px)) + 56px));
+    max-width: none;
+    left: auto;
+    margin: 0;
+    z-index: 71;
+    background: var(--bg);
+    border-color: var(--faint);
+    box-shadow: 0 4px 14px var(--shadow-tint-2);
+    transition:
+      width .25s ease-in-out,
+      right .25s ease-in-out,
+      background .2s ease,
+      border-color .2s ease,
+      box-shadow .2s ease;
+  }
+  /* Starting frame on reparent: 320px wide; animates to full content width. */
+  body.is-pal-open .doc-search.is-pal-opening {
+    width: 320px;
+  }
+
+  /* The palette no longer renders its own input row — input lives in topbar. */
+  .doc-pal-input-row { display: none; }
+
+  .doc-pal-input-icon { width: 16px; height: 16px; color: var(--muted); flex-shrink: 0; }
+  #doc-palette-input { display: none; }
+  .doc-pal-esc { display: none; }
+
+  .doc-pal-body {
+    --pal-list-w: 50%;
+    display: grid;
+    grid-template-columns: var(--pal-list-w) minmax(0, 1fr);
+    flex: 1;
+    min-height: 0;
+    position: relative;
+  }
+  /* Invisible hit-strip riding the list's right border. Hover/drag
+     paints the underlying border-right of .doc-pal-list. */
+  .doc-pal-resizer {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: calc(var(--pal-list-w) - 3px);
+    width: 6px;
+    cursor: col-resize;
+    z-index: 2;
+    background: transparent;
+  }
+  /* Highlight the actual border on the list when the resizer is
+     active. Using a sibling selector inside the grid: the resizer
+     sits AFTER the list, so we target the list via :has(). */
+  .doc-pal-body:has(.doc-pal-resizer:hover) .doc-pal-list,
+  .doc-pal-body:has(.doc-pal-resizer.is-dragging) .doc-pal-list {
+    border-right-color: var(--muted);
+  }
+  .doc-pal-list { transition: border-right-color .15s ease; }
+  .doc-pal-list {
+    overflow-y: auto;
+    padding: 6px;
+    border-right: 1px solid var(--faint);
+    border-top-right-radius: 12px;
+    border-bottom-right-radius: 12px;
+    background: color-mix(in srgb, var(--panel-bg) 35%, var(--bg));
+    min-height: 280px;
+    max-height: 50vh;
+  }
+  .doc-pal-row {
+    display: flex; align-items: center; gap: 10px;
+    width: 100%;
+    padding: 8px 10px;
+    background: transparent;
+    border: 0;
+    border-radius: 10px;
+    cursor: pointer;
+    text-align: left;
+    color: var(--ink);
+    font-family: var(--f-ui); font-size: 13px;
+    transition: background .1s ease;
+  }
+  .doc-pal-row.is-active {
+    background: var(--selected-bg);
+  }
+  .doc-pal-icon {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 24px; height: 24px;
+    border-radius: 5px;
+    background: var(--chip-bg);
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+  .doc-pal-row.is-active .doc-pal-icon { color: var(--accent); background: var(--accent-soft); }
+  .doc-pal-icon svg { width: 13px; height: 13px; }
+  .doc-pal-meta {
+    display: flex; flex-direction: column; gap: 2px;
+    min-width: 0; flex: 1;
+  }
+  .doc-pal-title {
+    font-weight: 500;
+    color: var(--ink);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .doc-pal-title mark {
+    background: color-mix(in srgb, var(--accent) 28%, transparent);
+    color: inherit;
+    border-radius: 2px;
+    padding: 0 1px;
+  }
+  .doc-pal-section {
+    font-family: var(--f-mono); font-size: 9.5px; font-weight: 500;
+    color: var(--muted);
+    text-transform: uppercase; letter-spacing: .04em;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .doc-pal-arrow {
+    color: var(--muted); opacity: 0;
+    margin-left: auto;
+    transition: opacity .12s ease, transform .15s ease;
+  }
+  .doc-pal-arrow svg { width: 14px; height: 14px; display: block; }
+  .doc-pal-row.is-active .doc-pal-arrow { opacity: .85; transform: translateX(2px); }
+
+  .doc-pal-preview {
+    padding: 18px 18px 14px;
+    overflow-y: auto;
+    background: color-mix(in srgb, var(--panel-bg) 60%, transparent);
+    min-height: 280px;
+    max-height: 50vh;
+  }
+  .doc-pal-prev-crumb {
+    font-family: var(--f-mono); font-size: 9.5px; font-weight: 500;
+    color: var(--muted);
+    text-transform: uppercase; letter-spacing: .05em;
+    margin-bottom: 10px;
+  }
+  .doc-pal-prev-title {
+    font-family: var(--f-ui); font-size: 16px; font-weight: 600;
+    letter-spacing: -.012em;
+    color: var(--ink);
+    margin: 0 0 8px;
+    line-height: 1.25;
+  }
+  .doc-pal-body p.doc-pal-body {
+    /* unfortunate name collision; this is the preview body text */
+  }
+  .doc-pal-preview .doc-pal-body {
+    font-family: var(--f-ui); font-size: 12.5px; line-height: 1.55;
+    color: var(--muted);
+    margin: 0 0 14px;
+    display: block;
+  }
+  .doc-pal-preview .doc-pal-body-empty { font-style: italic; opacity: .7; }
+  .doc-pal-prev-foot {
+    display: flex; align-items: center; justify-content: space-between;
+    font-family: var(--f-mono); font-size: 10px; font-weight: 500;
+    color: var(--muted);
+    border-top: 1px dashed var(--faint-dashed);
+    padding-top: 10px;
+    margin-top: auto;
+  }
+  .doc-pal-prev-href {
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    max-width: 60%;
+    color: var(--muted); opacity: .8;
+  }
+  .doc-pal-prev-cta kbd {
+    font-family: var(--f-mono); font-size: 9.5px;
+    background: var(--bg);
+    border: 1px solid var(--faint);
+    border-radius: 3px;
+    padding: 1px 4px;
+    margin: 0 2px;
+    color: var(--ink);
+  }
+
+  .doc-pal-empty {
+    position: absolute; inset: 0;
+    display: none;
+    flex-direction: column; align-items: center; justify-content: center;
+    gap: 6px;
+    color: var(--muted);
+    background: var(--bg);
+  }
+  .doc-pal-empty-glyph {
+    font-family: var(--f-mono); font-size: 28px;
+    color: var(--muted); opacity: .5;
+  }
+  .doc-pal-empty-title {
+    font-family: var(--f-ui); font-size: 14px; font-weight: 600;
+    color: var(--ink);
+  }
+  .doc-pal-empty-sub { font-family: var(--f-ui); font-size: 12px; color: var(--muted); }
+
+  .doc-pal-foot {
+    display: flex; align-items: center; gap: 14px;
+    padding: 9px 14px;
+    border-top: 1px solid var(--faint);
+    font-family: var(--f-mono); font-size: 10px; font-weight: 500;
+    color: var(--muted);
+    background: color-mix(in srgb, var(--panel-bg) 50%, transparent);
+  }
+  .doc-pal-foot-key { display: inline-flex; align-items: center; gap: 5px; }
+  .doc-pal-foot-key kbd {
+    font-family: var(--f-mono); font-size: 9.5px;
+    background: var(--bg);
+    border: 1px solid var(--faint);
+    border-radius: 3px;
+    padding: 1px 4px;
+    color: var(--ink);
+    min-width: 14px; text-align: center;
+  }
+  .doc-pal-foot-spacer { flex: 1; }
+  .doc-pal-foot-brand { opacity: .8; }
+
+  @media (max-width: 640px) {
+    .doc-pal-body { grid-template-columns: 1fr; }
+    .doc-pal-preview { display: none; }
+    .doc-palette { top: 8vh; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── Top bar ─────────────────────────────────────────────────── -->
+<header class="doc-topbar" style="height: 39px; padding: 4px 0px; margin: 0px 0px -2px">
+  <a class="doc-brand" href="dreamlake.html">
+    <span>DreamLake<span class="dot" aria-hidden="true">.</span></span>
+    <span class="slash">/</span>
+    <span class="docs">ros-viz</span>
+    <span class="ver"><span class="v">v0.3.1</span><span class="sha">8f2c1ae</span></span>
+  </a>
+
+  <nav class="doc-topcrumbs" aria-label="Breadcrumb" id="top-crumbs">
+    <a href="#">@dreamlake/ros-viz</a>
+    <span class="sep">/</span>
+    <span class="here">Quick start</span>
+  </nav>
+
+  <label class="doc-search" for="doc-search-input" style="border-radius: 12px; height: 28px">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="11" cy="11" r="7"></circle>
+      <path d="M21 21l-4.3-4.3"></path>
+    </svg>
+    <input id="doc-search-input" type="text" placeholder="Search docs…" autocomplete="off" />
+    <span class="kbd">⌘K</span>
+  </label>
+
+  <div class="doc-topnav-actions">
+    <a href="dreamlake-design-guide.html">UI Kit</a>
+    <a href="#" aria-label="GitHub" title="GitHub">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.56v-2c-3.2.7-3.87-1.36-3.87-1.36-.52-1.33-1.27-1.69-1.27-1.69-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.02 1.75 2.69 1.25 3.34.95.1-.74.4-1.25.72-1.54-2.55-.29-5.24-1.28-5.24-5.7 0-1.26.45-2.29 1.18-3.1-.12-.29-.51-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.05 11.05 0 015.78 0c2.2-1.49 3.18-1.18 3.18-1.18.62 1.59.23 2.76.11 3.05.74.81 1.18 1.84 1.18 3.1 0 4.43-2.7 5.4-5.27 5.69.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56C20.21 21.39 23.5 17.08 23.5 12 23.5 5.65 18.35.5 12 .5z"/>
+      </svg>
+    </a>
+    <div class="theme3" role="group" aria-label="Theme">
+      <button id="t3-light"  type="button" aria-label="Light"  title="Light"  aria-pressed="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"></circle>
+          <path d="M12 2v2"></path><path d="M12 20v2"></path>
+          <path d="M4.93 4.93l1.41 1.41"></path><path d="M17.66 17.66l1.41 1.41"></path>
+          <path d="M2 12h2"></path><path d="M20 12h2"></path>
+          <path d="M4.93 19.07l1.41-1.41"></path><path d="M17.66 6.34l1.41-1.41"></path>
+        </svg>
+      </button>
+      <button id="t3-system" type="button" aria-label="System" title="System" aria-pressed="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="3" y="4" width="18" height="13" rx="2"></rect>
+          <path d="M8 21h8"></path>
+          <path d="M12 17v4"></path>
+        </svg>
+      </button>
+      <button id="t3-dark"   type="button" aria-label="Dark"   title="Dark"   aria-pressed="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<div class="doc-shell">
+
+  <!-- ── Left nav ──────────────────────────────────────────────── -->
+  <aside class="doc-nav" aria-label="Sections">
+    <div class="group">
+      <div class="eyebrow">GET STARTED <span class="ct">01</span></div>
+      <a class="row is-active" href="dreamlake-viz.html">Quick start</a>
+    </div>
+
+    <div class="group">
+      <div class="eyebrow">COMPONENTS <span class="ct">02</span></div>
+      <a class="row" href="dreamlake-viz-file-tree.html">file-tree</a>
+      <a class="row" href="dreamlake-viz-video-images.html">video / images</a>
+    </div>
+
+    <div class="group">
+      <div class="eyebrow">EXAMPLES <span class="ct">01</span></div>
+      <a class="row is-todo" href="#ex-robot-visualizer" aria-disabled="true">Robot visualizer</a>
+    </div>
+
+    <div class="group">
+      <div class="eyebrow">CONCEPTS <span class="ct">04</span></div>
+      <a class="row is-todo" href="#concept-scene" aria-disabled="true">Scene &amp; layers</a>
+      <a class="row is-todo" href="#concept-clock" aria-disabled="true">Clock &amp; time</a>
+      <a class="row is-todo" href="#concept-frames" aria-disabled="true">Frames &amp; TF</a>
+      <a class="row is-todo" href="#concept-transport" aria-disabled="true">Transports</a>
+    </div>
+
+    <div class="group">
+      <div class="eyebrow">HOOKS <span class="ct">05</span></div>
+      <a class="row is-todo" href="#hook-useScene" aria-disabled="true">useScene</a>
+      <a class="row is-todo" href="#hook-useClock" aria-disabled="true">useClock</a>
+      <a class="row is-todo" href="#hook-useTopic" aria-disabled="true">useTopic</a>
+      <a class="row is-todo" href="#hook-useFrame" aria-disabled="true">useFrame</a>
+      <a class="row is-todo" href="#hook-useSelection" aria-disabled="true">useSelection</a>
+    </div>
+  </aside>
+
+  <!-- ── Center reading column ─────────────────────────────────── -->
+  <main class="doc-content">
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <a href="#">@dreamlake/ros-viz</a>
+      <span class="sep">/</span>
+      <span class="here">Quick start</span>
+    </nav>
+
+    <h1>Quick start</h1>
+    <p class="lede">
+      <code>@dreamlake/ros-viz</code> is the visualization library for robotics
+      data &mdash; point clouds, TF trees, occupancy grids, and image streams,
+      rendered in the browser from a live ROS bridge or a recorded bag. This
+      page gets your first scene on screen in under two minutes.
+    </p>
+
+    <h2 id="install">Install <a class="anchor" href="#install" aria-label="Link to Install"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></a></h2>
+    <p>
+      Add <code>ros-viz</code> to any modern bundler. The package ships ESM
+      and a CDN build &mdash; both are tree-shakeable down to just the
+      renderers you actually use.
+    </p>
+
+    <div class="codeblock" data-lang="bash">
+      <div class="cb-head">
+        <span class="cb-lang">bash</span>
+        <span class="cb-file">terminal</span>
+        <span class="cb-spacer"></span>
+        <button class="cb-copy" type="button">Copy</button>
+      </div>
+<pre><code><span class="tk-com"># npm</span>
+npm install @dreamlake/ros-viz
+
+<span class="tk-com"># or pnpm</span>
+pnpm add @dreamlake/ros-viz</code></pre>
+    </div>
+
+    <h2 id="first-scene">Your first scene <a class="anchor" href="#first-scene" aria-label="Link to Your first scene"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></a></h2>
+    <p>
+      A <code>Scene</code> binds a transport (rosbridge, foxglove ws, or a
+      local <code>.bag</code>/<code>.mcap</code> file) to a set of
+      <code>Layer</code> objects. Layers subscribe to topics and own their
+      own GPU buffers &mdash; you can mount them in any order and toggle
+      visibility independently.
+    </p>
+
+    <div class="codeblock" data-lang="ts">
+      <div class="cb-head">
+        <span class="cb-lang">typescript</span>
+        <span class="cb-file">scene.ts</span>
+        <span class="cb-spacer"></span>
+        <button class="cb-copy" type="button">Copy</button>
+      </div>
+<pre><code><span class="tk-kw">import</span> { Scene, PointCloud, TFTree, Grid } <span class="tk-kw">from</span> <span class="tk-str">"@dreamlake/ros-viz"</span>;
+
+<span class="tk-kw">const</span> scene = <span class="tk-kw">new</span> <span class="tk-fn">Scene</span>({
+  canvas: <span class="tk-fn">document</span>.<span class="tk-fn">querySelector</span>(<span class="tk-str">"#viewport"</span>),
+  transport: { kind: <span class="tk-str">"rosbridge"</span>, url: <span class="tk-str">"ws://robot.local:9090"</span> },
+  fixedFrame: <span class="tk-str">"map"</span>,
+});
+
+scene.<span class="tk-fn">add</span>(<span class="tk-kw">new</span> <span class="tk-fn">TFTree</span>());
+scene.<span class="tk-fn">add</span>(<span class="tk-kw">new</span> <span class="tk-fn">Grid</span>({ size: <span class="tk-num">20</span>, divisions: <span class="tk-num">20</span> }));
+scene.<span class="tk-fn">add</span>(<span class="tk-kw">new</span> <span class="tk-fn">PointCloud</span>({ topic: <span class="tk-str">"/velodyne_points"</span>, colorBy: <span class="tk-str">"z"</span> }));
+
+<span class="tk-kw">await</span> scene.<span class="tk-fn">start</span>();</code></pre>
+    </div>
+
+    <h3 id="markup">HTML scaffold</h3>
+    <p>
+      The renderer needs a sized canvas and nothing else. <code>Scene</code>
+      will observe the canvas and adopt its CSS pixel size, including DPR.
+    </p>
+
+    <div class="codeblock" data-lang="html">
+      <div class="cb-head">
+        <span class="cb-lang">html</span>
+        <span class="cb-file">index.html</span>
+        <span class="cb-spacer"></span>
+        <button class="cb-copy" type="button">Copy</button>
+      </div>
+<pre><code><span class="tk-tag">&lt;canvas</span> <span class="tk-fn">id</span>=<span class="tk-str">"viewport"</span> <span class="tk-fn">style</span>=<span class="tk-str">"width: 100%; height: 100vh"</span><span class="tk-tag">&gt;&lt;/canvas&gt;</span>
+<span class="tk-tag">&lt;script</span> <span class="tk-fn">type</span>=<span class="tk-str">"module"</span> <span class="tk-fn">src</span>=<span class="tk-str">"./scene.ts"</span><span class="tk-tag">&gt;&lt;/script&gt;</span></code></pre>
+    </div>
+
+    <div class="callout">
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="10"></circle>
+        <path d="M12 16v-4"></path>
+        <path d="M12 8h.01"></path>
+      </svg>
+      <div class="body">
+        <strong>WebGPU is preferred, WebGL2 is the fallback.</strong>
+        On Chromium-based browsers ros-viz uses WebGPU automatically; on
+        Safari and Firefox it falls back to WebGL2 with the same scene
+        graph. Performance differences are documented per-layer.
+      </div>
+    </div>
+
+    <h2 id="from-bag">Replay a recorded bag <a class="anchor" href="#from-bag" aria-label="Link to Replay a recorded bag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></a></h2>
+    <p>
+      Swap the transport for <code>kind: "file"</code> to play back a
+      <code>.bag</code> or <code>.mcap</code> from disk &mdash; same scene,
+      same layers, no live robot required. The clock becomes scrubbable
+      via <code>scene.clock</code>.
+    </p>
+
+    <div class="codeblock" data-lang="ts">
+      <div class="cb-head">
+        <span class="cb-lang">typescript</span>
+        <span class="cb-file">replay.ts</span>
+        <span class="cb-spacer"></span>
+        <button class="cb-copy" type="button">Copy</button>
+      </div>
+<pre><code><span class="tk-kw">const</span> file = <span class="tk-kw">await</span> <span class="tk-fn">fetch</span>(<span class="tk-str">"/runs/2026-04-30.mcap"</span>).<span class="tk-fn">then</span>(r =&gt; r.<span class="tk-fn">blob</span>());
+
+<span class="tk-kw">const</span> scene = <span class="tk-kw">new</span> <span class="tk-fn">Scene</span>({
+  canvas, fixedFrame: <span class="tk-str">"odom"</span>,
+  transport: { kind: <span class="tk-str">"file"</span>, source: file },
+});
+
+scene.clock.<span class="tk-fn">on</span>(<span class="tk-str">"tick"</span>, t =&gt; <span class="tk-fn">console</span>.<span class="tk-fn">log</span>(t.toFixed(<span class="tk-num">3</span>)));
+<span class="tk-kw">await</span> scene.<span class="tk-fn">start</span>();
+scene.clock.<span class="tk-fn">play</span>(<span class="tk-num">1.0</span>); <span class="tk-com">// 1× speed</span></code></pre>
+    </div>
+
+    <h2 id="layers">Built-in layers <a class="anchor" href="#layers" aria-label="Link to Built-in layers"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></a></h2>
+    <p>
+      Every layer is a small class with a topic, a message type, and
+      render options. You can subclass <code>Layer</code> for anything
+      custom; below is the catalog that ships in the box.
+    </p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Layer</th>
+          <th>Message type</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>PointCloud</code></td>
+          <td><code>sensor_msgs/PointCloud2</code></td>
+          <td>Color by axis, intensity, or RGB field.</td>
+        </tr>
+        <tr>
+          <td><code>TFTree</code></td>
+          <td><code>tf2_msgs/TFMessage</code></td>
+          <td>Renders frame axes; doubles as the transform graph.</td>
+        </tr>
+        <tr>
+          <td><code>Grid</code></td>
+          <td>—</td>
+          <td>Static reference grid, anchored to <code>fixedFrame</code>.</td>
+        </tr>
+        <tr>
+          <td><code>OccupancyGrid</code></td>
+          <td><code>nav_msgs/OccupancyGrid</code></td>
+          <td>2D costmaps and SLAM output.</td>
+        </tr>
+        <tr>
+          <td><code>Image</code></td>
+          <td><code>sensor_msgs/Image</code></td>
+          <td>Decodes on a worker; supports compressed variants.</td>
+        </tr>
+        <tr>
+          <td><code>MarkerArray</code></td>
+          <td><code>visualization_msgs/MarkerArray</code></td>
+          <td>Cubes, spheres, lines, text &mdash; rviz-compatible.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2 id="react">React binding <a class="anchor" href="#react" aria-label="Link to React binding"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></a></h2>
+    <p>
+      Prefer JSX? <code>@dreamlake/ros-viz/react</code> exposes the same
+      primitives as components. Layer order in JSX is render order; toggle
+      visibility by mounting/unmounting.
+    </p>
+
+    <div class="codeblock" data-lang="tsx">
+      <div class="cb-head">
+        <span class="cb-lang">tsx</span>
+        <span class="cb-file">App.tsx</span>
+        <span class="cb-spacer"></span>
+        <button class="cb-copy" type="button">Copy</button>
+      </div>
+<pre><code><span class="tk-kw">import</span> { Scene, PointCloud, TFTree, Grid } <span class="tk-kw">from</span> <span class="tk-str">"@dreamlake/ros-viz/react"</span>;
+
+<span class="tk-kw">export function</span> <span class="tk-fn">App</span>() {
+  <span class="tk-kw">return</span> (
+    <span class="tk-tag">&lt;Scene</span>
+      <span class="tk-fn">transport</span>={{ kind: <span class="tk-str">"rosbridge"</span>, url: <span class="tk-str">"ws://robot.local:9090"</span> }}
+      <span class="tk-fn">fixedFrame</span>=<span class="tk-str">"map"</span>
+    <span class="tk-tag">&gt;</span>
+      <span class="tk-tag">&lt;TFTree /&gt;</span>
+      <span class="tk-tag">&lt;Grid</span> <span class="tk-fn">size</span>={<span class="tk-num">20</span>} <span class="tk-fn">divisions</span>={<span class="tk-num">20</span>} <span class="tk-tag">/&gt;</span>
+      <span class="tk-tag">&lt;PointCloud</span> <span class="tk-fn">topic</span>=<span class="tk-str">"/velodyne_points"</span> <span class="tk-fn">colorBy</span>=<span class="tk-str">"z"</span> <span class="tk-tag">/&gt;</span>
+    <span class="tk-tag">&lt;/Scene&gt;</span>
+  );
+}</code></pre>
+    </div>
+
+    <div class="callout is-warn">
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"></path>
+        <path d="M12 9v4"></path>
+        <path d="M12 17h.01"></path>
+      </svg>
+      <div class="body">
+        <strong>Strict Mode mounts twice.</strong>
+        In React 18 dev with Strict Mode the <code>Scene</code> component
+        will create &amp; tear down a transport on first mount. This is
+        expected; production builds run a single mount.
+      </div>
+    </div>
+
+    <h2 id="next">Where to go next <a class="anchor" href="#next" aria-label="Link to Where to go next"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></a></h2>
+    <ol>
+      <li>Skim the <a class="in" href="#layers">layer catalog</a> &mdash; one section per layer, with full options and message-field mapping.</li>
+      <li>Wire up authoring &amp; deeplinking via <code>scene.serialize()</code> for sharable snapshots.</li>
+      <li>Drop a <code>&lt;Timeline /&gt;</code> next to your viewport for scrubbing across recorded segments.</li>
+    </ol>
+
+  </main>
+
+  <!-- ── Right TOC ─────────────────────────────────────────────── -->
+  <aside class="doc-toc" aria-label="On this page">
+    <div class="toc-title">On this page</div>
+    <div class="doc-toc-body">
+    <svg class="doc-toc-rail" id="toc-rail" aria-hidden="true" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="toc-rail-fade" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0"   stop-color="white" stop-opacity="0"></stop>
+          <stop offset="0.08" stop-color="white" stop-opacity="1"></stop>
+          <stop offset="1"   stop-color="white" stop-opacity="1"></stop>
+        </linearGradient>
+        <mask id="toc-rail-mask" maskUnits="userSpaceOnUse">
+          <rect id="toc-rail-mask-rect" x="0" y="0" width="100%" height="100%" fill="url(#toc-rail-fade)"></rect>
+        </mask>
+      </defs>
+      <g mask="url(#toc-rail-mask)">
+        <path class="rail-base" d=""></path>
+        <path class="rail-active" d=""></path>
+        <rect class="rail-end" width="6" height="6" x="0" y="0"></rect>
+      </g>
+      <circle class="rail-dot" r="3.5" cx="0" cy="0"></circle>
+    </svg>
+    <ul id="toc-list">
+      <li class="lvl-2"><a href="#install">Install</a></li>
+      <li class="lvl-2"><a href="#first-scene">Your first scene</a></li>
+      <li class="lvl-3"><a href="#markup">HTML scaffold</a></li>
+      <li class="lvl-2"><a href="#from-bag">Replay a recorded bag</a></li>
+      <li class="lvl-2"><a href="#layers">Built-in layers</a></li>
+      <li class="lvl-2"><a href="#react">React binding</a></li>
+      <li class="lvl-2"><a href="#next">Where to go next</a></li>
+    </ul>
+    </div>
+    <div class="toc-foot">
+      <a href="#">Edit this page</a>
+      <a href="#">Report an issue</a>
+    </div>
+  </aside>
+</div>
+
+
+
+<!-- ── Search palette ──────────────────────────────────────────── -->
+<div class="doc-palette-bd" id="doc-palette-bd" aria-hidden="true"></div>
+<div class="doc-palette" id="doc-palette" role="dialog" aria-modal="true" aria-label="Search">
+  <div class="doc-pal-input-row">
+    <svg class="doc-pal-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="11" cy="11" r="7"></circle>
+      <path d="M21 21l-4.3-4.3"></path>
+    </svg>
+    <input id="doc-palette-input" type="text" placeholder="Search docs, headings, references…" autocomplete="off" spellcheck="false" />
+    <span class="doc-pal-esc">esc</span>
+  </div>
+  <div class="doc-pal-body">
+    <div class="doc-pal-list" id="doc-palette-list" role="listbox"></div>
+    <div class="doc-pal-resizer" id="doc-palette-resizer" role="separator" aria-orientation="vertical" aria-label="Resize list"></div>
+    <aside class="doc-pal-preview" id="doc-palette-preview"></aside>
+    <div class="doc-pal-empty" id="doc-palette-empty">
+      <div class="doc-pal-empty-glyph">⌕</div>
+      <div class="doc-pal-empty-title">No matches</div>
+      <div class="doc-pal-empty-sub">Try a different phrase or partial word.</div>
+    </div>
+  </div>
+  <div class="doc-pal-foot">
+    <span class="doc-pal-foot-key"><kbd>↑</kbd><kbd>↓</kbd> navigate</span>
+    <span class="doc-pal-foot-key"><kbd>↵</kbd> open</span>
+    <span class="doc-pal-foot-key"><kbd>esc</kbd> close</span>
+    <span class="doc-pal-foot-spacer"></span>
+    <span class="doc-pal-foot-brand">Search · DreamLake docs</span>
+  </div>
+</div>
+
+<script>
+  /* ── 3-segment theme toggle (light / system / dark) ──────────── */
+  (function () {
+    var STORAGE_KEY = 'dl-theme';
+    var html = document.documentElement;
+    var btnLight  = document.getElementById('t3-light');
+    var btnSystem = document.getElementById('t3-system');
+    var btnDark   = document.getElementById('t3-dark');
+    var theme3    = btnLight && btnLight.parentElement;
+    var mql = window.matchMedia('(prefers-color-scheme: dark)');
+
+    function applyMode(mode) {
+      var resolved = (mode === 'system') ? (mql.matches ? 'dark' : 'light') : mode;
+      html.setAttribute('data-theme', resolved);
+      // indicator position: 0 light, 1 system, 2 dark
+      var pos = mode === 'light' ? 0 : (mode === 'system' ? 1 : 2);
+      if (theme3) theme3.style.setProperty('--t3-pos', pos);
+      btnLight.setAttribute('aria-pressed',  mode === 'light'  ? 'true' : 'false');
+      btnSystem.setAttribute('aria-pressed', mode === 'system' ? 'true' : 'false');
+      btnDark.setAttribute('aria-pressed',   mode === 'dark'   ? 'true' : 'false');
+    }
+    function setMode(mode) {
+      try { localStorage.setItem(STORAGE_KEY, mode); } catch (e) {}
+      applyMode(mode);
+    }
+    var saved;
+    try { saved = localStorage.getItem(STORAGE_KEY); } catch (e) {}
+    if (saved !== 'light' && saved !== 'dark' && saved !== 'system') saved = 'system';
+    applyMode(saved);
+
+    btnLight.addEventListener('click',  function () { setMode('light'); });
+    btnSystem.addEventListener('click', function () { setMode('system'); });
+    btnDark.addEventListener('click',   function () { setMode('dark'); });
+
+    // when in system mode, follow OS changes live
+    if (mql.addEventListener) {
+      mql.addEventListener('change', function () {
+        var cur;
+        try { cur = localStorage.getItem(STORAGE_KEY); } catch (e) {}
+        if (cur === 'system' || !cur) applyMode('system');
+      });
+    }
+  })();
+
+  /* ── TOC active-section highlighting ─────────────────────────── */
+  (function () {
+    var headings = Array.prototype.slice.call(document.querySelectorAll('.doc-content h2[id], .doc-content h3[id]'));
+    var links = {};
+    var linksOrdered = [];
+    document.querySelectorAll('.doc-toc a[href^="#"]').forEach(function (a) {
+      links[a.getAttribute('href').slice(1)] = a;
+    });
+    document.querySelectorAll('#toc-list a[href^="#"]').forEach(function (a) {
+      linksOrdered.push(a);
+    });
+    if (!headings.length) return;
+
+    /* ── Continuous SVG rail behind the TOC links ─────────────── */
+    var railSvg    = document.getElementById('toc-rail');
+    var railBase   = railSvg && railSvg.querySelector('.rail-base');
+    var railActive = railSvg && railSvg.querySelector('.rail-active');
+    var railBody   = railSvg && railSvg.parentElement;
+    /* per-link cumulative arc-length along the rail path */
+    var railPoints = [];   /* [{ id, mid, len }] */
+    var totalLen   = 0;
+
+    function buildRail() {
+      if (!railSvg || !railBase) return;
+      var bodyRect = railBody.getBoundingClientRect();
+      var rows = linksOrdered.map(function (a) {
+        var li = a.parentElement;
+        var r = a.getBoundingClientRect();
+        var top = r.top - bodyRect.top;
+        var h   = r.height;
+        var indent = li.classList.contains('lvl-3') ? 12 : 0;
+        return { a: a, id: a.getAttribute('href').slice(1), top: top, h: h, indent: indent };
+      });
+      if (!rows.length) return;
+
+      var X0 = 4;        /* x for lvl-2 line */
+      var X1 = X0 + 12;  /* x for lvl-3 line */
+      var BEND = 8;      /* vertical distance over which to ease the bend */
+
+      var d = '';
+      var startY = rows[0].top + 4;
+      var startX = X0 + rows[0].indent;
+      d += 'M ' + startX + ' ' + startY;
+
+      for (var i = 1; i < rows.length; i++) {
+        var prev = rows[i - 1];
+        var cur  = rows[i];
+        var prevX = X0 + prev.indent;
+        var curX  = X0 + cur.indent;
+        var midY  = cur.top + 4;
+        if (prevX === curX) {
+          d += ' L ' + curX + ' ' + midY;
+        } else {
+          /* smooth S-curve through the indent change */
+          var bendStart = midY - BEND;
+          var bendEnd   = midY + 2;
+          d += ' L ' + prevX + ' ' + bendStart;
+          d += ' C ' + prevX + ' ' + (bendStart + BEND * 0.6)
+             + ', '   + curX  + ' ' + (bendStart + BEND * 0.4)
+             + ', '   + curX  + ' ' + bendEnd;
+        }
+      }
+      var lastRow = rows[rows.length - 1];
+      var endY = lastRow.top + lastRow.h / 2;
+      d += ' L ' + (X0 + lastRow.indent) + ' ' + endY;
+
+      railBase.setAttribute('d', d);
+      railActive.setAttribute('d', d);
+      var pathLen = railBase.getTotalLength();
+      totalLen = pathLen;
+
+      /* Square cap at the path's end */
+      var endRect = railSvg.querySelector('.rail-end');
+      if (endRect) {
+        var endPt = railBase.getPointAtLength(pathLen);
+        var SIZE = 5;
+        endRect.setAttribute('x', endPt.x - SIZE / 2);
+        endRect.setAttribute('y', endPt.y - SIZE / 2);
+        endRect.setAttribute('width',  SIZE);
+        endRect.setAttribute('height', SIZE);
+      }
+
+      /* compute the arc-length at each row's midpoint by binary searching
+         the path's getPointAtLength for the row's midY. */
+      railPoints = rows.map(function (row) {
+        var midY = row.top + row.h / 2;
+        var lo = 0, hi = pathLen;
+        for (var k = 0; k < 18; k++) {
+          var mid = (lo + hi) / 2;
+          var p = railBase.getPointAtLength(mid);
+          if (p.y < midY) lo = mid; else hi = mid;
+        }
+        return { id: row.id, len: (lo + hi) / 2 };
+      });
+    }
+
+    /* Unified rAF animator: drives BOTH the rail-active stroke length
+       and the dot position from a single loop. If a new target arrives
+       mid-flight the loop eases from current values toward the new
+       target without restarting — so fast scrolling produces ONE smooth
+       sweep, not a chain of restarts. */
+    var animReq = null;
+    var animFromLen = 0;
+    var animToLen   = 0;
+    var animStart   = 0;
+    var DURATION    = 350;
+    var currentLen  = 0;
+
+    function ease(t) {
+      return t < .5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3) / 2;
+    }
+    function applyLen(len) {
+      currentLen = len;
+      railActive.style.setProperty('--seg-len', len);
+      var dot = railSvg && railSvg.querySelector('.rail-dot');
+      if (dot && railBase && len >= 0) {
+        var p = railBase.getPointAtLength(Math.max(0, len));
+        dot.setAttribute('cx', p.x);
+        dot.setAttribute('cy', p.y);
+      }
+    }
+    function animateTo(targetLen) {
+      if (Math.abs(targetLen - animToLen) < 0.5 && animReq) {
+        // already animating to this target
+        return;
+      }
+      animFromLen = currentLen;
+      animToLen   = targetLen;
+      animStart   = performance.now();
+      if (!animReq) animReq = requestAnimationFrame(tick);
+    }
+    function tick(now) {
+      var t = Math.min(1, (now - animStart) / DURATION);
+      var k = ease(t);
+      var v = animFromLen + (animToLen - animFromLen) * k;
+      applyLen(v);
+      if (t < 1) {
+        animReq = requestAnimationFrame(tick);
+      } else {
+        animReq = null;
+      }
+    }
+
+    function setActiveRail(activeId) {
+      if (!railActive || !railPoints.length) return;
+      var dot = railSvg && railSvg.querySelector('.rail-dot');
+      if (!activeId) {
+        animateTo(0);
+        if (dot) dot.classList.remove('is-on');
+        return;
+      }
+      var match = null;
+      for (var i = 0; i < railPoints.length; i++) {
+        if (railPoints[i].id === activeId) { match = railPoints[i]; break; }
+      }
+      if (!match) return;
+      railActive.style.setProperty('--seg-start', 0);
+      if (dot) dot.classList.add('is-on');
+      animateTo(match.len);
+    }
+
+    /* build once fonts/layout settle, and on resize */
+    var rebuild = function () { buildRail(); applyActive(); };
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(rebuild);
+    }
+    window.addEventListener('resize', rebuild);
+    setTimeout(rebuild, 50);
+
+    var currentActiveId = null;
+    function applyActive() { setActiveRail(currentActiveId); }
+
+    /* Scroll-position based active detection.
+       Sticky headings make IntersectionObserver thrash, so we just read
+       getBoundingClientRect() against a fixed activation line. The active
+       heading is the last one whose top is at or above the line. */
+    var ACTIVATE_LINE = 110; /* px below viewport top */
+
+    function pickActive() {
+      var activeId = headings[0].id;
+      for (var i = 0; i < headings.length; i++) {
+        var top = headings[i].getBoundingClientRect().top;
+        if (top - ACTIVATE_LINE <= 0.5) {
+          activeId = headings[i].id;
+        } else {
+          break;
+        }
+      }
+      if (activeId === currentActiveId) return;
+      Object.keys(links).forEach(function (id) {
+        links[id].classList.toggle('is-active', id === activeId);
+      });
+      currentActiveId = activeId;
+      setActiveRail(activeId);
+    }
+
+    var rafScheduled = false;
+    function onScrollOrResize() {
+      if (rafScheduled) return;
+      rafScheduled = true;
+      requestAnimationFrame(function () {
+        rafScheduled = false;
+        pickActive();
+      });
+    }
+    window.addEventListener('scroll', onScrollOrResize, { passive: true });
+    window.addEventListener('resize', onScrollOrResize);
+    pickActive();
+  })();
+
+  /* ── Merge breadcrumb into topbar when scrolled past <h1> ────── */
+  (function () {
+    var h1 = document.querySelector('.doc-content h1');
+    if (!h1) return;
+    var TOPBAR_H = 40;
+    var raf = false;
+    function check() {
+      raf = false;
+      var bottom = h1.getBoundingClientRect().bottom;
+      var merged = bottom < TOPBAR_H + 8;
+      document.body.classList.toggle('is-merged', merged);
+    }
+    function onScroll() {
+      if (raf) return;
+      raf = true;
+      requestAnimationFrame(check);
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    check();
+  })();
+
+  /* ── Code block copy ─────────────────────────────────────────── */
+  (function () {
+    document.querySelectorAll('.codeblock').forEach(function (cb) {
+      var btn = cb.querySelector('.cb-copy');
+      var pre = cb.querySelector('pre');
+      if (!btn || !pre) return;
+      btn.addEventListener('click', function () {
+        var text = pre.innerText;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text);
+        }
+        var orig = btn.textContent;
+        btn.textContent = 'Copied';
+        btn.classList.add('is-done');
+        setTimeout(function () {
+          btn.textContent = orig;
+          btn.classList.remove('is-done');
+        }, 1400);
+      });
+    });
+  })();
+
+  /* ── ⌘K focuses the search; palette opens after focus ≥ 1s OR on first keystroke ── */
+  (function () {
+    var input = document.getElementById('doc-search-input');
+    if (!input) return;
+    var focusTimer = null;
+
+    function startFocusTimer() {
+      clearTimeout(focusTimer);
+      focusTimer = setTimeout(function () {
+        if (document.activeElement === input && window.openPalette) {
+          window.openPalette();
+        }
+      }, 1000);
+    }
+    function clearFocusTimer() {
+      clearTimeout(focusTimer);
+      focusTimer = null;
+    }
+
+    document.addEventListener('keydown', function (e) {
+      if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) {
+        e.preventDefault();
+        input.focus();
+        if (window.openPalette) window.openPalette();
+      }
+    });
+    input.addEventListener('focus', startFocusTimer);
+    input.addEventListener('blur',  clearFocusTimer);
+  })();
+
+  /* ── Search palette ─────────────────────────────────────────── */
+  (function () {
+    /* Build the index from real navigation + content. */
+    var INDEX = [];
+    /* Left-nav rows */
+    document.querySelectorAll('.doc-nav .nav-leaf, .doc-nav .nav-row.is-leaf, .doc-nav a[href]').forEach(function (a) {
+      var href = a.getAttribute('href'); if (!href) return;
+      var label = (a.textContent || '').trim().replace(/\s+/g, ' ');
+      if (!label) return;
+      INDEX.push({
+        kind: 'page',
+        title: label,
+        href: href,
+        section: 'Navigation',
+        body: ''
+      });
+    });
+    /* Headings on the current page */
+    document.querySelectorAll('.doc-content h1[id], .doc-content h2[id], .doc-content h3[id]').forEach(function (h) {
+      var label = (h.firstChild ? h.firstChild.textContent : h.textContent).trim();
+      var lvl = h.tagName.toLowerCase();
+      var id = h.id;
+      var nextSib = h.nextElementSibling;
+      var snippet = '';
+      while (nextSib && !/^H[1-3]$/.test(nextSib.tagName) && snippet.length < 220) {
+        if (nextSib.matches && (nextSib.matches('p') || nextSib.matches('ul') || nextSib.matches('ol'))) {
+          snippet += ' ' + (nextSib.textContent || '').trim();
+        }
+        nextSib = nextSib.nextElementSibling;
+      }
+      INDEX.push({
+        kind: 'heading',
+        level: lvl,
+        title: label,
+        href: '#' + id,
+        section: 'Quickstart',
+        body: snippet.replace(/\s+/g, ' ').trim().slice(0, 240)
+      });
+    });
+    /* De-duplicate by title+href */
+    var seen = {};
+    INDEX = INDEX.filter(function (it) {
+      var k = it.title + '|' + it.href;
+      if (seen[k]) return false; seen[k] = 1; return true;
+    });
+
+    var pal     = document.getElementById('doc-palette');
+    var bd      = document.getElementById('doc-palette-bd');
+    var palIn   = document.getElementById('doc-palette-input');
+    var palList = document.getElementById('doc-palette-list');
+    var palPrev = document.getElementById('doc-palette-preview');
+    var palEmpty = document.getElementById('doc-palette-empty');
+    if (!pal || !bd || !palIn || !palList) return;
+
+    // ---- Resizer: drag the boundary between list and preview ----
+    (function setupResizer() {
+      var rez = document.getElementById('doc-palette-resizer');
+      var body = pal.querySelector('.doc-pal-body');
+      if (!rez || !body) return;
+      var STORE_KEY = 'docPalListW';
+      var MIN_PX = 200;       // list can't go narrower than this
+      var MIN_PREV_PX = 240;  // preview can't go narrower than this
+      // Restore saved width
+      try {
+        var saved = localStorage.getItem(STORE_KEY);
+        if (saved) body.style.setProperty('--pal-list-w', saved);
+      } catch (e) {}
+      var dragging = false;
+      function onDown(e) {
+        dragging = true;
+        rez.classList.add('is-dragging');
+        document.body.style.cursor = 'col-resize';
+        document.body.style.userSelect = 'none';
+        e.preventDefault();
+      }
+      function onMove(e) {
+        if (!dragging) return;
+        var rect = body.getBoundingClientRect();
+        var x = e.clientX - rect.left;
+        var max = rect.width - MIN_PREV_PX;
+        if (x < MIN_PX) x = MIN_PX;
+        if (x > max) x = max;
+        var val = x + 'px';
+        body.style.setProperty('--pal-list-w', val);
+        try { localStorage.setItem(STORE_KEY, val); } catch (e) {}
+      }
+      function onUp() {
+        if (!dragging) return;
+        dragging = false;
+        rez.classList.remove('is-dragging');
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+      }
+      rez.addEventListener('mousedown', onDown);
+      window.addEventListener('mousemove', onMove);
+      window.addEventListener('mouseup', onUp);
+      // Double-click resets to default
+      rez.addEventListener('dblclick', function () {
+        body.style.removeProperty('--pal-list-w');
+        try { localStorage.removeItem(STORE_KEY); } catch (e) {}
+      });
+    })();
+    var activeIdx = 0;
+    var matches = [];
+
+    function score(item, q) {
+      if (!q) return 1;
+      q = q.toLowerCase();
+      var t = item.title.toLowerCase();
+      var b = (item.body || '').toLowerCase();
+      if (t === q) return 10;
+      if (t.startsWith(q)) return 8;
+      if (t.indexOf(q) !== -1) return 5;
+      if (b.indexOf(q) !== -1) return 2;
+      /* fuzzy: every char of q in t in order */
+      var ti = 0;
+      for (var qi = 0; qi < q.length; qi++) {
+        ti = t.indexOf(q[qi], ti);
+        if (ti < 0) return 0;
+        ti++;
+      }
+      return 1;
+    }
+
+    function highlight(text, q) {
+      if (!q) return document.createTextNode(text);
+      var lc = text.toLowerCase();
+      var qi = lc.indexOf(q.toLowerCase());
+      if (qi < 0) return document.createTextNode(text);
+      var out = document.createDocumentFragment();
+      out.appendChild(document.createTextNode(text.slice(0, qi)));
+      var em = document.createElement('mark');
+      em.textContent = text.slice(qi, qi + q.length);
+      out.appendChild(em);
+      out.appendChild(document.createTextNode(text.slice(qi + q.length)));
+      return out;
+    }
+
+    function iconFor(item) {
+      if (item.kind === 'heading' && item.level === 'h1') {
+        return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
+      }
+      if (item.kind === 'heading') {
+        return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>';
+      }
+      return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>';
+    }
+
+    function render(q) {
+      matches = INDEX
+        .map(function (it) { return { item: it, s: score(it, q) }; })
+        .filter(function (r) { return r.s > 0; })
+        .sort(function (a, b) { return b.s - a.s; })
+        .slice(0, 30)
+        .map(function (r) { return r.item; });
+
+      palList.innerHTML = '';
+      if (!matches.length) {
+        palEmpty.style.display = 'flex';
+        palPrev.innerHTML = '';
+        return;
+      }
+      palEmpty.style.display = 'none';
+
+      matches.forEach(function (it, i) {
+        var row = document.createElement('button');
+        row.type = 'button';
+        row.className = 'doc-pal-row';
+        row.setAttribute('role', 'option');
+        row.dataset.idx = i;
+
+        var ic = document.createElement('span');
+        ic.className = 'doc-pal-icon';
+        ic.innerHTML = iconFor(it);
+
+        var meta = document.createElement('span');
+        meta.className = 'doc-pal-meta';
+        var t = document.createElement('span');
+        t.className = 'doc-pal-title';
+        t.appendChild(highlight(it.title, q));
+        var s = document.createElement('span');
+        s.className = 'doc-pal-section';
+        s.textContent = it.section + (it.kind === 'heading' ? ' · ' + it.level.toUpperCase() : '');
+        meta.appendChild(t);
+        meta.appendChild(s);
+
+        var arrow = document.createElement('span');
+        arrow.className = 'doc-pal-arrow';
+        arrow.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>';
+
+        row.appendChild(ic);
+        row.appendChild(meta);
+        row.appendChild(arrow);
+        row.addEventListener('mouseenter', function () { setActive(i); });
+        row.addEventListener('click', function () { go(i); });
+        palList.appendChild(row);
+      });
+
+      setActive(0);
+    }
+
+    function setActive(i) {
+      activeIdx = i;
+      Array.prototype.forEach.call(palList.children, function (el, idx) {
+        el.classList.toggle('is-active', idx === i);
+      });
+      var el = palList.children[i];
+      if (el) {
+        var top = el.offsetTop, h = el.offsetHeight;
+        var st = palList.scrollTop, vh = palList.clientHeight;
+        if (top < st) palList.scrollTop = top;
+        else if (top + h > st + vh) palList.scrollTop = top + h - vh;
+      }
+      renderPreview(matches[i]);
+    }
+
+    function renderPreview(item) {
+      if (!item) { palPrev.innerHTML = ''; return; }
+      var crumb = item.section + (item.kind === 'heading' ? ' / ' + item.level.toUpperCase() : '');
+      var bodyHtml = item.body
+        ? '<p class="doc-pal-body">' + escapeHtml(item.body) + (item.body.length >= 230 ? '…' : '') + '</p>'
+        : '<p class="doc-pal-body doc-pal-body-empty">Open to read this section.</p>';
+      palPrev.innerHTML =
+        '<div class="doc-pal-prev-crumb">' + escapeHtml(crumb) + '</div>' +
+        '<h3 class="doc-pal-prev-title">' + escapeHtml(item.title) + '</h3>' +
+        bodyHtml +
+        '<div class="doc-pal-prev-foot">' +
+          '<span class="doc-pal-prev-href">' + escapeHtml(item.href) + '</span>' +
+          '<span class="doc-pal-prev-cta">Press <kbd>↵</kbd> to open</span>' +
+        '</div>';
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, function (c) {
+        return ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[c];
+      });
+    }
+
+    function go(i) {
+      var it = matches[i]; if (!it) return;
+      var href = it.href;
+      closePalette();
+      if (href.indexOf('#') === 0) {
+        var target = document.getElementById(href.slice(1));
+        if (target) {
+          history.replaceState(null, '', href);
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      } else {
+        location.href = href;
+      }
+    }
+
+    function openPalette() {
+      if (pal.classList.contains('is-open')) return;
+      bd.classList.add('is-open');
+      pal.classList.add('is-open');
+      document.body.classList.add('is-pal-open');
+      document.body.style.overflow = 'hidden';
+      // Move the search input out of the topbar (which has its own
+      // stacking context via position:sticky) so its z-index can
+      // actually beat the backdrop. Remember origin to restore on close.
+      var searchEl = document.querySelector('.doc-search');
+      if (searchEl && !searchEl.dataset.origParent) {
+        var parent = searchEl.parentElement;
+        var nextSib = searchEl.nextElementSibling;
+        searchEl.dataset.origParent = '1';
+        searchEl._origParent = parent;
+        searchEl._origNext = nextSib;
+        document.body.appendChild(searchEl);
+        // Snap to topbar position first, then expand leftward on next frame.
+        searchEl.classList.add('is-pal-opening');
+        // force layout so the starting frame is registered
+        searchEl.offsetHeight;
+        requestAnimationFrame(function () {
+          requestAnimationFrame(function () {
+            searchEl.classList.remove('is-pal-opening');
+          });
+        });
+        // refocus the input since reparenting blurs it
+        var inp = document.getElementById('doc-search-input');
+        if (inp) inp.focus();
+      }
+      // Render initial results immediately so the palette isn't blank.
+      var topInput = document.getElementById('doc-search-input');
+      render(topInput ? topInput.value.trim() : '');
+    }
+
+    function closePalette() {
+      if (!pal.classList.contains('is-open')) return;
+      pal.classList.remove('is-open');
+      bd.classList.remove('is-open');
+      document.body.classList.remove('is-pal-open');
+      document.body.style.overflow = '';
+      var topInput = document.getElementById('doc-search-input');
+      if (topInput) { topInput.value = ''; topInput.blur(); }
+      // Restore search input to its original spot in the topbar.
+      var searchEl = document.querySelector('.doc-search');
+      if (searchEl && searchEl.dataset.origParent && searchEl._origParent) {
+        if (searchEl._origNext && searchEl._origNext.parentElement === searchEl._origParent) {
+          searchEl._origParent.insertBefore(searchEl, searchEl._origNext);
+        } else {
+          searchEl._origParent.appendChild(searchEl);
+        }
+        delete searchEl.dataset.origParent;
+        searchEl._origParent = null;
+        searchEl._origNext = null;
+      }
+    }
+    var topInput = document.getElementById('doc-search-input');
+    window.openPalette = openPalette;
+    window.closePalette = closePalette;
+
+    if (topInput) {
+      topInput.addEventListener('input', function () {
+        var v = topInput.value.trim();
+        if (!pal.classList.contains('is-open')) openPalette();
+        render(v);
+      });
+      topInput.addEventListener('keydown', function (e) {
+        if (!pal.classList.contains('is-open')) return;
+        if (e.key === 'ArrowDown') { e.preventDefault(); setActive(Math.min(activeIdx + 1, matches.length - 1)); }
+        else if (e.key === 'ArrowUp') { e.preventDefault(); setActive(Math.max(activeIdx - 1, 0)); }
+        else if (e.key === 'Enter') { e.preventDefault(); go(activeIdx); }
+      });
+      // Escape — handled in capture phase on the document so the
+      // browser's native "clear input on Esc" behaviour can't swallow
+      // the first press. Single Esc always closes the palette.
+      document.addEventListener('keydown', function (e) {
+        if (e.key !== 'Escape') return;
+        if (!pal.classList.contains('is-open')) return;
+        e.preventDefault();
+        e.stopPropagation();
+        closePalette();
+      }, true);
+    }
+    bd.addEventListener('click', closePalette);
+  })();
+</script>
+
+
+
+</body>
+</html>

@@ -1,0 +1,34 @@
+# macOS
+.DS_Store
+._*
+
+# Editors / IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Node (if tooling is added later)
+node_modules/
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-store/
+
+# Build / cache
+dist/
+build/
+.vike/
+.cache/
+.parcel-cache/
+.vite/
+
+# Logs / env
+*.log
+.env
+.env.*
+!.env.example
+
+# Local Netlify folder
+.netlify

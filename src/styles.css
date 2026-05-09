@@ -1,0 +1,4 @@
+/* Single global stylesheet — Tailwind v4 + @theme tokens + dark
+   variant + base reset + the small handful of imperative SVG/rail
+   rules that aren't worth re-expressing as Tailwind utilities. */
+@import "./theme.css";

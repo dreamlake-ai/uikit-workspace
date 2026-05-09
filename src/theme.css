@@ -1,0 +1,189 @@
+/* ─────────────────────────────────────────────────────────────────
+   Global theme — single source of truth for color, type, surfaces,
+   shadows, and radii. Light is the default; [data-theme="dark"]
+   overrides the same keys.
+
+   Tailwind v4 picks tokens up from @theme to generate utilities
+   (bg-bg, text-ink, font-ui, etc.). The unprefixed legacy aliases
+   at the bottom (--bg, --ink, --accent, etc.) exist purely for the
+   tiny set of CSS rules that haven't been folded into Tailwind:
+   the SVG TOC rail and the global base reset.
+   ───────────────────────────────────────────────────────────────── */
+
+@import "tailwindcss";
+
+/* ── Base reset ────────────────────────────────────────────────────
+   Everything else lives in components or @theme tokens — this is
+   the only ambient page CSS we ship. */
+@layer base {
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--color-bg);
+    color: var(--color-ink);
+  }
+  body {
+    font-family: var(--font-ui);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: 'ss01', 'cv11';
+  }
+}
+
+/* ── TOC rail ──────────────────────────────────────────────────────
+   useTocRail builds the SVG path imperatively and writes
+   --seg-len / --seg-start onto the rail-active path's style. These
+   rules read those custom properties; expressing them as Tailwind
+   utilities would just inline the same arbitrary-value strings.
+   Stroke colors come from --toc-rail-stroke and --color-accent. */
+.doc-toc-rail {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 28px;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+}
+.doc-toc-rail .rail-base {
+  stroke: var(--toc-rail-stroke);
+  stroke-width: 1.5;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.doc-toc-rail .rail-end { fill: var(--toc-rail-stroke); }
+.doc-toc-rail .rail-active {
+  stroke: var(--color-accent);
+  stroke-width: 2;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: var(--seg-len, 0) 99999;
+  stroke-dashoffset: calc(-1 * var(--seg-start, 0));
+}
+.doc-toc-rail .rail-dot {
+  fill: var(--color-accent);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.doc-toc-rail .rail-dot.is-on { opacity: 1; }
+
+/* `dark:` works against [data-theme="dark"], including nested elements. */
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+
+/* Search-palette + merged-header global state — driven by JS toggling
+   classes on <body>. Use as `pal-open:opacity-0`, `merged:translate-y-0`
+   etc. inside any component that responds to those states. */
+@custom-variant pal-open (body.is-pal-open &);
+@custom-variant merged (body.is-merged &);
+
+@theme {
+  /* Type ────────────────────────────────────────────────────────── */
+  --font-ui: 'Inter Tight', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  /* Surfaces ────────────────────────────────────────────────────── */
+  --color-bg: #fffefa;
+  --color-panel: #fcfbf7;
+  --color-rail: #fcfbf7;
+  --color-canvas: #f4efe2;
+  --color-canvas-dot: #d6cdb4;
+
+  /* Code-block surface ──────────────────────────────────────────── */
+  --color-code-bg: #faf8f1;
+
+  /* Ink ─────────────────────────────────────────────────────────── */
+  --color-ink: #1a1a1a;
+  --color-muted: #6b6b6b;
+
+  /* Hairlines / chips / search ──────────────────────────────────── */
+  --color-faint: rgba(0, 0, 0, 0.08);
+  --color-faint-dashed: rgba(0, 0, 0, 0.22);
+  --color-chip: rgba(0, 0, 0, 0.04);
+  --color-search: #f5f4f0;
+
+  /* Selection / accent ──────────────────────────────────────────── */
+  --color-selected: #d9e6f7;
+  --color-accent: #23aaff;
+  --color-accent-soft: rgba(35, 170, 255, 0.09);
+
+  /* Code-token colors ───────────────────────────────────────────── */
+  --color-kw: #2e6f9e;
+  --color-str: #8a6a2e;
+  --color-num: #6b4ea0;
+  --color-com: #999487;
+  --color-fn: #1f6b48;
+  --color-tag: #b14d3a;
+
+  /* Radii ───────────────────────────────────────────────────────── */
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-xl: 14px;
+}
+
+/* Dark theme overrides — same keys, different values. */
+html[data-theme="dark"] {
+  --color-bg: #2e2e35;
+  --color-panel: #2e2e35;
+  --color-rail: #2b2b31;
+  --color-canvas: #131318;
+  --color-canvas-dot: #2a2a32;
+
+  --color-code-bg: #2c2c33;
+
+  --color-ink: #ececec;
+  --color-muted: #8a8a8a;
+
+  --color-faint: rgba(255, 255, 255, 0.09);
+  --color-faint-dashed: rgba(255, 255, 255, 0.22);
+  --color-chip: rgba(255, 255, 255, 0.05);
+  --color-search: #36363c;
+
+  --color-selected: #3d4856;
+  --color-accent-soft: rgba(35, 170, 255, 0.18);
+
+  --color-kw: #7fc1ff;
+  --color-str: #d6b170;
+  --color-num: #c2a3ff;
+  --color-com: #6a6a72;
+  --color-fn: #8edcab;
+  --color-tag: #f0a48c;
+}
+
+/* Non-color tokens — stay outside @theme since they aren't utilities,
+   but live here as the global theming surface so dark-mode overrides
+   are colocated with everything else. */
+:root {
+  --shadow-tint-1: rgba(0, 0, 0, 0.06);
+  --shadow-tint-2: rgba(0, 0, 0, 0.1);
+  --shadow-tint-3: rgba(0, 0, 0, 0.16);
+  --shadow-inset: rgba(0, 0, 0, 0.08);
+
+  /* TOC rail — stroke colors set imperatively from useTocRail. */
+  --toc-rail-stroke: #d8d4c8;
+
+  --jobrow-hover-bg: color-mix(in oklab, var(--color-canvas) 78%, oklch(62% 0.11 60));
+  --jobrow-hover-ring: color-mix(in oklab, var(--color-ink) 10%, transparent);
+  --jobrow-hover-ink-override: ;
+  --jobrow-hover-muted-override: ;
+}
+
+html[data-theme="dark"] {
+  --toc-rail-stroke: #45454d;
+
+  --shadow-tint-1: rgba(0, 0, 0, 0.45);
+  --shadow-tint-2: rgba(0, 0, 0, 0.6);
+  --shadow-tint-3: rgba(0, 0, 0, 0.75);
+  --shadow-inset: rgba(0, 0, 0, 0.5);
+
+  --jobrow-hover-bg: color-mix(in oklab, var(--color-bg) 72%, oklch(62% 0.07 230));
+  --jobrow-hover-ring: color-mix(in oklab, var(--color-ink) 14%, transparent);
+}
+
+/* All legacy unprefixed aliases (--bg, --ink, --accent, etc.) were
+   removed once page-styles.css went away — components read tokens
+   through Tailwind utilities (which generate var(--color-bg) etc.)
+   or directly via the @theme-prefixed names in arbitrary values. */

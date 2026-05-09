@@ -1,0 +1,115 @@
+/* ─────────────────────────────────────────────────────────────────
+   Shared color tokens — the single source of truth for surfaces,
+   ink, accents and shadows across all dreamlake pages
+   (ml-dash, dreamlake, dreamlake-pipelines, dreamlake-profile, notebook).
+
+   Surface stack (3 tiers, varies per theme — see design.md → "Surface tokens"):
+     light:  --bg #fffefa  →  --panel-bg #fcfbf7  →  --rail-bg = --panel-bg
+     dark:   --rail-bg #2b2b31  →  --bg #2e2e35  →  --panel-bg = --bg
+
+   Light mode separates --bg from --panel-bg (subtle cream-on-cream lift) and
+   shares --rail-bg with --panel-bg — the cream gradient already gives the rail
+   enough identity. Dark mode inverts the relationship: the body / canvas plane
+   sits at #2e2e35 and the left navbar recedes into a deeper #2b2b31 recess.
+   --panel-bg still flattens onto --bg (panels lift via hairline + shadow, not
+   fill) — a brighter panel on near-black reads as washed-out. The nav reads
+   as a distinct zone because it's the deeper plane, not the lifted one.
+
+   The --bg-light / --bg-dark / --panel-bg-light / --panel-bg-dark literals
+   are kept so the in-page Tweaks panel can override them at runtime.
+   ───────────────────────────────────────────────────────────────── */
+
+:root {
+  /* ── Surfaces ────────────────────────────────────────────────── */
+  --bg-light: #fffefa;          /* warm off-white (canvas / page bg, light) */
+  --bg-dark:  #2e2e35;          /* near-black body plane, dark mode (lifted above the rail) */
+  --panel-bg-light: #fcfbf7;    /* half-step darker than --bg in light mode */
+  --panel-bg-dark:  #2e2e35;    /* same as --bg in dark mode (panels flatten onto page) */
+  --rail-bg-light:  #fcfbf7;    /* shares --panel-bg in light mode */
+  --rail-bg-dark:   #2b2b31;    /* deeper than --bg in dark mode — left nav recedes into a recess */
+
+  --bg:       var(--bg-light);
+  --panel-bg: var(--panel-bg-light);
+  --rail-bg:  var(--rail-bg-light);
+
+  /* ── Ink / muted ─────────────────────────────────────────────── */
+  --ink:   #1a1a1a;
+  --muted: #6b6b6b;
+
+  /* ── Hairlines, chips, search ────────────────────────────────── */
+  --faint:        rgba(0,0,0,.08);
+  --faint-dashed: rgba(0,0,0,.22);
+  --chip-bg:      rgba(0,0,0,.04);
+  --search-bg:    #f5f4f0;
+
+  /* ── Selection ───────────────────────────────────────────────── */
+  /* Per zebra-list-style-guide.md §3–§4: selectable list rows hover/select
+     in the active-blue family, never warm cream. Light = soft tint of
+     #2174d9 over the cream panel; dark = the same cool blue lift used on
+     .pipe-jobrow:hover. */
+  --selected-bg:  #d9e6f7;
+  --accent:       #23aaff;
+  --accent-soft:  rgba(35, 170, 255, .09);
+
+  /* ── Pipelines canvas (only consumed by pipelines pages but
+        defined here so dark-mode overrides stay in one place) ──── */
+  --canvas-bg:  #f4efe2;
+  --canvas-dot: #d6cdb4;
+
+  /* ── Geometry / shadow ──────────────────────────────────────── */
+  --radius: 10px;
+  --panel-shadow: none;
+
+  /* Theme-aware shadow tints. Light mode = soft black cast on cream;
+     dark mode = deeper black cast that darkens the surrounding canvas. */
+  --shadow-tint-1: rgba(0,0,0,.06);
+  --shadow-tint-2: rgba(0,0,0,.10);
+  --shadow-tint-3: rgba(0,0,0,.16);
+  --shadow-inset:  rgba(0,0,0,.08);
+
+  /* ── Job-row hover (light): warm tint derived from cream canvas. */
+  --jobrow-hover-bg: color-mix(in oklab, var(--canvas-bg) 78%, oklch(62% .11 60));
+  --jobrow-hover-ring: color-mix(in oklab, var(--ink) 10%, transparent);
+  --jobrow-hover-ink-override: ;
+  --jobrow-hover-muted-override: ;
+}
+
+html[data-theme="light"] {
+  --bg:       var(--bg-light);
+  --panel-bg: var(--panel-bg-light);
+  --rail-bg:  var(--rail-bg-light);
+  --jobrow-hover-bg: color-mix(in oklab, var(--canvas-bg) 78%, oklch(62% .11 60));
+  --jobrow-hover-ring: color-mix(in oklab, var(--ink) 10%, transparent);
+}
+
+html[data-theme="dark"] {
+  --bg:       var(--bg-dark);
+  --panel-bg: var(--panel-bg-dark);
+  --rail-bg:  var(--rail-bg-dark);
+
+  --ink:          #ececec;
+  --muted:        #8a8a8a;
+  --faint:        rgba(255,255,255,.09);
+  --faint-dashed: rgba(255,255,255,.22);
+  --chip-bg:      rgba(255,255,255,.05);
+  --search-bg:    #36363c;
+
+  --selected-bg:  #3d4856;
+  --accent-soft:  rgba(35, 170, 255, .18);
+
+  --canvas-bg:  #131318;
+  --canvas-dot: #2a2a32;
+
+  --jobrow-hover-bg: color-mix(in oklab, var(--bg) 72%, oklch(62% .07 230));
+  --jobrow-hover-ring: color-mix(in oklab, var(--ink) 14%, transparent);
+  --jobrow-hover-ink-override: ;
+  --jobrow-hover-muted-override: ;
+
+  /* Dark mode: pure black at higher opacity. Pairs with bigger blur on the
+     actual shadow definitions so the panel reads as floating above a
+     darkened pit, not glowing. */
+  --shadow-tint-1: rgba(0,0,0,.45);
+  --shadow-tint-2: rgba(0,0,0,.6);
+  --shadow-tint-3: rgba(0,0,0,.75);
+  --shadow-inset:  rgba(0,0,0,.5);
+}
