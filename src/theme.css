@@ -86,6 +86,30 @@ html[data-theme="dark"] .shiki span {
   color: var(--shiki-dark) !important;
 }
 
+/* ── Line numbers toggle ───────────────────────────────────────────
+   The CodeBlock wrapper sets `data-line-numbers="on|off"` from a
+   useLocalStorage('line-numbers') value. When on, every shiki
+   <span class="line"> gets a leading counter rendered via CSS — no
+   markup change, no runtime DOM walking. */
+[data-line-numbers="on"] .shiki code {
+  counter-reset: line;
+}
+[data-line-numbers="on"] .shiki .line {
+  counter-increment: line;
+}
+[data-line-numbers="on"] .shiki .line::before {
+  content: counter(line);
+  display: inline-block;
+  width: 2em;
+  padding-right: 1em;
+  margin-right: 1em;
+  text-align: right;
+  color: var(--color-muted);
+  opacity: 0.5;
+  border-right: 1px solid var(--color-faint);
+  user-select: none;
+}
+
 /* `dark:` works against [data-theme="dark"], including nested elements. */
 @custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
 
