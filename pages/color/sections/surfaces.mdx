@@ -1,0 +1,11 @@
+import { SurfaceTokens } from '../../../src/components/design/SurfaceTokens'
+
+## Surfaces
+
+Three surface tokens — `--bg`, `--panel-bg`, `--rail-bg` — relate differently in light
+vs. dark. Light separates `--bg` from `--panel-bg` (subtle cream-on-cream lift) and
+shares `--rail-bg` with `--panel-bg`. Dark collapses `--panel-bg` onto `--bg`; panels
+lift via 1px `--faint` + shadow alone, and `--rail-bg` *drops* below `--bg` so the rail
+recedes into a deeper plane.
+
+<SurfaceTokens />

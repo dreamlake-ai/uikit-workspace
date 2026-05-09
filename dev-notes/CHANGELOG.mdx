@@ -6,6 +6,51 @@ sections. README copy edits and typo fixes are skipped. See
 [`./README.mdx`](./README.mdx) for the folder convention and
 [`../CLAUDE.md`](../CLAUDE.md) for the release-notes policy.
 
+## 2026-05-09 — Restructure: Style Guide foundations + 1 component example
+
+Major scope reset on the docs site. Was 20 pages (every design-guide
+atom + chrome + lists + reference). Now 10 pages organized as:
+
+- **GET STARTED** (1) — `/` overview
+- **STYLE GUIDE** (8) — the seven canonical foundations any design
+  system documents (Color, Typography, Spacing & layout, Iconography,
+  Elevation & depth, Border & radius, Motion) plus Zebra lists (the
+  four-band model is too load-bearing to drop)
+- **COMPONENTS** (1) — Button as the representative atom example;
+  the full atom catalog will live in the eventual `@dreamlake/uikit`
+  npm package, not duplicated here
+
+The seven foundations are now flat URLs (`/color`, `/typography`,
+`/spacing-layout`, `/iconography`, `/elevation`, `/border-radius`,
+`/motion`) — no `/foundations/` prefix.
+
+Pages renamed/restructured:
+- `/foundations/palette` → `/color` (expanded to combine surfaces +
+  ink + semantic palette)
+- `/foundations/typography` → `/typography`
+- `/foundations/surfaces` — merged into `/color`'s Surfaces section
+- `/icons` → `/iconography`
+- `/geometry` split into `/spacing-layout` (+ page grid +
+  breakpoints), `/elevation` (+ z-index ladder), `/border-radius`,
+  and `/motion`
+
+Pages deleted: 11 component pages (Chip, Status, Kbd, Avatar,
+Dropdown, Panel, EyebrowTitle, TabStrip, ZebraRow, NavRailItem,
+SearchBar) and `/donts` (the doctrine card pair). Their MDX, sections,
+and specimen components removed; the underlying atom components
+(`src/components/<Name>.tsx`) deleted as orphaned dead code (git
+history preserves them for the npm-package effort).
+
+Kept: `Button.tsx` (used by the surviving component example),
+`prose.tsx`, the chrome (`LeftNav`, `TopBar`, `RightTOC`,
+`SearchPalette`, `ThemeToggle`), and the remaining specimens
+(`PaletteGrid`, `SurfaceTokens`, `TypeSpecimen`, `SpacingScale`,
+`RadiiSpecimen`, `HairlineSpecimen`, `ShadowSpecimen`, `IconCatalog`,
+`Zebra*Specimen`, `ButtonStates/Variants`).
+
+Verified: `pnpm build` clean (~272ms, 10 HTML pre-rendered, typecheck
+gate passes).
+
 ## 2026-05-09 — Quick fixes: lucide-react pin + typecheck in build
 
 Two follow-ups from the recent reference-page batch:

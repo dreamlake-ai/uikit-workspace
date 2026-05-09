@@ -1,0 +1,28 @@
+import { Crumbs, Lede } from '../../src/components/prose'
+
+<Crumbs trail={[{ href: '/', label: '@dreamlake/uikit' }]} here="Motion" />
+
+# Motion
+
+<Lede>
+  Three durations, two easings, and one explicit prohibition.
+</Lede>
+
+## Durations & easings
+
+- **120ms ease** — background and `border-radius` transitions on rows. Fast enough to
+  feel like an instant response to hover.
+- **140ms ease-out** — overlay and popover entry (vim-help, command palette). Slightly
+  slower than rows, with a settled-in tail.
+- **250ms ease** — chrome morph (the topbar's merged-state crossfade as the H1 scrolls
+  past). Slow enough to read as a deliberate transition rather than a flicker.
+
+## When not to animate
+
+**Never on `box-shadow`** — except the focus-visible outline. Animating shadow
+composites every frame and reads as "the panel is breathing"; the resting shadow is
+meant to be invisible after first paint.
+
+Honor `prefers-reduced-motion` everywhere. The theme toggle's animated puck and any
+sliding underline collapse to instant transitions when the user has reduced-motion set;
+nothing else moves under that media query.

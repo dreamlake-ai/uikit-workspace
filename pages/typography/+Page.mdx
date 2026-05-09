@@ -1,0 +1,18 @@
+import { Crumbs, Lede } from '../../src/components/prose'
+import { TypeSpecimen } from '../../src/components/design/TypeSpecimen'
+
+<Crumbs trail={[{ href: '/', label: '@dreamlake/uikit' }]} here="Typography" />
+
+# Typography — Inter Tight + JetBrains Mono
+
+<Lede>
+  Two families. **Mono carries identity** (IDs, paths, hashes, durations, eyebrows,
+  ledger rows, kbd, status). **UI carries narrative** (titles, body, nav labels, button
+  copy). The pairing is fixed.
+</Lede>
+
+<TypeSpecimen />
+
+The OpenType feature settings `ss01` and `cv11` are turned on globally — they are the
+two stylistic sets Inter Tight ships that affect punctuation density and the ampersand
+shape. Set once on `<body>` in `src/theme.css`; no per-component opt-in.
