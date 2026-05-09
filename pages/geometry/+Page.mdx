@@ -1,0 +1,26 @@
+import { Crumbs, Lede } from '../../src/components/prose'
+import Spacing from './sections/spacing.mdx'
+import Radii from './sections/radii.mdx'
+import Hairlines from './sections/hairlines.mdx'
+import Shadows from './sections/shadows.mdx'
+import Motion from './sections/motion.mdx'
+
+<Crumbs trail={[{ href: '/', label: '@dreamlake/uikit' }]} here="Geometry" />
+
+# Geometry — spacing, radii, hairlines, shadows, motion
+
+<Lede>
+  Density-first. Most padding lives between 6–18px; the 2px row gap is sacred. Radii
+  ladder from 3 (chips) to 10 (panels). Hairlines are 1px `--faint` and nothing else.
+  Shadows track theme via custom properties — never animated.
+</Lede>
+
+<Spacing />
+
+<Radii />
+
+<Hairlines />
+
+<Shadows />
+
+<Motion />
