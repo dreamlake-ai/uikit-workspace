@@ -1,12 +1,14 @@
 import '../src/styles.css'
 import type { ReactNode } from 'react'
+import { usePageContext } from 'vike-react/usePageContext'
 import { MDXProvider } from '@mdx-js/react'
 import { TopBar } from '../src/components/TopBar'
 import { LeftNav } from '../src/components/LeftNav'
-import { RightTOC, type TocItem } from '../src/components/RightTOC'
+import { RightTOC } from '../src/components/RightTOC'
 import { SearchPalette, SearchProvider } from '../src/components/SearchPalette'
 import { useMergedHeader } from '../src/hooks/useMergedHeader'
 import { mdxComponents } from '../src/mdx-components'
+import { tocByRoute } from '../src/data/toc'
 
 // Doc-content wrapper. Descendant variants style raw HTML elements (h1,
 // h3, p, ul, ol, li, code, table, th, td) emitted by MDX or hand-written
@@ -28,27 +30,16 @@ const docContentCx = [
   '[&_tbody_td_code]:font-mono [&_tbody_td_code]:text-xs',
 ].join(' ')
 
-// TODO(per-page-toc): once we add more pages, hoist this into pageContext
-// (vike) or read from MDX frontmatter so each page declares its own TOC.
-// IDs come from rehype-slug — pin them to slugs, not magic strings;
-// renaming a heading renames its anchor.
-const tocItems: TocItem[] = [
-  { id: 'install', label: 'Install', level: 2 },
-  { id: 'your-first-scene', label: 'Your first scene', level: 2 },
-  { id: 'html-scaffold', label: 'HTML scaffold', level: 3 },
-  { id: 'replay-a-recorded-bag', label: 'Replay a recorded bag', level: 2 },
-  { id: 'built-in-layers', label: 'Built-in layers', level: 2 },
-  { id: 'react-binding', label: 'React binding', level: 2 },
-  { id: 'where-to-go-next', label: 'Where to go next', level: 2 },
-]
-
 export default function Layout({ children }: { children: ReactNode }) {
   useMergedHeader()
+  const { urlPathname } = usePageContext()
+  const tocItems = tocByRoute[urlPathname] ?? []
+
   return (
     <SearchProvider>
       <TopBar />
       <div className="grid grid-cols-[240px_minmax(0,1fr)_240px] max-w-[1320px] mx-auto items-start max-[1100px]:grid-cols-[240px_1fr] max-[880px]:grid-cols-[1fr]">
-        <LeftNav activeHref="/" />
+        <LeftNav activeHref={urlPathname} />
         <MDXProvider components={mdxComponents}>
           <main className={docContentCx}>{children}</main>
         </MDXProvider>
