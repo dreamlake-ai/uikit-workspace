@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev",
-    "build": "vite build",
+    "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "prod": "git push origin HEAD:netlify-production",
@@ -15,7 +15,7 @@
     "@mdx-js/react": "^3.1.1",
     "@mdx-js/rollup": "^3.1.1",
     "@shikijs/rehype": "^4.0.2",
-    "lucide-react": "^1.14.0",
+    "lucide-react": "^0.577.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "rehype-slug": "^6.0.0",

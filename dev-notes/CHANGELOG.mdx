@@ -6,6 +6,21 @@ sections. README copy edits and typo fixes are skipped. See
 [`./README.mdx`](./README.mdx) for the folder convention and
 [`../CLAUDE.md`](../CLAUDE.md) for the release-notes policy.
 
+## 2026-05-09 — Quick fixes: lucide-react pin + typecheck in build
+
+Two follow-ups from the recent reference-page batch:
+
+- **`lucide-react` pinned to current 0.x** (`^0.577.0`). Was on the
+  legacy `1.14.0` lineage that npm `latest` resolves to. The active
+  Lucide release line is `0.x` (current stable: 0.577) — that's what
+  the design-guide spec calls for ("v0.460+"). The 1.14 line was
+  abandoned years ago and lacks newer glyphs. IconCatalog imports
+  unchanged; `pnpm build` clean.
+- **`pnpm build` now runs `tsc --noEmit` first.** Type regressions
+  block deploys instead of silently passing through. Resolves the
+  out-of-scope follow-up flagged in the typecheck-sync changelog
+  entry below.
+
 ## 2026-05-09 — Sync from viz-workspace: typecheck script + heading anchors
 
 Pulled upstream PRs #6 (`e4c673e`, typecheck script + fix latent type
