@@ -6,6 +6,42 @@ sections. README copy edits and typo fixes are skipped. See
 [`./README.mdx`](./README.mdx) for the folder convention and
 [`../CLAUDE.md`](../CLAUDE.md) for the release-notes policy.
 
+## 2026-05-09 — Sync from viz-workspace: typecheck script + heading anchors
+
+Pulled upstream PRs #6 (`e4c673e`, typecheck script + fix latent type
+errors) and #7 (`0481b5b`, heading copy-link anchor on h1/h2/h3) into
+this repo.
+
+  package.json scripts        — `pnpm typecheck` runs `tsc --noEmit`.
+  package.json dependencies   — `@types/mdx`, `shiki` (typecheck deps;
+                                shiki was a transitive dep of
+                                @shikijs/rehype but tsc needs it
+                                explicit for ShikiTransformer).
+  src/components/prose.tsx    — extracted HeadingAnchor (chain icon +
+                                copy-on-click + checkmark confirmation
+                                via setTimeout). Refactored H2 to use
+                                it; added H1 + H3 with the same
+                                pattern. Each heading wrapper carries
+                                `group` so anchor `group-hover:opacity-
+                                100` reveals on heading hover (CSS-
+                                only, no JS mount/unmount). Anchor's
+                                aria-label flips between 'Copy link to
+                                {heading text}' and 'Link copied to
+                                clipboard'.
+  src/mdx-components.tsx      — explicit prop types via React's
+                                `ComponentPropsWithoutRef<'pre'>` and
+                                `<'h2'>` augmented with the data-* the
+                                build pipeline stamps. Drops the
+                                `as { ... }` cast pattern. Maps h1/h2/
+                                h3 to the prose primitives.
+
+Verified: `pnpm typecheck` exits 0; `pnpm build` clean (~345ms,
+20 HTML pre-rendered); rendered HTML on /foundations/surfaces shows
+`aria-label="Copy link to {heading}"` on every h2 anchor.
+
+Wiring typecheck into Netlify's build command (so type regressions
+block deploys) is a future-PR call — out of scope here.
+
 ## 2026-05-09 — Phase 3 reference pages: Icons + Do · don't
 
 Final Phase 3 content batch. Two reference pages landed in parallel:

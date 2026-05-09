@@ -58,9 +58,21 @@ export const Lede = ({
   </p>
 )
 
-// ── Block: anchored H2 with hover-revealed link icon ─────────────
+// ── Block: anchored headings (h1, h2, h3) with copy-link button ──
+//
+// Every heading on the page gets a HeadingAnchor child that:
+//   1. Is hidden until the user hovers the heading (or focuses the
+//      anchor itself, for keyboard a11y).
+//   2. On click, copies the section's deep link
+//      (window.location.origin + pathname + #id) to the clipboard
+//      AND lets the browser navigate to the anchor (URL hash updates,
+//      page scrolls).
+//   3. Briefly shows a checkmark + accent color as confirmation.
+//
+// rehype-slug guarantees an `id` is present on every heading at
+// build time, so HeadingAnchor never has to work around a missing id.
 
-const AnchorIcon = () => (
+const ChainIcon = () => (
   <svg
     viewBox="0 0 24 24"
     fill="none"
@@ -76,27 +88,85 @@ const AnchorIcon = () => (
   </svg>
 )
 
-const h2Cx =
-  'sticky top-[38px] z-[3] font-ui text-[22px] font-semibold tracking-[-0.018em] mt-12 mb-3 -mx-14 px-14 pt-3 pb-2 text-ink [scroll-margin-top:64px] leading-tight flex items-center gap-2 bg-[color-mix(in_srgb,var(--color-bg)_92%,transparent)] [backdrop-filter:saturate(140%)_blur(8px)] [-webkit-backdrop-filter:saturate(140%)_blur(8px)] group/h2'
+const CheckIcon = () => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+    className="w-3.5 h-3.5 block"
+  >
+    <polyline points="20 6 9 17 4 12" />
+  </svg>
+)
 
-const anchorCx =
-  'inline-flex items-center justify-center w-[18px] h-[18px] text-muted no-underline rounded-[4px] opacity-0 transition-[opacity,background-color,color] duration-150 group-hover/h2:opacity-70 hover:opacity-100! hover:text-ink! hover:bg-chip!'
+const headingAnchorBaseCx =
+  'ml-1 inline-flex items-center justify-center w-[18px] h-[18px] no-underline rounded-[4px] opacity-0 transition-[opacity,background-color,color] duration-150 group-hover:opacity-70 hover:opacity-100! hover:text-ink! hover:bg-chip! focus-visible:opacity-100'
+
+const headingAnchorIdleCx = 'text-muted'
+const headingAnchorCopiedCx = 'text-accent! opacity-100!'
+
+export function HeadingAnchor({ id, label }: { id: string; label: string }) {
+  const [copied, setCopied] = useState(false)
+
+  const onClick = () => {
+    if (typeof window === 'undefined') return
+    const url = `${window.location.origin}${window.location.pathname}#${id}`
+    navigator.clipboard?.writeText(url).catch(() => {})
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1200)
+  }
+
+  return (
+    <a
+      href={`#${id}`}
+      onClick={onClick}
+      className={`${headingAnchorBaseCx} ${copied ? headingAnchorCopiedCx : headingAnchorIdleCx}`}
+      aria-label={copied ? 'Link copied to clipboard' : `Copy link to ${label}`}
+      title={copied ? 'Copied!' : 'Copy link to this section'}
+    >
+      {copied ? <CheckIcon /> : <ChainIcon />}
+    </a>
+  )
+}
+
+// `group` makes the heading the hover target so HeadingAnchor's
+// `group-hover:opacity-100` reveals it on heading hover.
+const h1Cx = 'group'
+const h2Cx =
+  'group sticky top-[38px] z-[3] font-ui text-[22px] font-semibold tracking-[-0.018em] mt-12 mb-3 -mx-14 px-14 pt-3 pb-2 text-ink [scroll-margin-top:64px] leading-tight flex items-center gap-2 bg-[color-mix(in_srgb,var(--color-bg)_92%,transparent)] [backdrop-filter:saturate(140%)_blur(8px)] [-webkit-backdrop-filter:saturate(140%)_blur(8px)]'
+const h3Cx = 'group'
+
+export const H1 = ({ id, children }: { id: string; children: ReactNode }) => (
+  <h1 id={id} className={h1Cx}>
+    {children}{' '}
+    <HeadingAnchor id={id} label={flatten(children)} />
+  </h1>
+)
 
 export const H2 = ({ id, children }: { id: string; children: ReactNode }) => (
   <h2 id={id} className={h2Cx}>
     {children}{' '}
-    <a className={anchorCx} href={`#${id}`} aria-label={`Link to ${flatten(children)}`}>
-      <AnchorIcon />
-    </a>
+    <HeadingAnchor id={id} label={flatten(children)} />
   </h2>
+)
+
+export const H3 = ({ id, children }: { id: string; children: ReactNode }) => (
+  <h3 id={id} className={h3Cx}>
+    {children}{' '}
+    <HeadingAnchor id={id} label={flatten(children)} />
+  </h3>
 )
 
 function flatten(node: ReactNode): string {
   if (typeof node === 'string' || typeof node === 'number') return String(node)
   if (Array.isArray(node)) return node.map(flatten).join('')
   if (node && typeof node === 'object' && 'props' in node) {
-    // @ts-expect-error — children may be ReactNode
-    return flatten(node.props.children)
+    const props = (node as { props?: { children?: ReactNode } }).props
+    return props ? flatten(props.children) : ''
   }
   return ''
 }

@@ -1,63 +1,73 @@
+import type { MDXComponents } from 'mdx/types'
 import {
   isValidElement,
-  type ComponentProps,
+  type ComponentPropsWithoutRef,
   type ReactElement,
   type ReactNode,
 } from 'react'
-import { CodeBlock, H2 } from './components/prose'
+import {
+  CodeBlock,
+  H1 as ProseH1,
+  H2 as ProseH2,
+  H3 as ProseH3,
+} from './components/prose'
 
-// Component mapping for MDX. Heading tags get auto-IDs from rehype-slug
-// (configured in vite.config.ts), so the H2 component receives `id` as
-// a prop on its own. The other prose elements (h1, h3, p, ul, ol, li,
-// table, code) keep their default tags — descendant CSS in
-// `pages/+Layout.tsx`'s docContentCx wrapper styles them.
+// Shape of the props MDX passes to a `pre` override. Augments the
+// standard <pre> intrinsic props with the data-* attributes our
+// rehype-shiki transformer + parseMetaString stamp on at build time.
+type PreProps = ComponentPropsWithoutRef<'pre'> & {
+  'data-language'?: string
+  'data-file'?: string
+}
+
+// Shape of the props MDX passes to a heading override. rehype-slug
+// guarantees `id` is present at build time, so the prose H1/H2/H3
+// components can rely on it without a fallback.
+type HeadingProps = ComponentPropsWithoutRef<'h2'> & { children?: ReactNode }
+
+// Components map injected into every .mdx via the MDXProvider in
+// +Layout.tsx. Only override what we want to *transform*; leave plain
+// elements alone so descendant Tailwind variants on .doc-content style
+// them.
 //
-// rehype-shiki turns fenced code blocks into
-//   <pre class="shiki language-X" data-language="X" data-file="...">
-//     <code><span style="color:...">...</span>...</code>
-//   </pre>
-// Our `pre` override extracts language + file and wraps shiki's
-// already-highlighted <pre> in our CodeBlock chrome. shiki's class +
-// inline styles flow through unchanged.
+// rehype-slug runs at compile time and stamps every heading with a
+// GitHub-style id, so `id` is always present on h2.
 //
-// TODO(prop-forwarding): the H2 component's signature accepts only
-// `{ id, children }`, so any extra props rehype plugins might attach
-// (data-*, classes from rehype-autolink-headings, etc.) get dropped
-// here. Not an issue with the current plugin set; widen H2's signature
-// when/if we add plugins that decorate headings.
+// rehype-shiki runs at compile time and turns fenced code blocks into
+// <pre class="shiki language-X" data-language="X" data-file="...">
+// <code><span style="color:...">...</span>...</code></pre>. Our `pre`
+// override extracts the language + file and wraps the highlighted
+// <pre> in our CodeBlock chrome.
+export const mdxComponents: MDXComponents = {
+  h1: ({ id, children }: HeadingProps) => (
+    <ProseH1 id={id ?? ''}>{children}</ProseH1>
+  ),
+  h2: ({ id, children }: HeadingProps) => (
+    <ProseH2 id={id ?? ''}>{children}</ProseH2>
+  ),
+  h3: ({ id, children }: HeadingProps) => (
+    <ProseH3 id={id ?? ''}>{children}</ProseH3>
+  ),
 
-export const mdxComponents = {
-  h2: (props: ComponentProps<'h2'>) => {
-    const { id, children } = props
-    if (!id) return <h2 {...props} />
-    return <H2 id={id}>{children}</H2>
-  },
+  pre: (props: PreProps) => {
+    const { children, className, ...rest } = props
 
-  pre: (props: ComponentProps<'pre'>) => {
-    const { children, className, ...rest } = props as {
-      children?: ReactNode
-      className?: string
-      [k: string]: unknown
-    }
-
-    // Pull the language out of either <pre data-language> (set by our
-    // stampLanguage transformer) or the inner <code class="language-X">.
-    const dataLang = (rest as Record<string, unknown>)['data-language']
-    const codeChild = isValidElement(children) ? (children as ReactElement) : null
-    const codeClassName =
-      (codeChild?.props as { className?: string } | undefined)?.className ?? ''
+    // Pull the language out of either the <pre data-language> attr or
+    // the inner <code class="language-X">. shiki sets data-language on
+    // the <pre>; the latter is the fallback.
+    const dataLang = rest['data-language']
+    const codeChild = isValidElement(children)
+      ? (children as ReactElement<{ className?: string }>)
+      : null
+    const codeClassName = codeChild?.props.className ?? ''
     const langFromCode = codeClassName.match(/language-(\S+)/)?.[1]
-    const lang =
-      (typeof dataLang === 'string' ? dataLang : undefined) ?? langFromCode ?? 'text'
-
-    const file = (rest as Record<string, unknown>)['data-file']
-    const fileStr = typeof file === 'string' ? file : undefined
+    const lang = dataLang ?? langFromCode ?? 'text'
 
     // Re-render the original <pre> as a child of our CodeBlock chrome,
-    // preserving every property shiki set (class, dual-theme inline
-    // styles, data attributes).
+    // preserving every property shiki set on it (class, style with
+    // dual-theme colors, data attributes).
     return (
-      <CodeBlock lang={lang} file={fileStr}>
+      <CodeBlock lang={lang} file={rest['data-file']}>
         <pre className={className} {...rest}>
           {children}
         </pre>
