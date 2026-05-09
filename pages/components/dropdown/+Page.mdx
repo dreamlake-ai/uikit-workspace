@@ -1,0 +1,19 @@
+import { Crumbs, Lede } from '../../../src/components/prose'
+import States from './sections/states.mdx'
+import WithLabel from './sections/with-label.mdx'
+
+<Crumbs trail={[{ href: '/', label: '@dreamlake/uikit' }, { href: '/components', label: 'Components' }]} here="Dropdown" />
+
+# Dropdown — mono select · faint border · accent focus · ▾ trailing glyph
+
+<Lede>
+  A static-presentation dropdown atom. Renders the closed-state visual — an optional
+  uppercase mono label above, a faint-bordered control with mono value text, and a
+  trailing `▾` chevron in muted ink. Hover lifts the border to 18% ink; focus adds a
+  2px accent ring; open keeps the lifted border and rotates the chevron 180°. Real
+  popover menu behaviour lands in a follow-up — this atom is the surface only.
+</Lede>
+
+<States />
+
+<WithLabel />
