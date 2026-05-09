@@ -1,0 +1,19 @@
+import { Lede } from '../../../../src/components/prose'
+import { Kbd } from '../../../../src/components/Kbd'
+
+<Lede>
+  A single key cap, sized to ride alongside running text. Mono 10px / 600 with a
+  5% ink fill and a 1px `--color-faint` border, radius 4. The atom is just the
+  pill — the surrounding sentence carries the verb.
+</Lede>
+
+## Inline within copy
+
+The `<Kbd>` element is meant to sit inside a normal paragraph. It picks up the
+surrounding line-height so chords like <Kbd>⌘</Kbd> <Kbd>K</Kbd> read as part
+of the sentence rather than as a separate widget. Keep one key per pill; for
+chords, render adjacent pills with a small gap rather than packing the keys
+into a single rectangle.
+
+Press <Kbd>⌘</Kbd> <Kbd>K</Kbd> to open the palette, <Kbd>esc</Kbd> to dismiss
+it, or <Kbd>/</Kbd> from anywhere on the page to jump straight to search.
