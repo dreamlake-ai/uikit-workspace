@@ -6,6 +6,22 @@ sections. README copy edits and typo fixes are skipped. See
 [`./README.mdx`](./README.mdx) for the folder convention and
 [`../CLAUDE.md`](../CLAUDE.md) for the release-notes policy.
 
+## 2026-05-09 — Replace ros-viz placeholder with uikit landing page
+
+- `pages/index/+Page.mdx` — port to a real `@dreamlake/uikit`
+  overview. Lede ported from `staging/dreamlake-design-guide.html`
+  page-head subtitle (single source of truth for surfaces, palette,
+  type, etc.). Section list links to the live foundations + components
+  pages; mentions the rest as "still in flight" rather than as
+  placeholder anchors.
+- `pages/+config.ts` — title + description updated.
+- `src/components/TopBar.tsx` — derive the merged-header crumb label
+  from `usePageContext().urlPathname` via a lookup against
+  `navGroups`. No more hardcoded "Quick start" — the crumb tracks
+  the current page.
+- `src/data/toc.ts` — TOC for `/` shrunk to the new 3-section
+  structure (Install / Foundations / Components).
+
 ## 2026-05-09 — Foundations / Typography
 
 - Lands `/foundations/typography` — port of
