@@ -23,4 +23,24 @@ export const tocByRoute: Record<string, TocItem[]> = {
     { id: 'when-adding-a-new-concept', label: 'When adding a new concept', level: 2 },
     { id: 'why-six-and-not-more', label: 'Why six and not more', level: 2 },
   ],
+  '/geometry': [
+    { id: 'spacing-scale', label: 'Spacing scale', level: 2 },
+    { id: 'radii', label: 'Radii', level: 2 },
+    { id: 'hairlines', label: 'Hairlines', level: 2 },
+    { id: 'shadows', label: 'Shadows', level: 2 },
+    { id: 'motion', label: 'Motion', level: 2 },
+  ],
+  '/zebra-lists': [
+    { id: 'the-four-band-model', label: 'The four-band model', level: 2 },
+    { id: 'per-state-colors', label: 'Per-state colors', level: 2 },
+    { id: 'multi-row-runs', label: 'Multi-row runs', level: 2 },
+  ],
+  '/components/chip': [
+    { id: 'tones', label: 'Tones', level: 2 },
+    { id: 'with-a-leading-icon', label: 'With a leading icon', level: 2 },
+  ],
+  '/components/button': [
+    { id: 'variants', label: 'Variants', level: 2 },
+    { id: 'states', label: 'States', level: 2 },
+  ],
 }

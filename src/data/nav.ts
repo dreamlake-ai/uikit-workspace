@@ -31,22 +31,22 @@ export const navGroups: NavGroup[] = [
   {
     eyebrow: 'GEOMETRY',
     count: '01',
-    items: [{ href: '/geometry', label: 'Geometry', todo: true }],
+    items: [{ href: '/geometry', label: 'Geometry' }],
   },
   {
     eyebrow: 'ZEBRA LISTS',
     count: '01',
-    items: [{ href: '/zebra-lists', label: 'Zebra lists', todo: true }],
+    items: [{ href: '/zebra-lists', label: 'Zebra lists' }],
   },
   {
     eyebrow: 'COMPONENTS · ATOMS',
     count: '07',
     items: [
-      { href: '/components/chip', label: 'chip', todo: true },
+      { href: '/components/chip', label: 'chip' },
       { href: '/components/status', label: 'status indicator', todo: true },
       { href: '/components/kbd', label: 'keyboard hint', todo: true },
       { href: '/components/avatar', label: 'avatar', todo: true },
-      { href: '/components/button', label: 'buttons', todo: true },
+      { href: '/components/button', label: 'buttons' },
       { href: '/components/timeline', label: 'timeline', todo: true },
       { href: '/components/dropdown', label: 'dropdown', todo: true },
     ],
