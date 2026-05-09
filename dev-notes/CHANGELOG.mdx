@@ -6,6 +6,42 @@ sections. README copy edits and typo fixes are skipped. See
 [`./README.mdx`](./README.mdx) for the folder convention and
 [`../CLAUDE.md`](../CLAUDE.md) for the release-notes policy.
 
+## 2026-05-09 — Phase 3 reference pages: Icons + Do · don't
+
+Final Phase 3 content batch. Two reference pages landed in parallel:
+
+- **`/icons`** (PR #34) — Lucide catalog (~37 glyphs across 6
+  categories: navigation / files & data / actions / layout / status /
+  domain) plus the migration-backlog table (10 legacy custom SVGs in
+  the source apps that should be replaced with their Lucide
+  equivalents). Renders via `lucide-react`.
+- **`/donts`** (PR #33) — the Do · Don't doctrine card pair, ported
+  verbatim from the design-guide. Eight don'ts and eight do's. The
+  page itself avoids the don'ts it documents (no `--ok` / `--error`
+  tokens, no near-miss hexes — uses the canonical palette inline).
+
+Two follow-ups to flag:
+
+- `lucide-react` was added at `^1.14.0` — that's what `npm latest`
+  resolves to, but it's the *legacy* lineage. The active development
+  line is `0.x` (current ~`0.460+`), tagged `dev` on npm. The
+  design-guide explicitly calls for `v0.460`. The current install
+  works (1.14.0 still renders icons cleanly) and matches the spirit
+  of the rule (every icon from Lucide, no hand-coded SVG); pin to
+  `0.460+` in a follow-up if the missing newer glyphs become a
+  blocker.
+- Click-to-copy on icon names (the design-guide source has it) was
+  skipped here — TODO in `IconCatalog.tsx`.
+
+This PR (`chore/wire-reference`) flips the 2 reference todos to live,
+registers `/icons`'s 2 TOC entries (`/donts` has no h2 sections so
+falls through to the empty-array null-render path).
+
+**Phase 3 substantively complete with this batch.** Remaining: 14
+compositions in the design-guide source (recommended skip — they're
+app-specific assemblies), and an out-of-scope timeline atom (also
+skipped).
+
 ## 2026-05-09 — Phase 3 batch: chrome (3) + lists (3)
 
 Third parallel-agent batch. Six new components, all reusable atoms

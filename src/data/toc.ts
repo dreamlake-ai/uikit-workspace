@@ -88,4 +88,9 @@ export const tocByRoute: Record<string, TocItem[]> = {
     { id: 'states', label: 'States', level: 2 },
     { id: 'with-a-hint-chip', label: 'With a hint chip', level: 2 },
   ],
+  '/icons': [
+    { id: 'categories', label: 'Categories', level: 2 },
+    { id: 'migration-backlog', label: 'Migration backlog', level: 2 },
+  ],
+  // /donts has no h2 sections — falls through to RightTOC's null path.
 }
