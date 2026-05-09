@@ -1,9 +1,0 @@
-## The surface contract
-
-1. Light separates `--bg` from `--panel-bg`; the rail shares `--panel-bg`.
-2. Dark collapses `--panel-bg` onto `--bg`; panels lift via 1px `--faint` + shadow, not a
-   brighter fill.
-3. Dark *drops* the rail to `#2b2b31` — figure/ground inverts; chrome recedes, working
-   surface advances.
-4. `tokens.css` is for surface chrome only — never `--ok` or `--error`. Keep semantic hex
-   inline at use sites so `grep` tells the truth.

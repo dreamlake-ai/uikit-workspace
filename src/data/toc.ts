@@ -5,92 +5,48 @@ import type { TocItem } from '../components/RightTOC'
 // actually produces, not magic strings; renaming a heading renames its
 // anchor.
 //
-// New pages add an entry here. The default for an unmapped route is
-// an empty array → RightTOC renders nothing, which is the right
-// behavior for pages without enough headings to warrant a TOC.
+// Routes without an entry default to `[]` → RightTOC returns null,
+// which is the right behavior for pages that have no h2 anchors.
 export const tocByRoute: Record<string, TocItem[]> = {
   '/': [
     { id: 'install', label: 'Install', level: 2 },
-    { id: 'foundations', label: 'Foundations', level: 2 },
+    { id: 'style-guide', label: 'Style guide', level: 2 },
     { id: 'components', label: 'Components', level: 2 },
   ],
-  '/foundations/surfaces': [
-    { id: 'tokens', label: 'Tokens', level: 2 },
-    { id: 'the-surface-contract', label: 'The surface contract', level: 2 },
-    { id: 'why-these-choices', label: 'Why these choices', level: 2 },
-  ],
-  '/foundations/palette': [
+  '/color': [
+    { id: 'surfaces', label: 'Surfaces', level: 2 },
+    { id: 'ink', label: 'Ink', level: 2 },
     { id: 'when-adding-a-new-concept', label: 'When adding a new concept', level: 2 },
     { id: 'why-six-and-not-more', label: 'Why six and not more', level: 2 },
   ],
-  '/geometry': [
+  '/spacing-layout': [
     { id: 'spacing-scale', label: 'Spacing scale', level: 2 },
-    { id: 'radii', label: 'Radii', level: 2 },
-    { id: 'hairlines', label: 'Hairlines', level: 2 },
-    { id: 'shadows', label: 'Shadows', level: 2 },
-    { id: 'motion', label: 'Motion', level: 2 },
+    { id: 'page-grid', label: 'Page grid', level: 2 },
+    { id: 'breakpoints', label: 'Breakpoints', level: 2 },
+  ],
+  '/elevation': [
+    { id: 'shadow-scale', label: 'Shadow scale', level: 2 },
+    { id: 'z-index-layers', label: 'Z-index layers', level: 2 },
+  ],
+  '/border-radius': [
+    { id: 'radius-scale', label: 'Radius scale', level: 2 },
+    { id: 'hairlines--dividers', label: 'Hairlines & dividers', level: 2 },
+  ],
+  '/motion': [
+    { id: 'durations--easings', label: 'Durations & easings', level: 2 },
+    { id: 'when-not-to-animate', label: 'When not to animate', level: 2 },
+  ],
+  '/iconography': [
+    { id: 'categories', label: 'Categories', level: 2 },
+    { id: 'migration-backlog', label: 'Migration backlog', level: 2 },
   ],
   '/zebra-lists': [
     { id: 'the-four-band-model', label: 'The four-band model', level: 2 },
     { id: 'per-state-colors', label: 'Per-state colors', level: 2 },
     { id: 'multi-row-runs', label: 'Multi-row runs', level: 2 },
   ],
-  '/components/chip': [
-    { id: 'tones', label: 'Tones', level: 2 },
-    { id: 'with-a-leading-icon', label: 'With a leading icon', level: 2 },
-  ],
   '/components/button': [
     { id: 'variants', label: 'Variants', level: 2 },
     { id: 'states', label: 'States', level: 2 },
   ],
-  '/components/status': [
-    { id: 'buckets', label: 'Buckets', level: 2 },
-    { id: 'styles', label: 'Styles', level: 2 },
-    { id: 'usage', label: 'Usage', level: 2 },
-  ],
-  '/components/kbd': [
-    { id: 'inline-within-copy', label: 'Inline within copy', level: 2 },
-    { id: 'combos-with-descriptions', label: 'Combos with descriptions', level: 2 },
-  ],
-  '/components/avatar': [
-    { id: 'sizes', label: 'Sizes', level: 2 },
-    { id: 'user-vs-org', label: 'User vs. org', level: 2 },
-    { id: 'with-a-name', label: 'With a name', level: 2 },
-  ],
-  '/components/dropdown': [
-    { id: 'states', label: 'States', level: 2 },
-    { id: 'with-a-label', label: 'With a label', level: 2 },
-  ],
-  '/components/inspector-panel': [
-    { id: 'anatomy', label: 'Anatomy', level: 2 },
-    { id: 'shadow-tiers', label: 'Shadow tiers', level: 2 },
-  ],
-  '/components/eyebrow-title': [
-    { id: 'levels', label: 'Levels', level: 2 },
-    { id: 'when-to-use-which-level', label: 'When to use which level', level: 2 },
-  ],
-  '/components/tab-strip': [
-    { id: 'variants', label: 'Variants', level: 2 },
-    { id: 'active-states', label: 'Active states', level: 2 },
-  ],
-  '/components/zebra-row': [
-    { id: 'anatomy', label: 'Anatomy', level: 2 },
-    { id: 'states', label: 'States', level: 2 },
-    { id: 'status-buckets', label: 'Status buckets', level: 2 },
-  ],
-  '/components/nav-rail-item': [
-    { id: 'states', label: 'States', level: 2 },
-    { id: 'icon-variants', label: 'Icon variants', level: 2 },
-    { id: 'with-trailing-meta', label: 'With trailing meta', level: 2 },
-  ],
-  '/components/search-bar': [
-    { id: 'anatomy', label: 'Anatomy', level: 2 },
-    { id: 'states', label: 'States', level: 2 },
-    { id: 'with-a-hint-chip', label: 'With a hint chip', level: 2 },
-  ],
-  '/icons': [
-    { id: 'categories', label: 'Categories', level: 2 },
-    { id: 'migration-backlog', label: 'Migration backlog', level: 2 },
-  ],
-  // /donts has no h2 sections — falls through to RightTOC's null path.
 }

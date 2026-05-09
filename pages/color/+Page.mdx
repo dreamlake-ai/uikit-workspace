@@ -1,0 +1,27 @@
+import { Crumbs, Lede } from '../../src/components/prose'
+import Surfaces from './sections/surfaces.mdx'
+import Ink from './sections/ink.mdx'
+import Overview from './sections/overview.mdx'
+import Rule from './sections/rule.mdx'
+import Why from './sections/why.mdx'
+
+<Crumbs trail={[{ href: '/', label: '@dreamlake/uikit' }]} here="Color" />
+
+# Color
+
+<Lede>
+  Color splits across three concerns: the *surface stack* (where things sit), the *ink
+  pair* (what users read), and a *six-color semantic palette* (what's happening). No
+  primary/secondary distinction — semantics come first, and the palette stays at six
+  forever.
+</Lede>
+
+<Surfaces />
+
+<Ink />
+
+<Overview />
+
+<Rule />
+
+<Why />

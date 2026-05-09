@@ -10,10 +10,10 @@ import { Callout, Crumbs, In, Lede } from '../../src/components/prose'
   `dreamlake-pipelines`, `dreamlake-profile`, `dreamlake-timetravel`, `notebook`.
 </Lede>
 
-These docs document a real React component library: tokens that paint surfaces, six
-hues that color domain concepts, two typefaces that split identity from narrative, and
-a small kit of components (chip, button, zebra row, status indicator, …) every
-DreamLake app already uses.
+These docs are the design contract: tokens that paint surfaces, six hues that color
+domain concepts, two typefaces that split identity from narrative, a fixed spacing
+and radius scale, layered shadows and z-index, and the zebra-list pattern every
+DreamLake list page reuses.
 
 ## Install
 
@@ -23,32 +23,38 @@ npm install @dreamlake/uikit
 pnpm add @dreamlake/uikit
 ```
 
-## Foundations
+## Style guide
 
-The token contract that every page loads first. Read these in order — each builds on
-the previous.
+Read these in order — each builds on the previous.
 
-- <In href="/foundations/surfaces">Surfaces — page · panel · rail</In> — the 3-tier
-  surface stack and why the tiers invert in dark mode.
-- <In href="/foundations/palette">Semantic palette — six hues, no seventh</In> — one
-  shared 6-color set for every domain concept across every page.
-- <In href="/foundations/typography">Typography — Inter Tight + JetBrains Mono</In> —
-  mono carries identity, UI carries narrative; nine specimens live.
+- <In href="/color">Color</In> — surfaces, ink pair, six-hue semantic palette, no
+  primary/secondary distinction.
+- <In href="/typography">Typography</In> — Inter Tight + JetBrains Mono; nine
+  specimens, mono carries identity, UI carries narrative.
+- <In href="/spacing-layout">Spacing & layout</In> — eleven-step scale, the docs
+  page grid, two breakpoints.
+- <In href="/iconography">Iconography</In> — every glyph from Lucide, sized 12–28px,
+  stroke 1.1–1.6.
+- <In href="/elevation">Elevation & depth</In> — four shadow tints, a small fixed
+  z-index ladder.
+- <In href="/border-radius">Border & radius</In> — five named radii, one hairline
+  weight, dashed-incomplete variant.
+- <In href="/motion">Motion</In> — three durations, two easings, one prohibition
+  (never on `box-shadow`).
+- <In href="/zebra-lists">Zebra lists</In> — the four-band model used by every
+  selectable list across DreamLake.
 
 ## Components
 
-Reusable React primitives. The shared vocabulary every DreamLake app builds on top of.
+- <In href="/components/button">Button</In> — primary + ghost variants, four
+  states.
 
-- <In href="/components/chip">Chip</In> — small status-tinted label.
-- <In href="/components/button">Buttons</In> — primary, secondary, ghost,
-  destructive.
-- More atoms (status indicator, kbd, avatar, dropdown, timeline) and the chrome /
-  list components are landing one at a time. Check the left rail for what's live;
-  faded items are still in flight.
+The full atom catalog (Chip, Avatar, Status, Kbd, Dropdown, Panel, etc.) lives in the
+eventual `@dreamlake/uikit` npm package — not duplicated here.
 
 <Callout type="info">
   **Reading the source.** Every doc page cites its design-guide section
   (`staging/dreamlake-design-guide.html`) and any cross-referenced reasoning
-  (`staging/design.md`, `staging/zebra-list-style-guide.md`). Code examples come
-  straight from the components in this repo — what you see is what you ship.
+  (`staging/design.md`, `staging/zebra-list-style-guide.md`). What you see is
+  what `@dreamlake/uikit` ships.
 </Callout>
