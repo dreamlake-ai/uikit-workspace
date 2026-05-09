@@ -40,15 +40,14 @@ export const navGroups: NavGroup[] = [
   },
   {
     eyebrow: 'COMPONENTS · ATOMS',
-    count: '07',
+    count: '06',
     items: [
       { href: '/components/chip', label: 'chip' },
-      { href: '/components/status', label: 'status indicator', todo: true },
-      { href: '/components/kbd', label: 'keyboard hint', todo: true },
-      { href: '/components/avatar', label: 'avatar', todo: true },
+      { href: '/components/status', label: 'status indicator' },
+      { href: '/components/kbd', label: 'keyboard hint' },
+      { href: '/components/avatar', label: 'avatar' },
       { href: '/components/button', label: 'buttons' },
-      { href: '/components/timeline', label: 'timeline', todo: true },
-      { href: '/components/dropdown', label: 'dropdown', todo: true },
+      { href: '/components/dropdown', label: 'dropdown' },
     ],
   },
   {

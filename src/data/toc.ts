@@ -43,4 +43,22 @@ export const tocByRoute: Record<string, TocItem[]> = {
     { id: 'variants', label: 'Variants', level: 2 },
     { id: 'states', label: 'States', level: 2 },
   ],
+  '/components/status': [
+    { id: 'buckets', label: 'Buckets', level: 2 },
+    { id: 'styles', label: 'Styles', level: 2 },
+    { id: 'usage', label: 'Usage', level: 2 },
+  ],
+  '/components/kbd': [
+    { id: 'inline-within-copy', label: 'Inline within copy', level: 2 },
+    { id: 'combos-with-descriptions', label: 'Combos with descriptions', level: 2 },
+  ],
+  '/components/avatar': [
+    { id: 'sizes', label: 'Sizes', level: 2 },
+    { id: 'user-vs-org', label: 'User vs. org', level: 2 },
+    { id: 'with-a-name', label: 'With a name', level: 2 },
+  ],
+  '/components/dropdown': [
+    { id: 'states', label: 'States', level: 2 },
+    { id: 'with-a-label', label: 'With a label', level: 2 },
+  ],
 }
