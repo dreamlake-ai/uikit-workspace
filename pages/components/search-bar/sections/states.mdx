@@ -1,0 +1,20 @@
+import { SearchBarStatesSpecimen } from '../../../../src/components/design/SearchBarSpecimens'
+
+## States
+
+Three visual states: `rest` (empty, hint chip visible), `focus` (accent outline,
+typed query), and a populated rest (no hint chip — the user has already engaged
+the bar). Focus in the specimen below is *forced* via the `state="focus"` prop
+so the row reads as a side-by-side reference; in real use the consumer just
+focuses the underlying input and `:focus-within` paints the ring.
+
+<SearchBarStatesSpecimen />
+
+- **Rest.** `--search-bg` fill, transparent 1px border (so swapping in a
+  bordered variant later doesn't shift layout), 13×13 muted magnifier, mono
+  placeholder at 65% opacity. The hint chip is shown when the bar is empty.
+- **Focus.** A 2px outline at `color-mix(in srgb, var(--color-accent) 50%, transparent)`
+  with offset 0 — flush against the bar so the height stays stable. Driven by
+  `:focus-within` in real use.
+- **With query.** Once the user has typed, the trailing hint chip drops out:
+  the affordance has done its job, and the populated value gets the full row.

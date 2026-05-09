@@ -1,0 +1,17 @@
+import { SearchBarHintSpecimen } from '../../../../src/components/design/SearchBarSpecimens'
+
+## With a hint chip
+
+The trailing `hint` slot accepts any node — usually a `<Kbd>` from the keyboard
+hint atom, but free-form mono badges work too. The chip is anchored to the far
+right of the bar via `margin-left: auto`, so the input stretches into the
+remaining space.
+
+<SearchBarHintSpecimen />
+
+The canonical pairing is `<Kbd>⌘ K</Kbd>`, which signals the cross-app palette
+shortcut. List-scoped bars inside a panel reach for `/` instead (vim-flavoured,
+fewer chord collisions); transient surfaces — palettes, command pops, sheets —
+sometimes carry an `esc` hint to telegraph dismissal. In every case the chip is
+purely informational; consumers wire the actual keybinding themselves at the
+input level.
