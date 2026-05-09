@@ -1,0 +1,32 @@
+# dev-notes changelog
+
+Release notes for engineering docs in `dev-notes/`. Each entry covers
+substantive doc changes — new patterns, removed advice, restructured
+sections. README copy edits and typo fixes are skipped. See
+[`./README.mdx`](./README.mdx) for the folder convention and
+[`../CLAUDE.md`](../CLAUDE.md) for the release-notes policy.
+
+## 2026-05-09 — Adopt PR workflow + changelog policy
+
+- Pulled `CLAUDE.md` (PR-based workflow, no direct pushes to `main`)
+  and the changelog policy from `dreamlake-ai/viz-workspace`. This
+  repo inherits the same conventions verbatim — same stack, same
+  shape of doc, same agents working on both.
+- Created this changelog. From here on, every substantive
+  `dev-notes/*.mdx` update lands a release note here, and the PR
+  description cites the entry.
+- Updated `README.mdx` to reference both the PR workflow and this
+  changelog.
+
+Direct pushes to `main` during the initial bring-up of this repo
+(fork from viz-workspace, identity rebrand, dev-notes pull) were
+intentional — move fast while shaping the surface. From this PR
+onward: branch + PR for everything that lands on `main`.
+
+## 2026-05-09 — Initial dev-notes set (forked from viz-workspace)
+
+- Pulled `migration-patterns.mdx` and `README.mdx` verbatim from
+  `dreamlake-ai/viz-workspace`. The patterns are stack-specific
+  (Vike + React 19 + TW4 + pnpm + Netlify) and apply 1:1 here.
+- No project-identifying references to scrub — content is generic
+  enough to share across both repos.
