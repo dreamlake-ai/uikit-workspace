@@ -61,4 +61,31 @@ export const tocByRoute: Record<string, TocItem[]> = {
     { id: 'states', label: 'States', level: 2 },
     { id: 'with-a-label', label: 'With a label', level: 2 },
   ],
+  '/components/inspector-panel': [
+    { id: 'anatomy', label: 'Anatomy', level: 2 },
+    { id: 'shadow-tiers', label: 'Shadow tiers', level: 2 },
+  ],
+  '/components/eyebrow-title': [
+    { id: 'levels', label: 'Levels', level: 2 },
+    { id: 'when-to-use-which-level', label: 'When to use which level', level: 2 },
+  ],
+  '/components/tab-strip': [
+    { id: 'variants', label: 'Variants', level: 2 },
+    { id: 'active-states', label: 'Active states', level: 2 },
+  ],
+  '/components/zebra-row': [
+    { id: 'anatomy', label: 'Anatomy', level: 2 },
+    { id: 'states', label: 'States', level: 2 },
+    { id: 'status-buckets', label: 'Status buckets', level: 2 },
+  ],
+  '/components/nav-rail-item': [
+    { id: 'states', label: 'States', level: 2 },
+    { id: 'icon-variants', label: 'Icon variants', level: 2 },
+    { id: 'with-trailing-meta', label: 'With trailing meta', level: 2 },
+  ],
+  '/components/search-bar': [
+    { id: 'anatomy', label: 'Anatomy', level: 2 },
+    { id: 'states', label: 'States', level: 2 },
+    { id: 'with-a-hint-chip', label: 'With a hint chip', level: 2 },
+  ],
 }

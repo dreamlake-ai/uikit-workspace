@@ -54,18 +54,18 @@ export const navGroups: NavGroup[] = [
     eyebrow: 'COMPONENTS · CHROME',
     count: '03',
     items: [
-      { href: '/components/inspector-panel', label: 'inspector panel', todo: true },
-      { href: '/components/eyebrow-title', label: 'eyebrow + title', todo: true },
-      { href: '/components/tab-strip', label: 'tab strip', todo: true },
+      { href: '/components/inspector-panel', label: 'inspector panel' },
+      { href: '/components/eyebrow-title', label: 'eyebrow + title' },
+      { href: '/components/tab-strip', label: 'tab strip' },
     ],
   },
   {
     eyebrow: 'COMPONENTS · LISTS',
     count: '03',
     items: [
-      { href: '/components/zebra-row', label: 'zebra row', todo: true },
-      { href: '/components/nav-rail-item', label: 'nav-rail item', todo: true },
-      { href: '/components/search-bar', label: 'search bar', todo: true },
+      { href: '/components/zebra-row', label: 'zebra row' },
+      { href: '/components/nav-rail-item', label: 'nav-rail item' },
+      { href: '/components/search-bar', label: 'search bar' },
     ],
   },
   {

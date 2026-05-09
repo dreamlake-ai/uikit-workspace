@@ -6,6 +6,44 @@ sections. README copy edits and typo fixes are skipped. See
 [`./README.mdx`](./README.mdx) for the folder convention and
 [`../CLAUDE.md`](../CLAUDE.md) for the release-notes policy.
 
+## 2026-05-09 — Phase 3 batch: chrome (3) + lists (3)
+
+Third parallel-agent batch. Six new components, all reusable atoms
+graduating to `@dreamlake/uikit`:
+
+**Chrome:**
+- **`/components/inspector-panel`** (PR #23) — `<Panel />` with
+  3 shadow tiers (resting / lifted / hairline) + eyebrow + title +
+  body slot.
+- **`/components/eyebrow-title`** (PR #22) — `<EyebrowTitle />`
+  page-head/section-head pattern, 3 levels (h1/h2/h3); eyebrow renders
+  as a `<div>` (out of heading outline) so screen readers + rehype-
+  slug see real structure.
+- **`/components/tab-strip`** (PR #25) — `<TabStrip />` mono small-caps
+  tabs with 2px ink underline. FLIP-style animation deferred (TODO
+  comment on the underline implementation).
+
+**Lists:**
+- **`/components/zebra-row`** (PR #24) — `<ZebraRow />` reusable atom.
+  4 states (rest/hover/selected/focus), 5 status buckets, 2 parities.
+  The foundations `/zebra-lists` page documents the *pattern*; this
+  page documents the *component*. The agent picked `data-parity` for
+  the prop instead of carrying over the foundations specimens'
+  `data-zebra` attribute — different naming for the new component is
+  fine since the foundations specimens were left untouched per the
+  agent's out-of-scope rule.
+- **`/components/nav-rail-item`** (PR #26) — `<NavRailItem />`
+  left-rail row. 3 states × 4 icons (none/folder/dot/branch). Renders
+  as `<a>` with href, `<div>` otherwise.
+- **`/components/search-bar`** (PR #27) — `<SearchBar />` the docs-
+  page atom with --search-bg fill + `:focus-within` accent ring +
+  optional trailing hint chip slot. Distinct from
+  `src/components/SearchPalette.tsx` which is the existing cmd-K
+  overlay; both ship.
+
+This PR (`chore/wire-chrome-lists`) flips the 6 nav todos to live and
+registers 15 new TOC items.
+
 ## 2026-05-09 — Phase 3 batch: 4 more atoms (status, kbd, avatar, dropdown)
 
 Second parallel-agent batch lands the remaining atoms apart from
