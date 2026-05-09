@@ -157,9 +157,19 @@ export const Callout = ({
 )
 
 // ── Block: code block with chrome + working copy button ──────────
+//
+// CodeBlock just wraps a syntax-highlighted <pre> from rehype-shiki
+// with the head bar (lang label, file label, copy button). It does
+// NOT add its own <pre><code> any more — children come in already
+// wrapped (shiki's <pre class="shiki"><code>...</code></pre>), so we
+// render them directly. The mdx-components map's `pre` override is
+// what calls this with the right children + props.
 
 const cbWrapperCx =
-  'relative bg-code-bg border border-faint rounded-md my-[18px_0_22px] overflow-hidden'
+  // pre.shiki gets its background from theme.css (forced to
+  // --color-code-bg in both modes). Here we just normalize typography
+  // (font-size, line-height, padding) inside the chrome.
+  'relative border border-faint rounded-md [margin:18px_0_22px] overflow-hidden [&_pre.shiki]:m-0 [&_pre.shiki]:px-4 [&_pre.shiki]:py-3.5 [&_pre.shiki]:overflow-x-auto [&_pre.shiki]:text-[12.5px] [&_pre.shiki]:leading-[1.62] [&_pre.shiki_code]:font-mono'
 
 const cbHeadCx =
   'flex items-center gap-2.5 px-3 py-2 border-b border-faint bg-[color-mix(in_srgb,var(--color-ink)_3%,var(--color-code-bg))]'
@@ -171,8 +181,6 @@ const cbCopyBaseCx =
   'appearance-none border border-faint bg-transparent text-muted font-mono text-[10px] font-medium tracking-[0.08em] uppercase py-[3px] px-2 rounded-[5px] cursor-pointer transition-[color,border-color] duration-150 hover:text-ink hover:border-ink/[0.22]'
 const cbCopyDoneCx = 'text-accent! border-accent/50!'
 
-const cbPreCx = 'm-0 px-4 py-3.5 overflow-x-auto font-mono text-[12.5px] leading-[1.62] text-ink [&>code]:font-[inherit] [&>code]:bg-transparent [&>code]:border-0 [&>code]:p-0'
-
 export const CodeBlock = ({
   lang,
   file,
@@ -182,18 +190,19 @@ export const CodeBlock = ({
   file?: string
   children: ReactNode
 }) => {
-  const preRef = useRef<HTMLPreElement>(null)
+  const wrapperRef = useRef<HTMLDivElement>(null)
   const [copied, setCopied] = useState(false)
 
   const onCopy = () => {
-    const text = preRef.current?.innerText ?? ''
+    const pre = wrapperRef.current?.querySelector('pre')
+    const text = pre?.innerText ?? ''
     if (navigator.clipboard?.writeText) navigator.clipboard.writeText(text)
     setCopied(true)
     setTimeout(() => setCopied(false), 1400)
   }
 
   return (
-    <div className={cbWrapperCx} data-lang={lang}>
+    <div ref={wrapperRef} className={cbWrapperCx} data-lang={lang}>
       <div className={cbHeadCx}>
         <span className={cbLangCx}>{lang}</span>
         {file && <span className={cbFileCx}>{file}</span>}
@@ -206,33 +215,7 @@ export const CodeBlock = ({
           {copied ? 'Copied' : 'Copy'}
         </button>
       </div>
-      <pre ref={preRef} className={cbPreCx}>
-        <code>{children}</code>
-      </pre>
+      {children}
     </div>
   )
 }
-
-// ── Inline syntax-highlight spans for inside CodeBlock ───────────
-// TODO(shiki): replace with build-time syntax highlighting (rehype-shiki)
-// once we move prose to MDX. The hand-applied spans here paint over the
-// @theme code-token colors (--color-kw / --color-str / etc.).
-
-export const Kw = ({ children }: { children: ReactNode }) => (
-  <span className="text-kw font-semibold">{children}</span>
-)
-export const Str = ({ children }: { children: ReactNode }) => (
-  <span className="text-str">{children}</span>
-)
-export const Num = ({ children }: { children: ReactNode }) => (
-  <span className="text-num">{children}</span>
-)
-export const Com = ({ children }: { children: ReactNode }) => (
-  <span className="text-com italic">{children}</span>
-)
-export const Fn = ({ children }: { children: ReactNode }) => (
-  <span className="text-fn font-medium">{children}</span>
-)
-export const Tag = ({ children }: { children: ReactNode }) => (
-  <span className="text-tag">{children}</span>
-)
