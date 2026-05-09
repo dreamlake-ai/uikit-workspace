@@ -6,6 +6,31 @@ sections. README copy edits and typo fixes are skipped. See
 [`./README.mdx`](./README.mdx) for the folder convention and
 [`../CLAUDE.md`](../CLAUDE.md) for the release-notes policy.
 
+## 2026-05-09 — Phase 3 batch: 4 more atoms (status, kbd, avatar, dropdown)
+
+Second parallel-agent batch lands the remaining atoms apart from
+timeline (which was scoped out). Same orchestration pattern as the
+first batch (worktrees + agents + central wiring PR):
+
+- **`/components/status`** (PR #18) — `<Status />` indicator. 6
+  semantic-palette buckets × 3 styles (dot, dot-pulse, bar) +
+  optional `secondary` line.
+- **`/components/kbd`** (PR #16) — `<Kbd />` and `<KbdCombo />`.
+  Combos accept space-separated keys + optional description, with
+  leading or trailing placement.
+- **`/components/avatar`** (PR #19) — `<Avatar />` for users and
+  orgs. Tinted-ink monogram, **no hue per user** (the design rule).
+  4 sizes (20/26/32/48), 2 kinds (user radius 4 / org radius 2).
+- **`/components/dropdown`** (PR #17) — `<Dropdown />` static-
+  presentation surface. 4 states (rest/hover/focus/open). Real menu
+  semantics deferred to a future PR.
+
+Timeline atom was dropped from scope per user direction.
+
+This PR (`chore/wire-atoms-batch-2`) flips the 4 nav todos to live,
+registers 10 new TOC items across the 4 routes, and adds this
+CHANGELOG entry.
+
 ## 2026-05-09 — Fix: zebra specimens + revert TopBar crumb
 
 The Zebra-list specimens shipped by the parallel-agent batch diverged
