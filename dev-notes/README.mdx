@@ -34,9 +34,19 @@ components appear (later) does the file diverge from "just Markdown".
   meant to leave the repo (gist, blog), keep examples generic enough
   that they read as patterns, not memoirs.
 
+## Workflow
+
+All changes to docs in this folder go through a pull request — see
+[`../CLAUDE.md`](../CLAUDE.md). Substantive changes (new patterns,
+removed advice, restructured sections) get a release note in
+[`./CHANGELOG.mdx`](./CHANGELOG.mdx); the PR description cites the
+entry so reviewers see the running history.
+
 ## Index
 
 - [`migration-patterns.mdx`](./migration-patterns.mdx) — Patterns from
   taking an HTML/CSS/JS design prototype to a pre-rendered, token-
   driven React app. Stack choices, CSS migration in stages, JS-to-
   React patterns, deploy workflow, common gotchas.
+- [`CHANGELOG.mdx`](./CHANGELOG.mdx) — Running history of dev-notes
+  changes. New entry per substantive PR.
