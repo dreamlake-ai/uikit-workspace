@@ -11,12 +11,8 @@ import type { TocItem } from '../components/RightTOC'
 export const tocByRoute: Record<string, TocItem[]> = {
   '/': [
     { id: 'install', label: 'Install', level: 2 },
-    { id: 'your-first-scene', label: 'Your first scene', level: 2 },
-    { id: 'html-scaffold', label: 'HTML scaffold', level: 3 },
-    { id: 'replay-a-recorded-bag', label: 'Replay a recorded bag', level: 2 },
-    { id: 'built-in-layers', label: 'Built-in layers', level: 2 },
-    { id: 'react-binding', label: 'React binding', level: 2 },
-    { id: 'where-to-go-next', label: 'Where to go next', level: 2 },
+    { id: 'foundations', label: 'Foundations', level: 2 },
+    { id: 'components', label: 'Components', level: 2 },
   ],
   '/foundations/surfaces': [
     { id: 'tokens', label: 'Tokens', level: 2 },
