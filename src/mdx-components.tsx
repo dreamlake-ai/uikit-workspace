@@ -1,5 +1,4 @@
 import {
-  cloneElement,
   isValidElement,
   type ComponentProps,
   type ReactElement,
@@ -57,15 +56,11 @@ export const mdxComponents = {
     // Re-render the original <pre> as a child of our CodeBlock chrome,
     // preserving every property shiki set (class, dual-theme inline
     // styles, data attributes).
-    const innerPre = cloneElement(
-      <pre className={className} {...rest}>
-        {children}
-      </pre>,
-    )
-
     return (
       <CodeBlock lang={lang} file={fileStr}>
-        {innerPre}
+        <pre className={className} {...rest}>
+          {children}
+        </pre>
       </CodeBlock>
     )
   },
