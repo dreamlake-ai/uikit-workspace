@@ -72,8 +72,8 @@ export const navGroups: NavGroup[] = [
     eyebrow: 'REFERENCE',
     count: '02',
     items: [
-      { href: '/icons', label: 'Icons', todo: true },
-      { href: '/donts', label: 'Do · don’t', todo: true },
+      { href: '/icons', label: 'Icons' },
+      { href: '/donts', label: 'Do · don’t' },
     ],
   },
 ]
