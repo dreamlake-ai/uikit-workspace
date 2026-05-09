@@ -1,0 +1,18 @@
+import { NavRailItemStatesSpecimen } from '../../../../src/components/design/NavRailItemSpecimens'
+
+## States
+
+Three visual states: `rest`, `hover`, `active`. Hover and active in the specimen
+below are *forced* via the `state` prop — the styling is stamped unconditionally so
+the row reads as a side-by-side reference, not as something you have to mouse over.
+
+<NavRailItemStatesSpecimen />
+
+- **Rest.** Transparent fill, ink label at weight 500, mono meta in muted ink at .55
+  alpha. The native `:hover` rule sits underneath so a real cursor still paints the
+  hover wash without a `state` prop.
+- **Hover.** A 5% ink wash via `color-mix(in srgb, var(--color-ink) 5%, transparent)`.
+  Label color and weight are unchanged — only the surface shifts.
+- **Active.** `bg-selected` — i.e. `--color-selected`, the same value the design-guide
+  calls `--selected-bg`. Label promotes to weight 600 and stays at ink. This is the
+  one row per rail that says "you are here".
