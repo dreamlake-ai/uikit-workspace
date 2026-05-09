@@ -1,0 +1,22 @@
+import { Crumbs, Lede } from '../../../src/components/prose'
+import Sizes from './sections/sizes.mdx'
+import Kinds from './sections/kinds.mdx'
+import WithName from './sections/with-name.mdx'
+
+<Crumbs trail={[{ href: '/', label: '@dreamlake/uikit' }, { href: '/components', label: 'Components' }]} here="Avatar" />
+
+# Avatar — tinted-ink monogram square
+
+<Lede>
+  A small ink-tinted square carrying a 1–2 letter monogram. One atom, two
+  kinds: **user** (radius 4, lighter ink) and **org** (radius 2, heavier ink).
+  No hue per user — every avatar uses the same `--color-ink` paint at a low
+  alpha so the page palette stays disciplined; the only signals are the
+  monogram itself and (for org) the heavier ink weight.
+</Lede>
+
+<Sizes />
+
+<Kinds />
+
+<WithName />
