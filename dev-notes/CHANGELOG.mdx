@@ -6,6 +6,21 @@ sections. README copy edits and typo fixes are skipped. See
 [`./README.mdx`](./README.mdx) for the folder convention and
 [`../CLAUDE.md`](../CLAUDE.md) for the release-notes policy.
 
+## 2026-05-09 — Foundations / Typography
+
+- Lands `/foundations/typography` — port of
+  `staging/dreamlake-design-guide.html` §03. Single-page (no `##`
+  sections to split into files), Lede + `<TypeSpecimen />` + a
+  short note on the global `ss01` / `cv11` Inter Tight feature
+  settings.
+- New `<TypeSpecimen />` component renders the 9 typographic
+  classes (h1 / h2 / h3 / body / row · ledger / meta · timestamp /
+  eyebrow / tag / kbd) live, each next to its spec annotation
+  (font + size/leading + tracking). Demo strings ported verbatim
+  from the design-guide HTML.
+- `src/data/nav.ts` flips typography todo → live. No `toc.ts`
+  entry needed (page has no h2 anchors).
+
 ## 2026-05-09 — Foundations / Semantic palette
 
 - Lands `/foundations/palette` per the per-section-file pattern from
