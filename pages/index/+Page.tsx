@@ -36,7 +36,7 @@ const docContentCx = [
 export default function Page() {
   return (
     <main className={docContentCx}>
-      <Crumbs trail={[{ href: '/', label: '@dreamlake/ros-viz' }]} here="Quick start" />
+      <Crumbs trail={[{ href: '/', label: '@dreamlake/uikit' }]} here="Quick start" />
 
       <h1>Quick start</h1>
       <Lede>

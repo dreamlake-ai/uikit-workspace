@@ -96,7 +96,7 @@ export function TopBar() {
           </span>
         </span>
         <span className={slashCx}>/</span>
-        <span className={docsCx}>ros-viz</span>
+        <span className={docsCx}>uikit</span>
         <span className={verCx}>
           <span className={verVCx}>v0.3.1</span>
           <span className={verShaCx}>
@@ -108,7 +108,7 @@ export function TopBar() {
 
       <nav className={topcrumbsCx} aria-label="Breadcrumb" id="top-crumbs">
         <a href="/" className="text-inherit no-underline transition-colors duration-150 hover:text-ink">
-          @dreamlake/ros-viz
+          @dreamlake/uikit
         </a>
         <span className="sep opacity-50">/</span>
         <span className="here text-ink">Quick start</span>
