@@ -1,0 +1,20 @@
+import { Crumbs, Lede } from '../../../src/components/prose'
+import Anatomy from './sections/anatomy.mdx'
+import ShadowTiers from './sections/shadow-tiers.mdx'
+
+<Crumbs trail={[{ href: '/', label: '@dreamlake/uikit' }, { href: '/components', label: 'Components' }]} here="Inspector panel" />
+
+# Inspector panel — --panel-bg · 1px --faint · layered shadow stack · the universal panel shell
+
+<Lede>
+  The chassis every other panel in the guide pours into. A `--panel-bg`
+  surface, a 1px `--faint` hairline, a 10px corner, and one of three shadow
+  tiers — **resting** for cards, **lifted** for popovers, **hairline** for
+  nested panels. An optional eyebrow + title chrome sits above the children
+  slot; consumers that just want the surface drop the head and pass children
+  only.
+</Lede>
+
+<Anatomy />
+
+<ShadowTiers />
