@@ -46,7 +46,7 @@ const SearchIcon = () => (
 // The same component is also createPortal'd to <body> when open (so
 // it physically escapes the topbar's stacking context — see SearchInput).
 const searchCx =
-  'col-start-2 row-start-1 self-center justify-self-end mr-[56px] flex items-center gap-2 w-80 max-w-full px-2.5 py-1.5 bg-search rounded-[4px] border border-transparent transition-[border-color,background-color,width,box-shadow] duration-[180ms] focus-within:border-[color-mix(in_srgb,var(--color-accent)_50%,transparent)] h-7 ' +
+  'col-start-2 row-start-1 self-center justify-self-end mr-[56px] flex items-center gap-2 w-80 max-w-full pl-2.5 pr-1.5 py-1.5 bg-search rounded-[8px] border border-transparent transition-[border-color,background-color,width,box-shadow] duration-[180ms] focus-within:border-[color-mix(in_srgb,var(--color-accent)_50%,transparent)] h-7 ' +
   'max-[880px]:w-[200px] max-[880px]:mx-3 ' +
   'pal-open:fixed pal-open:top-1.5 pal-open:left-auto pal-open:m-0 pal-open:max-w-none pal-open:z-[71] pal-open:bg-bg pal-open:border-faint pal-open:shadow-[0_4px_14px_var(--shadow-tint-2)] ' +
   'pal-open:right-[calc(max(240px,calc((100vw-1320px)/2+240px))+56px)] ' +
