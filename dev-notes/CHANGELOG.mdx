@@ -6,6 +6,42 @@ sections. README copy edits and typo fixes are skipped. See
 [`./README.mdx`](./README.mdx) for the folder convention and
 [`../CLAUDE.md`](../CLAUDE.md) for the release-notes policy.
 
+## 2026-05-09 — Phase 3 batch: parallel agents land 4 pages
+
+Four design-guide pages landed concurrently via subagents working in
+isolated git worktrees, each on its own `feat/agent-*` branch:
+
+- **`/geometry`** (PR #9) — Geometry: spacing scale, radii, hairlines,
+  shadows, motion. New components: `<SpacingScale />`,
+  `<RadiiSpecimen />`, `<HairlineSpecimen />`, `<ShadowSpecimen />`.
+- **`/zebra-lists`** (PR #10) — The four-band model, per-state colors,
+  multi-row runs. New components: `<ZebraSpecimen />`,
+  `<ZebraStatesSpecimen />`, `<ZebraRunSpecimen />`. Multi-row run
+  merging implemented in JS via `aria-selected` + `data-run-pos`.
+- **`/components/chip`** (PR #11) — first reusable atom. Six tones
+  (`neutral` / `accent` / `ok` / `warn` / `error` / `muted`) plus a
+  leading-icon slot. The actual `<Chip />` lives at
+  `src/components/Chip.tsx` (eventually exported from
+  `@dreamlake/uikit`); `ChipSpecimen` under `src/components/design/`
+  consumes it for the docs gallery.
+- **`/components/button`** (PR #13) — second reusable atom. Two
+  variants (`ghost`, `primary` — the only two the design-guide
+  source demonstrates; no spec contamination from the original
+  4-variant suggestion). `<Button />` at `src/components/Button.tsx`.
+
+Orchestration pattern (worth keeping for future batches):
+- Pre-create 4 git worktrees on `main` with branches `feat/agent-*`.
+- Spawn 4 background `general-purpose` agents in parallel, each with
+  a self-contained prompt that includes the source spec, file
+  layout, and explicit "do NOT modify nav.ts / toc.ts / CHANGELOG.mdx"
+  contract so the per-agent PRs never conflict on shared files.
+- Merge agent PRs in order (no conflicts because of the contract).
+- One central `chore/wire-agent-pages` PR adds the 4 nav entries
+  (todos → live), 4 TOC route entries, and this CHANGELOG bullet
+  — keeping the integration delta visible in one place.
+
+This PR (`chore/wire-agent-pages`) is that consolidation.
+
 ## 2026-05-09 — Replace ros-viz placeholder with uikit landing page
 
 - `pages/index/+Page.mdx` — port to a real `@dreamlake/uikit`
