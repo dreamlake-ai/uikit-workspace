@@ -1,0 +1,13 @@
+import { KbdComboSpecimen } from '../../../../src/components/design/KbdComboSpecimen'
+
+## Combos with descriptions
+
+`<KbdCombo />` pairs a space-separated `combo` string with an optional
+`description`. The combo splits on whitespace so each token becomes its own
+`<Kbd>` pill — that's how `⌘ ⇧ P` reads as three keys with a visual gap rather
+than one fused rectangle. `placement` decides which side the description rides
+on: `leading` (the default) puts the keys first and reads like an instruction,
+`trailing` puts the description first and reads like a caption — the same
+shape as the hints along the bottom of a vim-help overlay.
+
+<KbdComboSpecimen />
