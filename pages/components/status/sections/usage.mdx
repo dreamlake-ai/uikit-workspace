@@ -1,0 +1,22 @@
+## Usage
+
+Status reads two ways: **inline** within running copy ("the
+ingest job `ingest · webhook` finished at 03:14") and as a **row leader** at the
+left edge of a list row, where it sets the row's overall mood. Both forms keep
+the same anatomy — `<dot|bar> label · secondary` — so a row's status can be
+quoted into prose without re-styling.
+
+A few rules of thumb:
+
+- **One bucket per row.** If a row genuinely straddles two states (queued *and*
+  stale, say), pick the more actionable one and let the secondary clause carry
+  the other.
+- **Reserve `dot-pulse` for live ticking.** A pulsing halo on a row that is not
+  actually moving reads as broken animation. If the job last reported 30s ago,
+  it is `idle`, not `active`.
+- **Secondary is optional and muted.** It is the parenthetical — duration,
+  trigger, exit code. The label carries the bucket's name, the secondary
+  carries the *why*. Skip it when the label is self-evident (`queued`).
+- **Don't pair with a tinted Chip in the same row.** The dot already carries
+  the hue; doubling up just makes the row noisier. Either a Status indicator
+  *or* a tinted Chip per concept — not both.
