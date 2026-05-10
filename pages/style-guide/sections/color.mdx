@@ -1,0 +1,70 @@
+import { SurfaceTokens } from '../../../src/components/design/SurfaceTokens'
+import { PaletteGrid } from '../../../src/components/design/PaletteGrid'
+
+## Color
+
+Color splits across three concerns: the *surface stack* (where things sit), the *ink
+pair* (what users read), and a *six-color semantic palette* (what's happening). No
+primary/secondary distinction — semantics come first, and the palette stays at six
+forever.
+
+### Surfaces
+
+Three surface tokens — `--bg`, `--panel-bg`, `--rail-bg` — relate differently in light
+vs. dark. Light separates `--bg` from `--panel-bg` (subtle cream-on-cream lift) and
+shares `--rail-bg` with `--panel-bg`. Dark collapses `--panel-bg` onto `--bg`; panels
+lift via 1px `--faint` + shadow alone, and `--rail-bg` *drops* below `--bg` so the rail
+recedes into a deeper plane.
+
+<SurfaceTokens />
+
+### Ink
+
+Two text colors carry every glyph on the page: `--ink` for primary content, `--muted`
+for secondary. There is no third gray — anything paler is achieved with opacity on
+`--ink`, not by introducing another token. Both flip in dark mode against the inverted
+surface stack.
+
+| Token | Light | Dark | Used on |
+|---|---|---|---|
+| `--ink` | `#1a1a1a` | `#ececec` | Body copy, titles, ledger rows, kbd glyphs |
+| `--muted` | `#6b6b6b` | `#8a8a8a` | Eyebrows, meta cells, placeholder text, neutral status |
+
+### Semantic palette
+
+All domain coloring — pipeline kinds, run statuses, transform types, event types,
+branch identities, release kinds, diff ops — pulls from one shared 6-color set. Every
+other page maps its concepts onto these six. **`dreamlake-pipelines`** is the canonical
+source.
+
+<PaletteGrid />
+
+### When adding a new concept
+
+1. **Open `pipelines-canvas.jsx`.** `PIPE_KIND_COLOR`, `PIPE_STATUS`, and
+   `PIPE_FLOW_LABEL` are the canonical mappings. The legend (`PipeLegend`) is what users
+   learn the palette from.
+2. **Map by *function*, not vibe.** "Ingest" is a *successful inflow* → green
+   (`#1f8f4a`), not blue. "RC release" is an *active candidate* → blue (`#23aaff`), not
+   amber. "Draft release" is *pre-success* → green. The semantic bucket trumps any
+   aesthetic preference.
+3. **Never invent a near-miss hex.** `#3a7bd5`, `#c08a2a`, `#5a8fbf` were all bugs in
+   earlier timetravel work — they tried to be "a slightly different blue/amber" and just
+   looked broken next to pipelines. Distinguish two same-bucket concepts via **glyph +
+   label**, not a third color.
+4. **`tokens.css` is for surface chrome, not domain coloring.** `--accent` happens to
+   equal `#23aaff` because the active/running color is also the UI accent. Don't add
+   `--ok` / `--error` to `tokens.css`; keep the six hex values inline at use sites so
+   `grep` tells the truth.
+
+### Why six and not more
+
+- **Six is the ceiling for a legend.** The pipelines flow legend is already 5 rows tall
+  (`running` / `queued` / `stalled` / `error` / `ok`); a 7th hue pushes it past the
+  threshold where users can hold the mapping in working memory.
+- **Each hue does double duty.** Every color carries a status meaning *and* a kind
+  meaning *and* a domain-concept meaning. That collision is the point — if "ingest" and
+  "ok" both mean *data flowed in successfully*, they should look the same.
+- **Outliers get caught at review.** A `grep '#[0-9a-f]\{6\}'` across `*.jsx` should
+  return only these six values plus surface tokens. Anything else is either a typo, a
+  leftover from prototyping, or a missed alignment.

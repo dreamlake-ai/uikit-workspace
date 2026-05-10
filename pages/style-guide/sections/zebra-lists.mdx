@@ -1,0 +1,62 @@
+import { ZebraSpecimen } from '../../../src/components/design/ZebraSpecimen'
+import { ZebraStatesSpecimen } from '../../../src/components/design/ZebraStatesSpecimen'
+import { ZebraRunSpecimen } from '../../../src/components/design/ZebraRunSpecimen'
+
+## Zebra lists
+
+Every list row is in exactly one of four bands at any moment: **base**, **zebra**,
+**hover**, **selected**. Each band picks a different hue axis so they never collide.
+
+### The four-band model
+
+**Zebra** is structural — a cool ink-step that carries scan rhythm. **Hover** is
+transient — a soft tint of the active blue that previews the eventual selection.
+**Selected** is committed — saturated blue with white text. **Base** is "this row is
+here," equal to the panel `--bg`.
+
+Rows are not flush. A `gap: 2px` between every row lets the panel `--bg` show through,
+which is what makes the alternating zebra fills tile rather than smear and lets a
+hovered or selected row read as a discrete tile lifting out of the list — without any
+per-row border.
+
+<ZebraSpecimen />
+
+### Per-state colors
+
+Precedence is strict — only one rule wins per render:
+
+```
+selected  >  hover  >  zebra (odd)  >  base (even)
+```
+
+A row that is both odd-parity *and* hovered paints with `--color-row-hover`, not the
+zebra fill — hover overrides zebra. A selected row paints `--color-row-selected`
+regardless of parity or hover state. Text colors do not change between bands; the one
+exception is bright-blue selected, which forces every span inside the row to
+`--color-row-selected-fg` (white) so a saturated selection reads as one identity.
+
+Hover is **bg-only**. No inset border, no ring. The 2px row gap already detaches the
+hovered tile from its neighbours.
+
+<ZebraStatesSpecimen />
+
+### Multi-row runs
+
+When two or more rows are selected, **consecutive selected rows merge into one visual
+block.** The two ways to draw the block are not interchangeable; pick by what the
+selection *means*:
+
+- **Ring** — a 2px accent border around the run, rows underneath keep their own zebra
+  parity showing through. Use for **transient** selection (bulk-delete, bulk-tag,
+  bulk-move). Loud and short-lived.
+- **Fill** — every selected row paints `--color-row-selected`, optionally with a left
+  rail. Use for **persistent** selection that drives downstream UI (compare panel,
+  side-by-side charts, batch editor). Commits visually.
+
+The specimen below renders the ring form, mirroring the design-guide source. The
+wrapper is transparent — its `::after` pseudo-element draws the 2px accent border,
+sitting at `z:2` above the rows so the stroke isn't occluded by row backgrounds. Rows
+inside the run keep their zebra parity uninterrupted; the ring is purely an outer
+indicator.
+
+<ZebraRunSpecimen />
