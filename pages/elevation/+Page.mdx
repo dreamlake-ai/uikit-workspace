@@ -25,8 +25,14 @@ A small fixed set of layers — never invent ad-hoc z-indices.
 
 | Layer | z-index | What sits there |
 |---|---|---|
-| Page chrome (sticky topbar) | `50` | The doc topbar |
+| Page content | `0` (auto) | Body, prose, specimens — the default plane |
 | Sticky in-page chrome | `3` | Sticky `<H2>` headings inside the prose |
-| Page content | `auto` (0) | Default — everything in the doc body |
-| Overlay backdrop | `70` | Dim layer behind the search palette |
-| Overlay surface | `71` | The search palette + input itself when open |
+| Search backdrop | `40` | Dim/blur layer behind the cmd+K palette when open |
+| Search panel | `49` | The cmd+K results card surface |
+| Page chrome (topbar) | `50` | The sticky doc topbar |
+| Search input (open) | `71` | The search input portals out of the topbar when the palette is open, sitting above every other layer so it's the only thing receiving keystrokes |
+
+Component-internal stacking (the `ThemeToggle` puck, the `ZebraRunSpecimen`
+selection ring) uses small ints (`z-0`/`z-10`/`z-[1]`/`z-[2]`) inside its own
+`isolate` boundary. Those don't compose with the page ladder above — they're
+private to the component.
