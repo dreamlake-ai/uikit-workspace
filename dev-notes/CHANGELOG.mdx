@@ -6,6 +6,34 @@ sections. README copy edits and typo fixes are skipped. See
 [`./README.mdx`](./README.mdx) for the folder convention and
 [`../CLAUDE.md`](../CLAUDE.md) for the release-notes policy.
 
+## 2026-05-09 — Consolidate: 8 foundation routes → one /style-guide page
+
+Per-foundation routes (`/color`, `/typography`, `/spacing-layout`,
+`/iconography`, `/elevation`, `/border-radius`, `/motion`,
+`/zebra-lists`) collapse into a single `/style-guide` route.
+
+LeftNav goes from `STYLE GUIDE (8 items)` to `GET STARTED → Style
+guide` — one entry. The full design contract is now one long page,
+which is how a real style guide reads (top-to-bottom, color first,
+zebra last).
+
+Each foundation is still its own MDX file under
+`pages/style-guide/sections/<foundation>.mdx` — so authoring stays
+modular even though presentation collapses. The `+Page.mdx` imports
+all 8 sections and renders them in order with the page-level Lede +
+Crumbs.
+
+Internal heading hierarchy:
+  H1   Style Guide
+  H2   per foundation (Color, Typography, …)
+  H3   sub-sections within (Surfaces, Ink, Spacing scale, …)
+
+3 routes total now: `/`, `/style-guide`, `/components/button`.
+
+Verified: `pnpm build` clean (~230ms, 3 HTML pre-rendered, typecheck
+gate passes). All 8 foundation h2 ids verified against
+`tocByRoute['/style-guide']`.
+
 ## 2026-05-09 — Restructure: Style Guide foundations + 1 component example
 
 Major scope reset on the docs site. Was 20 pages (every design-guide

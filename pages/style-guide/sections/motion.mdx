@@ -1,14 +1,8 @@
-import { Crumbs, Lede } from '../../src/components/prose'
+## Motion
 
-<Crumbs trail={[{ href: '/', label: '@dreamlake/uikit' }]} here="Motion" />
+Three durations, two easings, and one explicit prohibition.
 
-# Motion
-
-<Lede>
-  Three durations, two easings, and one explicit prohibition.
-</Lede>
-
-## Durations & easings
+### Durations & easings
 
 - **120ms ease** — background and `border-radius` transitions on rows. Fast enough to
   feel like an instant response to hover.
@@ -17,7 +11,7 @@ import { Crumbs, Lede } from '../../src/components/prose'
 - **250ms ease** — chrome morph (the topbar's merged-state crossfade as the H1 scrolls
   past). Slow enough to read as a deliberate transition rather than a flicker.
 
-## When not to animate
+### When not to animate
 
 **Never on `box-shadow`** — except the focus-visible outline. Animating shadow
 composites every frame and reads as "the panel is breathing"; the resting shadow is

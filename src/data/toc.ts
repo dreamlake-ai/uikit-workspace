@@ -13,37 +13,15 @@ export const tocByRoute: Record<string, TocItem[]> = {
     { id: 'style-guide', label: 'Style guide', level: 2 },
     { id: 'components', label: 'Components', level: 2 },
   ],
-  '/color': [
-    { id: 'surfaces', label: 'Surfaces', level: 2 },
-    { id: 'ink', label: 'Ink', level: 2 },
-    { id: 'when-adding-a-new-concept', label: 'When adding a new concept', level: 2 },
-    { id: 'why-six-and-not-more', label: 'Why six and not more', level: 2 },
-  ],
-  '/spacing-layout': [
-    { id: 'spacing-scale', label: 'Spacing scale', level: 2 },
-    { id: 'page-grid', label: 'Page grid', level: 2 },
-    { id: 'breakpoints', label: 'Breakpoints', level: 2 },
-  ],
-  '/elevation': [
-    { id: 'shadow-scale', label: 'Shadow scale', level: 2 },
-    { id: 'z-index-layers', label: 'Z-index layers', level: 2 },
-  ],
-  '/border-radius': [
-    { id: 'radius-scale', label: 'Radius scale', level: 2 },
-    { id: 'hairlines--dividers', label: 'Hairlines & dividers', level: 2 },
-  ],
-  '/motion': [
-    { id: 'durations--easings', label: 'Durations & easings', level: 2 },
-    { id: 'when-not-to-animate', label: 'When not to animate', level: 2 },
-  ],
-  '/iconography': [
-    { id: 'categories', label: 'Categories', level: 2 },
-    { id: 'migration-backlog', label: 'Migration backlog', level: 2 },
-  ],
-  '/zebra-lists': [
-    { id: 'the-four-band-model', label: 'The four-band model', level: 2 },
-    { id: 'per-state-colors', label: 'Per-state colors', level: 2 },
-    { id: 'multi-row-runs', label: 'Multi-row runs', level: 2 },
+  '/style-guide': [
+    { id: 'color', label: 'Color', level: 2 },
+    { id: 'typography', label: 'Typography', level: 2 },
+    { id: 'spacing--layout', label: 'Spacing & layout', level: 2 },
+    { id: 'iconography', label: 'Iconography', level: 2 },
+    { id: 'elevation--depth', label: 'Elevation & depth', level: 2 },
+    { id: 'border--radius', label: 'Border & radius', level: 2 },
+    { id: 'motion', label: 'Motion', level: 2 },
+    { id: 'zebra-lists', label: 'Zebra lists', level: 2 },
   ],
   '/components/button': [
     { id: 'variants', label: 'Variants', level: 2 },
