@@ -1,0 +1,20 @@
+## Usage
+
+```tsx file="App.tsx"
+import { Button } from '@dreamlake/uikit'
+
+export function Toolbar() {
+  return (
+    <>
+      <Button variant="primary" onClick={onSave}>Save</Button>
+      <Button variant="ghost" onClick={onCancel}>Cancel</Button>
+      <Button variant="ghost" icon={<span>⌘S</span>}>Save (⌘S)</Button>
+    </>
+  )
+}
+```
+
+The default variant is `ghost` — leave it unset for secondary actions, set
+`variant="primary"` for the single accent-fill CTA per surface. The component
+forwards every standard `<button>` attribute (`onClick`, `disabled`, `type`,
+`aria-*`, …), so you don't need to wrap it for accessibility.
