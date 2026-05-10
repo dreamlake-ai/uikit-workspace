@@ -6,10 +6,14 @@ import {
   type ReactNode,
 } from 'react'
 import {
+  Callout,
   CodeBlock,
+  Crumbs,
   H1 as ProseH1,
   H2 as ProseH2,
   H3 as ProseH3,
+  In,
+  Lede,
 } from './components/prose'
 
 // Shape of the props MDX passes to a `pre` override. Augments the
@@ -48,6 +52,15 @@ export const mdxComponents: MDXComponents = {
   h3: ({ id, children }: HeadingProps) => (
     <ProseH3 id={id ?? ''}>{children}</ProseH3>
   ),
+
+  // Custom prose primitives — surfaced by name so .mdx files can use
+  // <Lede>, <Crumbs>, <Callout>, <In> without an explicit import. JSX
+  // resolves PascalCase tags first against the file's local scope, then
+  // falls back to the components passed into MDXProvider.
+  Lede,
+  Crumbs,
+  Callout,
+  In,
 
   pre: (props: PreProps) => {
     const { children, className, ...rest } = props
