@@ -14,10 +14,10 @@ type Radius = {
 
 const radii: Radius[] = [
   { px: 3, role: 'kbd · tag', description: 'Inline glyph elements only.' },
-  { px: 6, role: 'search · input', description: 'Search bars, single-line inputs.' },
-  { px: 7, role: 'resting row', description: 'Zebra-list row at rest and on hover.' },
-  { px: 8, role: 'card', description: 'Cards and lab tiles.' },
-  { px: 10, role: 'panel · selected', description: 'Panels, selected rows, selection runs.', isToken: true },
+  { px: 6, role: 'badge', description: 'Inline kbd-like chips and version badges.' },
+  { px: 8, role: 'card', description: 'Cards, state tables, and lab tiles.' },
+  { px: 10, role: 'panel · input', description: 'Panels, popovers, search input, palette buttons.', isToken: true },
+  { px: 12, role: 'list row', description: 'Zebra-list rows at rest, hover, and selection-run wrappers.' },
 ]
 
 const cardCx = 'border border-faint rounded-md bg-panel p-3 flex flex-col gap-2'
