@@ -29,7 +29,7 @@ const RUN_END = 3
 
 const rowBaseCx =
   'grid grid-cols-[56px_minmax(0,1fr)_auto] items-center gap-3 ' +
-  'px-2.5 py-1.5 rounded-[7px] font-mono text-[11.5px] text-ink ' +
+  'px-2.5 py-1.5 rounded-[12px] font-mono text-[11.5px] text-ink ' +
   'bg-row-base data-[zebra=odd]:bg-row-zebra'
 
 const idCx = 'text-[10.5px] text-muted opacity-70'
