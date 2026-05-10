@@ -24,7 +24,9 @@ export const tocByRoute: Record<string, TocItem[]> = {
     { id: 'zebra-lists', label: 'Zebra lists', level: 2 },
   ],
   '/components/button': [
+    { id: 'usage', label: 'Usage', level: 2 },
     { id: 'variants', label: 'Variants', level: 2 },
     { id: 'states', label: 'States', level: 2 },
+    { id: 'props', label: 'Props', level: 2 },
   ],
 }
