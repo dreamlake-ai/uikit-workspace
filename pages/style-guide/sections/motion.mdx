@@ -1,15 +1,26 @@
 ## Motion
 
-Three durations, two easings, and one explicit prohibition.
+Three tiers, two custom easings, one prohibition.
 
 ### Durations & easings
 
-- **120ms ease** — background and `border-radius` transitions on rows. Fast enough to
-  feel like an instant response to hover.
-- **140ms ease-out** — overlay and popover entry (vim-help, command palette). Slightly
-  slower than rows, with a settled-in tail.
-- **250ms ease** — chrome morph (the topbar's merged-state crossfade as the H1 scrolls
-  past). Slow enough to read as a deliberate transition rather than a flicker.
+**Tier 1 — feedback (100–150ms · linear ease)**
+- `100ms` — search palette result rows on hover.
+- `120ms` — nav-rail rows on hover and selection.
+- `150ms` — Tailwind's default; everything else color/border transitions through here
+  (prose links, copy/anchor buttons, palette inner borders).
+
+**Tier 2 — chrome morph (180–250ms)**
+- `180ms` — search input grows wider when the cmd+K palette opens.
+- `220ms` — palette backdrop fades + blurs in.
+- `250ms` — topbar merged-state crossfade as the H1 scrolls past, brand → breadcrumb
+  swap, palette panel slide. Uses `cubic-bezier(.4, .7, .3, 1)` — a soft ease-out with
+  a settled tail.
+
+**Tier 3 — spring (420ms)**
+- `420ms` — theme-toggle puck. Uses `cubic-bezier(.34, 1.45, .55, 1)` for an overshoot
+  that reads as a button-press, not a crossfade. The only animation in the kit that
+  doesn't return-to-rest by 250ms.
 
 ### When not to animate
 
@@ -17,6 +28,6 @@ Three durations, two easings, and one explicit prohibition.
 composites every frame and reads as "the panel is breathing"; the resting shadow is
 meant to be invisible after first paint.
 
-Honor `prefers-reduced-motion` everywhere. The theme toggle's animated puck and any
-sliding underline collapse to instant transitions when the user has reduced-motion set;
+Honor `prefers-reduced-motion` everywhere. The theme toggle's spring puck and any
+slide-in chrome collapse to instant transitions when the user has reduced-motion set;
 nothing else moves under that media query.
