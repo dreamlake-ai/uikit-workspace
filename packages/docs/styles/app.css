@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+/* Pull in @dreamlake/uikit's design tokens (--color-bg, --color-ink,
+   --color-accent, etc.) so the library's components render correctly
+   inside the doc site. The doc-template tokens below are separate —
+   they paint the docs chrome, not the library primitives. */
+@import "../../uikit/src/styles.css";
+
 /* ─────────────────────────────────────────────────────────────────
    Prefixed theme tokens — one-to-one with the dreamlake palette so
    utility classes (bg-doc-template-bg, text-doc-template-ink, etc.)

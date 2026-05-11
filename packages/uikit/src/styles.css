@@ -1,0 +1,98 @@
+/* ─────────────────────────────────────────────────────────────────
+   @dreamlake/uikit design tokens.
+
+   Consumers import this once at the app root (or via app CSS):
+     @import "@dreamlake/uikit/styles.css";
+
+   Tailwind v4 picks tokens up from @theme to generate utilities
+   (bg-bg, text-ink, font-ui, etc.). Dark-mode overrides re-declare
+   the same custom-property names so every utility instantly swaps.
+   ───────────────────────────────────────────────────────────────── */
+
+@theme {
+  /* Type ────────────────────────────────────────────────────────── */
+  --font-ui: 'Inter Tight', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  /* Surfaces ────────────────────────────────────────────────────── */
+  --color-bg: #fffefa;
+  --color-panel: #fcfbf7;
+  --color-rail: #fcfbf7;
+  --color-canvas: #f4efe2;
+  --color-canvas-dot: #d6cdb4;
+
+  /* Code-block surface ──────────────────────────────────────────── */
+  --color-code-bg: #faf8f1;
+
+  /* Ink ─────────────────────────────────────────────────────────── */
+  --color-ink: #1a1a1a;
+  --color-muted: #6b6b6b;
+
+  /* Hairlines / chips / search ──────────────────────────────────── */
+  --color-faint: rgba(0, 0, 0, 0.08);
+  --color-faint-dashed: rgba(0, 0, 0, 0.22);
+  --color-chip: rgba(0, 0, 0, 0.04);
+  --color-search: #f5f4f0;
+
+  /* Selection / accent ──────────────────────────────────────────── */
+  --color-selected: #d9e6f7;
+  --color-accent: #23aaff;
+  --color-accent-soft: rgba(35, 170, 255, 0.09);
+
+  /* Zebra-list row backgrounds ────────────────────────────────────
+     Canonical hex from staging/zebra-list-style-guide.md §11. */
+  --color-row-base: #fffefa;
+  --color-row-zebra: #f3f2ee;
+  --color-row-hover: #d9e6f7;
+  --color-row-hover-warm: #f3e6cc;
+  --color-row-selected: #2174d9;
+  --color-row-selected-fg: #ffffff;
+
+  /* Code-token colors ───────────────────────────────────────────── */
+  --color-kw:  #2e6f9e;
+  --color-str: #8a6a2e;
+  --color-num: #6b4ea0;
+  --color-com: #999487;
+  --color-fn:  #1f6b48;
+  --color-tag: #b14d3a;
+
+  /* Radii ───────────────────────────────────────────────────────── */
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-xl: 14px;
+}
+
+/* Dark theme overrides — same keys, different values. */
+[data-theme='dark'] {
+  --color-bg: #2e2e35;
+  --color-panel: #2e2e35;
+  --color-rail: #2b2b31;
+  --color-canvas: #131318;
+  --color-canvas-dot: #2a2a32;
+
+  --color-code-bg: #2c2c33;
+
+  --color-ink: #ececec;
+  --color-muted: #8a8a8a;
+
+  --color-faint: rgba(255, 255, 255, 0.09);
+  --color-faint-dashed: rgba(255, 255, 255, 0.22);
+  --color-chip: rgba(255, 255, 255, 0.05);
+  --color-search: #36363c;
+
+  --color-selected: #3d4856;
+  --color-accent-soft: rgba(35, 170, 255, 0.18);
+
+  --color-row-base: #2b2b31;
+  --color-row-zebra: #36363c;
+  --color-row-hover: #3d4856;
+  --color-row-hover-warm: #3d4856;
+  --color-row-selected: #2f86e6;
+
+  --color-kw:  #7fc1ff;
+  --color-str: #d6b170;
+  --color-num: #c2a3ff;
+  --color-com: #6a6a72;
+  --color-fn:  #8edcab;
+  --color-tag: #f0a48c;
+}

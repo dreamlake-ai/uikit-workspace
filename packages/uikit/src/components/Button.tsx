@@ -1,43 +1,72 @@
+// Button — the single button atom for @dreamlake/uikit.
+//
+// Ports `.btn` from staging/dreamlake-design-guide.html (`#lab-button`).
+// The design-guide ships exactly two variants:
+//
+//   ghost    — muted ink + faint hairline border, transparent fill
+//   primary  — accent fill (#23aaff = --color-accent) + white ink
+//
+// Shared chrome, lifted from the source CSS:
+//
+//   inline-flex · 6px gap · 5px / 10px padding · 6px radius
+//   JetBrains Mono · 10.5px · 600 · 0.08em tracking · UPPERCASE
+//   1px border · 120ms background ease
+//
+// `lead` (key combo / glyph rendered before the label) is a sibling
+// <span class="lead"> in the source. Here it's the `icon` prop. The
+// .65 opacity from the source ports as a 65% alpha utility.
+//
+// Disabled state collapses to .4 opacity + cursor-not-allowed in the
+// source — same here, driven by the native `disabled` attribute via a
+// Tailwind variant rather than a marker class.
+
 import type { ButtonHTMLAttributes, ReactNode } from 'react'
 
-export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'ghost'
-  size?: 'sm' | 'md' | 'lg'
+export type ButtonVariant = 'ghost' | 'primary'
+
+export type ButtonProps = {
   children: ReactNode
-}
+  variant?: ButtonVariant
+  icon?: ReactNode
+} & ButtonHTMLAttributes<HTMLButtonElement>
 
-const VARIANT_CLS: Record<NonNullable<ButtonProps['variant']>, string> = {
-  primary:
-    'bg-doc-template-accent text-white border-transparent hover:brightness-105',
-  secondary:
-    'bg-zinc-100 text-zinc-900 border-zinc-200 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-700',
+// Shared chrome shared by every variant.
+const baseCx =
+  'inline-flex items-center gap-1.5 px-2.5 py-[5px] rounded-md cursor-pointer ' +
+  'font-mono text-[10.5px] font-semibold tracking-[0.08em] uppercase ' +
+  'border border-transparent bg-transparent ' +
+  'transition-[background-color,color,border-color] duration-[120ms] ease-out ' +
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 ' +
+  'disabled:opacity-40 disabled:cursor-not-allowed'
+
+// Per-variant paint. Hover rules mirror the source `.btn.<v>.is-hover`.
+const variantCx: Record<ButtonVariant, string> = {
   ghost:
-    'bg-transparent border-transparent text-inherit hover:bg-zinc-100 dark:hover:bg-zinc-800',
+    'text-muted border-faint ' +
+    'not-disabled:hover:text-ink ' +
+    'not-disabled:hover:border-[color-mix(in_oklab,var(--color-ink)_18%,transparent)] ' +
+    'not-disabled:hover:bg-[color-mix(in_srgb,var(--color-ink)_4%,transparent)]',
+  primary:
+    'text-white bg-accent border-accent ' +
+    'not-disabled:hover:bg-[color-mix(in_srgb,var(--color-accent)_88%,var(--color-ink))]',
 }
 
-const SIZE_CLS: Record<NonNullable<ButtonProps['size']>, string> = {
-  sm: 'text-[11px] px-2 py-1',
-  md: 'text-[13px] px-3 py-1.5',
-  lg: 'text-[15px] px-4 py-2.5',
-}
+// The leading <span class="lead"> from the source — opacity .65, slightly
+// lighter weight. Pure presentation; rendered only when an icon is set.
+const iconCx = 'opacity-65 font-medium'
 
-export function Button({
-  variant = 'primary',
-  size = 'md',
-  className,
+export const Button = ({
   children,
+  variant = 'ghost',
+  icon,
+  className,
+  type = 'button',
   ...rest
-}: ButtonProps) {
-  const cls = [
-    'inline-flex items-center justify-center rounded-md border font-medium cursor-pointer transition-[background,filter,color]',
-    VARIANT_CLS[variant],
-    SIZE_CLS[size],
-    className,
-  ]
-    .filter(Boolean)
-    .join(' ')
+}: ButtonProps) => {
+  const cx = `${baseCx} ${variantCx[variant]}${className ? ` ${className}` : ''}`
   return (
-    <button className={cls} {...rest}>
+    <button type={type} className={cx} {...rest}>
+      {icon != null && <span className={iconCx}>{icon}</span>}
       {children}
     </button>
   )
