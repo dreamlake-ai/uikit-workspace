@@ -1,0 +1,76 @@
+---
+title: Drafts
+section: Overview
+order: 3
+description: Flag pages as awaiting review with the draft frontmatter field.
+draft: true
+---
+
+# Drafts
+
+This page is itself marked `draft: true` — that's why you see the
+**DRAFT** chip next to "Drafts" in the left sidebar. Use the draft
+flag to signal that a page has been written but is still waiting for
+review, sign-off, or a second pair of eyes before it's considered
+shipped.
+
+## Usage
+
+Add `draft: true` to any page's frontmatter:
+
+```mdx file="packages/docs/pages/whatever/+Page.mdx"
+---
+title: My Page
+section: Reference
+order: 5
+draft: true
+---
+
+# My Page
+
+…
+```
+
+That's the whole API. The page renders normally — same URL, same
+search-indexing, same TOC behavior — but its sidebar entry picks up
+the **DRAFT** chip so reviewers can scan for what still needs eyes on
+it.
+
+## Removing the flag
+
+When the page passes review, either delete the line entirely:
+
+```diff
+ title: My Page
+ order: 5
+-draft: true
+```
+
+…or flip it to `false` (both are treated as "not draft" — the chip
+only renders when the value is exactly `true`):
+
+```mdx
+draft: false
+```
+
+<Callout variant="info" title="Why a chip and not a hidden page?">
+  Drafts are **visible** by design — the goal is to surface in-progress
+  work for reviewers, not to hide it from readers. If you want to
+  truly gate a page out of the build, omit the folder until you're
+  ready to ship.
+</Callout>
+
+## How it's wired
+
+Three small pieces:
+
+1. **Frontmatter parsed** — `packages/docs/lib/navigation.ts` reads
+   `draft` from each page's frontmatter and threads it through
+   `PageMeta`.
+2. **Sidebar render** — `packages/docs/components/Sidebar.tsx` reads
+   `item.draft` and renders a small mono-font chip when it's `true`,
+   styled with the warn-color token so it's unmistakable but not
+   alarming.
+3. **Nothing else changes** — TOC, search, breadcrumbs, page titles,
+   and `<meta description>` all behave exactly the same. The flag is
+   purely a review-workflow affordance.

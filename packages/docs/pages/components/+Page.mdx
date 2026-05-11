@@ -1,0 +1,199 @@
+---
+title: Components
+section: Overview
+order: 2
+description: The MDX components and authoring behaviors available in any page.
+---
+
+# Components
+
+Every page in this site is MDX. That means the body of `+Page.mdx`
+accepts both markdown (rendered through the template's styled
+components) and JSX (so you can drop in a `<Callout>` or `<Preview>`
+anywhere). The MDX provider is configured in
+`packages/docs/components/mdx-components.tsx` and exposes two kinds of
+components:
+
+- **Implicit** — standard markdown elements styled by the template:
+  `h1`, `h2`, `h3`, `p`, `ul`, `ol`, `li`, `a`, `blockquote`, `table`,
+  `code`, fenced code blocks.
+- **Explicit** — JSX components you author as tags: `<Callout>`,
+  `<Preview>`.
+
+## Headings
+
+Use one `#` for the page title, `##` for major sections, and `###` for
+subsections. Each `##`/`###` gets an auto-generated id from
+`rehype-slug` so URLs like `/components#callout` work. Hovering a
+heading reveals an anchor icon that links to itself. `##` headings are
+sticky — they pin under the topbar as you scroll, with a blurred
+backdrop.
+
+Only `##` and `###` show up in the right-rail Table of Contents
+(`packages/docs/components/TOC.tsx`). Deeper headings render but
+don't enter the TOC.
+
+## Callout
+
+`<Callout>` is the boxed-aside element. Two variants:
+
+<Callout variant="info" title="Info callout">
+  Accent-tinted background, blue exclamation-triangle icon. Use it
+  for notes, helpful context, or things worth knowing but not warnings.
+</Callout>
+
+<Callout variant="warn" title="Warning callout">
+  Warm-amber background and icon. Use it for footguns, breaking
+  behavior, force-pushes, anything that needs the reader to pause.
+</Callout>
+
+Body content is normal MDX — paragraphs, `inline code`, lists, links —
+the last child's bottom margin is trimmed automatically so the box
+hugs its content.
+
+### Usage
+
+````mdx
+<Callout variant="warn" title="Heads up">
+  Force-pushing rewrites the deploy preview pinned to that version.
+</Callout>
+````
+
+Props:
+
+| Prop | Type | Default | Notes |
+|---|---|---|---|
+| `variant` | `'info' \| 'warn'` | `'info'` | Color theme |
+| `title` | `ReactNode` | — | Bolded header line. Omit for a body-only callout. |
+| `children` | `ReactNode` | — | Body content (MDX) |
+
+## Code blocks
+
+Fenced code blocks (` ``` `) render through the template's `CodeBlock`
+chrome: a header bar with the language chip and optional filename, a
+copy button, and a per-block line-numbers toggle (the toggle is
+site-wide — flipping it on one block flips it everywhere).
+
+```ts file="example.ts"
+export interface Greeting {
+  name: string
+  language?: 'en' | 'zh'
+}
+
+export function greet({ name, language = 'en' }: Greeting): string {
+  return language === 'zh' ? `你好，${name}` : `Hello, ${name}`
+}
+```
+
+### The `file=` meta string
+
+Add `file="…"` after the language tag to label the block:
+
+````mdx
+```ts file="example.ts"
+export const x = 1
+```
+````
+
+The parser is `parseMetaString` in `packages/docs/vite.config.ts` —
+the filename lands as a chip on the header bar.
+
+### Languages
+
+Any Shiki language identifier works (`ts`, `tsx`, `bash`, `json`,
+`css`, `mdx`, `yaml`, …). The language drives both syntax highlighting
+and the small chip on the right side of the header. Dual-theme
+(light/dark) styling is wired automatically via the `data-theme`
+attribute on `<html>`.
+
+## Preview
+
+`<Preview>` wraps a live React component next to its raw source. Use
+it whenever you want a reader to see what a component looks like *and*
+the code that produced it.
+
+The full live demo lives on the
+**[Library / Button](/library/button)** page. The wiring is short — a
+component import, a `?raw` source import, and the JSX:
+
+````mdx
+import { Button } from '@dreamlake/uikit'
+import basicSrc from '../../examples/Button.basic.tsx?raw'
+
+<Preview source={basicSrc} filename="Button.basic.tsx">
+  <ButtonBasic />
+</Preview>
+````
+
+Props:
+
+| Prop | Type | Default | Notes |
+|---|---|---|---|
+| `children` | `ReactNode` | — | What renders in the **Preview** tab |
+| `source` | `string` | — | Raw `.tsx` text (imported with `?raw`) — shown in the **Source** tab |
+| `dataSource` | `string` | — | Optional second source — adds a **Data** tab |
+| `filename` | `string` | — | Label shown in the header chip |
+| `defaultTab` | `'preview' \| 'source' \| 'data'` | `'preview'` | Initial tab |
+| `height` | `number \| string` | — | Fixes the preview-pane height (omit for auto) |
+
+The `?raw` import is enabled by the small `mdxRawLoader` plugin in
+`vite.config.ts` — it works for `.tsx`, `.ts`, and `.mdx` files.
+
+## Markdown elements
+
+A visual showcase of the styled markdown the template ships with — all
+of these are stock markdown, no JSX:
+
+Body paragraphs render at **14.5px / line-height 1.65** in the
+template's UI font (Inter Tight). Inline `code` uses the mono font
+(JetBrains Mono) with a subtle chip background. Links like
+[this one](/getting-started) carry the accent color with a thin
+underline that thickens on hover.
+
+Unordered lists use muted disc markers:
+
+- First item
+- Second item with `inline code`
+- Third item with a [link](/library/button)
+
+Ordered lists use muted decimal markers:
+
+1. First
+2. Second
+3. Third
+
+Block quotes get an accent-colored left rule and a tinted background:
+
+> "A documentation site is the contract between your code and the
+> people who use it."
+
+Tables are bordered top-and-bottom with muted, all-caps headers:
+
+| Column | Type | Notes |
+|---|---|---|
+| `foo` | `string` | Mandatory |
+| `bar` | `number` | Optional, defaults to `0` |
+
+## Authoring behaviors
+
+A few things the template does automatically when you add or edit
+pages:
+
+- **Sidebar auto-grouping.** Pages are grouped by their frontmatter
+  `section` (`packages/docs/lib/navigation.ts`), and the section order
+  in the sidebar matches the order the section names first appear in
+  the sorted page list. There is no manual nav config — drop a folder
+  + `+Page.mdx` and it shows up.
+- **TOC scope.** The right-rail Table of Contents only indexes `##`
+  and `###` headings with auto-generated ids. Anything deeper is
+  invisible to the TOC.
+- **Search indexing.** The Cmd-K search palette indexes each page's
+  `title`, `section`, `description`, all `##`/`###` headings, and the
+  body text. Fenced code blocks are intentionally **skipped** —
+  searching for `import { Button } from '@dreamlake/uikit'` won't return
+  matches from every code example in the docs.
+- **Per-page `<title>` and `<meta description>`.** Both come from
+  frontmatter, with `siteConfig.brand` appended to the title
+  (`<title>Components — DocSite</title>`). SSR sets the head; the
+  Layout's `HeadSync` updates `document.title` on client-side route
+  changes.

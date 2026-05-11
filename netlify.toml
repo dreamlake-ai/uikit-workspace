@@ -1,6 +1,7 @@
 [build]
-command = "pnpm build"
-publish = "dist/client"
+command = "pnpm install --frozen-lockfile && pnpm build"
+publish = "packages/docs/dist/client"
 
 [build.environment]
 NODE_VERSION = "20"
+PNPM_VERSION = "10.33.0"

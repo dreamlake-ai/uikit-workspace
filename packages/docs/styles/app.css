@@ -1,0 +1,144 @@
+@import "tailwindcss";
+
+/* ─────────────────────────────────────────────────────────────────
+   Prefixed theme tokens — one-to-one with the dreamlake palette so
+   utility classes (bg-doc-template-bg, text-doc-template-ink, etc.)
+   produce pixel-identical output. The --doc-template- prefix isolates
+   us from any consuming library or app's tokens.
+   ───────────────────────────────────────────────────────────────── */
+@theme {
+  --color-doc-template-bg:           #fffefa;
+  --color-doc-template-panel:        #fcfbf7;
+  --color-doc-template-rail:         #fcfbf7;
+  --color-doc-template-code:         #faf8f1;
+  --color-doc-template-ink:          #1a1a1a;
+  --color-doc-template-muted:        #6b6b6b;
+  --color-doc-template-faint:        rgb(0 0 0 / 0.08);
+  --color-doc-template-faint-strong: rgb(0 0 0 / 0.16);
+  --color-doc-template-chip:         rgb(0 0 0 / 0.04);
+  --color-doc-template-search:       #f5f4f0;
+  --color-doc-template-selected:     #d9e6f7;
+  --color-doc-template-accent:       #23aaff;
+  --color-doc-template-accent-soft:  rgb(35 170 255 / 0.09);
+  --color-doc-template-warn:         #d68b3a;
+  --color-doc-template-warn-soft:    rgb(214 139 58 / 0.10);
+  --color-doc-template-rail-stroke:  #d8d4c8;
+
+  --font-doc-template-ui:   "Inter Tight", ui-sans-serif, system-ui, sans-serif;
+  --font-doc-template-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --radius-doc-template:    10px;
+  --radius-doc-template-sm: 6px;
+}
+
+/* Dark-mode overrides — same custom property names get re-declared so
+   every utility instantly swaps without us touching JSX. Tailwind v4 emits
+   @theme tokens as plain CSS vars, so attribute-selector overrides work. */
+[data-theme='dark'] {
+  --color-doc-template-bg:           #2e2e35;
+  --color-doc-template-panel:        #2e2e35;
+  --color-doc-template-rail:         #2b2b31;
+  --color-doc-template-code:         #2c2c33;
+  --color-doc-template-ink:          #ececec;
+  --color-doc-template-muted:        #8a8a8a;
+  --color-doc-template-faint:        rgb(255 255 255 / 0.09);
+  --color-doc-template-faint-strong: rgb(255 255 255 / 0.20);
+  --color-doc-template-chip:         rgb(255 255 255 / 0.05);
+  --color-doc-template-search:       #36363c;
+  --color-doc-template-selected:     #3d4856;
+  --color-doc-template-accent-soft:  rgb(35 170 255 / 0.18);
+  --color-doc-template-warn-soft:    rgb(214 139 58 / 0.18);
+  --color-doc-template-rail-stroke:  #45454d;
+}
+
+/* `dark:*` Tailwind variants hook the same [data-theme="dark"] attribute
+   the FOUC script in +onRenderHtml.tsx sets. */
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
+/* Tell Tailwind where utility-class usage lives so it can compile them. */
+@source "../components/**/*.{ts,tsx}";
+@source "../examples/**/*.{ts,tsx}";
+@source "../pages/**/*.{mdx,tsx}";
+@source "../renderer/**/*.{ts,tsx}";
+@source "../../uikit/src/**/*.{ts,tsx}";
+
+@layer base {
+  /* Tailwind's default font-sans is ui-sans-serif. We want Inter Tight
+     without minting a Tailwind font token, so set on body once. */
+  body {
+    font-family: var(--font-doc-template-ui);
+    background: var(--color-doc-template-bg);
+    color: var(--color-doc-template-ink);
+    /* Match the dreamlake design's text rendering — without these, Inter
+       Tight defaults to subpixel AA which reads chunkier than the design. */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    /* Inter stylistic sets used by the design:
+       - ss01: open digit alternates (cleaner 4 / 6 / 9)
+       - cv11: single-storey g
+       These slim the look noticeably. */
+    font-feature-settings: 'ss01', 'cv11';
+  }
+  code, pre, kbd, .font-mono {
+    font-family: var(--font-doc-template-mono);
+  }
+}
+
+/* Shiki dual-theme bridge — the only mandatory non-utility rule, since
+   shiki authors its own <pre><code>…</code></pre> markup we don't
+   render directly. Per-token color only — never paint backgrounds, so
+   the cream wrapper (`.codeblock` border + bg) is the lone visible
+   surface. Setting bg on every span produces white token rectangles
+   on top of the cream surface, which reads as a second border. */
+.shiki, .shiki span { color: var(--shiki-light); }
+[data-theme='dark'] .shiki,
+[data-theme='dark'] .shiki span { color: var(--shiki-dark); }
+.shiki {
+  background: transparent !important;
+  margin: 0;
+  padding: 14px 16px;
+  font-family: var(--font-doc-template-mono);
+  font-size: 12.5px;
+  line-height: 1.62;
+  overflow-x: auto;
+}
+
+/* Trim the last child's bottom margin so the callout's / blockquote's
+   own padding doesn't stack on top of a paragraph's `margin-bottom: 14px`.
+   The MDX <P> wrapper sets that margin as an inline style, so we need
+   !important to win the specificity battle. */
+.doc-callout-body > *:last-child,
+.doc-content blockquote > *:last-child {
+  margin-bottom: 0 !important;
+}
+
+/* Mute the list-marker color to match dreamlake (default markers
+   inherit `color` which would be the ink color — too prominent). */
+.doc-content li::marker {
+  color: var(--color-doc-template-muted);
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   Optional line numbers — toggled by the `:set nu` button in the
+   CodeBlock / Preview header. The toggle flips `data-line-numbers`
+   on the wrapper; an inline-block `::before` on each Shiki `.line`
+   prepends the counter. Keeping `.line` inline (the default) means
+   we don't disturb the natural `\n`-driven line breaks Shiki emits
+   between line spans — so the no-numbers state stays correct. */
+[data-line-numbers='on'] .shiki code { counter-reset: cl-ln; }
+[data-line-numbers='on'] .shiki .line::before {
+  counter-increment: cl-ln;
+  content: counter(cl-ln);
+  display: inline-block;
+  /* number column + gap-to-border + 1px rule + gap-to-code */
+  width: 2em;
+  padding-right: 0.6em;
+  margin-right: 0.9em;
+  border-right: 1px solid var(--color-doc-template-faint);
+  text-align: right;
+  color: color-mix(in srgb, var(--color-doc-template-ink) 28%, transparent);
+  font-variant-numeric: tabular-nums;
+  user-select: none;
+  pointer-events: none;
+}
