@@ -63,7 +63,6 @@
 
 /* Tell Tailwind where utility-class usage lives so it can compile them. */
 @source "../components/**/*.{ts,tsx}";
-@source "../examples/**/*.{ts,tsx}";
 @source "../pages/**/*.{mdx,tsx}";
 @source "../renderer/**/*.{ts,tsx}";
 @source "../../uikit/src/**/*.{ts,tsx}";

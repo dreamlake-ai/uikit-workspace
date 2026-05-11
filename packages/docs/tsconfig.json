@@ -13,7 +13,6 @@
     "components/**/*",
     "lib/**/*",
     "pages/**/*",
-    "examples/**/*",
     "mdx.d.ts",
     "vite.config.ts"
   ]
