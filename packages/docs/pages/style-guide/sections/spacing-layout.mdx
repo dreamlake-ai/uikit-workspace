@@ -1,0 +1,37 @@
+import { SpacingScale } from '../../../components/specimens/SpacingScale'
+
+## Spacing & layout
+
+Eleven spacing steps from 2 to 40px. There's no token — values are used inline. Most
+padding lives between 6–18px; the 2px row gap is sacred. The big jumps at the top
+(20 → 28 → 40) are for section breathing room, not row rhythm.
+
+### Spacing scale
+
+<SpacingScale />
+
+### Page grid
+
+The docs site itself is the canonical example: a 3-column grid at `1320px` max width —
+**240px** left rail, **1fr** content, **240px** right rail — with `0` gaps between
+columns. Everything inside lays out against this frame.
+
+```css
+.page {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr) 240px;
+  max-width: 1320px;
+  margin-inline: auto;
+}
+```
+
+### Breakpoints
+
+Two breakpoints in current use, both for the docs shell:
+
+- **`max-[1100px]`** — drop the right rail (TOC). Content widens to fill the remaining
+  space; the left nav stays at 240px.
+- **`max-[880px]`** — drop the left nav too. Single-column layout; chrome collapses.
+
+No "mobile-first" set of named breakpoints. Everything is desktop-first; the two
+overrides are the only places the layout changes.
