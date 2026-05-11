@@ -7,6 +7,10 @@ export interface PageMeta {
   /** True if the page is awaiting review. Surfaced as a chip in the
    *  sidebar so reviewers can spot what still needs eyes on it. */
   draft?: boolean
+  /** Right-rail TOC depth. 3 (default) surfaces H2 + H3; 2 limits the
+   *  rail to H2 only. Set in frontmatter on long pages where H3 noise
+   *  crowds the rail. */
+  tocLevel?: 2 | 3
 }
 
 interface PageFrontmatter {
@@ -15,6 +19,7 @@ interface PageFrontmatter {
   order?: number
   description?: string
   draft?: boolean
+  tocLevel?: 2 | 3
 }
 
 interface PageModule {
@@ -35,6 +40,7 @@ export const pages: PageMeta[] = Object.entries(modules)
       order: fm.order ?? 99,
       description: fm.description,
       draft: fm.draft === true,
+      tocLevel: fm.tocLevel,
     }
   })
   .sort((a, b) => a.order - b.order)

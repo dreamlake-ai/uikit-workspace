@@ -7,6 +7,10 @@ declare module '*.mdx' {
     kind?: 'component' | 'application'
     layer?: 'view' | 'dataIO'
     description?: string
+    /** Right-rail TOC depth. 3 (default) surfaces H2 + H3; 2 limits
+     *  the rail to H2 only — useful on long pages where the H3 count
+     *  would crowd the rail. */
+    tocLevel?: 2 | 3
   }
   export const frontmatter: Frontmatter
   const Component: ComponentType

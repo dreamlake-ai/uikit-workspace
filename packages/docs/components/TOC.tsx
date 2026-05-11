@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { usePageContext } from 'vike-react/usePageContext'
+import { pages } from '../lib/navigation'
 
 interface Heading {
   id: string
@@ -133,6 +134,13 @@ export function TOC() {
       setHeadings([])
       return
     }
+    // Per-page TOC depth. `tocLevel` in frontmatter is the knob; defaults
+    // to 3 (H2 + H3). Setting 2 in frontmatter keeps the rail to H2 only
+    // — used on long pages whose H3 count would otherwise crowd the rail.
+    const current = pages.find(p => p.path === urlPathname)
+    const tocLevel = current?.tocLevel ?? 3
+    const selector =
+      tocLevel >= 3 ? '[data-toc-anchor], h3[id]' : '[data-toc-anchor]'
     function collect() {
       // H2 ids live on a non-sticky `<span data-toc-anchor>` just before
       // the visible <h2>; H3 keeps its id directly. See the H2 component
@@ -140,7 +148,7 @@ export function TOC() {
       // painted positions in getBoundingClientRect / offsetTop, which
       // breaks scroll-target math).
       const nodes = Array.from(
-        main!.querySelectorAll<HTMLElement>('[data-toc-anchor], h3[id]'),
+        main!.querySelectorAll<HTMLElement>(selector),
       )
       setHeadings(
         nodes.map(el => {
