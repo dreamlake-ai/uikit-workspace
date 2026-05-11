@@ -62,8 +62,25 @@
   --radius-xl: 14px;
 }
 
+/* Non-utility CSS variables — referenced directly via var(--…) by
+   components that need values which don't make sense as Tailwind
+   utilities (raw rgba shadow tints, etc.). Live outside @theme so
+   Tailwind doesn't try to mint utilities for them, but get the same
+   dark-mode override treatment below. */
+:root {
+  --shadow-tint-1: rgba(0, 0, 0, 0.06);
+  --shadow-tint-2: rgba(0, 0, 0, 0.10);
+  --shadow-tint-3: rgba(0, 0, 0, 0.16);
+  --shadow-inset:  rgba(0, 0, 0, 0.08);
+}
+
 /* Dark theme overrides — same keys, different values. */
 [data-theme='dark'] {
+  --shadow-tint-1: rgba(0, 0, 0, 0.45);
+  --shadow-tint-2: rgba(0, 0, 0, 0.60);
+  --shadow-tint-3: rgba(0, 0, 0, 0.75);
+  --shadow-inset:  rgba(0, 0, 0, 0.50);
+
   --color-bg: #2e2e35;
   --color-panel: #2e2e35;
   --color-rail: #2b2b31;
