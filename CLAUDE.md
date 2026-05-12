@@ -61,3 +61,26 @@ fixes don't need a changelog entry — judgment call.
   stages, JS-to-React patterns, deploy workflow, gotchas.
 - `dev-notes/CHANGELOG.mdx` — running history of doc changes.
 - `dev-notes/README.mdx` — folder convention + index.
+
+## Versioning and release (load-bearing rules)
+
+- The root `package.json` plus every `packages/*/package.json` must agree on
+  `version`. `pnpm prod` runs a check and **refuses to deploy** on mismatch.
+- Bump version with `pnpm set-version <x.y.z>` (rewrites every package.json
+  that declares a version), then `pnpm install`, then commit both
+  `package.json` files and `pnpm-lock.yaml`.
+- `pnpm prod` does, in order: version-consistency check → force-push HEAD to
+  `v/<version>` snapshot branch → force-push HEAD to `netlify-production`.
+- `pnpm staging` is intentionally lighter: just force-push HEAD to
+  `netlify-staging`. No version check, no snapshot. Use for WIP previews.
+- The version pipeline source is `scripts/{lib-packages,set-version,
+  push-version-branch}.mjs`.
+
+## pnpm scripts (versioning + release)
+
+| Script                | What it does                                              |
+| --------------------- | --------------------------------------------------------- |
+| `pnpm set-version`    | Sync `version` across root + `packages/*/package.json`    |
+| `pnpm version-branch` | Check versions, then force-push HEAD to `v/<version>`     |
+| `pnpm prod`           | `version-branch` then push to `netlify-production`        |
+| `pnpm staging`        | Push to `netlify-staging` (no check, no snapshot)         |

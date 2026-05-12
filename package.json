@@ -1,6 +1,6 @@
 {
   "name": "uikit-workspace",
-  "version": "0.1.1",
+  "version": "0.1.3",
   "description": "@dreamlake/uikit workspace — UI primitives + Vike/MDX doc site",
   "private": true,
   "type": "module",
@@ -11,9 +11,10 @@
     "typecheck": "pnpm -r typecheck",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "set-version": "node scripts/set-version.mjs",
     "version-branch": "node scripts/push-version-branch.mjs",
-    "prod": "git push -f origin HEAD:netlify-production && pnpm version-branch",
-    "staging": "git push -f origin HEAD:netlify-staging && pnpm version-branch"
+    "prod": "pnpm version-branch && git push -f origin HEAD:netlify-production",
+    "staging": "git push -f origin HEAD:netlify-staging"
   },
   "devDependencies": {
     "prettier": "^3.8.1",
