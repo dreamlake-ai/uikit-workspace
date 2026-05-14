@@ -12,9 +12,24 @@
     "./styles.css": "./src/styles.css"
   },
   "scripts": {
-    "build": "echo '@dreamlake/uikit has no build step (consumed via source)' && exit 0"
+    "build": "echo '@dreamlake/uikit has no build step (consumed via source)' && exit 0",
+    "typecheck": "tsc --noEmit"
   },
   "peerDependencies": {
-    "react": "^19.0.0"
+    "react": "^19.0.0",
+    "lucide-react": ">=1.0.0"
+  },
+  "peerDependenciesMeta": {
+    "lucide-react": { "optional": false }
+  },
+  "dependencies": {
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^3.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "lucide-react": "^1.7.0",
+    "typescript": "^5.7.0"
   }
 }

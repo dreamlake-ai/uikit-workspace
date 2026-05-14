@@ -11,6 +11,9 @@ export interface PageMeta {
    *  rail to H2 only. Set in frontmatter on long pages where H3 noise
    *  crowds the rail. */
   tocLevel?: 2 | 3
+  /** When true, the main column drops its `max-w-[760px]` cap so a wide
+   *  preview (e.g. a full-page layout) can use the remaining grid space. */
+  wide?: boolean
 }
 
 interface PageFrontmatter {
@@ -20,6 +23,7 @@ interface PageFrontmatter {
   description?: string
   draft?: boolean
   tocLevel?: 2 | 3
+  wide?: boolean
 }
 
 interface PageModule {
@@ -41,6 +45,7 @@ export const pages: PageMeta[] = Object.entries(modules)
       description: fm.description,
       draft: fm.draft === true,
       tocLevel: fm.tocLevel,
+      wide: fm.wide === true,
     }
   })
   .sort((a, b) => a.order - b.order)

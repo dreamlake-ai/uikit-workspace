@@ -1,0 +1,45 @@
+---
+title: Avatar
+section: Components
+order: 10
+description: Initials-based avatar with adjustable size and corner radius.
+---
+
+import { Preview } from '../../../components/Preview'
+import { SizesSpec } from '../../../components/specimens/components/avatar/SizesSpec'
+import { ShapesSpec } from '../../../components/specimens/components/avatar/ShapesSpec'
+import sizesSrc from '../../../components/specimens/components/avatar/SizesSpec.tsx?raw'
+import shapesSrc from '../../../components/specimens/components/avatar/ShapesSpec.tsx?raw'
+
+# Avatar
+
+A square initials atom. The component derives initials from `name` (first letter
+of the first two whitespace-separated words, uppercased — `"Ge Yang"` → `"GY"`,
+`"MIT CSAIL"` → `"MC"`) so callers pass the display name rather than precomputing.
+Color, font, and surface follow the design tokens and flip with the theme.
+
+## Sizes
+
+Five sizes showing how the font scales with the avatar (`fontSize = round(size × 0.36)`).
+
+<Preview source={sizesSrc} filename="SizesSpec.tsx">
+  <SizesSpec />
+</Preview>
+
+## Custom radius
+
+Pass `radius` (px) to override the default `3` (square). Use `size / 2` for a
+perfect circle.
+
+<Preview source={shapesSrc} filename="ShapesSpec.tsx">
+  <ShapesSpec />
+</Preview>
+
+## Props
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `name` | `string` | — | Display name. Initials are derived automatically (first letter of the first two whitespace-separated words). |
+| `size` | `number` | `32` | Avatar size in px. Font size scales as `round(size × 0.36)`. |
+| `radius` | `number` | `3` | Border radius in px. Use a larger value (or `size / 2`) for a circle. |
+| `className` | `string` | — | Extra classes on the root `<span>`. |

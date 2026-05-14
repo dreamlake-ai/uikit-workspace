@@ -127,6 +127,9 @@ export function Layout({ children }: { children: ReactNode }) {
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [merged, setMerged] = useState(false)
+  const { urlPathname } = usePageContext() as { urlPathname: string }
+  const currentPage = pages.find(p => p.path === urlPathname)
+  const wide = currentPage?.wide === true
 
   return (
     <ThemeProvider>
@@ -140,7 +143,15 @@ export function Layout({ children }: { children: ReactNode }) {
             setQuery={setSearchQuery}
           />
           <div
-            className="grid items-start mx-auto min-h-screen grid-cols-[minmax(0,1fr)] md:grid-cols-[240px_minmax(0,1fr)] lg:grid-cols-[240px_minmax(0,1fr)_240px]"
+            // Outer container max-width is constant across pages so the
+            // sidebar's position never shifts when navigating to a `wide` page.
+            // Wide mode only drops the right-rail TOC column and removes the
+            // 760px cap on the main column — sidebar geometry is untouched.
+            className={
+              wide
+                ? 'grid items-start mx-auto min-h-screen grid-cols-[minmax(0,1fr)] md:grid-cols-[240px_minmax(0,1fr)]'
+                : 'grid items-start mx-auto min-h-screen grid-cols-[minmax(0,1fr)] md:grid-cols-[240px_minmax(0,1fr)] lg:grid-cols-[240px_minmax(0,1fr)_240px]'
+            }
             style={{ maxWidth: 1320 }}
           >
             <Sidebar />
@@ -151,13 +162,17 @@ export function Layout({ children }: { children: ReactNode }) {
               // NOTE: left-aligned in the grid cell (no mx-auto) to match
               // docs.html — the slack at wide viewports sits to the right,
               // keeping the sidebar tight against the content.
-              className="doc-content w-full min-w-0 px-[18px] pb-20 lg:px-[56px] lg:pb-[120px] lg:max-w-[760px]"
+              className={
+                wide
+                  ? 'doc-content w-full min-w-0 px-[18px] pb-20 lg:px-[56px] lg:pb-[120px]'
+                  : 'doc-content w-full min-w-0 px-[18px] pb-20 lg:px-[56px] lg:pb-[120px] lg:max-w-[760px]'
+              }
             >
               <PageBreadcrumb />
               {children}
               <DocFooter />
             </main>
-            <TOC />
+            {!wide && <TOC />}
           </div>
           <SearchPalette
             open={searchOpen}

@@ -1,115 +1,330 @@
 /* ─────────────────────────────────────────────────────────────────
-   @dreamlake/uikit design tokens.
-
-   Consumers import this once at the app root (or via app CSS):
-     @import "@dreamlake/uikit/styles.css";
-
-   Tailwind v4 picks tokens up from @theme to generate utilities
-   (bg-bg, text-ink, font-ui, etc.). Dark-mode overrides re-declare
-   the same custom-property names so every utility instantly swaps.
+   Shared design tokens — single source of truth for surface, ink,
+   muted, accent, hairlines, chips, search, selection, radius, and
+   typography. Dark mode flips via [data-theme="dark"] on <html>.
+   Ported from the Dreamlake / ML-Dash tokens.css.
    ───────────────────────────────────────────────────────────────── */
 
-@theme {
-  /* Type ────────────────────────────────────────────────────────── */
-  --font-ui: 'Inter Tight', ui-sans-serif, system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
-
-  /* Surfaces ────────────────────────────────────────────────────── */
-  --color-bg: #fffefa;
-  --color-panel: #fcfbf7;
-  --color-rail: #fcfbf7;
-  --color-canvas: #f4efe2;
-  --color-canvas-dot: #d6cdb4;
-
-  /* Code-block surface ──────────────────────────────────────────── */
-  --color-code-bg: #faf8f1;
-
-  /* Ink ─────────────────────────────────────────────────────────── */
-  --color-ink: #1a1a1a;
-  --color-muted: #6b6b6b;
-
-  /* Hairlines / chips / search ──────────────────────────────────── */
-  --color-faint: rgba(0, 0, 0, 0.08);
-  --color-faint-dashed: rgba(0, 0, 0, 0.22);
-  --color-chip: rgba(0, 0, 0, 0.04);
-  --color-search: #f5f4f0;
-
-  /* Selection / accent ──────────────────────────────────────────── */
-  --color-selected: #d9e6f7;
-  --color-accent: #23aaff;
-  --color-accent-soft: rgba(35, 170, 255, 0.09);
-
-  /* Zebra-list row backgrounds ────────────────────────────────────
-     Canonical hex from staging/zebra-list-style-guide.md §11. */
-  --color-row-base: #fffefa;
-  --color-row-zebra: #f3f2ee;
-  --color-row-hover: #d9e6f7;
-  --color-row-hover-warm: #f3e6cc;
-  --color-row-selected: #2174d9;
-  --color-row-selected-fg: #ffffff;
-
-  /* Code-token colors ───────────────────────────────────────────── */
-  --color-kw:  #2e6f9e;
-  --color-str: #8a6a2e;
-  --color-num: #6b4ea0;
-  --color-com: #999487;
-  --color-fn:  #1f6b48;
-  --color-tag: #b14d3a;
-
-  /* Radii ───────────────────────────────────────────────────────── */
-  --radius-md: 10px;
-  --radius-lg: 12px;
-  --radius-xl: 14px;
-}
-
-/* Non-utility CSS variables — referenced directly via var(--…) by
-   components that need values which don't make sense as Tailwind
-   utilities (raw rgba shadow tints, etc.). Live outside @theme so
-   Tailwind doesn't try to mint utilities for them, but get the same
-   dark-mode override treatment below. */
 :root {
+  /* ── Surfaces ────────────────────────────────────────────────── */
+  --bg-light:       #fffefa;
+  --bg-dark:        #2e2e35;
+  --panel-bg-light: #fcfbf7;
+  --panel-bg-dark:  #2e2e35;
+  --rail-bg-light:  #fcfbf7;
+  --rail-bg-dark:   #2b2b31;
+
+  --bg:       var(--bg-light);
+  --panel-bg: var(--panel-bg-light);
+  --rail-bg:  var(--rail-bg-light);
+
+  /* ── Ink / muted ─────────────────────────────────────────────── */
+  --ink:   #1a1a1a;
+  --muted: #6b6b6b;
+
+  /* ── Hairlines, chips, search ────────────────────────────────── */
+  --faint:        rgba(0, 0, 0, 0.08);
+  --faint-dashed: rgba(0, 0, 0, 0.22);
+  --chip-bg:      rgba(0, 0, 0, 0.04);
+  --search-bg:    #f5f4f0;
+
+  /* ── Selection / accent ──────────────────────────────────────── */
+  --selected-bg: #d9e6f7;
+  --accent:      #23aaff;
+  --accent-soft: rgba(35, 170, 255, 0.09);
+
+  /* ── Zebra-list row bands (doc Style Guide only) ──────────────
+     Four-band model used by docs/components/specimens/ZebraSpecimen and
+     ZebraRunSpecimen. Light/dark hex values are inlined here as the
+     canonical contract — the specimens render the same hex literals
+     alongside the swatches as their grep target. */
+  --row-base:        #fffefa;
+  --row-zebra:       #f3f2ee;
+  --row-hover:       #d9e6f7;
+  --row-hover-warm:  #f3e6cc;
+  --row-selected:    #2174d9;
+  --row-selected-fg: #ffffff;
+
+  /* ── Geometry / shadow ──────────────────────────────────────── */
+  --radius: 10px;
+
   --shadow-tint-1: rgba(0, 0, 0, 0.06);
   --shadow-tint-2: rgba(0, 0, 0, 0.10);
   --shadow-tint-3: rgba(0, 0, 0, 0.16);
   --shadow-inset:  rgba(0, 0, 0, 0.08);
+
+  /* ── Typography ─────────────────────────────────────────────── */
+  --f-ui:   'Inter Tight', ui-sans-serif, system-ui, sans-serif;
+  --f-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --f-hand: 'JetBrains Mono', ui-monospace, monospace;
 }
 
-/* Dark theme overrides — same keys, different values. */
-[data-theme='dark'] {
+html[data-theme="light"] {
+  --bg:       var(--bg-light);
+  --panel-bg: var(--panel-bg-light);
+  --rail-bg:  var(--rail-bg-light);
+}
+
+html[data-theme="dark"] {
+  --bg:       var(--bg-dark);
+  --panel-bg: var(--panel-bg-dark);
+  --rail-bg:  var(--rail-bg-dark);
+
+  --ink:          #ececec;
+  --muted:        #8a8a8a;
+  --faint:        rgba(255, 255, 255, 0.09);
+  --faint-dashed: rgba(255, 255, 255, 0.22);
+  --chip-bg:      rgba(255, 255, 255, 0.05);
+  --search-bg:    #36363c;
+
+  --selected-bg:  #3d4856;
+  --accent-soft:  rgba(35, 170, 255, 0.18);
+
+  /* Row bands — dark */
+  --row-base:        #2b2b31;
+  --row-zebra:       #36363c;
+  --row-hover:       #3d4856;
+  --row-hover-warm:  #3d4856;
+  --row-selected:    #2f86e6;
+  --row-selected-fg: #ffffff;
+
   --shadow-tint-1: rgba(0, 0, 0, 0.45);
-  --shadow-tint-2: rgba(0, 0, 0, 0.60);
+  --shadow-tint-2: rgba(0, 0, 0, 0.6);
   --shadow-tint-3: rgba(0, 0, 0, 0.75);
-  --shadow-inset:  rgba(0, 0, 0, 0.50);
+  --shadow-inset:  rgba(0, 0, 0, 0.5);
+}
 
-  --color-bg: #2e2e35;
-  --color-panel: #2e2e35;
-  --color-rail: #2b2b31;
-  --color-canvas: #131318;
-  --color-canvas-dot: #2a2a32;
+/* System-dark fallback — applied only when the consumer hasn't pinned light.
+   Lower specificity than the explicit `[data-theme]` rules above, so an
+   explicit user choice always wins. */
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme="light"]) {
+    --bg:       var(--bg-dark);
+    --panel-bg: var(--panel-bg-dark);
+    --rail-bg:  var(--rail-bg-dark);
 
-  --color-code-bg: #2c2c33;
+    --ink:          #ececec;
+    --muted:        #8a8a8a;
+    --faint:        rgba(255, 255, 255, 0.09);
+    --faint-dashed: rgba(255, 255, 255, 0.22);
+    --chip-bg:      rgba(255, 255, 255, 0.05);
+    --search-bg:    #36363c;
 
-  --color-ink: #ececec;
-  --color-muted: #8a8a8a;
+    --selected-bg:  #3d4856;
+    --accent-soft:  rgba(35, 170, 255, 0.18);
 
-  --color-faint: rgba(255, 255, 255, 0.09);
-  --color-faint-dashed: rgba(255, 255, 255, 0.22);
-  --color-chip: rgba(255, 255, 255, 0.05);
-  --color-search: #36363c;
+    --row-base:        #2b2b31;
+    --row-zebra:       #36363c;
+    --row-hover:       #3d4856;
+    --row-hover-warm:  #3d4856;
+    --row-selected:    #2f86e6;
+    --row-selected-fg: #ffffff;
 
-  --color-selected: #3d4856;
-  --color-accent-soft: rgba(35, 170, 255, 0.18);
+    --shadow-tint-1: rgba(0, 0, 0, 0.45);
+    --shadow-tint-2: rgba(0, 0, 0, 0.6);
+    --shadow-tint-3: rgba(0, 0, 0, 0.75);
+    --shadow-inset:  rgba(0, 0, 0, 0.5);
+  }
+}
 
-  --color-row-base: #2b2b31;
-  --color-row-zebra: #36363c;
-  --color-row-hover: #3d4856;
-  --color-row-hover-warm: #3d4856;
-  --color-row-selected: #2f86e6;
+/* ─────────────────────────────────────────────────────────────────
+   Tailwind v4 @theme — exposes the runtime tokens above as utility
+   classes. Naming is value-based (e.g. `--color-ink-5` is "ink at 5%
+   alpha" — describes the value, not where it's used). Usage-derived
+   names (eyebrow, panel, popover) are intentionally avoided — they
+   drift when reused.
+   ───────────────────────────────────────────────────────────────── */
 
-  --color-kw:  #7fc1ff;
-  --color-str: #d6b170;
-  --color-num: #c2a3ff;
-  --color-com: #6a6a72;
-  --color-fn:  #8edcab;
-  --color-tag: #f0a48c;
+@theme {
+  /* ── Color aliases ─────────────────────────────────────────────
+     Each runtime token gets a Tailwind utility (text-uikit-ink,
+     bg-uikit-rail, border-uikit-faint, etc). The `uikit-` prefix
+     namespaces our utilities so consumer @theme blocks can't
+     accidentally shadow them. Theme-flipping happens at runtime via
+     the :root / [data-theme] cascade above, so dark mode "just works". */
+  --color-uikit-ink:         var(--ink);
+  --color-uikit-muted:       var(--muted);
+  --color-uikit-bg:          var(--bg);
+  --color-uikit-panel:       var(--panel-bg);
+  --color-uikit-rail:        var(--rail-bg);
+  --color-uikit-accent:      var(--accent);
+  --color-uikit-accent-soft: var(--accent-soft);
+  --color-uikit-faint:       var(--faint);
+  --color-uikit-chip:        var(--chip-bg);
+  --color-uikit-search:      var(--search-bg);
+  --color-uikit-selected:    var(--selected-bg);
+
+  /* ── Bare-name aliases ─────────────────────────────────────────
+     The Style Guide specimens and a handful of legacy call-sites use
+     the un-prefixed forms (`border-faint`, `bg-panel`, `text-ink`,
+     `bg-bg`, etc.). Each one resolves through the same runtime token,
+     so the dark cascade still works. New code should prefer the
+     `uikit-` variants above to avoid collisions with consumer themes. */
+  --color-ink:          var(--ink);
+  --color-muted:        var(--muted);
+  --color-bg:           var(--bg);
+  --color-panel:        var(--panel-bg);
+  --color-rail:         var(--rail-bg);
+  --color-accent:       var(--accent);
+  --color-accent-soft:  var(--accent-soft);
+  --color-faint:        var(--faint);
+  --color-faint-dashed: var(--faint-dashed);
+  --color-chip:         var(--chip-bg);
+  --color-search:       var(--search-bg);
+  --color-selected:     var(--selected-bg);
+
+  /* Row bands — exposed for the ZebraSpecimen utilities
+     (bg-row-base, bg-row-zebra, bg-row-hover, bg-row-hover-warm,
+     bg-row-selected, text-row-selected-fg). */
+  --color-row-base:        var(--row-base);
+  --color-row-zebra:       var(--row-zebra);
+  --color-row-hover:       var(--row-hover);
+  --color-row-hover-warm:  var(--row-hover-warm);
+  --color-row-selected:    var(--row-selected);
+  --color-row-selected-fg: var(--row-selected-fg);
+
+  /* ── Color-mix presets — name = base color · alpha % ──────────
+     Numeric suffix is the percentage of the base color over a
+     transparent backdrop (in srgb). Common hover / selected /
+     faded-text recipes. */
+  --color-uikit-ink-4:       color-mix(in srgb, var(--ink) 4%,  transparent);
+  --color-uikit-ink-5:       color-mix(in srgb, var(--ink) 5%,  transparent);
+  --color-uikit-ink-6:       color-mix(in srgb, var(--ink) 6%,  transparent);
+  --color-uikit-ink-8:       color-mix(in srgb, var(--ink) 8%,  transparent);
+  --color-uikit-ink-12:      color-mix(in srgb, var(--ink) 12%, transparent);
+  --color-uikit-ink-50:      color-mix(in srgb, var(--ink) 50%, transparent);
+  --color-uikit-accent-12:   color-mix(in srgb, var(--accent) 12%, transparent);
+
+  /* ── Fonts ────────────────────────────────────────────────────── */
+  --font-uikit-ui:   var(--f-ui);
+  --font-uikit-mono: var(--f-mono);
+
+  /* ── Font sizes — integer px ──────────────────────────────────
+     Fractional sizes (10.5, 11.5, 12.5, 13.5) are rare enough to use
+     `text-[Xpx]` arbitrary values at the call site. */
+  --text-uikit-9:  9px;
+  --text-uikit-10: 10px;
+  --text-uikit-11: 11px;
+  --text-uikit-12: 12px;
+  --text-uikit-13: 13px;
+  --text-uikit-14: 14px;
+  --text-uikit-17: 17px;
+  --text-uikit-22: 22px;
+
+  /* ── Line-height — value-based snug / prose pair.
+     Tailwind's default leading-* covers 1 / 1.25 / 1.5, so we only
+     need to supplement with the two values the design uses heavily. */
+  --leading-uikit-snug:  1.3;
+  --leading-uikit-prose: 1.55;
+
+  /* ── Danger color (MenuItem destructive action, etc.) ─────────
+     Different shade from Tag's danger (#d93434, used for tag-removal
+     feedback) — this one is the popover-destructive-action red. */
+  --color-uikit-danger:    oklch(58% .17 25);
+  --color-uikit-danger-8:  color-mix(in srgb, oklch(58% .17 25) 8%, transparent);
+
+  /* ── Letter-spacing — relative tightness scale.
+     The `uikit-` prefix keeps our values fully isolated from
+     Tailwind's own tracking-* defaults — both can coexist. */
+  --tracking-uikit-tightest: -0.025em;
+  --tracking-uikit-tighter:  -0.02em;
+  --tracking-uikit-tight:    -0.015em;
+  --tracking-uikit-snug:     -0.005em;
+  --tracking-uikit-wide:     0.04em;
+  --tracking-uikit-wider:    0.06em;
+  --tracking-uikit-widest:   0.14em;
+
+  /* ── Shadows — depth-based ────────────────────────────────────
+     `soft` for popovers / menus / dropdowns.
+     `deep` for modal panels (Dialog).
+     Both include the inset 1px var(--faint) ring. */
+  --shadow-uikit-soft: 0 8px 28px -8px var(--shadow-tint-3),
+                       0 0 0 1px var(--faint);
+  --shadow-uikit-deep: 0 1px 2px var(--shadow-tint-1),
+                       0 24px 60px var(--shadow-tint-3),
+                       inset 0 0 0 1px var(--faint);
+}
+
+/* ── Animations ─────────────────────────────────────────────────── */
+
+@keyframes vdu-panel-in {
+  from { opacity: 0; transform: scale(0.985) translateY(-4px); }
+  to   { opacity: 1; transform: scale(1)     translateY(0); }
+}
+.vdu-panel-in {
+  animation: vdu-panel-in 280ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes vdu-row-in {
+  from { opacity: 0; transform: translateX(-6px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ── Scrollbar utilities ────────────────────────────────────────── */
+
+.vdu-no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.vdu-no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: rgba(156, 163, 175, 0.5);
+  border-radius: 4px;
+  border: 1px solid transparent;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(156, 163, 175, 0.7);
+}
+
+html[data-theme="dark"] * {
+  scrollbar-color: rgba(75, 85, 99, 0.5) transparent;
+}
+
+html[data-theme="dark"] *::-webkit-scrollbar-thumb {
+  background-color: rgba(75, 85, 99, 0.5);
+}
+
+html[data-theme="dark"] *::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(75, 85, 99, 0.7);
+}
+
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme="light"]) * {
+    scrollbar-color: rgba(75, 85, 99, 0.5) transparent;
+  }
+
+  html:not([data-theme="light"]) *::-webkit-scrollbar-thumb {
+    background-color: rgba(75, 85, 99, 0.5);
+  }
+
+  html:not([data-theme="light"]) *::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(75, 85, 99, 0.7);
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   EpisodeVideoStack — LIVE pulse animation. Scoped name (vdu-) so
+   it doesn't collide with consumer styles.
+   ───────────────────────────────────────────────────────────────── */
+@keyframes vdu-live-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.55; transform: scale(0.78); }
 }

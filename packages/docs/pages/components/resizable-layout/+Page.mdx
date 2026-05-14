@@ -1,0 +1,84 @@
+---
+title: ResizableLayout
+section: Components
+order: 80
+description: Three-column drag-to-resize layout with optional persistence and a collapse toggle.
+---
+
+import { Preview } from '../../../components/Preview'
+import { BasicSpec } from '../../../components/specimens/components/resizable-layout/BasicSpec'
+import { NoDividerSpec } from '../../../components/specimens/components/resizable-layout/NoDividerSpec'
+import { CustomGapSpec } from '../../../components/specimens/components/resizable-layout/CustomGapSpec'
+import { ToggleSpec } from '../../../components/specimens/components/resizable-layout/ToggleSpec'
+import basicSrc from '../../../components/specimens/components/resizable-layout/BasicSpec.tsx?raw'
+import noDividerSrc from '../../../components/specimens/components/resizable-layout/NoDividerSpec.tsx?raw'
+import customGapSrc from '../../../components/specimens/components/resizable-layout/CustomGapSpec.tsx?raw'
+import toggleSrc from '../../../components/specimens/components/resizable-layout/ToggleSpec.tsx?raw'
+
+# ResizableLayout
+
+A three-column drag-to-resize layout. All column widths are proportional
+(flex-based) so the layout responds to any container size. Widths can be
+persisted to `localStorage` via `storageKey`. Dividers paint a 2px accent line
+on hover/drag; an opt-in `showToggle` prop adds a hover-revealed collapse
+button.
+
+## Demo
+
+Drag the dividers to resize. All three columns are resizable by default. Hover
+a divider to see the accent line.
+
+<Preview source={basicSrc} filename="BasicSpec.tsx">
+  <BasicSpec />
+</Preview>
+
+## Without divider indicator
+
+`showDivider={false}` hides the accent line. The drag area remains active —
+hover and drag work as before.
+
+<Preview source={noDividerSrc} filename="NoDividerSpec.tsx">
+  <NoDividerSpec />
+</Preview>
+
+## Custom gap
+
+`gap` controls the width of the space between columns in pixels (default `24`).
+Narrower gaps work well in dense layouts.
+
+<Preview source={customGapSrc} filename="CustomGapSpec.tsx">
+  <CustomGapSpec />
+</Preview>
+
+## Column toggle
+
+Pass `showToggle` together with `onToggleLeft` / `onToggleRight` to reveal a
+hover-shown collapse button on the divider. The button is opt-in — by default
+the divider is just the accent line.
+
+<Preview source={toggleSrc} filename="ToggleSpec.tsx">
+  <ToggleSpec />
+</Preview>
+
+## Props
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `left` | `ReactNode` | — | Content for the left column. |
+| `middle` | `ReactNode` | — | Content for the middle column. |
+| `right` | `ReactNode` | — | Content for the right column. |
+| `top` | `ReactNode` | — | Optional content rendered above all columns (e.g. a toolbar). |
+| `showDivider` | `boolean` | `true` | Show the 2px accent indicator on dividers. The drag area is always active. |
+| `showToggle` | `boolean` | `false` | Show the morphing collapse-toggle button on the divider when `onToggleLeft` / `onToggleRight` is provided. |
+| `gap` | `number` | `24` | Width of the gap between columns in px. |
+| `defaultWidths` | `{ left?: number; middle?: number; right?: number }` | `2/3/5` | Initial flex weights for each column. |
+| `minWidths` | `{ left?: number; middle?: number; right?: number }` | `80px` | Minimum pixel width per column. |
+| `storageKey` | `string` | — | `localStorage` key to persist column widths across sessions. |
+| `leftHidden` | `boolean` | `false` | Collapse the left column. |
+| `middleHidden` | `boolean` | `false` | Collapse the middle column. |
+| `rightHidden` | `boolean` | `false` | Collapse the right column. |
+| `leftResizable` | `boolean` | `true` | Enable drag-to-resize on the left divider. |
+| `rightResizable` | `boolean` | `true` | Enable drag-to-resize on the right divider. |
+| `onToggleLeft` | `() => void` | — | Toggle handler for the left divider. Only renders the toggle button when `showToggle` is true. |
+| `onToggleRight` | `() => void` | — | Toggle handler for the right divider. Only renders the toggle button when `showToggle` is true. |
+| `className` | `string` | — | Extra classes on the root element. |

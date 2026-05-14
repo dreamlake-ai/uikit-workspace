@@ -6,7 +6,100 @@ sections. README copy edits and typo fixes are skipped. See
 [`./README.mdx`](./README.mdx) for the folder convention and
 [`../CLAUDE.md`](../CLAUDE.md) for the release-notes policy.
 
-## 2026-05-09 — Consolidate: 8 foundation routes → one /style-guide page
+## 2026-05-14 — Component docs land + Style Guide token + Preview/Select fixes
+
+Follow-up to the 2026-05-13 migration. The 13 placeholder pages now
+carry full demos, props tables, and `Spec.tsx + ?raw` source views.
+
+- **31 spec files under `packages/docs/components/specimens/components/<name>/`.**
+  Each demo is its own file so the source pane (`?raw` import) shows
+  exactly the code that runs in the live preview. Demo content mirrors
+  the parallel pages in `vuer-dashboard-ui` (Avatar gets Sizes + Shapes,
+  Tabs gets Uncontrolled / Controlled / CountBadge / SmSize / Segment,
+  Tag gets Tag / Accent / Tone / Pill, ResizableLayout gets Basic /
+  NoDivider / CustomGap / Toggle, etc.). All specs use Tailwind
+  utilities (`font-uikit-mono`, `text-uikit-ink`, `bg-uikit-panel`, …)
+  instead of the inline `style={{}}` blocks used in the source repo.
+  Only three inline styles remain — `gridTemplateColumns` (prop-driven),
+  `top: stickyTop` (scroll-derived), and progress-bar `width`.
+
+- **Style Guide token regression fix.** The 2026-05-13 wholesale token
+  replacement broke every bare-name utility (`border-faint`,
+  `bg-panel`, `text-ink`, `bg-row-*`, `text-row-selected-fg`,
+  `border-[color:var(--color-faint-dashed)]`) the zebra / hairline /
+  surface specimens depend on. `packages/uikit/src/styles.css` now
+  exposes bare-name aliases inside `@theme` that point through to the
+  same runtime tokens (`--color-ink → var(--ink)`, etc.) so the dark
+  cascade keeps working. The four-band row palette
+  (`--row-base / -zebra / -hover / -hover-warm / -selected / -selected-fg`)
+  is declared in `:root` with light hex values inlined as the canonical
+  contract, with dark overrides in `[data-theme="dark"]`.
+
+- **Props sections moved to the end** on every page. Dialog, Menu,
+  BreadcrumbTree, and Tag previously interleaved Behavior / rootPath /
+  Color resolution sections after Props — now Props (with its
+  sub-tables) is consistently the final section.
+
+- **`wide: true` frontmatter** for full-page demos (ProfileLayout).
+  Implemented in `lib/navigation.ts` (`PageMeta.wide`) and read by
+  `renderer/Layout.tsx`. Wide pages drop the right-rail TOC column and
+  remove the `lg:max-w-[760px]` cap on `<main>`, but keep the outer
+  container `maxWidth: 1320` constant so the sidebar's position never
+  shifts when navigating to a wide page.
+
+- **`<Preview>` no longer clips popovers.** The 2026-05-13 import shipped
+  the source repo's Preview verbatim, which carried `overflow: hidden`
+  on the outer wrapper. Removed — the Select dropdown and Menu panel
+  rendered inside a preview can now extend past the rounded bottom
+  corner. The header strip and source-view body each carry their own
+  explicit corner-radius declarations to preserve the rounded look.
+
+- **`<Select>` dropdown anchor fix.** The wrapper `<div>` was
+  `relative` (block-level), so the dropdown's `right-0` anchored to the
+  full-width row's right edge instead of the trigger's. Changed to
+  `relative inline-block` so the wrapper hugs the trigger.
+
+## 2026-05-13 — Adopt full vuer-dashboard-ui token set; import 13 component primitives
+
+Two-phase migration from the sibling `vuer-dashboard-ui` repo:
+
+- **Phase 1 — design-token adoption.** `packages/uikit/src/styles.css`
+  now holds the full token set previously curated in
+  `vuer-dashboard-ui/packages/ui/src/styles/globals.css`: the
+  light / dark / `prefers-color-scheme` cascade plus the entire
+  `@theme` block of `uikit-`-prefixed Tailwind utilities (color
+  aliases, alpha-mix presets, fonts, font sizes, line heights,
+  letter spacing, shadows, danger color). The previous narrow
+  token set (`--color-bg`, `--color-panel`, etc.) is replaced
+  wholesale. `packages/uikit/src/lib/utils.ts` ships the `cn()`
+  helper, configured for the `uikit-font-size` and `text-color`
+  class groups so `text-uikit-12` and `text-uikit-muted` no longer
+  collide.
+
+- **Phase 1 — Button removed.** `Button.tsx` and its docs page
+  (`pages/components/button/`) plus `ButtonStates` /
+  `ButtonVariants` specimens are dropped — the new primitive set
+  doesn't ship a Button atom.
+
+- **Phase 2 — 13 component primitives migrated:** Avatar,
+  BreadcrumbTree, Dialog, FilterBar, Menu, ProfileCard,
+  ProfileLayout, ResizableLayout, Select, SideNav, Tabs, Tag,
+  VirtualList. Source is copied verbatim — components keep their
+  `bg-uikit-*` / `text-uikit-*` / `font-uikit-*` Tailwind classes,
+  matched by the token set adopted in Phase 1, so no code-level
+  changes were needed. New `clsx`, `tailwind-merge`, and
+  `lucide-react` runtime deps; `@types/react`, `@types/react-dom`,
+  `typescript`, and `lucide-react` (dev) added to the kit
+  package.
+
+- **Phase 2 — docs scaffold.** A placeholder `+Page.mdx` lives
+  under `pages/components/<name>/` for each of the 13
+  primitives — frontmatter + a short prose summary + a
+  `<Callout>` reserving the URL and the sidebar slot. Live
+  `<Preview>` blocks and the spec / section split land in
+  follow-up passes, one component at a time, so each component's
+  doc can be iterated rather than mass-translated.
+
 
 Per-foundation routes (`/color`, `/typography`, `/spacing-layout`,
 `/iconography`, `/elevation`, `/border-radius`, `/motion`,

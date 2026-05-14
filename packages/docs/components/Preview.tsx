@@ -166,13 +166,21 @@ export function Preview({
     <div
       data-line-numbers={showLines ? 'on' : 'off'}
       className="border border-doc-template-faint bg-doc-template-panel"
-      style={{ margin: '18px 0 22px', borderRadius: 'var(--radius-doc-template)', overflow: 'hidden' }}
+      // No `overflow: hidden` here — popovers (Select dropdown, Menu panel,
+      // etc.) opened from inside the preview must be able to extend past the
+      // bottom rounded corner. The header strip below carries its own
+      // rounded-top via the parent's border-radius + bg cascade.
+      style={{ margin: '18px 0 22px', borderRadius: 'var(--radius-doc-template)' }}
     >
       <div
         className="flex items-center border-b border-doc-template-faint"
         style={{
           gap: 10,
           padding: '6px 10px 6px 6px',
+          // Round the top corners so the header strip respects the parent's
+          // border-radius now that the parent no longer clips its children.
+          borderTopLeftRadius: 'var(--radius-doc-template)',
+          borderTopRightRadius: 'var(--radius-doc-template)',
           background: 'color-mix(in srgb, var(--color-doc-template-ink) 3%, transparent)',
         }}
       >
@@ -234,7 +242,16 @@ export function Preview({
       {tab === 'preview' ? (
         <div style={{ padding: 24, minHeight: 80, ...(height ? { height } : null) }}>{children}</div>
       ) : (
-        <div style={{ background: 'var(--color-doc-template-code)' }}>
+        <div
+          style={{
+            background: 'var(--color-doc-template-code)',
+            // Round the bottom corners so the cream source bg respects the
+            // parent's border-radius now that the parent no longer clips.
+            borderBottomLeftRadius: 'var(--radius-doc-template)',
+            borderBottomRightRadius: 'var(--radius-doc-template)',
+            overflow: 'hidden',
+          }}
+        >
           <HighlightedSource code={visibleSource} filename={filename} />
         </div>
       )}

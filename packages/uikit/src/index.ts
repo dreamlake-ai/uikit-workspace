@@ -1,2 +1,9 @@
-export { Button } from './components/Button'
-export type { ButtonProps } from './components/Button'
+// Public API for @dreamlake/uikit.
+//
+// Component primitives + the design-token stylesheet (imported once at
+// the app root via `@import "@dreamlake/uikit/styles.css"`). The cn()
+// helper composes Tailwind classes with tailwind-merge configured for
+// the uikit-prefixed utility groups.
+
+export * from "./components";
+export { cn } from "./lib/utils";

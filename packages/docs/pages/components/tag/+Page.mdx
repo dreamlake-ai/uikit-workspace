@@ -1,0 +1,112 @@
+---
+title: Tag
+section: Components
+order: 120
+description: Hashtag or pill tag with a six-color tone palette, accent override, and removable variant.
+---
+
+import { Preview } from '../../../components/Preview'
+import { TagSpec } from '../../../components/specimens/components/tag/TagSpec'
+import { AccentSpec } from '../../../components/specimens/components/tag/AccentSpec'
+import { ToneSpec } from '../../../components/specimens/components/tag/ToneSpec'
+import { PillSpec } from '../../../components/specimens/components/tag/PillSpec'
+import tagSrc from '../../../components/specimens/components/tag/TagSpec.tsx?raw'
+import accentSrc from '../../../components/specimens/components/tag/AccentSpec.tsx?raw'
+import toneSrc from '../../../components/specimens/components/tag/ToneSpec.tsx?raw'
+import pillSrc from '../../../components/specimens/components/tag/PillSpec.tsx?raw'
+
+# Tag
+
+Two tag styles in one component. Pick `variant` by the role the tag plays:
+
+- **`variant="tag"` (default)** — hashtag presentation. `#name` with an
+  underline when active. Used in experiment metadata, dataset bindrs, profile
+  project footers.
+- **`variant="pill"`** — boxed pill with a hairline border, fills with accent
+  when active. Used for filter chips, single-select tag pickers.
+
+## Removable tags
+
+Hover any tag to reveal the × button. Clicking × calls `onRemove` — wire it
+to delete from your state. Hovering the × turns the row red and adds a
+strikethrough preview.
+
+<Preview source={tagSrc} filename="TagSpec.tsx">
+  <TagSpec />
+</Preview>
+
+## Active state and accent override
+
+`active` underlines the label. By default, hover and the active underline both
+use `var(--accent)`. Pass `accent` to override — accepts a palette tone name
+(`'green'`, `'red'`, …) or any CSS color string. The static text stays
+`var(--ink)` — only hover and the active underline pick up the accent.
+
+<Preview source={accentSrc} filename="AccentSpec.tsx">
+  <AccentSpec />
+</Preview>
+
+## Tone (palette colors)
+
+`tone` constrains the tag to one of the design's six palette buckets and sets
+BOTH the static text color AND the default accent (hover/active). Use it for
+status-colored labels — `#failed`, `#running`, `#stale`. For the rare case
+where you want the static color to differ from hover, override `accent`
+independently.
+
+<Preview source={toneSrc} filename="ToneSpec.tsx">
+  <ToneSpec />
+</Preview>
+
+## Pill variant
+
+A single-select chip row. The active pill fills with `accent`, others show a
+hairline ring.
+
+<Preview source={pillSrc} filename="PillSpec.tsx">
+  <PillSpec />
+</Preview>
+
+## Color resolution
+
+| Props | Static text | Hover / active |
+| --- | --- | --- |
+| `<Tag name="x" />` | `var(--ink)` | `var(--accent)` |
+| `<Tag name="x" accent="green" />` | `var(--ink)` | `#1f8f4a` |
+| `<Tag name="x" accent="#abc123" />` | `var(--ink)` | `#abc123` |
+| `<Tag name="x" tone="red" />` | `#c8513b` | `#c8513b` |
+| `<Tag name="x" tone="red" accent="amber" />` | `#c8513b` | `#c0922e` |
+| `<Tag name="x" tone="red" accent="#abc123" />` | `#c8513b` | `#abc123` |
+
+> **Confirmation flows** — `Tag` fires `onRemove` immediately on × click. If
+> you want a "are you sure?" step or a "don't ask for the next 10 minutes"
+> suppression window, wrap the call in `Dialog` / your own confirmation logic.
+
+## Props
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `name` | `string` | — | Tag label text. |
+| `variant` | `'tag' \| 'pill'` | `'tag'` | Visual style — hashtag with underline, or boxed pill. |
+| `active` | `boolean` | `false` | Pill fills with accent; tag underlines. |
+| `removable` | `boolean` | `false` | Show a × button on hover that calls `onRemove`. |
+| `tone` | `TagTone` | — | Constrain the tag to one of 6 palette buckets. Sets both static text color and default accent. |
+| `accent` | `TagTone \| string` | — | Override the hover/active color. Accepts a palette tone name or any CSS color. |
+| `light` | `boolean` | `false` | Reduce font weight to 400. |
+| `compact` | `boolean` | `false` | Reduce font size by ~1.5px. |
+| `onClick` | `() => void` | — | Click handler for the tag body. |
+| `onRemove` | `() => void` | — | Called when the user clicks the × button (only when `removable`). |
+| `className` | `string` | — | Extra classes on the root span. |
+
+### TagTone
+
+Six semantic-palette buckets per `design.md`. Pick by **function**, not vibe.
+
+| Tone | Hex | Description |
+| --- | --- | --- |
+| `'blue'` | `#23aaff` | Active / running / accent. Also the library's `--accent` token. |
+| `'green'` | `#1f8f4a` | Ok / source / success. "passed", "ingest", "draft release". |
+| `'amber'` | `#c0922e` | Stale / scheduled / filter. "Needs review", warnings. |
+| `'red'` | `#c8513b` | Error / sink / quarantine. Failed states, destructive actions. |
+| `'purple'` | `#7c5bd9` | Model / merge / human-authored. PRs, tags, code authorship. |
+| `'warmGray'` | `#9c907a` | Idle / queued / placeholder. Neutral chips, "noop". |
