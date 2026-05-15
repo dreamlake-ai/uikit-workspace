@@ -20,15 +20,15 @@ const radii: Radius[] = [
   { px: 12, role: 'list row', description: 'Zebra-list rows at rest, hover, and selection-run wrappers.' },
 ]
 
-const cardCx = 'border border-faint rounded-md bg-panel p-3 flex flex-col gap-2'
+const cardCx = 'border border-uikit-faint rounded-md bg-uikit-panel p-3 flex flex-col gap-2'
 const demoCx = 'h-16 flex items-end'
-const shapeCx = 'w-full h-12 bg-ink/10 border border-faint'
+const shapeCx = 'w-full h-12 bg-uikit-ink/10 border border-uikit-faint'
 const headRowCx = 'flex items-baseline gap-2'
-const nameCx = 'font-mono text-[12px] font-semibold text-ink'
+const nameCx = 'font-mono text-[12px] font-semibold text-uikit-ink'
 const tagCx =
-  'font-mono text-[9px] font-medium tracking-[0.1em] uppercase text-muted px-1.5 py-px rounded border border-faint'
-const roleCx = 'font-mono text-[10.5px] text-muted'
-const descCx = 'font-ui text-[12px] leading-[1.5] text-ink [text-wrap:pretty]'
+  'font-mono text-[9px] font-medium tracking-[0.1em] uppercase text-uikit-muted px-1.5 py-px rounded border border-uikit-faint'
+const roleCx = 'font-mono text-[10.5px] text-uikit-muted'
+const descCx = 'font-ui text-[12px] leading-[1.5] text-uikit-ink [text-wrap:pretty]'
 
 export const RadiiSpecimen = () => (
   <div className="grid grid-cols-3 gap-2.5 my-6 max-[880px]:grid-cols-2 max-[560px]:grid-cols-1">

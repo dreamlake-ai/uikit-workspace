@@ -197,7 +197,9 @@ export function Tabs({
       {variant === 'segment' && (
         <div
           aria-hidden
-          className="absolute pointer-events-none bg-uikit-bg shadow-[0_1px_2px_rgba(0,0,0,.08)]"
+          // Style Guide §Elevation tint-1 — the resting-panel tint.
+          // Theme-aware via `--shadow-tint-1` so dark mode darkens.
+          className="absolute pointer-events-none bg-uikit-bg shadow-[0_1px_2px_var(--shadow-tint-1)]"
           style={{
             top: segCfg.inset,
             bottom: segCfg.inset,

@@ -14,7 +14,7 @@ type Row = {
 }
 
 // Note the zebra parity carries through the run — the run wrapper is
-// transparent, so each row's own bg-row-base / bg-row-zebra reads.
+// transparent, so each row's own bg-uikit-row-base / bg-uikit-row-zebra reads.
 const rows: Row[] = [
   { id: 'e_4422', label: 'column.add · price_usd',    meta: '14:01', zebra: 'even' },
   { id: 'e_4421', label: 'column.modify · region',    meta: '13:58', zebra: 'odd'  },
@@ -29,12 +29,12 @@ const RUN_END = 3
 
 const rowBaseCx =
   'grid grid-cols-[56px_minmax(0,1fr)_auto] items-center gap-3 ' +
-  'px-2.5 py-1.5 rounded-[12px] font-mono text-[11.5px] text-ink ' +
-  'bg-row-base data-[zebra=odd]:bg-row-zebra'
+  'px-2.5 py-1.5 rounded-[12px] font-mono text-[11.5px] text-uikit-ink ' +
+  'bg-uikit-row-base data-[zebra=odd]:bg-uikit-row-zebra'
 
-const idCx = 'text-[10.5px] text-muted opacity-70'
+const idCx = 'text-[10.5px] text-uikit-muted opacity-70'
 const labelCx = 'font-medium overflow-hidden text-ellipsis whitespace-nowrap'
-const metaCx = 'text-[9.5px] text-muted tracking-[0.04em]'
+const metaCx = 'text-[9.5px] text-uikit-muted tracking-[0.04em]'
 
 // The ::after wrapper draws the 2px accent ring at +2 over its rows
 // (which are at +1 via parent's `relative isolate z-[1]`). The ring is
@@ -42,7 +42,7 @@ const metaCx = 'text-[9.5px] text-muted tracking-[0.04em]'
 const selRunCx =
   'relative isolate z-[1] bg-transparent flex flex-col gap-[2px] rounded-[12px] ' +
   "after:content-[''] after:absolute after:inset-0 after:rounded-[12px] " +
-  'after:border-2 after:border-accent after:pointer-events-none after:z-[2]'
+  'after:border-2 after:border-uikit-accent after:pointer-events-none after:z-[2]'
 
 function RowView({ r }: { r: Row }) {
   return (
@@ -56,7 +56,7 @@ function RowView({ r }: { r: Row }) {
 
 export const ZebraRunSpecimen = () => (
   <div
-    className="my-6 p-3 border border-faint rounded-md bg-panel shadow-[0_1px_2px_var(--shadow-tint-1),0_8px_24px_-10px_var(--shadow-tint-3)]"
+    className="my-6 p-3 border border-uikit-faint rounded-md bg-uikit-panel shadow-[0_1px_2px_var(--shadow-tint-1),0_8px_24px_-10px_var(--shadow-tint-3)]"
     role="img"
     aria-label="Six-row list with rows 2 to 4 selected as a contiguous run, drawn with an accent ring"
   >

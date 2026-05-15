@@ -144,13 +144,13 @@ const categories: Category[] = [
 
 const groupCx = 'mt-6 first:mt-2'
 const headCx =
-  'font-mono text-[9.5px] font-semibold uppercase tracking-[0.12em] text-muted mb-2.5'
+  'font-mono text-[9.5px] font-semibold uppercase tracking-[0.12em] text-uikit-muted mb-2.5'
 const gridCx =
   'grid grid-cols-[repeat(auto-fill,minmax(108px,1fr))] gap-2'
 const cardCx =
-  'flex flex-col items-center justify-center gap-1.5 px-2 py-3 border border-faint rounded-md bg-panel text-ink'
+  'flex flex-col items-center justify-center gap-1.5 px-2 py-3 border border-uikit-faint rounded-md bg-uikit-panel text-uikit-ink'
 const glyphCx = 'flex items-center justify-center h-7'
-const nameCx = 'font-mono text-[10.5px] text-muted leading-none'
+const nameCx = 'font-mono text-[10.5px] text-uikit-muted leading-none'
 
 export const IconCatalog = () => (
   <div className="my-6">
@@ -215,14 +215,14 @@ const migration: MigrationRow[] = [
 ]
 
 const tableCx =
-  'w-full my-5 border-collapse font-ui text-[12.5px] text-ink'
+  'w-full my-5 border-collapse font-ui text-[12.5px] text-uikit-ink'
 const thCx =
-  'text-left font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-muted py-2 pr-4 border-b border-faint'
-const tdCx = 'py-2 pr-4 border-b border-faint last:border-b-0 align-middle'
-const arrowCx = 'font-mono text-muted px-1'
+  'text-left font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-uikit-muted py-2 pr-4 border-b border-uikit-faint'
+const tdCx = 'py-2 pr-4 border-b border-uikit-faint last:border-b-0 align-middle'
+const arrowCx = 'font-mono text-uikit-muted px-1'
 
 export const MigrationBacklog = () => (
-  <div className="my-5 border border-faint rounded-md bg-panel px-4 py-2">
+  <div className="my-5 border border-uikit-faint rounded-md bg-uikit-panel px-4 py-2">
     <table className={tableCx}>
       <thead>
         <tr>
@@ -234,7 +234,7 @@ export const MigrationBacklog = () => (
       <tbody>
         {migration.map((row) => (
           <tr key={`${row.where}-${row.custom}`}>
-            <td className={`${tdCx} font-mono text-muted`}>{row.where}</td>
+            <td className={`${tdCx} font-mono text-uikit-muted`}>{row.where}</td>
             <td className={tdCx}>
               <code>{row.custom}</code>
             </td>

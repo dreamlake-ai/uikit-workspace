@@ -68,7 +68,7 @@ const buckets: Bucket[] = [
   },
 ]
 
-const cardCx = 'border border-faint rounded-md overflow-hidden flex flex-col'
+const cardCx = 'border border-uikit-faint rounded-md overflow-hidden flex flex-col'
 
 const headCx =
   'flex items-center justify-between px-3.5 py-2.5 font-mono text-[11px] font-semibold text-white tracking-[-0.005em]'
@@ -76,18 +76,18 @@ const headCx =
 const bucketLabelCx = 'truncate'
 const hexCx = 'opacity-80 tracking-[0.02em] tabular-nums'
 
-const bodyCx = 'bg-panel px-3 py-3 flex flex-col gap-2 flex-1'
+const bodyCx = 'bg-uikit-panel px-3 py-3 flex flex-col gap-2 flex-1'
 
 const alsoCx =
-  'font-mono text-[10px] font-medium text-muted tracking-[0.04em] uppercase opacity-85'
+  'font-mono text-[10px] font-medium text-uikit-muted tracking-[0.04em] uppercase opacity-85'
 
 const domainRowCx = 'flex flex-wrap items-baseline gap-1.5'
 
 const domainNameCx =
-  'font-mono text-[9.5px] font-semibold text-ink tracking-[0.1em] uppercase opacity-75 mr-1'
+  'font-mono text-[9.5px] font-semibold text-uikit-ink tracking-[0.1em] uppercase opacity-75 mr-1'
 
 const conceptCx =
-  'font-mono text-[10.5px] font-medium text-ink leading-tight px-1.5 py-px rounded border border-faint bg-bg'
+  'font-mono text-[10.5px] font-medium text-uikit-ink leading-tight px-1.5 py-px rounded border border-uikit-faint bg-uikit-bg'
 
 export const PaletteGrid = () => (
   <div className="grid grid-cols-2 gap-2.5 my-6 max-[700px]:grid-cols-1">

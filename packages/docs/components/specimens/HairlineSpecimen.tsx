@@ -35,26 +35,26 @@ const specimens: Specimen[] = [
   },
 ]
 
-const cardCx = 'border border-faint rounded-md bg-panel p-3 flex flex-col gap-2'
+const cardCx = 'border border-uikit-faint rounded-md bg-uikit-panel p-3 flex flex-col gap-2'
 const demoCx = 'h-12 flex items-center'
 const headRowCx = 'flex items-baseline'
-const nameCx = 'font-mono text-[12px] font-semibold text-ink'
-const valuesCx = 'font-mono text-[10.5px] text-muted'
-const roleCx = 'font-ui text-[12px] leading-[1.5] text-ink [text-wrap:pretty]'
+const nameCx = 'font-mono text-[12px] font-semibold text-uikit-ink'
+const valuesCx = 'font-mono text-[10.5px] text-uikit-muted'
+const roleCx = 'font-ui text-[12px] leading-[1.5] text-uikit-ink [text-wrap:pretty]'
 
 const renderDemo = (kind: Specimen['demo']) => {
   if (kind === 'solid') {
-    return <div className="w-full border-t border-faint" aria-hidden="true" />
+    return <div className="w-full border-t border-uikit-faint" aria-hidden="true" />
   }
   if (kind === 'dashed') {
     return (
       <div
-        className="w-full border-t border-dashed border-[color:var(--color-faint-dashed)]"
+        className="w-full border-t border-dashed border-[color:var(--color-uikit-faint-dashed)]"
         aria-hidden="true"
       />
     )
   }
-  return <div className="w-full h-6 rounded bg-chip border border-faint" aria-hidden="true" />
+  return <div className="w-full h-6 rounded bg-uikit-chip border border-uikit-faint" aria-hidden="true" />
 }
 
 export const HairlineSpecimen = () => (

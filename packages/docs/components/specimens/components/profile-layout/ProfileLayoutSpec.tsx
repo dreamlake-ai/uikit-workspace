@@ -228,7 +228,7 @@ export const ProfileLayoutSpec = () => {
   return (
     <div
       ref={containerRef}
-      className="vdu-no-scrollbar relative h-[720px] overflow-y-auto overflow-x-hidden border border-uikit-faint rounded-xl"
+      className="uikit-no-scrollbar relative h-[720px] overflow-y-auto overflow-x-hidden border border-uikit-faint rounded-xl"
     >
       <ProfileLayout
         profile={PROFILE}

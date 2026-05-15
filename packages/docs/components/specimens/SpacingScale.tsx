@@ -2,7 +2,7 @@
 // §04 (id="sub-spacing"). Values are literal pixels — there's no token; the
 // design-guide rationale is "used inline · no token". This component exists
 // to make the rhythm visible: each row shows a horizontal bar whose width
-// equals the named value, against the same `bg-ink/20` rule so the visual
+// equals the named value, against the same `bg-uikit-ink/20` rule so the visual
 // weight tracks the px count.
 
 type Step = { name: string; value: number }
@@ -22,13 +22,13 @@ const steps: Step[] = [
 ]
 
 const rowCx =
-  'grid grid-cols-[120px_56px_minmax(0,1fr)] items-center gap-3 py-1.5 border-b border-faint last:border-b-0'
-const nameCx = 'font-mono text-[11.5px] font-semibold text-ink'
-const valCx = 'font-mono text-[11px] text-muted tabular-nums'
-const barCx = 'h-2 rounded-sm bg-ink/20'
+  'grid grid-cols-[120px_56px_minmax(0,1fr)] items-center gap-3 py-1.5 border-b border-uikit-faint last:border-b-0'
+const nameCx = 'font-mono text-[11.5px] font-semibold text-uikit-ink'
+const valCx = 'font-mono text-[11px] text-uikit-muted tabular-nums'
+const barCx = 'h-2 rounded-sm bg-uikit-ink/20'
 
 export const SpacingScale = () => (
-  <div className="my-6 border border-faint rounded-md bg-panel px-4 py-2">
+  <div className="my-6 border border-uikit-faint rounded-md bg-uikit-panel px-4 py-2">
     {steps.map((s) => (
       <div key={s.name} className={rowCx}>
         <div className={nameCx}>{s.name}</div>

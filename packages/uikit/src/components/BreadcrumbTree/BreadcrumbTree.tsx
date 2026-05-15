@@ -142,7 +142,7 @@ function TreeRow({
       )}
       style={{
         // Stagger animation depends on column + row index (runtime).
-        animation: `vdu-row-in 240ms ${
+        animation: `uikit-row-in 240ms ${
           colIdx * 45 + rowIdx * 20
         }ms cubic-bezier(0.2, 0.8, 0.2, 1) both`,
       }}
@@ -404,10 +404,13 @@ export function BreadcrumbTree({
           <div
             ref={panelRef}
             className={cn(
-              'vdu-panel-in fixed z-[1000] flex overflow-hidden origin-top-left',
+              'uikit-panel-in fixed z-[1000] flex overflow-hidden origin-top-left',
               'bg-uikit-bg text-uikit-ink font-uikit-ui',
               'rounded-[calc(var(--radius)+2px)]',
-              'shadow-[0_2px_6px_rgba(20,20,18,0.05),0_10px_28px_rgba(20,20,18,0.12)]',
+              // Style Guide §Elevation: popovers use the `soft` ladder.
+              // Theme-aware via `--shadow-tint-*` (was a fixed rgba that
+              // didn't darken in dark mode).
+              'shadow-uikit-soft',
             )}
             style={{
               top: anchorRect.top + anchorRect.height + 6,
@@ -486,7 +489,7 @@ export function BreadcrumbTree({
                         ))}
 
                       {error && items.length === 0 && (
-                        <div className="py-6 px-2 text-center text-uikit-11 text-[#f87171]">
+                        <div className="py-6 px-2 text-center text-uikit-11 text-uikit-danger">
                           Failed to load
                         </div>
                       )}

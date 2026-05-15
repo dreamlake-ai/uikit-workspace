@@ -57,7 +57,8 @@ export function Select({
             'absolute top-[calc(100%+8px)] right-0 z-10',
             'rounded-lg p-1 min-w-[140px]',
             'bg-uikit-bg border border-uikit-faint',
-            'shadow-[0_1px_2px_rgba(0,0,0,.04),0_8px_24px_rgba(0,0,0,.08)]',
+            // Style Guide §Elevation — dropdowns use the `soft` ladder.
+            'shadow-uikit-soft',
           )}
         >
           {options.map((o) => (

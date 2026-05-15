@@ -39,13 +39,13 @@ const shadows: Shadow[] = [
   },
 ]
 
-const cardCx = 'border border-faint rounded-md bg-panel p-3 flex flex-col gap-2'
+const cardCx = 'border border-uikit-faint rounded-md bg-uikit-panel p-3 flex flex-col gap-2'
 const demoCx = 'h-20 flex items-center justify-center'
-const tileCx = 'w-3/4 h-12 rounded-md bg-panel'
+const tileCx = 'w-3/4 h-12 rounded-md bg-uikit-panel'
 const headRowCx = 'flex items-baseline'
-const nameCx = 'font-mono text-[12px] font-semibold text-ink'
-const valuesCx = 'font-mono text-[10.5px] text-muted'
-const roleCx = 'font-ui text-[12px] leading-[1.5] text-ink [text-wrap:pretty]'
+const nameCx = 'font-mono text-[12px] font-semibold text-uikit-ink'
+const valuesCx = 'font-mono text-[10.5px] text-uikit-muted'
+const roleCx = 'font-ui text-[12px] leading-[1.5] text-uikit-ink [text-wrap:pretty]'
 
 export const ShadowSpecimen = () => (
   <div className="grid grid-cols-2 gap-2.5 my-6 max-[560px]:grid-cols-1">

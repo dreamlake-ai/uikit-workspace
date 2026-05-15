@@ -33,6 +33,18 @@
   --accent:      #23aaff;
   --accent-soft: rgba(35, 170, 255, 0.09);
 
+  /* ── Semantic palette (Style Guide §Color) ────────────────────
+     The six-color set every domain coloring pulls from. Names mirror
+     the `TagTone` union so `tone="green"` and `--tone-green` track
+     each other. Palette values are theme-invariant — the same hex in
+     light + dark. `--tone-blue` intentionally equals `--accent`. */
+  --tone-blue:      #23aaff; /* active · running · accent */
+  --tone-green:     #1f8f4a; /* ok · source · success */
+  --tone-amber:     #c0922e; /* stale · scheduled · filter */
+  --tone-red:       #c8513b; /* error · sink · quarantine · destructive */
+  --tone-purple:    #7c5bd9; /* model · merge · human */
+  --tone-warm-gray: #9c907a; /* idle · queued · placeholder */
+
   /* ── Zebra-list row bands (doc Style Guide only) ──────────────
      Four-band model used by docs/components/specimens/ZebraSpecimen and
      ZebraRunSpecimen. Light/dark hex values are inlined here as the
@@ -129,7 +141,7 @@ html[data-theme="dark"] {
 
 /* ─────────────────────────────────────────────────────────────────
    Tailwind v4 @theme — exposes the runtime tokens above as utility
-   classes. Naming is value-based (e.g. `--color-ink-5` is "ink at 5%
+   classes. Naming is value-based (e.g. `--color-uikit-ink-5` is "ink at 5%
    alpha" — describes the value, not where it's used). Usage-derived
    names (eyebrow, panel, popover) are intentionally avoided — they
    drift when reused.
@@ -149,39 +161,33 @@ html[data-theme="dark"] {
   --color-uikit-rail:        var(--rail-bg);
   --color-uikit-accent:      var(--accent);
   --color-uikit-accent-soft: var(--accent-soft);
-  --color-uikit-faint:       var(--faint);
-  --color-uikit-chip:        var(--chip-bg);
-  --color-uikit-search:      var(--search-bg);
-  --color-uikit-selected:    var(--selected-bg);
-
-  /* ── Bare-name aliases ─────────────────────────────────────────
-     The Style Guide specimens and a handful of legacy call-sites use
-     the un-prefixed forms (`border-faint`, `bg-panel`, `text-ink`,
-     `bg-bg`, etc.). Each one resolves through the same runtime token,
-     so the dark cascade still works. New code should prefer the
-     `uikit-` variants above to avoid collisions with consumer themes. */
-  --color-ink:          var(--ink);
-  --color-muted:        var(--muted);
-  --color-bg:           var(--bg);
-  --color-panel:        var(--panel-bg);
-  --color-rail:         var(--rail-bg);
-  --color-accent:       var(--accent);
-  --color-accent-soft:  var(--accent-soft);
-  --color-faint:        var(--faint);
-  --color-faint-dashed: var(--faint-dashed);
-  --color-chip:         var(--chip-bg);
-  --color-search:       var(--search-bg);
-  --color-selected:     var(--selected-bg);
+  --color-uikit-faint:        var(--faint);
+  --color-uikit-faint-dashed: var(--faint-dashed);
+  --color-uikit-chip:         var(--chip-bg);
+  --color-uikit-search:       var(--search-bg);
+  --color-uikit-selected:     var(--selected-bg);
 
   /* Row bands — exposed for the ZebraSpecimen utilities
-     (bg-row-base, bg-row-zebra, bg-row-hover, bg-row-hover-warm,
-     bg-row-selected, text-row-selected-fg). */
-  --color-row-base:        var(--row-base);
-  --color-row-zebra:       var(--row-zebra);
-  --color-row-hover:       var(--row-hover);
-  --color-row-hover-warm:  var(--row-hover-warm);
-  --color-row-selected:    var(--row-selected);
-  --color-row-selected-fg: var(--row-selected-fg);
+     (`bg-uikit-row-base`, `bg-uikit-row-zebra`, `bg-uikit-row-hover`,
+     `bg-uikit-row-hover-warm`, `bg-uikit-row-selected`,
+     `text-uikit-row-selected-fg`). */
+  --color-uikit-row-base:        var(--row-base);
+  --color-uikit-row-zebra:       var(--row-zebra);
+  --color-uikit-row-hover:       var(--row-hover);
+  --color-uikit-row-hover-warm:  var(--row-hover-warm);
+  --color-uikit-row-selected:    var(--row-selected);
+  --color-uikit-row-selected-fg: var(--row-selected-fg);
+
+  /* Semantic-palette tones — exposed for `text-uikit-tone-red`,
+     `bg-uikit-tone-green`, etc. Mirror the `TagTone` union; values are
+     theme-invariant per the Style Guide §Color rule "Never invent a
+     near-miss hex." */
+  --color-uikit-tone-blue:      var(--tone-blue);
+  --color-uikit-tone-green:     var(--tone-green);
+  --color-uikit-tone-amber:     var(--tone-amber);
+  --color-uikit-tone-red:       var(--tone-red);
+  --color-uikit-tone-purple:    var(--tone-purple);
+  --color-uikit-tone-warm-gray: var(--tone-warm-gray);
 
   /* ── Color-mix presets — name = base color · alpha % ──────────
      Numeric suffix is the percentage of the base color over a
@@ -217,11 +223,13 @@ html[data-theme="dark"] {
   --leading-uikit-snug:  1.3;
   --leading-uikit-prose: 1.55;
 
-  /* ── Danger color (MenuItem destructive action, etc.) ─────────
-     Different shade from Tag's danger (#d93434, used for tag-removal
-     feedback) — this one is the popover-destructive-action red. */
-  --color-uikit-danger:    oklch(58% .17 25);
-  --color-uikit-danger-8:  color-mix(in srgb, oklch(58% .17 25) 8%, transparent);
+  /* ── Danger color (MenuItem destructive action, Tag × hover, etc.)
+     Same palette red as `--tone-red` / Style Guide §Color, expressed in
+     oklch so the alpha-mix preset below has a perceptually-uniform base.
+     Per §Color rule "Never invent a near-miss hex," anything that wants
+     a destructive red points here or at `var(--tone-red)`. */
+  --color-uikit-danger:    var(--tone-red);
+  --color-uikit-danger-8:  color-mix(in srgb, var(--tone-red) 8%, transparent);
 
   /* ── Letter-spacing — relative tightness scale.
      The `uikit-` prefix keeps our values fully isolated from
@@ -247,26 +255,28 @@ html[data-theme="dark"] {
 
 /* ── Animations ─────────────────────────────────────────────────── */
 
-@keyframes vdu-panel-in {
+@keyframes uikit-panel-in {
   from { opacity: 0; transform: scale(0.985) translateY(-4px); }
   to   { opacity: 1; transform: scale(1)     translateY(0); }
 }
-.vdu-panel-in {
-  animation: vdu-panel-in 280ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+.uikit-panel-in {
+  animation: uikit-panel-in 280ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
-@keyframes vdu-row-in {
+/* Row-cascade entry used by BreadcrumbTree's column-fill animation —
+   referenced via inline `style={{ animation: 'uikit-row-in …' }}`. */
+@keyframes uikit-row-in {
   from { opacity: 0; transform: translateX(-6px); }
   to   { opacity: 1; transform: translateX(0); }
 }
 
 /* ── Scrollbar utilities ────────────────────────────────────────── */
 
-.vdu-no-scrollbar {
+.uikit-no-scrollbar {
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
-.vdu-no-scrollbar::-webkit-scrollbar {
+.uikit-no-scrollbar::-webkit-scrollbar {
   display: none;
 }
 
@@ -320,11 +330,3 @@ html[data-theme="dark"] *::-webkit-scrollbar-thumb:hover {
   }
 }
 
-/* ─────────────────────────────────────────────────────────────────
-   EpisodeVideoStack — LIVE pulse animation. Scoped name (vdu-) so
-   it doesn't collide with consumer styles.
-   ───────────────────────────────────────────────────────────────── */
-@keyframes vdu-live-pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50%      { opacity: 0.55; transform: scale(0.78); }
-}

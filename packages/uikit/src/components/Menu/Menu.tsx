@@ -133,7 +133,7 @@ export function Menu({
             role="menu"
             onClick={(e) => e.stopPropagation()}
             className={cn(
-              'vdu-panel-in fixed z-[1000] flex flex-col',
+              'uikit-panel-in fixed z-[1000] flex flex-col',
               'rounded-lg py-1.5',
               'bg-uikit-bg text-uikit-ink font-uikit-ui',
               'shadow-uikit-soft',

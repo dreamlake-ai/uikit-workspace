@@ -20,19 +20,24 @@ export type TagTone =
   | 'purple'
   | 'warmGray'
 
-const TONE_COLORS: Record<TagTone, string> = {
-  blue:     '#23aaff',
-  green:    '#1f8f4a',
-  amber:    '#c0922e',
-  red:      '#c8513b',
-  purple:   '#7c5bd9',
-  warmGray: '#9c907a',
+// Tone → CSS-variable lookup. The hex values themselves live in
+// `packages/uikit/src/styles.css` as `--tone-*` (Style Guide §Color),
+// so every site that wants a palette color points through this map.
+// Inline hex literals are intentionally avoided per §"Never invent a
+// near-miss hex."
+const TONE_VARS: Record<TagTone, string> = {
+  blue:     'var(--tone-blue)',
+  green:    'var(--tone-green)',
+  amber:    'var(--tone-amber)',
+  red:      'var(--tone-red)',
+  purple:   'var(--tone-purple)',
+  warmGray: 'var(--tone-warm-gray)',
 }
 
 /** Resolves a palette tone name OR a raw color string to a CSS color. */
 function resolveColor(c: TagTone | string | undefined): string | undefined {
   if (!c) return undefined
-  return c in TONE_COLORS ? TONE_COLORS[c as TagTone] : c
+  return c in TONE_VARS ? TONE_VARS[c as TagTone] : c
 }
 
 export interface TagProps {
@@ -69,7 +74,10 @@ export interface TagProps {
   className?: string
 }
 
-const DANGER = '#d93434'
+// × hover / removal feedback uses the palette red — same color as
+// `tone="red"` and `var(--color-uikit-danger)`. No bespoke "destructive"
+// hex (Style Guide §Color §"Never invent a near-miss hex").
+const DANGER = 'var(--tone-red)'
 
 export function Tag({
   name,
@@ -84,7 +92,7 @@ export function Tag({
   onRemove,
   className,
 }: TagProps) {
-  const toneColor = tone ? TONE_COLORS[tone] : undefined
+  const toneColor = tone ? TONE_VARS[tone] : undefined
   const staticColor = toneColor ?? 'var(--ink)'
   const accentColor = resolveColor(accent) ?? toneColor ?? 'var(--accent)'
 

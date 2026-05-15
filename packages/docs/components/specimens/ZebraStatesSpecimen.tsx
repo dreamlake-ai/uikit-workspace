@@ -25,17 +25,17 @@ const states: State[] = [
 ]
 
 const headCellCx =
-  'px-3.5 py-2 font-mono text-[9.5px] font-semibold tracking-[0.12em] uppercase text-muted bg-bg border-b border-faint'
+  'px-3.5 py-2 font-mono text-[9.5px] font-semibold tracking-[0.12em] uppercase text-uikit-muted bg-uikit-bg border-b border-uikit-faint'
 
 const rowCellCx =
-  'flex items-center gap-2.5 px-3.5 py-[11px] border-b border-faint [&:where(.last-row_*)]:border-b-0'
+  'flex items-center gap-2.5 px-3.5 py-[11px] border-b border-uikit-faint [&:where(.last-row_*)]:border-b-0'
 
 const swatchFillCx = 'shrink-0 w-14 h-6 rounded-[5px] border border-[rgba(0,0,0,0.08)]'
 const swatchOutlineCx =
-  'shrink-0 w-14 h-6 rounded-[5px] outline-2 outline-accent -outline-offset-2 bg-transparent'
+  'shrink-0 w-14 h-6 rounded-[5px] outline-2 outline-uikit-accent -outline-offset-2 bg-transparent'
 
-const labelCx = 'font-mono text-[10.5px] font-semibold text-ink tracking-[0.02em]'
-const hexCx = 'font-mono text-[10px] text-muted'
+const labelCx = 'font-mono text-[10.5px] font-semibold text-uikit-ink tracking-[0.02em]'
+const hexCx = 'font-mono text-[10px] text-uikit-muted'
 
 function CellView({ c }: { c: Cell }) {
   if (c.kind === 'outline') {
@@ -55,7 +55,7 @@ function CellView({ c }: { c: Cell }) {
 }
 
 export const ZebraStatesSpecimen = () => (
-  <div className="my-6 border border-faint rounded-[8px] overflow-hidden bg-panel shadow-[0_1px_2px_var(--shadow-tint-1)]">
+  <div className="my-6 border border-uikit-faint rounded-[8px] overflow-hidden bg-uikit-panel shadow-[0_1px_2px_var(--shadow-tint-1)]">
     <div className="grid grid-cols-[140px_1fr_1fr]">
       <div className={headCellCx}>state</div>
       <div className={headCellCx}>light</div>

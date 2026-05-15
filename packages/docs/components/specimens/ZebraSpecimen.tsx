@@ -35,24 +35,24 @@ const rows: Row[] = [
 // resting radius (selected state will override to 10px).
 const rowBaseCx =
   'grid grid-cols-[56px_minmax(0,1fr)_auto_auto] items-center gap-3 ' +
-  'px-2.5 py-1.5 rounded-[12px] font-mono text-[11.5px] text-ink ' +
+  'px-2.5 py-1.5 rounded-[12px] font-mono text-[11.5px] text-uikit-ink ' +
   'transition-[background-color,border-radius] duration-[120ms] ' +
-  'bg-row-base data-[zebra=odd]:bg-row-zebra'
+  'bg-uikit-row-base data-[zebra=odd]:bg-uikit-row-zebra'
 
 // State overrides. Hover and selected swap the background; focus draws
 // an inset accent outline. They're additive on top of the base + zebra
 // classes (state's bg-* wins via source-order in Tailwind v4).
 const stateCx: Record<RowState, string> = {
   rest:     '',
-  hover:    'bg-row-hover! data-[zebra=odd]:bg-row-hover!',
-  selected: 'bg-row-selected! data-[zebra=odd]:bg-row-selected! rounded-[10px]! text-row-selected-fg',
-  focus:    'outline-2 outline-accent -outline-offset-2',
+  hover:    'bg-uikit-row-hover! data-[zebra=odd]:bg-uikit-row-hover!',
+  selected: 'bg-uikit-row-selected! data-[zebra=odd]:bg-uikit-row-selected! rounded-[10px]! text-uikit-row-selected-fg',
+  focus:    'outline-2 outline-uikit-accent -outline-offset-2',
 }
 
-const idCx     = 'text-[10.5px] text-muted opacity-70'
+const idCx     = 'text-[10.5px] text-uikit-muted opacity-70'
 const labelCx  = 'font-medium overflow-hidden text-ellipsis whitespace-nowrap'
-const metaCx   = 'text-[9.5px] text-muted tracking-[0.04em]'
-const statBase = 'text-[9px] tracking-[0.04em] uppercase text-muted'
+const metaCx   = 'text-[9.5px] text-uikit-muted tracking-[0.04em]'
+const statBase = 'text-[9px] tracking-[0.04em] uppercase text-uikit-muted'
 
 const statusInk: Record<Status, string> = {
   ok:     '',
@@ -64,17 +64,17 @@ const statusInk: Record<Status, string> = {
 // Selected rows force every span to the same fg (zebra-list-style-guide
 // §3 rule 5). Use the row-selected-fg token via text-* utility, plus a
 // child selector so status colors don't bleed through.
-const selectedChildCx = '[&>*]:text-row-selected-fg [&>*]:opacity-100'
+const selectedChildCx = '[&>*]:text-uikit-row-selected-fg [&>*]:opacity-100'
 
 export const ZebraSpecimen = () => (
   <div
-    className="my-6 p-3 border border-faint rounded-md bg-panel shadow-[0_1px_2px_var(--shadow-tint-1),0_8px_24px_-10px_var(--shadow-tint-3)]"
+    className="my-6 p-3 border border-uikit-faint rounded-md bg-uikit-panel shadow-[0_1px_2px_var(--shadow-tint-1),0_8px_24px_-10px_var(--shadow-tint-3)]"
     role="img"
     aria-label="Zebra-list specimen with rest, hover, selected, and focus states inline"
   >
     {/* Search header — gives the row stack the visual context of a real
         list panel (matches .rail-search). */}
-    <div className="flex items-center gap-2 px-2.5 py-[7px] mb-2.5 rounded-md bg-search font-mono text-[11px] text-muted tracking-[0.03em]">
+    <div className="flex items-center gap-2 px-2.5 py-[7px] mb-2.5 rounded-md bg-uikit-search font-mono text-[11px] text-uikit-muted tracking-[0.03em]">
       <span aria-hidden="true">⌕</span>
       <span>filter runs…</span>
       <span className="opacity-55">· pipeline:classify · last 24h</span>

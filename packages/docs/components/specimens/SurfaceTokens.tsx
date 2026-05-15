@@ -20,12 +20,12 @@ const tokens: Token[] = [
   { name: '--rail-bg', theme: 'dark', hex: '#2b2b31', role: 'A step deeper than --bg. Navbar recedes.' },
 ]
 
-const cardCx = 'grid grid-cols-[64px_minmax(0,1fr)] gap-3 p-3 border border-faint rounded-md bg-panel'
-const swatchCx = 'h-[64px] rounded border border-faint'
-const nameCx = 'font-mono text-[12px] font-semibold text-ink leading-tight'
-const tagCx = 'font-mono text-[9px] font-medium tracking-[0.1em] uppercase text-muted px-1.5 py-px rounded border border-faint ml-1.5 align-[1px]'
-const hexCx = 'font-mono text-[10.5px] text-muted mt-1'
-const roleCx = 'font-ui text-[12px] leading-[1.5] text-ink mt-1.5 [text-wrap:pretty]'
+const cardCx = 'grid grid-cols-[64px_minmax(0,1fr)] gap-3 p-3 border border-uikit-faint rounded-md bg-uikit-panel'
+const swatchCx = 'h-[64px] rounded border border-uikit-faint'
+const nameCx = 'font-mono text-[12px] font-semibold text-uikit-ink leading-tight'
+const tagCx = 'font-mono text-[9px] font-medium tracking-[0.1em] uppercase text-uikit-muted px-1.5 py-px rounded border border-uikit-faint ml-1.5 align-[1px]'
+const hexCx = 'font-mono text-[10.5px] text-uikit-muted mt-1'
+const roleCx = 'font-ui text-[12px] leading-[1.5] text-uikit-ink mt-1.5 [text-wrap:pretty]'
 
 export const SurfaceTokens = () => (
   <div className="grid grid-cols-2 gap-2.5 my-6 max-[700px]:grid-cols-1">

@@ -6,6 +6,55 @@ sections. README copy edits and typo fixes are skipped. See
 [`./README.mdx`](./README.mdx) for the folder convention and
 [`../CLAUDE.md`](../CLAUDE.md) for the release-notes policy.
 
+## 2026-05-15 — Style Guide alignment + styles.css unified on the `uikit-` prefix
+
+Two threads completed: closing the gap between the Style Guide rules and the
+component implementations, plus the `styles.css` naming cleanup the kit had
+accumulated through three migration passes.
+
+- **Palette centralization.** The six-hue semantic palette now lives in
+  `styles.css` as `--tone-blue / -green / -amber / -red / -purple /
+  -warm-gray`, exposed under `@theme` as `--color-uikit-tone-*`. `Tag`'s
+  inline hex table was replaced with `var(--tone-*)` references; the
+  bespoke seventh red `#d93434` for the × hover state and the
+  off-palette `#f87171` in `BreadcrumbTree`'s error row are gone — both
+  now route through `--tone-red` (Style Guide §Color §"Never invent a
+  near-miss hex"). `--color-uikit-danger` collapses onto the same
+  palette red.
+
+- **Shadow ladder honoured.** Three ad-hoc panel shadows were replaced:
+  `BreadcrumbTree` popover and `Select` dropdown now use
+  `shadow-uikit-soft`; `Tabs` segment indicator now uses
+  `shadow-[0_1px_2px_var(--shadow-tint-1)]`. All three theme-flip
+  correctly in dark mode instead of pinning a fixed rgba.
+
+- **FilterBar palette typo.** `#1f9d55` → palette green `#1f8f4a`
+  everywhere — the FilterBar JSDoc, the spec, and the doc page. The
+  spec now passes `accent: 'var(--tone-green)' / 'var(--tone-red)'` so
+  future hex tweaks ripple automatically.
+
+- **styles.css naming unified.** Three confusions resolved:
+    - **`@theme` aliases:** dropped the duplicate "bare-name" block.
+      Every Tailwind alias now has exactly one canonical name —
+      `--color-uikit-*`. Row-band and tone aliases promoted from bare
+      to `--color-uikit-row-*` / `--color-uikit-tone-*` for symmetry.
+      Added the previously-missing `--color-uikit-faint-dashed`.
+    - **Runtime tokens (`:root`) stay un-prefixed.** They're the
+      consumer's theme-override hook; namespacing them would add
+      friction without security gain. The Tailwind layer handles
+      collision isolation for JSX-facing class names.
+    - **`vdu-*` → `uikit-*`.** `vdu-panel-in`, `vdu-no-scrollbar`, and
+      `vdu-row-in` renamed (last is referenced from BreadcrumbTree's
+      inline animation style). `vdu-live-pulse` deleted — viz ships
+      its own copy.
+
+- **Style Guide specimen sweep** (~155 sites): every bare-name color
+  utility (`text-ink`, `bg-panel`, `border-faint`, `bg-row-*`,
+  `text-tone-*`, etc.) rewritten to its `uikit-` prefixed form across
+  all 11 Style Guide specimens plus the handful of component specs
+  that used bare forms. Single scripted regex pass + a final
+  verification grep against `node_modules`-excluded source.
+
 ## 2026-05-14 — Component docs land + Style Guide token + Preview/Select fixes
 
 Follow-up to the 2026-05-13 migration. The 13 placeholder pages now

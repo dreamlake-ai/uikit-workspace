@@ -239,7 +239,7 @@ function TabStrip({
     <div
       data-hidden={hidden || undefined}
       className={cn(
-        'flex items-end overflow-x-auto vdu-no-scrollbar',
+        'flex items-end overflow-x-auto uikit-no-scrollbar',
         'data-[hidden]:invisible data-[hidden]:pointer-events-none',
         !embedded && 'sticky z-20 mt-2.5 bg-inherit border-b border-uikit-faint',
       )}
@@ -274,7 +274,7 @@ function HeroRail({ profile }: { profile: ProfileLayoutProfile }) {
   return (
     <aside
       className={cn(
-        'vdu-no-scrollbar shrink-0 flex flex-col gap-[18px] self-start',
+        'uikit-no-scrollbar shrink-0 flex flex-col gap-[18px] self-start',
         'sticky pt-7 overflow-y-auto',
       )}
       style={{

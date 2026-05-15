@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { FilterBar } from '@dreamlake/uikit'
 
+// Tints reference the Style Guide §Color palette by CSS-var so a future
+// hex tweak in styles.css ripples here automatically.
 const FILTERS = [
   { value: 'all',     label: 'all',     count: 24 },
-  { value: 'running', label: 'running', count: 3, accent: '#1f9d55' },
-  { value: 'failed',  label: 'failed',  count: 2, accent: '#e3342f' },
+  { value: 'running', label: 'running', count: 3, accent: 'var(--tone-green)' },
+  { value: 'failed',  label: 'failed',  count: 2, accent: 'var(--tone-red)'   },
   { value: 'queued',  label: 'queued',  count: 5 },
   { value: 'done',    label: 'done',    count: 14 },
 ]

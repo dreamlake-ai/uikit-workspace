@@ -15,7 +15,10 @@ export interface FilterOption {
   value: string
   label: string
   count?: number
-  /** Optional tint color applied when count > 0 (e.g. '#1f9d55' for running). */
+  /** Optional tint color applied when count > 0. Prefer palette tones
+   *  (`'#1f8f4a'` / `var(--tone-green)` for running, `'#c8513b'` /
+   *  `var(--tone-red)` for failed). Style Guide §Color §"Never invent
+   *  a near-miss hex." */
   accent?: string
 }
 
