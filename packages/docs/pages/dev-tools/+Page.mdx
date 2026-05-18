@@ -23,7 +23,7 @@ internal scratch, decision logs, half-written specs, dev-only how-tos.
 | Keybinding | **Cmd+Shift+D** (macOS) / **Ctrl+Shift+D** (Linux/Win) |
 | State | `localStorage` key `doc:show-hidden`, persisted across reloads + tabs |
 | Indicator | `DEV` chip in the topbar (click to turn back off) |
-| Per-page mark | `INTERNAL` chip next to the entry in the sidebar |
+| Per-page mark | Open-lock icon next to the entry in the sidebar |
 
 ## Marking a page hidden
 
@@ -39,14 +39,14 @@ hidden: true
 ```
 
 That's it. The page disappears from the default sidebar; reappears
-with an `INTERNAL` chip when dev mode is on.
+with an open-lock icon when dev mode is on.
 
 ## `hidden` vs `draft`
 
 | Frontmatter | Where it shows | When to use |
 |---|---|---|
 | `draft: true` | Always in sidebar, with a `DRAFT` chip | You want reviewers to find it |
-| `hidden: true` | Only with dev mode on, with an `INTERNAL` chip | Internal-only — scratch, decisions, dev-tools docs |
+| `hidden: true` | Only with dev mode on, with an open-lock icon | Internal-only — scratch, decisions, dev-tools docs |
 | Both | Only with dev mode on, both chips | Internal page that's still in flux |
 
 ## Where the code lives
