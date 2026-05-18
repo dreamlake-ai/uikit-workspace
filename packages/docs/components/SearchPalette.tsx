@@ -171,7 +171,7 @@ export function SearchPalette({ open, onClose, query }: SearchPaletteProps) {
     zIndex: 49,
     background: 'var(--color-doc-template-bg)',
     border: '1px solid var(--color-doc-template-faint)',
-    borderRadius: 14,
+    borderRadius: 16,
     boxShadow: '0 24px 60px rgb(0 0 0 / 0.18), 0 6px 18px rgb(0 0 0 / 0.06)',
     display: 'flex',
     flexDirection: 'column',
