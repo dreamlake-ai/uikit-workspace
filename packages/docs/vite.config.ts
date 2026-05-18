@@ -14,7 +14,7 @@ import rehypeShiki from '@shikijs/rehype'
 
 /** Captured once at build/dev start. */
 const pkg = JSON.parse(
-  readFileSync(new URL('./package.json', import.meta.url), 'utf-8'),
+  readFileSync(new URL('../uikit/package.json', import.meta.url), 'utf-8'),
 ) as { version?: string }
 const APP_VERSION = pkg.version ?? '0.0.0'
 const GIT_HASH = (() => {
