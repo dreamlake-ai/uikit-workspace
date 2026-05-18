@@ -1,5 +1,6 @@
 import { usePageContext } from 'vike-react/usePageContext'
 import { getAdjacentPages } from '../lib/navigation'
+import { useHiddenToggle } from '../lib/use-hidden-toggle'
 
 const LINK: React.CSSProperties = {
   display: 'flex',
@@ -23,7 +24,8 @@ const LABEL: React.CSSProperties = {
 
 export function DocFooter() {
   const { urlPathname } = usePageContext() as { urlPathname: string }
-  const { prev, next } = getAdjacentPages(urlPathname)
+  const [showHidden] = useHiddenToggle()
+  const { prev, next } = getAdjacentPages(urlPathname, { includeHidden: showHidden })
   if (!prev && !next) return null
   return (
     <nav

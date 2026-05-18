@@ -1,12 +1,19 @@
 import { usePageContext } from 'vike-react/usePageContext'
-import { groupedPages } from '../lib/navigation'
+import { groupedPages, groupedVisiblePages } from '../lib/navigation'
+import { useHiddenToggle } from '../lib/use-hidden-toggle'
 
 /**
  * Left sidebar — auto-discovered nav grouped by `section` frontmatter.
  * All styling is utility-class + inline; no global CSS dependency.
+ *
+ * Pages with `hidden: true` are filtered out unless the global
+ * "show hidden" toggle is active (Cmd+Shift+D). Persisted via
+ * localStorage so the choice survives reloads.
  */
 export function Sidebar() {
   const { urlPathname } = usePageContext() as { urlPathname: string }
+  const [showHidden] = useHiddenToggle()
+  const groups = showHidden ? groupedPages : groupedVisiblePages
   return (
     <aside
       aria-label="Sections"
@@ -18,7 +25,7 @@ export function Sidebar() {
         gap: 2,
       }}
     >
-      {groupedPages.map(group => (
+      {groups.map(group => (
         <div key={group.label || '_'} className="flex flex-col" style={{ gap: 1, marginBottom: 14 }}>
           {group.label && (
             <div
@@ -61,6 +68,37 @@ export function Sidebar() {
                 }}
               >
                 <span style={{ flex: 1, minWidth: 0 }}>{item.title}</span>
+                {item.hidden && (
+                  <span
+                    aria-hidden
+                    title="Internal — only visible when dev mode is on (Cmd+Shift+D)"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      color: 'var(--color-doc-template-warn)',
+                      flexShrink: 0,
+                      pointerEvents: 'none',
+                    }}
+                  >
+                    {/* Open lock — entry is only visible when dev mode has
+                        unlocked hidden pages. Same icon + color as the DEV
+                        chip in the topbar. */}
+                    <svg
+                      width="11"
+                      height="11"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden
+                    >
+                      <rect x="5" y="11" width="14" height="10" rx="2" />
+                      <path d="M8 11V7a4 4 0 0 1 7.5-1.2" />
+                    </svg>
+                  </span>
+                )}
                 {item.draft && (
                   <span
                     aria-label="Draft — awaiting review"

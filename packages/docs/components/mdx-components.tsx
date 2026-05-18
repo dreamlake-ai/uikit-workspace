@@ -325,12 +325,11 @@ const LI: React.FC<ComponentPropsWithoutRef<'li'>> = ({ children, style, ...rest
 const Blockquote: React.FC<ComponentPropsWithoutRef<'blockquote'>> = ({ children, style, ...rest }) => (
   <blockquote
     {...rest}
-    className="text-doc-template-muted bg-doc-template-accent-soft"
+    className="text-doc-template-muted"
     style={{
-      borderLeft: '2px solid var(--color-doc-template-accent)',
-      padding: '4px 14px',
+      borderLeft: '3px solid color-mix(in srgb, var(--color-doc-template-ink) 22%, transparent)',
+      padding: '2px 0 2px 16px',
       margin: '14px 0',
-      borderRadius: '0 var(--radius-doc-template-sm) var(--radius-doc-template-sm) 0',
       ...style,
     }}
   >
