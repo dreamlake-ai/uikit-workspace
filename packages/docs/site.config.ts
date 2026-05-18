@@ -13,8 +13,9 @@
 export const siteConfig = {
   brand: 'DreamLake',
   subtitle: 'uikit',
-  /** Drives the GitHub link in the top-right of the header. Set to an
-   *  empty string to hide the icon. */
+  /** Drives the GitHub link in the top-right of the header. Also used by
+   *  the version badge to build the per-commit link (`${repoUrl}/commit/
+   *  ${__GIT_HASH__}`). Set to an empty string to hide both. */
   repoUrl: 'https://github.com/dreamlake-ai/uikit-workspace',
   /** Leftmost crumb in both the page-top and merged-topbar breadcrumbs.
    *  Set to an empty string to omit the root crumb entirely. */

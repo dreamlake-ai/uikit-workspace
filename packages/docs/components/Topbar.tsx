@@ -5,6 +5,7 @@ import { siteConfig } from '../site.config'
 import { useMediaQuery } from '../lib/use-media-query'
 import { useHiddenToggle } from '../lib/use-hidden-toggle'
 import { ThemeToggle } from './ThemeToggle'
+import { VersionBadge } from './VersionBadge'
 import { useMerge } from '../renderer/Layout'
 
 /**
@@ -160,20 +161,21 @@ export function Topbar({ searchOpen, onOpenSearch, onCloseSearch, query, setQuer
     }
   }
 
-  // Brand-cluster pieces (`/`, `docs`, ver chip) collapse to width 0 when
-  // merged — same effect as the docs.html `body.is-merged .doc-brand .ver`
-  // rule, just expressed as an inline style we toggle on the merge state.
+  // Decoration-cluster hide style. Only opacity + transform animate —
+  // no width/margin shrink. Reason: animating width to 0 with
+  // `overflow: hidden` produces a left-to-right "wipe" that clips the
+  // version badge off abruptly, which reads as a sudden disappearance.
+  // Holding the cluster's layout box steady and fading + sliding it
+  // gives a uniform, smooth transition. The breadcrumb above sits at
+  // `position: absolute` and doesn't depend on the cluster vacating
+  // space, so the stable box has no visual cost.
   const collapsedStyle = (collapsed: boolean): CSSProperties => ({
-    transition: `opacity 0.25s ease, transform 0.25s ${SPRING}, width 0.25s ${SPRING}, margin 0.25s ${SPRING}, padding 0.25s ${SPRING}`,
+    transition: `opacity 0.25s ease, transform 0.25s ${SPRING}`,
     ...(collapsed
       ? {
           opacity: 0,
           transform: 'translateX(-4px)',
           pointerEvents: 'none',
-          width: 0,
-          margin: 0,
-          padding: 0,
-          overflow: 'hidden',
         }
       : {}),
   })
@@ -261,88 +263,60 @@ export function Topbar({ searchOpen, onOpenSearch, onCloseSearch, query, setQuer
         transition: 'background 0.25s ease, box-shadow 0.25s ease',
       }}
     >
-      <a
-        href="/"
-        className="flex items-center gap-2.5 pl-[14px] md:pl-[18px] no-underline text-doc-template-ink hover:opacity-80 min-w-0"
+      {/* Brand cluster: brand link + a single decoration container.
+          Decoration (`/`, subtitle, version badge) lives in ONE flex
+          container with a fixed internal layout — when the topbar
+          merges on scroll, that whole container collapses as a unit
+          rather than each child animating independently. This is what
+          keeps the badge's position stable relative to subtitle across
+          the merge/unmerge transition. */}
+      <div
+        className="flex items-center pl-[14px] md:pl-[18px] min-w-0"
         style={{
           fontFamily: 'var(--font-doc-template-ui)',
           fontSize: 14,
-          fontWeight: 700,
           letterSpacing: '-0.04em',
-          transition: 'opacity 0.15s ease, color 0.25s ease',
           ...palFade(searchOpen),
         }}
       >
-        <span>
-          {siteConfig.brand}
-          <span
-            aria-hidden
-            className="text-doc-template-accent"
-            style={{ fontWeight: 700, fontSize: '1.4em', lineHeight: 0, marginLeft: 1, verticalAlign: 'baseline' }}
-          >
-            .
-          </span>
-        </span>
-        <span
-          className="hidden md:inline text-doc-template-muted"
-          style={{ fontWeight: 400, opacity: 0.55, marginLeft: -4, marginRight: -4, ...collapsedStyle(merged) }}
-        >
-          /
-        </span>
-        <span
-          className="hidden md:inline text-doc-template-muted"
-          style={{ fontWeight: 500, letterSpacing: '-0.01em', ...collapsedStyle(merged) }}
-        >
-          {siteConfig.subtitle}
-        </span>
-        <span
-          className="hidden md:inline-flex items-stretch border border-doc-template-faint"
+        <a
+          href="/"
+          className="flex items-center shrink-0 no-underline text-doc-template-ink hover:opacity-80"
           style={{
-            fontFamily: 'var(--font-doc-template-mono)',
-            fontSize: 10,
-            fontWeight: 500,
-            letterSpacing: '0.02em',
-            marginLeft: 6,
-            borderRadius: 4,
+            fontWeight: 700,
+            transition: 'opacity 0.15s ease, color 0.25s ease',
+          }}
+        >
+          <span>
+            {siteConfig.brand}
+            <span
+              aria-hidden
+              className="text-doc-template-accent"
+              style={{ fontWeight: 700, fontSize: '1.4em', lineHeight: 0, marginLeft: 1, verticalAlign: 'baseline' }}
+            >
+              .
+            </span>
+          </span>
+        </a>
+        <div
+          className="hidden md:flex items-center gap-2.5 shrink-0"
+          style={{
+            marginLeft: 10,
             ...collapsedStyle(merged),
           }}
         >
-          <span
-            className="inline-flex items-center text-doc-template-ink"
-            style={{
-              padding: '2px 6px',
-              background: 'color-mix(in srgb, var(--color-doc-template-ink) 5%, var(--color-doc-template-bg))',
-              fontWeight: 600,
-              borderTopLeftRadius: 3,
-              borderBottomLeftRadius: 3,
-            }}
-          >
-            v{__APP_VERSION__}
+          <span className="text-doc-template-muted" style={{ fontWeight: 400, opacity: 0.55 }}>
+            /
           </span>
           <span
-            className="inline-flex items-center text-doc-template-muted border-l border-doc-template-faint"
-            style={{ gap: 5, padding: '2px 7px', borderTopRightRadius: 3, borderBottomRightRadius: 3 }}
-            title={`git ${__GIT_HASH__}`}
+            className="text-doc-template-muted"
+            style={{ fontWeight: 500, letterSpacing: '-0.01em' }}
           >
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden
-              style={{ width: 9, height: 9, opacity: 0.8, flexShrink: 0 }}
-            >
-              <circle cx="18" cy="18" r="3" />
-              <circle cx="6" cy="6" r="3" />
-              <path d="M6 9v6" />
-              <path d="M18 9a9 9 0 0 1-9 9" />
-            </svg>
-            {__GIT_HASH__}
+            {siteConfig.subtitle}
           </span>
-        </span>
-      </a>
+          <VersionBadge repoUrl={siteConfig.repoUrl} />
+        </div>
+      </div>
 
       {/* Topbar breadcrumb — fades in when scrolled past <h1>; fades out
           again while the search palette is open (matches docs.html).
