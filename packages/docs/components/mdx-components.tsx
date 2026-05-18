@@ -162,11 +162,12 @@ const H2: React.FC<ComponentPropsWithoutRef<'h2'>> = ({ id, children, style, ...
         thinks the heading is "already here" and stops short. Putting
         the id on a zero-height non-sticky span just above the h2
         sidesteps the issue: the span's natural position is reliable.
-        Margin choreography: move the h2's `marginTop: 48` onto the
-        span so margin collapsing with the previous block stays the
-        same. The span then sits where the h2's margin-top would have
-        started, and the h2 follows with margin-top: 0 — visually
-        identical to the old single-element layout. */}
+        Margin choreography: the anchor span carries the section gap.
+        The static gap is small (16) — when scrolled the sticky h2
+        below already gets a 40px topbar-shelf of breathing room above
+        it, so a tall static `margin-top` is redundant and just
+        stretches the page. `scrollMarginTop` keeps direct-link jumps
+        landing below the topbar (40 + a hair of slack). */}
     {id && (
       <span
         id={id}
@@ -176,8 +177,8 @@ const H2: React.FC<ComponentPropsWithoutRef<'h2'>> = ({ id, children, style, ...
         style={{
           display: 'block',
           height: 0,
-          marginTop: 48,
-          scrollMarginTop: 64,
+          marginTop: 16,
+          scrollMarginTop: 56,
         }}
       />
     )}
@@ -222,9 +223,9 @@ const H3: React.FC<ComponentPropsWithoutRef<'h3'>> = ({ id, children, style, ...
       fontSize: 15,
       fontWeight: 600,
       letterSpacing: '-0.005em',
-      margin: '28px 0 8px',
+      margin: '18px 0 6px',
       gap: 8,
-      scrollMarginTop: 124,
+      scrollMarginTop: 96,
       ...style,
     }}
   >
