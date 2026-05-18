@@ -3,8 +3,61 @@ import { usePageContext } from 'vike-react/usePageContext'
 import { pages } from '../lib/navigation'
 import { siteConfig } from '../site.config'
 import { useMediaQuery } from '../lib/use-media-query'
+import { useHiddenToggle } from '../lib/use-hidden-toggle'
 import { ThemeToggle } from './ThemeToggle'
 import { useMerge } from '../renderer/Layout'
+
+/**
+ * Tiny chip that shows up only when the hidden-pages reveal toggle
+ * (Cmd+Shift+D) is active. Clicking it turns the toggle back off.
+ * Stays out of sight when the toggle is off.
+ */
+function HiddenRevealChip() {
+  const [show, setShow] = useHiddenToggle()
+  if (!show) return null
+  return (
+    <button
+      type="button"
+      onClick={() => setShow(false)}
+      aria-label="Dev mode on — hidden pages are visible. Click to hide again."
+      title="Dev mode on — hidden pages are visible (Cmd+Shift+D to toggle)"
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 5,
+        fontFamily: 'var(--font-doc-template-mono)',
+        fontSize: 9,
+        fontWeight: 600,
+        letterSpacing: '0.08em',
+        padding: '3px 7px',
+        borderRadius: 4,
+        color: 'var(--color-doc-template-warn)',
+        background: 'var(--color-doc-template-warn-soft)',
+        border:
+          '1px solid color-mix(in srgb, var(--color-doc-template-warn) 35%, transparent)',
+        cursor: 'pointer',
+        whiteSpace: 'nowrap',
+      }}
+    >
+      {/* Open lock — dev mode has unlocked the hidden pages. */}
+      <svg
+        width="11"
+        height="11"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden
+      >
+        <rect x="5" y="11" width="14" height="10" rx="2" />
+        <path d="M8 11V7a4 4 0 0 1 7.5-1.2" />
+      </svg>
+      DEV
+    </button>
+  )
+}
 
 interface TopbarProps {
   searchOpen: boolean
@@ -188,7 +241,13 @@ export function Topbar({ searchOpen, onOpenSearch, onCloseSearch, query, setQuer
 
   return (
     <header
-      className="sticky top-0 z-50 grid grid-cols-[auto_minmax(0,1fr)_auto] md:grid-cols-[240px_minmax(0,1fr)_240px] items-center w-full m-0 py-1 border-b"
+      // The bottom divider is a box-shadow rather than `border-b` so it
+      // sits *outside* the 40px box. With border-box sizing, a `border-b`
+      // eats 1px from the inside (visible area becomes 39, throws off
+      // vertical centering of the fixed-position search field by 0.5px).
+      // Box-shadow draws the line at y=40 → y=41 — outside the height
+      // budget; the sidebar's `top: 40` still sits flush against it.
+      className="sticky top-0 z-50 grid grid-cols-[auto_minmax(0,1fr)_auto] md:grid-cols-[240px_minmax(0,1fr)_240px] items-center w-full m-0 py-1"
       style={{
         height: 40,
         // Backdrop blur creates a stacking context; we keep it ON when
@@ -198,8 +257,8 @@ export function Topbar({ searchOpen, onOpenSearch, onCloseSearch, query, setQuer
         backdropFilter: searchOpen ? 'none' : 'saturate(140%) blur(8px)',
         WebkitBackdropFilter: searchOpen ? 'none' : 'saturate(140%) blur(8px)',
         background: searchOpen ? 'transparent' : 'var(--color-doc-template-bg)',
-        borderBottomColor: searchOpen ? 'transparent' : 'var(--color-doc-template-faint)',
-        transition: 'background 0.25s ease, border-color 0.25s ease',
+        boxShadow: searchOpen ? 'none' : '0 1px 0 var(--color-doc-template-faint)',
+        transition: 'background 0.25s ease, box-shadow 0.25s ease',
       }}
     >
       <a
@@ -441,6 +500,7 @@ export function Topbar({ searchOpen, onOpenSearch, onCloseSearch, query, setQuer
             </svg>
           </a>
         )}
+        <HiddenRevealChip />
         <ThemeToggle />
       </div>
     </header>

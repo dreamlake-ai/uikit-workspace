@@ -1,0 +1,57 @@
+---
+title: Internal pages
+section: Developer notes
+order: 0.5
+hidden: true
+description: How the hidden-pages mechanism works. Cmd+Shift+D toggles visibility; pages live here when they're for the team, not first-time visitors.
+---
+
+# Internal pages
+
+You're reading this because **dev mode is on** (the `DEV` chip is lit
+in the top right). Pages tagged `hidden: true` only appear in the
+sidebar in this mode; otherwise they're invisible. Direct URLs still
+work — sharing a link to a hidden page doesn't depend on the toggle.
+
+Use this section for things first-time visitors shouldn't trip over:
+internal scratch, decision logs, half-written specs, dev-only how-tos.
+
+## Toggle
+
+| | |
+|---|---|
+| Keybinding | **Cmd+Shift+D** (macOS) / **Ctrl+Shift+D** (Linux/Win) |
+| State | `localStorage` key `doc:show-hidden`, persisted across reloads + tabs |
+| Indicator | `DEV` chip in the topbar (click to turn back off) |
+| Per-page mark | `INTERNAL` chip next to the entry in the sidebar |
+
+## Marking a page hidden
+
+```mdx file="pages/my-internal/+Page.mdx"
+---
+title: My internal page
+section: Developer notes
+order: 1
+hidden: true
+---
+
+# whatever
+```
+
+That's it. The page disappears from the default sidebar; reappears
+with an `INTERNAL` chip when dev mode is on.
+
+## `hidden` vs `draft`
+
+| Frontmatter | Where it shows | When to use |
+|---|---|---|
+| `draft: true` | Always in sidebar, with a `DRAFT` chip | You want reviewers to find it |
+| `hidden: true` | Only with dev mode on, with an `INTERNAL` chip | Internal-only — scratch, decisions, dev-tools docs |
+| Both | Only with dev mode on, both chips | Internal page that's still in flux |
+
+## Where the code lives
+
+- `lib/use-hidden-toggle.ts` — the chord handler + `useLocalStorage`
+- `lib/navigation.ts` — `groupedPages` (all) vs `groupedVisiblePages` (filtered)
+- `components/Sidebar.tsx` — picks the filter based on the toggle
+- `components/Topbar.tsx` — the `DEV` chip (also a click target)
