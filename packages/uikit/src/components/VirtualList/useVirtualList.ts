@@ -1,6 +1,5 @@
 import {
   useCallback,
-  useEffect,
   useMemo,
   useReducer,
   useRef,
@@ -59,24 +58,18 @@ export function useVirtualList<T>({
 
   const isFixed = typeof itemHeight === "number";
 
-  // Version counter — bumped (via rAF batch) whenever any item is measured so
-  // that totalHeight and visibleRange useMemos re-run with fresh measurements.
+  // Version counter — bumped synchronously whenever any item is measured
+  // so totalHeight and visibleRange useMemos re-run with fresh
+  // measurements.
+  //
+  // No explicit batching: under React 18 automatic batching, multiple
+  // `bumpVersion()` calls within the same JS task (typically inside one
+  // ResizeObserver callback that delivers N entries) collapse into a
+  // single re-render. The dispatch lands in the same task as the RO
+  // callback, so the commit happens before paint — no stale-height
+  // window like rAF would introduce, and no microtask indirection
+  // either.
   const [measurementVersion, bumpVersion] = useReducer((n: number) => n + 1, 0);
-  const rafRef = useRef<number | null>(null);
-  const scheduleUpdate = useCallback(() => {
-    if (rafRef.current !== null) return;
-    rafRef.current = requestAnimationFrame(() => {
-      rafRef.current = null;
-      bumpVersion();
-    });
-  }, [bumpVersion]);
-
-  useEffect(
-    () => () => {
-      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
-    },
-    []
-  );
 
   const totalHeight = useMemo(() => {
     if (isFixed) {
@@ -207,9 +200,9 @@ export function useVirtualList<T>({
         }
       }
 
-      scheduleUpdate();
+      bumpVersion();
     },
-    [items.length, estimatedItemHeight, measurements, scheduleUpdate]
+    [items.length, estimatedItemHeight, measurements, bumpVersion]
   );
 
   return { visibleRange, totalHeight, getItemStyle, measureItem, measurements };
