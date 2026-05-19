@@ -6,6 +6,43 @@ sections. README copy edits and typo fixes are skipped. See
 [`./README.mdx`](./README.mdx) for the folder convention and
 [`../CLAUDE.md`](../CLAUDE.md) for the release-notes policy.
 
+## 2026-05-19 — VirtualListFlow: flow-layout alternative to VirtualList
+
+Added `VirtualListFlow` next to `VirtualList`. Same external API
+(`VirtualListProps` shape, same render-fn signature, same scroll /
+infinite-load / sticky-header props), but the internal layout uses
+normal document flow inside a padding-top/padding-bottom shell instead
+of absolutely-positioned `transform: translateY` children.
+
+Trade-off summary:
+
+- **Sticky inside an item works against the scroll container, not the
+  item.** With absolute items, each item is the containing block for
+  its `position: sticky` descendants, so a per-item sticky header
+  pinned within its own item bounds — confusing in tall virtualized
+  lists. Flow items aren't containing blocks; sticky behaves like in a
+  non-virtual list.
+- **CSS `gap` / `margin` between items works naturally.** No need to
+  bake spacing into each item's padding.
+- **No transform-induced compositing layer per visible item.**
+- **Browser `overflow-anchor` keeps scroll position stable** when an
+  off-screen item's height arrives via async measurement — flow items
+  participate in the normal scroll-anchoring heuristic.
+- **Cost**: changing the padding-top/bottom values triggers a layout
+  reflow on each scroll-induced range change, vs. transform's
+  compositor-only repositioning. In practice the layout work is small
+  (one paint of a shell div), and modern browsers handle it well.
+
+Pick:
+
+- `VirtualList` (absolute + transform): for cases where you want
+  maximum scroll-perf isolation and don't need sticky/gap inside items.
+- `VirtualListFlow` (flow): default for list views with sticky
+  headers, gap, or unpredictable item heights driven by async data.
+
+Both share types (`VirtualListProps`, `ItemHeight`) and remain in the
+public surface.
+
 ## 2026-05-15 — Style Guide alignment + styles.css unified on the `uikit-` prefix
 
 Two threads completed: closing the gap between the Style Guide rules and the
