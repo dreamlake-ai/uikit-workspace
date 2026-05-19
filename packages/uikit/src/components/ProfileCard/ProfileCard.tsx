@@ -7,7 +7,20 @@ export interface ProfileCardProps {
   titleRight?: ReactNode // right-aligned header meta (timestamp, version)
   description?: ReactNode
   footer?: ReactNode
-  hoverActions?: ReactNode // revealed on hover, anchored to bottom-right
+  /** Right-aligned content alongside `footer`. Use for ACL chips, member
+   *  avatars, status badges — anything that should sit on the footer's right
+   *  while `footer` keeps the left-side stats. Shares the footer row's mono
+   *  typography; wrap in a styled element to override. */
+  footerRight?: ReactNode
+  /** Hover-revealed actions anchored to the card's top-right. Use for the
+   *  edit/delete pattern. When this slot is provided, `titleRight` auto-fades
+   *  on hover so the two don't visually collide. Clicks do not bubble to
+   *  `onClick`. */
+  topRightActions?: ReactNode
+  /** Hover-revealed actions anchored to the card's bottom-right. Use for
+   *  primary inline actions (fork, open, etc). Clicks do not bubble to
+   *  `onClick`. */
+  hoverActions?: ReactNode
   onClick?: () => void
   className?: string
 }
@@ -18,6 +31,8 @@ export function ProfileCard({
   titleRight,
   description,
   footer,
+  footerRight,
+  topRightActions,
   hoverActions,
   onClick,
   className,
@@ -45,7 +60,15 @@ export function ProfileCard({
         )}
         <span className="flex-1" />
         {titleRight && (
-          <span className="font-uikit-mono text-uikit-11 text-uikit-muted opacity-65 tracking-uikit-snug whitespace-nowrap">
+          <span
+            className={cn(
+              'font-uikit-mono text-uikit-11 text-uikit-muted opacity-65 tracking-uikit-snug whitespace-nowrap',
+              // When topRightActions are also present, fade titleRight on
+              // hover so the hover-revealed cluster doesn't collide with
+              // the meta (e.g. timestamp behind edit/delete buttons).
+              topRightActions && 'transition-opacity duration-[120ms] group-hover:opacity-0',
+            )}
+          >
             {titleRight}
           </span>
         )}
@@ -58,14 +81,37 @@ export function ProfileCard({
         </div>
       )}
 
-      {/* footer */}
-      {footer && (
-        <div className="mt-1.5 font-uikit-mono text-uikit-11 opacity-75 tracking-uikit-snug truncate">
-          {footer}
+      {/* footer (+ optional right-aligned cluster) */}
+      {(footer || footerRight) && (
+        <div className="mt-1.5 flex items-center gap-3 min-w-0 font-uikit-mono text-uikit-11 tracking-uikit-snug">
+          {footer ? (
+            <div className="flex-1 min-w-0 truncate opacity-75">{footer}</div>
+          ) : (
+            <span className="flex-1" />
+          )}
+          {footerRight && (
+            <div className="flex-shrink-0 inline-flex items-center gap-1.5 whitespace-nowrap">
+              {footerRight}
+            </div>
+          )}
         </div>
       )}
 
-      {/* hover actions */}
+      {/* top-right hover actions (edit / delete pattern) */}
+      {topRightActions && (
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className={cn(
+            'absolute right-3 top-3 inline-flex items-center gap-1',
+            'opacity-0 pointer-events-none transition-opacity duration-[120ms]',
+            'group-hover:opacity-100 group-hover:pointer-events-auto',
+          )}
+        >
+          {topRightActions}
+        </div>
+      )}
+
+      {/* bottom-right hover actions (primary inline action) */}
       {hoverActions && (
         <div
           onClick={(e) => e.stopPropagation()}
