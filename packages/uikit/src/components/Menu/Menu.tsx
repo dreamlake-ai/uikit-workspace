@@ -73,10 +73,16 @@ export function Menu({
     if (!open || !triggerRef.current) return
     const update = () => {
       const r = triggerRef.current!.getBoundingClientRect()
+      // Use clientWidth (excludes scrollbar) — `position: fixed; right` is
+      // measured from the viewport content edge, same coordinate space as
+      // getBoundingClientRect. Using window.innerWidth here would inflate
+      // the right offset by the scrollbar width when classic scrollbars are
+      // present, shifting the panel leftward by that amount.
+      const viewportContentWidth = document.documentElement.clientWidth
       setCoords({
         top: r.bottom + 6,
         left: r.left,
-        right: window.innerWidth - r.right,
+        right: viewportContentWidth - r.right,
       })
     }
     update()
