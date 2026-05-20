@@ -68,7 +68,7 @@ export function Dialog({
       onClick={dismissOnBackdropClick ? onClose : undefined}
       className={cn(
         'fixed inset-0 z-[100] flex items-center justify-center font-uikit-ui',
-        'bg-[color-mix(in_srgb,var(--ink)_35%,transparent)]',
+        'bg-[rgba(0,0,0,0.55)]',
       )}
     >
       <div

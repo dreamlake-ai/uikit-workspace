@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { Sun, Moon } from 'lucide-react'
 import {
   ProfileLayout,
   ProfileCard,
@@ -8,7 +9,35 @@ import {
   type ProfileLayoutProfile,
 } from '@dreamlake/uikit'
 
-const PROFILE: ProfileLayoutProfile = {
+// Minimal two-state theme toggle used to demo the `nameAccessory` slot.
+function ThemeToggleDemo({ value, onChange }: { value: 'light' | 'dark'; onChange: (v: 'light' | 'dark') => void }) {
+  const isDark = value === 'dark'
+  return (
+    <div
+      role="group"
+      aria-label="Theme"
+      className="relative inline-flex items-center rounded-full p-[2px] border border-uikit-faint bg-uikit-panel"
+    >
+      <span
+        aria-hidden
+        className="absolute top-[2px] rounded-full bg-uikit-chip transition-[left] duration-300 ease-out"
+        style={{ left: 2 + (isDark ? 22 : 0), width: 22, height: 22 }}
+      />
+      <button type="button" onClick={() => onChange('light')}
+        className="relative z-[1] inline-flex items-center justify-center w-[22px] h-[22px] rounded-full border-0 bg-transparent cursor-pointer text-uikit-muted aria-pressed:text-uikit-ink"
+        aria-pressed={!isDark}>
+        <Sun size={13} strokeWidth={2} />
+      </button>
+      <button type="button" onClick={() => onChange('dark')}
+        className="relative z-[1] inline-flex items-center justify-center w-[22px] h-[22px] rounded-full border-0 bg-transparent cursor-pointer text-uikit-muted aria-pressed:text-uikit-ink"
+        aria-pressed={isDark}>
+        <Moon size={13} strokeWidth={2} />
+      </button>
+    </div>
+  )
+}
+
+const BASE_PROFILE: Omit<ProfileLayoutProfile, 'image' | 'onAvatarChange' | 'onEditClick' | 'nameAccessory'> = {
   name: 'MIT CSAIL',
   handle: 'mit-csail',
   kind: 'org',
@@ -195,6 +224,29 @@ function EmptyTabContent({ message }: { message: string }) {
 
 export const ProfileLayoutSpec = () => {
   const containerRef = useRef<HTMLDivElement>(null)
+  // Local state so the demo's editable affordances actually do something:
+  // - avatar image is mutated by the built-in upload sheet
+  // - pencil button opens a stub "edit" alert (caller-owned in real apps)
+  // - theme toggle drives a local pill (demo scope only)
+  const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined)
+  const [theme, setTheme] = useState<'light' | 'dark'>('light')
+
+  const profile: ProfileLayoutProfile = {
+    ...BASE_PROFILE,
+    image: avatarUrl,
+    onAvatarChange: (file) => {
+      if (file === null) { setAvatarUrl(undefined); return }
+      // Convert to data URL so the demo can preview it without a backend.
+      return new Promise<void>((resolve) => {
+        const r = new FileReader()
+        r.onload = () => { setAvatarUrl(String(r.result)); resolve() }
+        r.readAsDataURL(file)
+      })
+    },
+    onEditClick: () => alert('Open profile edit dialog (caller-owned)'),
+    nameAccessory: <ThemeToggleDemo value={theme} onChange={setTheme} />,
+  }
+
   const tabs: ProfileLayoutTab[] = [
     {
       value: 'overview',
@@ -231,7 +283,7 @@ export const ProfileLayoutSpec = () => {
       className="uikit-no-scrollbar relative h-[720px] overflow-y-auto overflow-x-hidden border border-uikit-faint rounded-xl"
     >
       <ProfileLayout
-        profile={PROFILE}
+        profile={profile}
         tabs={tabs}
         defaultTab="projects"
         scrollContainerRef={containerRef as React.RefObject<HTMLElement>}

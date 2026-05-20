@@ -7,9 +7,11 @@ import {
   useRef,
   useState,
 } from 'react'
+import { Pencil } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { Tabs } from '../Tabs/Tabs'
 import { Avatar } from '../Avatar/Avatar'
+import { Dialog } from '../Dialog/Dialog'
 
 // ── Constants ──────────────────────────────────────────────────────────────
 
@@ -42,6 +44,23 @@ export interface ProfileLayoutProfile {
   bio?: string
   facts?: ProfileLayoutFact[]
   members?: ProfileLayoutMember[]
+  /** When provided, the rail avatar becomes interactive: hover shows a
+   *  "change avatar" overlay and clicking opens a built-in upload sheet
+   *  (drag-drop, file picker, live preview, optional remove). The callback
+   *  fires with the chosen File on save, or `null` when the caller-rendered
+   *  "remove" affordance is clicked. May return a Promise; the sheet shows
+   *  a spinner while it resolves and surfaces an error if it rejects. */
+  onAvatarChange?: (file: File | null) => Promise<void> | void
+  /** When provided, the rail name row gains a small pencil button that
+   *  invokes this callback (typically to open a profile-edit dialog the
+   *  caller owns — keeping that flow's app-specific validation outside
+   *  the design system). The pencil only materialises on group-hover of
+   *  the name row. */
+  onEditClick?: () => void
+  /** Slot rendered flush-right on the name row, after the optional pencil
+   *  button. Stays visible regardless of hover. Typical use is a theme-toggle
+   *  pill, but anything works — settings shortcut, status badge, etc. */
+  nameAccessory?: ReactNode
 }
 
 export interface ProfileLayoutTab {
@@ -266,10 +285,281 @@ function TabStrip({
   )
 }
 
+// ── RailAvatar ─────────────────────────────────────────────────────────────
+// Reads-only avatar (image or monogram) when no `onAvatarChange` is wired.
+// Otherwise, clicking opens an upload sheet and the avatar gains a dim
+// hover scrim with a "change avatar" label.
+
+function RailAvatar({
+  name,
+  image,
+  onAvatarChange,
+}: {
+  name: string
+  image?: string
+  onAvatarChange?: (file: File | null) => Promise<void> | void
+}) {
+  const [editing, setEditing] = useState(false)
+  const editable = !!onAvatarChange
+  const initials = getInitials(name)
+
+  return (
+    <>
+      <div
+        onClick={editable ? () => setEditing(true) : undefined}
+        className={cn(
+          'group relative w-full aspect-square overflow-hidden rounded-xl select-none',
+          editable && 'cursor-pointer',
+        )}
+        title={editable ? 'change avatar' : undefined}
+      >
+        {image ? (
+          <img
+            src={image}
+            alt={name}
+            className="block w-full h-full object-cover"
+          />
+        ) : (
+          <div
+            className={cn(
+              'w-full h-full flex items-center justify-center',
+              'font-uikit-ui font-semibold text-uikit-ink opacity-90',
+              'bg-[color-mix(in_oklab,var(--ink)_8%,var(--bg))]',
+              'tracking-[-.04em] text-[88px]',
+            )}
+          >
+            {initials}
+          </div>
+        )}
+        {editable && (
+          <div
+            className={cn(
+              'absolute inset-0 flex items-center justify-center gap-2',
+              'bg-[color-mix(in_srgb,black_38%,transparent)]',
+              'opacity-0 group-hover:opacity-100 transition-opacity duration-150',
+              'text-white font-uikit-mono text-uikit-12 tracking-uikit-snug',
+            )}
+          >
+            <Pencil size={16} />
+            <span>change avatar</span>
+          </div>
+        )}
+      </div>
+
+      {editing && onAvatarChange && (
+        <AvatarEditSheet
+          name={name}
+          currentImage={image}
+          onChange={onAvatarChange}
+          onClose={() => setEditing(false)}
+        />
+      )}
+    </>
+  )
+}
+
+// ── AvatarEditSheet ────────────────────────────────────────────────────────
+// Dialog-based avatar picker: drag-drop + click-to-browse, live preview,
+// "remove avatar" affordance when a current image exists. Async-aware:
+// `onChange` may return a Promise and the sheet keeps itself open with a
+// generic error message if it rejects.
+
+function AvatarEditSheet({
+  name,
+  currentImage,
+  onChange,
+  onClose,
+}: {
+  name: string
+  currentImage?: string
+  onChange: (file: File | null) => Promise<void> | void
+  onClose: () => void
+}) {
+  const initials = getInitials(name) || '?'
+  const [pendingFile, setPendingFile] = useState<File | null>(null)
+  // `cleared` records that the user clicked "remove avatar" — we treat that
+  // as a pending intent (commit on save) so the dialog stays open and the
+  // preview reflects the change immediately.
+  const [cleared, setCleared] = useState(false)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(currentImage ?? null)
+  const [dragOver, setDragOver] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
+
+  const dirty = pendingFile !== null || cleared
+
+  const readFile = (f: File | null | undefined) => {
+    if (!f || !/^image\//.test(f.type)) return
+    const r = new FileReader()
+    r.onload = () => setPreviewUrl(String(r.result))
+    r.readAsDataURL(f)
+    setPendingFile(f)
+    setCleared(false)
+    setError(null)
+  }
+
+  const handleRemove = (e?: React.MouseEvent) => {
+    e?.stopPropagation()
+    if (saving) return
+    setPendingFile(null)
+    setPreviewUrl(null)
+    setCleared(true)
+    setError(null)
+  }
+
+  const handleSave = async () => {
+    if (saving) return
+    if (!dirty) {
+      onClose()
+      return
+    }
+    setSaving(true)
+    setError(null)
+    try {
+      await onChange(pendingFile)
+      onClose()
+    } catch {
+      setError(
+        pendingFile
+          ? 'Upload failed. Please try again.'
+          : 'Failed to remove avatar. Please try again.',
+      )
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <Dialog
+      open
+      onClose={() => { if (!saving) onClose() }}
+      title="change avatar"
+      eyebrow="upload an image · png, jpg, webp"
+      width={480}
+      footer={
+        <>
+          <span
+            role="button"
+            onClick={() => { if (!saving) onClose() }}
+            data-disabled={saving || undefined}
+            className={cn(
+              'font-uikit-mono text-[11.5px] tracking-uikit-snug',
+              'text-uikit-muted opacity-80 cursor-pointer select-none',
+              'hover:text-uikit-ink',
+              'data-[disabled]:opacity-50 data-[disabled]:pointer-events-none',
+            )}
+          >
+            cancel
+          </span>
+          <span
+            role="button"
+            onClick={handleSave}
+            data-disabled={saving || undefined}
+            className={cn(
+              'font-uikit-mono text-uikit-11 font-medium tracking-uikit-snug',
+              'inline-block text-uikit-bg bg-uikit-ink rounded-md px-2.5 py-[5px] cursor-pointer select-none',
+              'transition-[background] duration-120',
+              'hover:bg-[color-mix(in_oklab,var(--ink)_88%,var(--accent))]',
+              'data-[disabled]:opacity-60 data-[disabled]:pointer-events-none',
+            )}
+          >
+            {saving ? 'saving…' : 'save avatar'}
+          </span>
+        </>
+      }
+    >
+      {/* Avatar preview + drop zone on one row; "remove avatar" sits in its
+          own row below, left-aligned (matches the design's ProfAvatarSheet
+          layout in dreamlake v4/profile-view.jsx). */}
+      <div className="flex items-stretch gap-3">
+        <div
+          className={cn(
+            'w-[72px] h-[72px] flex-shrink-0 rounded-lg overflow-hidden',
+            'flex items-center justify-center',
+            'bg-[color-mix(in_oklab,var(--ink)_8%,var(--bg))]',
+            'font-uikit-ui font-semibold text-uikit-ink opacity-90',
+            'text-[26px] tracking-uikit-tighter',
+          )}
+        >
+          {previewUrl ? (
+            <img src={previewUrl} alt="" className="w-full h-full object-cover" />
+          ) : (
+            <span>{initials}</span>
+          )}
+        </div>
+
+        <div
+          onClick={() => fileRef.current?.click()}
+          onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={(e) => {
+            e.preventDefault()
+            setDragOver(false)
+            readFile(e.dataTransfer.files?.[0])
+          }}
+          className={cn(
+            'flex-1 self-stretch flex flex-col items-center justify-center text-center',
+            'cursor-pointer rounded-lg border border-dashed px-3',
+            'font-uikit-mono text-[11.5px] text-uikit-muted leading-normal tracking-uikit-snug',
+            dragOver
+              ? 'border-uikit-accent bg-uikit-accent-soft'
+              : 'border-uikit-faint-dashed bg-[color-mix(in_srgb,var(--ink)_2%,transparent)]',
+          )}
+        >
+          <span>
+            drop an image here, or{' '}
+            <span className="text-uikit-ink">browse</span>
+          </span>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            hidden
+            onChange={(e) => readFile(e.target.files?.[0])}
+          />
+        </div>
+      </div>
+
+      {(currentImage || pendingFile) && !cleared && (
+        <div className="flex justify-start">
+          <span
+            role="button"
+            onClick={handleRemove}
+            className={cn(
+              'font-uikit-mono text-[11.5px] tracking-uikit-snug',
+              'text-uikit-tone-red cursor-pointer select-none',
+            )}
+          >
+            remove avatar
+          </span>
+        </div>
+      )}
+
+      {error && (
+        <div className="font-uikit-mono text-uikit-11 text-uikit-tone-red">
+          {error}
+        </div>
+      )}
+    </Dialog>
+  )
+}
+
 // ── HeroRail ───────────────────────────────────────────────────────────────
 
 function HeroRail({ profile }: { profile: ProfileLayoutProfile }) {
-  const { name, handle, image, bio, facts = [], members = [], kind } = profile
+  const {
+    name,
+    handle,
+    image,
+    bio,
+    facts = [],
+    members = [],
+    kind,
+    onAvatarChange,
+    onEditClick,
+    nameAccessory,
+  } = profile
 
   return (
     <aside
@@ -283,32 +573,37 @@ function HeroRail({ profile }: { profile: ProfileLayoutProfile }) {
         maxHeight: `calc(100vh - ${TOPBAR_H_SMALL + 4}px)`,
       }}
     >
-      {/* Avatar banner — image when provided, monogram fallback otherwise */}
-      {image ? (
-        <img
-          src={image}
-          alt={name}
-          className="block w-full aspect-square select-none rounded-xl object-cover"
-        />
-      ) : (
-        <div
-          className={cn(
-            'w-full aspect-square flex items-center justify-center',
-            'font-uikit-ui font-semibold select-none rounded-xl',
-            'text-uikit-ink opacity-90',
-            'bg-[color-mix(in_oklab,var(--ink)_8%,var(--bg))]',
-            'tracking-[-.04em] text-[88px]',
-          )}
-        >
-          {getInitials(name)}
-        </div>
-      )}
+      <RailAvatar name={name} image={image} onAvatarChange={onAvatarChange} />
 
-      {/* Name + handle */}
-      <div className="flex flex-col gap-1">
-        <h1 className="m-0 font-uikit-ui text-uikit-22 font-semibold text-uikit-ink tracking-uikit-tighter leading-[1.15]">
-          {name}
-        </h1>
+      {/* Name + handle. Pencil only materialises on group-hover of the row;
+          nameAccessory slot stays visible regardless. */}
+      <div className="group flex flex-col gap-1">
+        <div className="flex items-start gap-2">
+          <h1 className="m-0 font-uikit-ui text-uikit-22 font-semibold text-uikit-ink tracking-uikit-tighter leading-[1.15] flex-1 min-w-0 break-words">
+            {name}
+          </h1>
+          {onEditClick && (
+            <button
+              type="button"
+              onClick={onEditClick}
+              aria-label="Edit profile"
+              title="edit profile"
+              className={cn(
+                'flex-shrink-0 inline-flex items-center justify-center p-1 mt-0.5',
+                'appearance-none bg-transparent border-0 cursor-pointer',
+                'text-uikit-muted opacity-0 hover:text-uikit-ink',
+                'group-hover:opacity-90 transition-[opacity,color] duration-120',
+              )}
+            >
+              <Pencil size={14} />
+            </button>
+          )}
+          {nameAccessory && (
+            <div className="flex-shrink-0 mt-px inline-flex items-center">
+              {nameAccessory}
+            </div>
+          )}
+        </div>
         <span className="font-uikit-mono text-[12.5px] font-medium text-uikit-muted opacity-85 tracking-uikit-snug">
           @{handle}
         </span>

@@ -12,6 +12,10 @@ export interface ProfileCardProps {
    *  while `footer` keeps the left-side stats. Shares the footer row's mono
    *  typography; wrap in a styled element to override. */
   footerRight?: ReactNode
+  /** Final row inside the card body. Render `<Tag>` chips here for the
+   *  "Pipelines tab" pattern — a horizontal, wrapping row at the bottom of
+   *  the card. Pass an array of nodes or any flex-wrap-friendly subtree. */
+  tags?: ReactNode
   /** Hover-revealed actions anchored to the card's top-right. Use for the
    *  edit/delete pattern. When this slot is provided, `titleRight` auto-fades
    *  on hover so the two don't visually collide. Clicks do not bubble to
@@ -32,6 +36,7 @@ export function ProfileCard({
   description,
   footer,
   footerRight,
+  tags,
   topRightActions,
   hoverActions,
   onClick,
@@ -48,21 +53,24 @@ export function ProfileCard({
         className,
       )}
     >
-      {/* header */}
+      {/* header — title + tag share a shrinkable flex column on the left so
+          long titles truncate with ellipsis instead of pushing titleRight
+          (or worse, the card boundary) out. */}
       <div className="flex items-baseline gap-2.5">
-        <span className="text-uikit-14 font-medium tracking-uikit-tight leading-uikit-snug">
-          {title}
-        </span>
-        {tag && (
-          <span className="font-uikit-mono text-[10.5px] opacity-80 whitespace-nowrap">
-            {tag}
+        <div className="flex items-baseline gap-2.5 flex-1 min-w-0">
+          <span className="text-uikit-14 font-medium tracking-uikit-tight leading-uikit-snug truncate min-w-0">
+            {title}
           </span>
-        )}
-        <span className="flex-1" />
+          {tag && (
+            <span className="font-uikit-mono text-[10.5px] opacity-80 whitespace-nowrap shrink-0">
+              {tag}
+            </span>
+          )}
+        </div>
         {titleRight && (
           <span
             className={cn(
-              'font-uikit-mono text-uikit-11 text-uikit-muted opacity-65 tracking-uikit-snug whitespace-nowrap',
+              'font-uikit-mono text-uikit-11 text-uikit-muted opacity-65 tracking-uikit-snug whitespace-nowrap shrink-0',
               // When topRightActions are also present, fade titleRight on
               // hover so the hover-revealed cluster doesn't collide with
               // the meta (e.g. timestamp behind edit/delete buttons).
@@ -74,9 +82,10 @@ export function ProfileCard({
         )}
       </div>
 
-      {/* description */}
+      {/* description — `break-words` keeps unbroken strings (URLs, tokens)
+          from spilling past the card edge. */}
       {description && (
-        <div className="mt-1.5 text-uikit-13 font-normal opacity-75 leading-normal tracking-uikit-snug">
+        <div className="mt-1.5 text-uikit-13 font-normal opacity-75 leading-normal tracking-uikit-snug break-words">
           {description}
         </div>
       )}
@@ -94,6 +103,14 @@ export function ProfileCard({
               {footerRight}
             </div>
           )}
+        </div>
+      )}
+
+      {/* tags row — `<Tag>` chips by convention. Wraps onto multiple lines
+          when they don't fit; `min-w-0` lets the row shrink inside grid cells. */}
+      {tags && (
+        <div className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1 min-w-0">
+          {tags}
         </div>
       )}
 
