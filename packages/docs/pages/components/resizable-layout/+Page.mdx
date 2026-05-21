@@ -17,16 +17,17 @@ import toggleSrc from '../../../components/specimens/components/resizable-layout
 
 # ResizableLayout
 
-A three-column drag-to-resize layout. All column widths are proportional
-(flex-based) so the layout responds to any container size. Widths can be
-persisted to `localStorage` via `storageKey`. Dividers paint a 2px accent line
-on hover/drag; an opt-in `showToggle` prop adds a hover-revealed collapse
-button.
+A three-column drag-to-resize layout. Column widths are proportional
+(flex-based) by default so the layout responds to any container size, but the
+left column can be pinned to a fixed pixel width via `leftFixedPx`. Widths are
+persisted to `localStorage` via `storageKey`. Each divider reveals a
+cursor-following frosted pill on hover/drag; an opt-in `showToggle` prop adds
+a hover-revealed collapse button.
 
 ## Demo
 
 Drag the dividers to resize. All three columns are resizable by default. Hover
-a divider to see the accent line.
+a divider to see the pill track the cursor.
 
 <Preview source={basicSrc} filename="BasicSpec.tsx">
   <BasicSpec />
@@ -34,7 +35,7 @@ a divider to see the accent line.
 
 ## Without divider indicator
 
-`showDivider={false}` hides the accent line. The drag area remains active —
+`showDivider={false}` hides the pill entirely. The drag area remains active —
 hover and drag work as before.
 
 <Preview source={noDividerSrc} filename="NoDividerSpec.tsx">
@@ -54,7 +55,7 @@ Narrower gaps work well in dense layouts.
 
 Pass `showToggle` together with `onToggleLeft` / `onToggleRight` to reveal a
 hover-shown collapse button on the divider. The button is opt-in — by default
-the divider is just the accent line.
+the divider is just the pill.
 
 <Preview source={toggleSrc} filename="ToggleSpec.tsx">
   <ToggleSpec />
@@ -68,11 +69,12 @@ the divider is just the accent line.
 | `middle` | `ReactNode` | — | Content for the middle column. |
 | `right` | `ReactNode` | — | Content for the right column. |
 | `top` | `ReactNode` | — | Optional content rendered above all columns (e.g. a toolbar). |
-| `showDivider` | `boolean` | `true` | Show the 2px accent indicator on dividers. The drag area is always active. |
+| `showDivider` | `boolean` | `true` | Show the cursor-following pill on dividers. The drag area is always active. |
 | `showToggle` | `boolean` | `false` | Show the morphing collapse-toggle button on the divider when `onToggleLeft` / `onToggleRight` is provided. |
 | `gap` | `number` | `24` | Width of the gap between columns in px. |
-| `defaultWidths` | `{ left?: number; middle?: number; right?: number }` | `2/3/5` | Initial flex weights for each column. |
-| `minWidths` | `{ left?: number; middle?: number; right?: number }` | `80px` | Minimum pixel width per column. |
+| `defaultWidths` | `{ left?: number; middle?: number; right?: number }` | `2/3/5` | Initial flex weights for each column. Ignored for the left column when `leftFixedPx` is set. |
+| `minWidths` | `{ left?: number; middle?: number; right?: number }` | `80px` | Minimum pixel width per column, enforced during drag-resize. |
+| `leftFixedPx` | `number` | — | Pin the left column to a fixed pixel width (`flex: 0 0 <px>`). The column ignores its flex ratio and never grows with the viewport; middle and right keep their flex behavior. |
 | `storageKey` | `string` | — | `localStorage` key to persist column widths across sessions. |
 | `leftHidden` | `boolean` | `false` | Collapse the left column. |
 | `middleHidden` | `boolean` | `false` | Collapse the middle column. |

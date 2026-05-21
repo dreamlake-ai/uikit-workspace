@@ -36,6 +36,14 @@ export interface ResizableLayoutProps {
   showDivider?: boolean;
   /** Width of the gap between columns in px. Default 24. */
   gap?: number;
+  /**
+   * Pin the left column to a fixed pixel width (`flex: 0 0 <px>`). When set,
+   * the left column ignores `defaultWidths.left` / `minWidths.left` and never
+   * grows with the viewport. The remaining width is divided between middle
+   * and right via their flex ratios as usual. Leave undefined for the default
+   * flex-ratio behavior.
+   */
+  leftFixedPx?: number;
   className?: string;
 }
 
@@ -86,6 +94,7 @@ export function ResizableLayout({
   showToggle = false,
   showDivider = true,
   gap = 24,
+  leftFixedPx,
   className,
 }: ResizableLayoutProps) {
   const defaults = {
@@ -151,20 +160,29 @@ export function ResizableLayout({
   const handleMiddleRightResize = useCallback((deltaX: number) => {
     if (!containerRef.current) return;
     const cw = containerRef.current.clientWidth;
+    // When the left column is pinned to a fixed pixel width it sits outside
+    // the flex pool, so the cursor-px ↔ flex-ratio conversion has to use the
+    // *remaining* width and the *remaining* flex sum. Otherwise the same px
+    // delta would translate to a different flex delta depending on whether
+    // left was fixed or flex-grown.
+    const fixed = leftFixedPx != null && !leftHidden ? leftFixedPx : 0;
+    const flexAvailable = Math.max(1, cw - fixed);
     const total =
-      leftFlexRef.current + middleFlexRef.current + rightFlexRef.current;
-    const raw = deltaX / (cw / total);
+      (leftFixedPx != null ? 0 : leftFlexRef.current) +
+      middleFlexRef.current +
+      rightFlexRef.current;
+    const raw = deltaX / (flexAvailable / total);
     const middleMin =
-      ((minWidthsRef.current?.middle ?? MIN_WIDTH_DEFAULT) / cw) * total;
+      ((minWidthsRef.current?.middle ?? MIN_WIDTH_DEFAULT) / flexAvailable) * total;
     const rightMin =
-      ((minWidthsRef.current?.right ?? MIN_WIDTH_DEFAULT) / cw) * total;
+      ((minWidthsRef.current?.right ?? MIN_WIDTH_DEFAULT) / flexAvailable) * total;
     const delta = Math.max(
       -(middleFlexRef.current - middleMin),
       Math.min(rightFlexRef.current - rightMin, raw)
     );
     setMiddleFlex(middleFlexRef.current + delta);
     setRightFlex(rightFlexRef.current - delta);
-  }, []);
+  }, [leftFixedPx, leftHidden]);
 
   const showLeftDivider = !leftHidden && !middleHidden;
   const showRightDivider = !middleHidden && !rightHidden;
@@ -186,7 +204,9 @@ export function ResizableLayout({
             )}
             style={
               !leftHidden
-                ? { flexGrow: leftFlex, flexShrink: 1, flexBasis: 0 }
+                ? leftFixedPx != null
+                  ? { flexGrow: 0, flexShrink: 0, flexBasis: `${leftFixedPx}px` }
+                  : { flexGrow: leftFlex, flexShrink: 1, flexBasis: 0 }
                 : undefined
             }
           >
