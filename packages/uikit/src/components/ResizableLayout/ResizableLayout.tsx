@@ -1,5 +1,4 @@
 import { ReactNode, useState, useEffect, useRef, useCallback } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { ResizeDivider } from "./ResizeDivider";
 
@@ -8,8 +7,12 @@ export interface ResizableLayoutProps {
   middle: ReactNode;
   right: ReactNode;
   top?: ReactNode;
+  /**
+   * Initial flex weights for each column. Ignored for any column that opts
+   * into a fixed-px mode (`leftFixedPx`, `middleFixedPx`).
+   */
   defaultWidths?: { left?: number; middle?: number; right?: number };
-  /** Minimum pixel width for each column. Default 80px per column. */
+  /** Minimum pixel width for each column, enforced during drag-resize. */
   minWidths?: { left?: number; middle?: number; right?: number };
   storageKey?: string;
   /** Hide the left column. */
@@ -22,59 +25,55 @@ export interface ResizableLayoutProps {
   leftResizable?: boolean;
   /** Enable drag-to-resize on the right divider. Default true. */
   rightResizable?: boolean;
-  /** Optional toggle button on the left divider. Only rendered when `showToggle` is true. */
-  onToggleLeft?: () => void;
-  /** Optional toggle button on the right divider. Only rendered when `showToggle` is true. */
-  onToggleRight?: () => void;
-  /**
-   * Show the morphing collapse-toggle button on the divider when an `onToggleLeft` /
-   * `onToggleRight` callback is provided. Default false — the divider is a clean
-   * 2px accent line that fades in on hover/drag (matches design).
-   */
-  showToggle?: boolean;
-  /** Show the accent line indicator on the divider. Default true. */
+  /** Show the cursor-following pill on dividers. The drag area is always active. */
   showDivider?: boolean;
-  /** Width of the gap between columns in px. Default 24. */
+  /** Visual width of the space between columns in px. Default 24. */
   gap?: number;
   /**
    * Pin the left column to a fixed pixel width (`flex: 0 0 <px>`). When set,
-   * the left column ignores `defaultWidths.left` / `minWidths.left` and never
-   * grows with the viewport. The remaining width is divided between middle
-   * and right via their flex ratios as usual. Leave undefined for the default
-   * flex-ratio behavior.
+   * the left column ignores `defaultWidths.left` and never grows with the
+   * viewport. Leave undefined for the default flex-ratio behavior.
    */
   leftFixedPx?: number;
+  /**
+   * Pin the middle column to a fixed-but-resize-adjustable pixel width. The
+   * value is the initial width; the middle-right drag mutates it directly
+   * (1px cursor = 1px middle), clamped by `minWidths.middle`. When set, the
+   * right column takes the remaining width via `flex: 1 1 0` (the design's
+   * `1fr` track). Pair with `storageKey` to persist the px value.
+   */
+  middleFixedPx?: number;
   className?: string;
 }
 
 const DEFAULTS = { left: 2, middle: 3, right: 5 };
+const MIN_WIDTH_DEFAULT = 80;
 
-function readWidths(
-  key: string | undefined,
-  defaults: typeof DEFAULTS
-): typeof DEFAULTS {
-  if (!key) return defaults;
+// Persisted shape. `middle` is interpreted in px when `middleFixedPx` is set,
+// otherwise as a flex ratio. Mode is implicit from the caller's props — the
+// component never tries to convert between the two on the fly.
+type StoredWidths = { left?: number; middle?: number; right?: number };
+
+function readWidths(key: string | undefined): StoredWidths {
+  if (!key || typeof window === "undefined") return {};
   try {
     const stored = JSON.parse(localStorage.getItem(key) ?? "{}");
     return {
-      left: typeof stored.left === "number" ? stored.left : defaults.left,
-      middle:
-        typeof stored.middle === "number" ? stored.middle : defaults.middle,
-      right: typeof stored.right === "number" ? stored.right : defaults.right,
+      left: typeof stored.left === "number" ? stored.left : undefined,
+      middle: typeof stored.middle === "number" ? stored.middle : undefined,
+      right: typeof stored.right === "number" ? stored.right : undefined,
     };
   } catch {
-    return defaults;
+    return {};
   }
 }
 
-function writeWidths(key: string | undefined, widths: typeof DEFAULTS) {
+function writeWidths(key: string | undefined, widths: StoredWidths) {
   if (!key || typeof window === "undefined") return;
   try {
     localStorage.setItem(key, JSON.stringify(widths));
   } catch {}
 }
-
-const MIN_WIDTH_DEFAULT = 80;
 
 export function ResizableLayout({
   left,
@@ -89,42 +88,58 @@ export function ResizableLayout({
   rightHidden = false,
   leftResizable = true,
   rightResizable = true,
-  onToggleLeft,
-  onToggleRight,
-  showToggle = false,
   showDivider = true,
   gap = 24,
   leftFixedPx,
+  middleFixedPx,
   className,
 }: ResizableLayoutProps) {
+  // The divider's hit area is at least 20px regardless of `gap` so the
+  // resize handle stays grabbable even when columns sit flush (`gap: 0`,
+  // the design's flush-column layout). When the hit exceeds `gap` the
+  // divider renders as an absolute overlay so it overhangs the column
+  // boundary without stealing flex space.
+  const MIN_HIT = 20;
+  const hitSize = Math.max(gap, MIN_HIT);
+  const overlay = hitSize > gap;
   const defaults = {
     left: defaultWidths?.left ?? DEFAULTS.left,
     middle: defaultWidths?.middle ?? DEFAULTS.middle,
     right: defaultWidths?.right ?? DEFAULTS.right,
   };
 
+  // Flex-ratio state, used when the corresponding column isn't fixed.
   const [leftFlex, setLeftFlex] = useState(defaults.left);
   const [middleFlex, setMiddleFlex] = useState(defaults.middle);
   const [rightFlex, setRightFlex] = useState(defaults.right);
+  // Px state for the fixed-but-resizable middle column. Tracks the *current*
+  // width, which starts at `middleFixedPx` and is mutated by the resize handle.
+  const [middlePx, setMiddlePx] = useState(middleFixedPx ?? 0);
   const [isResizing, setIsResizing] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const leftFlexRef = useRef(leftFlex);
   const middleFlexRef = useRef(middleFlex);
   const rightFlexRef = useRef(rightFlex);
+  const middlePxRef = useRef(middlePx);
   const minWidthsRef = useRef(minWidths);
 
   leftFlexRef.current = leftFlex;
   middleFlexRef.current = middleFlex;
   rightFlexRef.current = rightFlex;
+  middlePxRef.current = middlePx;
   minWidthsRef.current = minWidths;
 
+  // Hydrate persisted widths on mount.
   useEffect(() => {
     if (!storageKey) return;
-    const stored = readWidths(storageKey, defaults);
-    setLeftFlex(stored.left);
-    setMiddleFlex(stored.middle);
-    setRightFlex(stored.right);
+    const stored = readWidths(storageKey);
+    if (stored.left != null) setLeftFlex(stored.left);
+    if (stored.right != null) setRightFlex(stored.right);
+    if (stored.middle != null) {
+      if (middleFixedPx != null) setMiddlePx(stored.middle);
+      else setMiddleFlex(stored.middle);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storageKey]);
 
@@ -134,10 +149,10 @@ export function ResizableLayout({
     setIsResizing(false);
     writeWidths(storageKey, {
       left: leftFlexRef.current,
-      middle: middleFlexRef.current,
+      middle: middleFixedPx != null ? middlePxRef.current : middleFlexRef.current,
       right: rightFlexRef.current,
     });
-  }, [storageKey]);
+  }, [storageKey, middleFixedPx]);
 
   const handleLeftMiddleResize = useCallback((deltaX: number) => {
     if (!containerRef.current) return;
@@ -159,12 +174,23 @@ export function ResizableLayout({
 
   const handleMiddleRightResize = useCallback((deltaX: number) => {
     if (!containerRef.current) return;
+
+    // When middle is in fixed-px mode the math is direct — the drag mutates
+    // middle's pixel width 1:1, right is `1fr` so it absorbs the change.
+    if (middleFixedPx != null) {
+      const min = minWidthsRef.current?.middle ?? MIN_WIDTH_DEFAULT;
+      // Upper bound: leave room for any right-min plus the fixed left + dividers.
+      const cw = containerRef.current.clientWidth;
+      const fixedLeft = leftFixedPx != null && !leftHidden ? leftFixedPx : 0;
+      const rightMin = minWidthsRef.current?.right ?? 0;
+      const max = Math.max(min, cw - fixedLeft - rightMin);
+      const next = Math.max(min, Math.min(max, middlePxRef.current + deltaX));
+      setMiddlePx(next);
+      return;
+    }
+
+    // Flex-ratio mode (no middleFixedPx).
     const cw = containerRef.current.clientWidth;
-    // When the left column is pinned to a fixed pixel width it sits outside
-    // the flex pool, so the cursor-px ↔ flex-ratio conversion has to use the
-    // *remaining* width and the *remaining* flex sum. Otherwise the same px
-    // delta would translate to a different flex delta depending on whether
-    // left was fixed or flex-grown.
     const fixed = leftFixedPx != null && !leftHidden ? leftFixedPx : 0;
     const flexAvailable = Math.max(1, cw - fixed);
     const total =
@@ -182,12 +208,31 @@ export function ResizableLayout({
     );
     setMiddleFlex(middleFlexRef.current + delta);
     setRightFlex(rightFlexRef.current - delta);
-  }, [leftFixedPx, leftHidden]);
+  }, [leftFixedPx, leftHidden, middleFixedPx]);
 
   const showLeftDivider = !leftHidden && !middleHidden;
   const showRightDivider = !middleHidden && !rightHidden;
-  const leftToggleOn = showToggle && !!onToggleLeft;
-  const rightToggleOn = showToggle && !!onToggleRight;
+
+  // Column flex styles, derived once per render.
+  const leftStyle = leftHidden
+    ? undefined
+    : leftFixedPx != null
+      ? { flexGrow: 0, flexShrink: 0, flexBasis: `${leftFixedPx}px` }
+      : { flexGrow: leftFlex, flexShrink: 1, flexBasis: 0 };
+
+  const middleStyle = middleHidden
+    ? undefined
+    : middleFixedPx != null
+      ? { flexGrow: 0, flexShrink: 0, flexBasis: `${middlePx}px` }
+      : { flexGrow: middleFlex, flexShrink: 1, flexBasis: 0 };
+
+  // When middle is fixed-px, right is the `1fr` track (absorbs remaining
+  // space). Otherwise right participates in the flex-ratio split.
+  const rightStyle = rightHidden
+    ? undefined
+    : middleFixedPx != null
+      ? { flexGrow: 1, flexShrink: 1, flexBasis: 0 }
+      : { flexGrow: rightFlex, flexShrink: 1, flexBasis: 0 };
 
   return (
     <div className={cn("relative w-full h-full", className)}>
@@ -202,39 +247,30 @@ export function ResizableLayout({
               !isResizing && "transition-all duration-300",
               leftHidden ? "flex-[0_0_0px] opacity-0" : ""
             )}
-            style={
-              !leftHidden
-                ? leftFixedPx != null
-                  ? { flexGrow: 0, flexShrink: 0, flexBasis: `${leftFixedPx}px` }
-                  : { flexGrow: leftFlex, flexShrink: 1, flexBasis: 0 }
-                : undefined
-            }
+            style={leftStyle}
           >
             {left}
           </div>
 
           {/* Divider: left–middle */}
           {showLeftDivider && (
-            <div className="relative flex items-center">
-              {leftToggleOn && (
-                <div className="peer absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-10 w-6 h-6 flex items-center justify-center group z-10">
-                  <button
-                    onClick={onToggleLeft}
-                    title="Collapse left panel"
-                    className="cursor-pointer size-1.5 rounded-full bg-gray-200 group-hover:bg-gray-400 dark:bg-gray-800 group-hover:size-6 transition-all flex items-center justify-center origin-center"
+            <div className="relative self-stretch shrink-0" style={{ width: gap }}>
+              {leftResizable ? (
+                overlay ? (
+                  <div
+                    className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2"
+                    style={{ width: hitSize, zIndex: 5 }}
                   >
-                    <ChevronLeft className="w-0 h-0 group-hover:size-4 transition-all text-white" />
-                  </button>
-                </div>
-              )}
-              <div
-                className={cn(
-                  "self-stretch",
-                  leftToggleOn &&
-                    "[clip-path:inset(0_round_9999px)] peer-hover:[clip-path:inset(10px_0_0_0_round_9999px)] transition-[clip-path] duration-300"
-                )}
-              >
-                {leftResizable ? (
+                    <ResizeDivider
+                      axis="x"
+                      size={hitSize}
+                      hideCapsule={!showDivider}
+                      onResize={handleLeftMiddleResize}
+                      onResizeStart={handleResizeStart}
+                      onResizeEnd={handleResizeEnd}
+                    />
+                  </div>
+                ) : (
                   <ResizeDivider
                     axis="x"
                     size={gap}
@@ -243,10 +279,8 @@ export function ResizableLayout({
                     onResizeStart={handleResizeStart}
                     onResizeEnd={handleResizeEnd}
                   />
-                ) : (
-                  <div style={{ width: gap }} />
-                )}
-              </div>
+                )
+              ) : null}
             </div>
           )}
 
@@ -257,11 +291,7 @@ export function ResizableLayout({
               !isResizing && "transition-all duration-300",
               middleHidden ? "flex-[0_0_0px] opacity-0" : ""
             )}
-            style={
-              !middleHidden
-                ? { flexGrow: middleFlex, flexShrink: 1, flexBasis: 0 }
-                : undefined
-            }
+            style={middleStyle}
           >
             {middle}
           </div>
@@ -273,26 +303,23 @@ export function ResizableLayout({
 
           {/* Divider: middle–right */}
           {showRightDivider && (
-            <div className="relative flex items-center">
-              {rightToggleOn && (
-                <div className="peer absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-10 w-6 h-6 flex items-center justify-center group z-10">
-                  <button
-                    onClick={onToggleRight}
-                    title="Toggle right panel"
-                    className="cursor-pointer size-1.5 rounded-full bg-gray-200 group-hover:bg-gray-400 dark:bg-gray-800 group-hover:size-6 transition-all flex items-center justify-center origin-center"
+            <div className="relative self-stretch shrink-0" style={{ width: gap }}>
+              {rightResizable ? (
+                overlay ? (
+                  <div
+                    className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2"
+                    style={{ width: hitSize, zIndex: 5 }}
                   >
-                    <ChevronRight className="w-0 h-0 group-hover:size-4 transition-all text-white" />
-                  </button>
-                </div>
-              )}
-              <div
-                className={cn(
-                  "self-stretch",
-                  rightToggleOn &&
-                    "[clip-path:inset(0_round_9999px)] peer-hover:[clip-path:inset(10px_0_0_0_round_9999px)] transition-[clip-path] duration-300"
-                )}
-              >
-                {rightResizable ? (
+                    <ResizeDivider
+                      axis="x"
+                      size={hitSize}
+                      hideCapsule={!showDivider}
+                      onResize={handleMiddleRightResize}
+                      onResizeStart={handleResizeStart}
+                      onResizeEnd={handleResizeEnd}
+                    />
+                  </div>
+                ) : (
                   <ResizeDivider
                     axis="x"
                     size={gap}
@@ -301,10 +328,8 @@ export function ResizableLayout({
                     onResizeStart={handleResizeStart}
                     onResizeEnd={handleResizeEnd}
                   />
-                ) : (
-                  <div style={{ width: gap }} />
-                )}
-              </div>
+                )
+              ) : null}
             </div>
           )}
 
@@ -315,11 +340,7 @@ export function ResizableLayout({
               !isResizing && "transition-all duration-300",
               rightHidden ? "flex-[0_0_0px] opacity-0" : ""
             )}
-            style={
-              !rightHidden
-                ? { flexGrow: rightFlex, flexShrink: 1, flexBasis: 0 }
-                : undefined
-            }
+            style={rightStyle}
           >
             {right}
           </div>

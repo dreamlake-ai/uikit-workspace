@@ -2,27 +2,26 @@
 title: ResizableLayout
 section: Components
 order: 80
-description: Three-column drag-to-resize layout with optional persistence and a collapse toggle.
+description: Three-column drag-to-resize layout with optional persistence and fixed-px column modes.
 ---
 
 import { Preview } from '../../../components/Preview'
 import { BasicSpec } from '../../../components/specimens/components/resizable-layout/BasicSpec'
 import { NoDividerSpec } from '../../../components/specimens/components/resizable-layout/NoDividerSpec'
 import { CustomGapSpec } from '../../../components/specimens/components/resizable-layout/CustomGapSpec'
-import { ToggleSpec } from '../../../components/specimens/components/resizable-layout/ToggleSpec'
+import { HiddenColumnsSpec } from '../../../components/specimens/components/resizable-layout/HiddenColumnsSpec'
 import basicSrc from '../../../components/specimens/components/resizable-layout/BasicSpec.tsx?raw'
 import noDividerSrc from '../../../components/specimens/components/resizable-layout/NoDividerSpec.tsx?raw'
 import customGapSrc from '../../../components/specimens/components/resizable-layout/CustomGapSpec.tsx?raw'
-import toggleSrc from '../../../components/specimens/components/resizable-layout/ToggleSpec.tsx?raw'
+import hiddenColumnsSrc from '../../../components/specimens/components/resizable-layout/HiddenColumnsSpec.tsx?raw'
 
 # ResizableLayout
 
 A three-column drag-to-resize layout. Column widths are proportional
 (flex-based) by default so the layout responds to any container size, but the
-left column can be pinned to a fixed pixel width via `leftFixedPx`. Widths are
-persisted to `localStorage` via `storageKey`. Each divider reveals a
-cursor-following frosted pill on hover/drag; an opt-in `showToggle` prop adds
-a hover-revealed collapse button.
+left and middle columns can each opt into a fixed pixel mode via `leftFixedPx`
+and `middleFixedPx`. Widths are persisted to `localStorage` via `storageKey`.
+Each divider reveals a cursor-following frosted pill on hover/drag.
 
 ## Demo
 
@@ -44,21 +43,24 @@ hover and drag work as before.
 
 ## Custom gap
 
-`gap` controls the width of the space between columns in pixels (default `24`).
-Narrower gaps work well in dense layouts.
+`gap` controls the visual space between columns in pixels (default `24`).
+With `gap={0}` columns sit flush; the divider's hit area is automatically
+extended to `20px` via an absolute overlay so the resize handle stays
+grabbable.
 
 <Preview source={customGapSrc} filename="CustomGapSpec.tsx">
   <CustomGapSpec />
 </Preview>
 
-## Column toggle
+## Hidden columns + fullscreen
 
-Pass `showToggle` together with `onToggleLeft` / `onToggleRight` to reveal a
-hover-shown collapse button on the divider. The button is opt-in — by default
-the divider is just the pill.
+`leftHidden`, `middleHidden`, and `rightHidden` each collapse a column to
+zero width with an opacity fade. To make one column take the full viewport
+("fullscreen"), hide the other two together — there's no dedicated
+fullscreen prop because two hidden columns already express the intent.
 
-<Preview source={toggleSrc} filename="ToggleSpec.tsx">
-  <ToggleSpec />
+<Preview source={hiddenColumnsSrc} filename="HiddenColumnsSpec.tsx">
+  <HiddenColumnsSpec />
 </Preview>
 
 ## Props
@@ -70,17 +72,15 @@ the divider is just the pill.
 | `right` | `ReactNode` | — | Content for the right column. |
 | `top` | `ReactNode` | — | Optional content rendered above all columns (e.g. a toolbar). |
 | `showDivider` | `boolean` | `true` | Show the cursor-following pill on dividers. The drag area is always active. |
-| `showToggle` | `boolean` | `false` | Show the morphing collapse-toggle button on the divider when `onToggleLeft` / `onToggleRight` is provided. |
-| `gap` | `number` | `24` | Width of the gap between columns in px. |
-| `defaultWidths` | `{ left?: number; middle?: number; right?: number }` | `2/3/5` | Initial flex weights for each column. Ignored for the left column when `leftFixedPx` is set. |
+| `gap` | `number` | `24` | Visual width of the space between columns in px. The divider's interactive hit area is always at least 20px — when `gap` is smaller, the hit area sits as an absolute overlay centered on the column boundary so the resize handle stays grabbable. |
+| `defaultWidths` | `{ left?: number; middle?: number; right?: number }` | `2/3/5` | Initial flex weights for each column. Ignored for any column that opts into a fixed-px mode (`leftFixedPx`, `middleFixedPx`). |
 | `minWidths` | `{ left?: number; middle?: number; right?: number }` | `80px` | Minimum pixel width per column, enforced during drag-resize. |
-| `leftFixedPx` | `number` | — | Pin the left column to a fixed pixel width (`flex: 0 0 <px>`). The column ignores its flex ratio and never grows with the viewport; middle and right keep their flex behavior. |
+| `leftFixedPx` | `number` | — | Pin the left column to a fixed pixel width (`flex: 0 0 <px>`). The column ignores its flex ratio and never grows with the viewport. |
+| `middleFixedPx` | `number` | — | Pin the middle column to a fixed-but-resize-adjustable pixel width. The middle-right drag mutates the value 1:1 (clamped by `minWidths.middle`); the right column takes the remaining width via `flex: 1 1 0` — the design's `1fr` track. Pair with `storageKey` to persist the px value. |
 | `storageKey` | `string` | — | `localStorage` key to persist column widths across sessions. |
 | `leftHidden` | `boolean` | `false` | Collapse the left column. |
 | `middleHidden` | `boolean` | `false` | Collapse the middle column. |
 | `rightHidden` | `boolean` | `false` | Collapse the right column. |
 | `leftResizable` | `boolean` | `true` | Enable drag-to-resize on the left divider. |
 | `rightResizable` | `boolean` | `true` | Enable drag-to-resize on the right divider. |
-| `onToggleLeft` | `() => void` | — | Toggle handler for the left divider. Only renders the toggle button when `showToggle` is true. |
-| `onToggleRight` | `() => void` | — | Toggle handler for the right divider. Only renders the toggle button when `showToggle` is true. |
 | `className` | `string` | — | Extra classes on the root element. |
