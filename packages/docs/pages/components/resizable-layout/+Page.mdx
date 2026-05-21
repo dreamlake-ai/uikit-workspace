@@ -73,6 +73,7 @@ fullscreen prop because two hidden columns already express the intent.
 | `top` | `ReactNode` | — | Optional content rendered above all columns (e.g. a toolbar). |
 | `showDivider` | `boolean` | `true` | Show the cursor-following pill on dividers. The drag area is always active. |
 | `gap` | `number` | `24` | Visual width of the space between columns in px. The divider's interactive hit area is always at least 20px — when `gap` is smaller, the hit area sits as an absolute overlay centered on the column boundary so the resize handle stays grabbable. |
+| `padding` | `number` | `12` | Outer padding from the layout's container edges in px. Set to `0` for designs where the layout sits flush with the viewport. |
 | `defaultWidths` | `{ left?: number; middle?: number; right?: number }` | `2/3/5` | Initial flex weights for each column. Ignored for any column that opts into a fixed-px mode (`leftFixedPx`, `middleFixedPx`). |
 | `minWidths` | `{ left?: number; middle?: number; right?: number }` | `80px` | Minimum pixel width per column, enforced during drag-resize. |
 | `leftFixedPx` | `number` | — | Pin the left column to a fixed pixel width (`flex: 0 0 <px>`). The column ignores its flex ratio and never grows with the viewport. |

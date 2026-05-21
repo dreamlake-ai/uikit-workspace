@@ -30,6 +30,12 @@ export interface ResizableLayoutProps {
   /** Visual width of the space between columns in px. Default 24. */
   gap?: number;
   /**
+   * Outer padding from the layout's container edges in px. Default `12`
+   * (matches the legacy `inset-3` chrome). Set to `0` for designs where the
+   * layout sits flush with the viewport, e.g. ml-dash's main page.
+   */
+  padding?: number;
+  /**
    * Pin the left column to a fixed pixel width (`flex: 0 0 <px>`). When set,
    * the left column ignores `defaultWidths.left` and never grows with the
    * viewport. Leave undefined for the default flex-ratio behavior.
@@ -90,6 +96,7 @@ export function ResizableLayout({
   rightResizable = true,
   showDivider = true,
   gap = 24,
+  padding = 12,
   leftFixedPx,
   middleFixedPx,
   className,
@@ -236,7 +243,10 @@ export function ResizableLayout({
 
   return (
     <div className={cn("relative w-full h-full", className)}>
-      <div className="absolute inset-3 flex flex-col gap-3">
+      <div
+        className="absolute flex flex-col gap-3"
+        style={{ inset: padding }}
+      >
         {top && <div>{top}</div>}
 
         <div ref={containerRef} className="flex flex-row flex-1 min-h-0">
