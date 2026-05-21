@@ -40,7 +40,7 @@ function NavRow({
       onClick={onClick}
       data-active={active || undefined}
       data-accent={accent || undefined}
-      className="flex items-center gap-2 px-2 py-[5px] -mx-[3px] font-uikit-ui text-[12.5px] font-medium data-[active]:font-semibold text-uikit-ink leading-uikit-snug tracking-uikit-snug rounded-[var(--radius)] bg-transparent hover:bg-uikit-ink-5 data-[active]:bg-uikit-accent-soft data-[active]:hover:bg-uikit-accent-soft cursor-pointer transition-[background] duration-[120ms] select-none"
+      className="group flex items-center gap-2 px-2 py-[5px] -mx-[3px] font-uikit-ui text-[12.5px] font-medium data-[active]:font-semibold text-uikit-ink leading-uikit-snug tracking-uikit-snug rounded-[var(--radius)] bg-transparent hover:bg-uikit-ink-5 data-[active]:bg-uikit-accent-soft data-[active]:hover:bg-uikit-accent-soft cursor-pointer transition-[background] duration-[120ms] select-none"
     >
       {icon && (
         <span
