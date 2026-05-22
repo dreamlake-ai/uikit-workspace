@@ -8,10 +8,9 @@ interface SearchPaletteProps {
   query: string
 }
 
-/** Width formula matches `body.is-pal-open .doc-search` from docs.html
- *  (lines 805–833) — palette anchors to the same content column as the
- *  expanded search field. */
-const PAL_INSET = 'max(240px, calc((100vw - 1320px) / 2 + 240px))'
+const PAL_MAX_W = 860
+const PAL_GUTTER = 24
+const PAL_INSET = `max(${PAL_GUTTER}px, calc((100vw - ${PAL_MAX_W}px) / 2))`
 
 /** Same easeOutExpo curve as the search-field expand, so the panel
  *  unfurl and the input widening feel like one motion. */
@@ -26,10 +25,17 @@ export function SearchPalette({ open, onClose, query }: SearchPaletteProps) {
     return Number.isFinite(stored) && stored > 0 ? stored : 360
   })
   const draggingRef = useRef(false)
-  // <640px: collapse the palette body to a single column and drop the
-  // preview pane (docs.html lines 1090–1094); also tuck the panel under
-  // the mobile topbar with smaller margins.
-  const isVeryNarrow = useMediaQuery('(max-width: 639px)')
+  const [gripY, setGripY] = useState<number | null>(null)
+  // Two separate breakpoints:
+  // - `isNarrowInset` (<768px): tuck the panel at 12/12 instead of the
+  //   240/240 desktop inset. Matches the topbar's `isMobile` so the
+  //   open search input (12/12 fixed) and the panel below it stay
+  //   edge-aligned. Above 768, panel anchors to the content column.
+  // - `isSingleCol` (<640px): collapse the palette body to one column
+  //   and drop the preview pane — at that width the preview is too
+  //   cramped to be useful.
+  const isNarrowInset = useMediaQuery('(max-width: 767px)')
+  const isSingleCol = useMediaQuery('(max-width: 639px)')
 
   const hits = useMemo<SearchHit[]>(() => {
     if (!query.trim()) {
@@ -76,10 +82,12 @@ export function SearchPalette({ open, onClose, query }: SearchPaletteProps) {
       const rect = dlg.getBoundingClientRect()
       const x = Math.max(200, Math.min(e.clientX - rect.left, rect.width - 200))
       setSplitPx(x)
+      setGripY(Math.max(0, Math.min(e.clientY - rect.top, rect.height)))
     }
     function onUp() {
       if (draggingRef.current) {
         draggingRef.current = false
+        setGripY(null)
         localStorage.setItem('palette-split', String(splitPx))
       }
     }
@@ -165,9 +173,9 @@ export function SearchPalette({ open, onClose, query }: SearchPaletteProps) {
 
   const panelStyle: CSSProperties = {
     position: 'fixed',
-    top: isVeryNarrow ? 48 : 40,
-    left: isVeryNarrow ? 12 : PAL_INSET,
-    right: isVeryNarrow ? 12 : PAL_INSET,
+    top: 40,
+    left: isNarrowInset ? 12 : PAL_INSET,
+    right: isNarrowInset ? 12 : PAL_INSET,
     zIndex: 49,
     background: 'var(--color-doc-template-bg)',
     border: '1px solid var(--color-doc-template-faint)',
@@ -186,15 +194,15 @@ export function SearchPalette({ open, onClose, query }: SearchPaletteProps) {
 
   return (
     <>
-      {/* Backdrop is purely visual — Esc / the close button on the input
-          are the only ways out. Clicking the dim area no longer closes
-          the palette (per user request). */}
-      <div style={backdropStyle} />
+      {/* Backdrop closes the palette on click; the query state lives in
+          the Layout and is preserved, so re-opening shows the previous
+          query. Esc still works as the keyboard escape route. */}
+      <div style={backdropStyle} onClick={onClose} />
       <div data-palette-panel role="dialog" aria-modal="true" aria-label="Search" style={panelStyle}>
         <div
           className="grid flex-1"
           style={{
-            gridTemplateColumns: isVeryNarrow ? '1fr' : `${splitPx}px 1fr`,
+            gridTemplateColumns: isSingleCol ? '1fr' : `${splitPx}px 1fr`,
             minHeight: 0,
             position: 'relative',
           }}
@@ -203,7 +211,7 @@ export function SearchPalette({ open, onClose, query }: SearchPaletteProps) {
             className="m-0 overflow-y-auto list-none"
             style={{
               padding: 6,
-              borderRight: isVeryNarrow ? '0' : '1px solid var(--color-doc-template-faint)',
+              borderRight: isSingleCol ? '0' : '1px solid var(--color-doc-template-faint)',
               background: 'color-mix(in srgb, var(--color-doc-template-panel) 35%, var(--color-doc-template-bg))',
             }}
           >
@@ -290,15 +298,37 @@ export function SearchPalette({ open, onClose, query }: SearchPaletteProps) {
                       {hit.entry.section}
                     </span>
                   )}
+                  {isSingleCol && hit.snippet && (
+                    <span
+                      className="text-doc-template-muted"
+                      style={{
+                        fontFamily: 'var(--font-doc-template-ui)',
+                        fontSize: 11,
+                        lineHeight: 1.4,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                      }}
+                    >
+                      {highlight(hit.snippet, query)}
+                    </span>
+                  )}
                 </span>
               </li>
             ))}
           </ul>
-          {!isVeryNarrow && (
+          {!isSingleCol && (
             <div
               aria-hidden
-              onMouseDown={() => {
+              onMouseDown={(e) => {
                 draggingRef.current = true
+                const dlg = e.currentTarget.closest('[data-palette-panel]')
+                if (dlg) {
+                  const rect = dlg.getBoundingClientRect()
+                  setGripY(Math.max(0, Math.min(e.clientY - rect.top, rect.height)))
+                }
               }}
               onDoubleClick={() => {
                 setSplitPx(360)
@@ -308,15 +338,29 @@ export function SearchPalette({ open, onClose, query }: SearchPaletteProps) {
                 position: 'absolute',
                 top: 0,
                 bottom: 0,
-                left: `calc(${splitPx}px - 3px)`,
-                width: 6,
+                left: `calc(${splitPx}px - 4px)`,
+                width: 8,
                 cursor: 'col-resize',
-                background: 'transparent',
                 zIndex: 2,
               }}
-            />
+            >
+              {gripY != null && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    left: '50%',
+                    top: gripY,
+                    transform: 'translate(-50%, -50%)',
+                    width: 3,
+                    height: 28,
+                    borderRadius: 2,
+                    background: 'var(--color-doc-template-muted)',
+                  }}
+                />
+              )}
+            </div>
           )}
-          {!isVeryNarrow && (
+          {!isSingleCol && (
           <aside
             className="overflow-y-auto"
             style={{

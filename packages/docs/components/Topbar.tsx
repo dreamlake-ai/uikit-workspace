@@ -83,8 +83,9 @@ const EXPAND_MS = 320
  *  spanning the full content column. */
 const CLOSED_RIGHT = 240
 const CLOSED_WIDTH = 320
-const EXPANDED_RIGHT = 'max(240px, calc((100vw - 1320px) / 2 + 240px))'
-const EXPANDED_WIDTH = 'calc(100vw - 2 * max(240px, calc((100vw - 1320px) / 2 + 240px)))'
+const SEARCH_MAX_W = 860
+const SEARCH_GUTTER = 24
+const SEARCH_INSET = `max(${SEARCH_GUTTER}px, calc((100vw - ${SEARCH_MAX_W}px) / 2))`
 
 export function Topbar({ searchOpen, onOpenSearch, onCloseSearch, query, setQuery }: TopbarProps) {
   const { urlPathname } = usePageContext() as { urlPathname: string }
@@ -96,6 +97,7 @@ export function Topbar({ searchOpen, onOpenSearch, onCloseSearch, query, setQuer
   // <768px: sidebar gone, topbar collapses to auto/1fr/auto, search becomes
   // in-grid rather than position:fixed (fixed-right:240 would land off-screen).
   const isMobile = useMediaQuery('(max-width: 767px)')
+  const hasRightTOC = useMediaQuery('(min-width: 1024px)')
 
   useEffect(() => {
     setIsMac(/Mac|iPod|iPhone|iPad/.test(navigator.platform))
@@ -161,21 +163,20 @@ export function Topbar({ searchOpen, onOpenSearch, onCloseSearch, query, setQuer
     }
   }
 
-  // Decoration-cluster hide style. Only opacity + transform animate —
-  // no width/margin shrink. Reason: animating width to 0 with
-  // `overflow: hidden` produces a left-to-right "wipe" that clips the
-  // version badge off abruptly, which reads as a sudden disappearance.
-  // Holding the cluster's layout box steady and fading + sliding it
-  // gives a uniform, smooth transition. The breadcrumb above sits at
-  // `position: absolute` and doesn't depend on the cluster vacating
-  // space, so the stable box has no visual cost.
+  // Brand-cluster pieces (`/`, `docs`, ver chip) collapse to width 0 when
+  // merged — same effect as the docs.html `body.is-merged .doc-brand .ver`
+  // rule, just expressed as an inline style we toggle on the merge state.
   const collapsedStyle = (collapsed: boolean): CSSProperties => ({
-    transition: `opacity 0.25s ease, transform 0.25s ${SPRING}`,
+    transition: `opacity 0.25s ease, transform 0.25s ${SPRING}, width 0.25s ${SPRING}, margin 0.25s ${SPRING}, padding 0.25s ${SPRING}`,
     ...(collapsed
       ? {
           opacity: 0,
           transform: 'translateX(-4px)',
           pointerEvents: 'none',
+          width: 0,
+          margin: 0,
+          padding: 0,
+          overflow: 'hidden',
         }
       : {}),
   })
@@ -201,13 +202,24 @@ export function Topbar({ searchOpen, onOpenSearch, onCloseSearch, query, setQuer
   // minus a 12px gutter per side. Switching out of fixed snaps; that's
   // the same trade-off the desktop path already accepts.
   const searchStyle: CSSProperties = isMobile
-    ? searchOpen
+    ? {
+        position: 'fixed',
+        top: 6,
+        left: searchOpen ? 12 : 96,
+        right: searchOpen ? 12 : 128,
+        height: 28,
+        padding: '6px 10px',
+        borderRadius: 12,
+        zIndex: 71,
+        boxShadow: searchOpen ? '0 4px 14px rgb(0 0 0 / 0.06)' : 'none',
+        transition: `left ${EXPAND_MS}ms ${EXPAND_EASE}, right ${EXPAND_MS}ms ${EXPAND_EASE}, background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease`,
+      }
+    : searchOpen
       ? {
           position: 'fixed',
           top: 6,
-          left: 12,
-          right: 12,
-          width: 'auto',
+          left: SEARCH_INSET,
+          right: SEARCH_INSET,
           height: 28,
           padding: '6px 10px',
           borderRadius: 12,
@@ -218,28 +230,15 @@ export function Topbar({ searchOpen, onOpenSearch, onCloseSearch, query, setQuer
       : {
           gridColumn: 2,
           gridRow: 1,
-          justifySelf: 'stretch',
+          justifySelf: 'end',
           width: '100%',
-          maxWidth: 220,
+          maxWidth: CLOSED_WIDTH,
           height: 28,
           padding: '6px 10px',
           borderRadius: 12,
-          margin: '0 12px',
+          marginRight: 8,
           transition: 'background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease',
         }
-    : {
-        position: 'fixed',
-        top: 6,
-        left: 'auto',
-        right: searchOpen ? EXPANDED_RIGHT : CLOSED_RIGHT,
-        width: searchOpen ? EXPANDED_WIDTH : CLOSED_WIDTH,
-        height: 28,
-        padding: '6px 10px',
-        borderRadius: 12,
-        zIndex: 71,
-        boxShadow: searchOpen ? '0 4px 14px rgb(0 0 0 / 0.06)' : 'none',
-        transition: `width ${EXPAND_MS}ms ${EXPAND_EASE}, right ${EXPAND_MS}ms ${EXPAND_EASE}, background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease`,
-      }
 
   return (
     <header
@@ -249,7 +248,7 @@ export function Topbar({ searchOpen, onOpenSearch, onCloseSearch, query, setQuer
       // vertical centering of the fixed-position search field by 0.5px).
       // Box-shadow draws the line at y=40 → y=41 — outside the height
       // budget; the sidebar's `top: 40` still sits flush against it.
-      className="sticky top-0 z-50 grid grid-cols-[auto_minmax(0,1fr)_auto] md:grid-cols-[240px_minmax(0,1fr)_240px] items-center w-full m-0 py-1"
+      className="sticky top-0 z-50 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center w-full m-0 py-1"
       style={{
         height: 40,
         // Backdrop blur creates a stacking context; we keep it ON when
@@ -263,60 +262,42 @@ export function Topbar({ searchOpen, onOpenSearch, onCloseSearch, query, setQuer
         transition: 'background 0.25s ease, box-shadow 0.25s ease',
       }}
     >
-      {/* Brand cluster: brand link + a single decoration container.
-          Decoration (`/`, subtitle, version badge) lives in ONE flex
-          container with a fixed internal layout — when the topbar
-          merges on scroll, that whole container collapses as a unit
-          rather than each child animating independently. This is what
-          keeps the badge's position stable relative to subtitle across
-          the merge/unmerge transition. */}
-      <div
-        className="flex items-center pl-[14px] md:pl-[18px] min-w-0"
+      <a
+        href="/"
+        className="flex items-center gap-2.5 pl-[14px] md:pl-[18px] no-underline text-doc-template-ink hover:opacity-80 min-w-[72px] shrink-0"
         style={{
           fontFamily: 'var(--font-doc-template-ui)',
           fontSize: 14,
+          fontWeight: 700,
           letterSpacing: '-0.04em',
+          transition: 'opacity 0.15s ease, color 0.25s ease',
           ...palFade(searchOpen),
         }}
       >
-        <a
-          href="/"
-          className="flex items-center shrink-0 no-underline text-doc-template-ink hover:opacity-80"
-          style={{
-            fontWeight: 700,
-            transition: 'opacity 0.15s ease, color 0.25s ease',
-          }}
-        >
-          <span>
-            {siteConfig.brand}
-            <span
-              aria-hidden
-              className="text-doc-template-accent"
-              style={{ fontWeight: 700, fontSize: '1.4em', lineHeight: 0, marginLeft: 1, verticalAlign: 'baseline' }}
-            >
-              .
-            </span>
-          </span>
-        </a>
-        <div
-          className="hidden md:flex items-center gap-2.5 shrink-0"
-          style={{
-            marginLeft: 10,
-            ...collapsedStyle(merged),
-          }}
-        >
-          <span className="text-doc-template-muted" style={{ fontWeight: 400, opacity: 0.55 }}>
-            /
-          </span>
+        <span>
+          {siteConfig.brand}
           <span
-            className="text-doc-template-muted"
-            style={{ fontWeight: 500, letterSpacing: '-0.01em' }}
+            aria-hidden
+            className="text-doc-template-accent"
+            style={{ fontWeight: 700, fontSize: '1.4em', lineHeight: 0, marginLeft: 1, verticalAlign: 'baseline' }}
           >
-            {siteConfig.subtitle}
+            .
           </span>
-          <VersionBadge repoUrl={siteConfig.repoUrl} />
-        </div>
-      </div>
+        </span>
+        <span
+          className="hidden md:inline text-doc-template-muted"
+          style={{ fontWeight: 400, opacity: 0.55, marginLeft: -4, marginRight: -4, ...collapsedStyle(merged) }}
+        >
+          /
+        </span>
+        <span
+          className="hidden md:inline text-doc-template-muted"
+          style={{ fontWeight: 500, letterSpacing: '-0.01em', ...collapsedStyle(merged) }}
+        >
+          {siteConfig.subtitle}
+        </span>
+        <VersionBadge repoUrl={siteConfig.repoUrl} />
+      </a>
 
       {/* Topbar breadcrumb — fades in when scrolled past <h1>; fades out
           again while the search palette is open (matches docs.html).
@@ -326,24 +307,17 @@ export function Topbar({ searchOpen, onOpenSearch, onCloseSearch, query, setQuer
       {current && (
         <nav
           aria-label="Breadcrumb"
-          className="hidden md:flex items-center gap-1.5 text-doc-template-muted uppercase pointer-events-none"
+          className="hidden md:flex items-center gap-1.5 text-doc-template-muted uppercase pointer-events-none overflow-hidden"
           style={{
-            position: 'absolute',
-            // Anchored at the midpoint of the gap between the sidebar
-            // (right edge at 240px from the centered container) and the
-            // content's text start (240 + 56 = 296px) — i.e. 268px. The
-            // first separator `/` is the leftmost in-flow flex child, so
-            // it lands on this anchor regardless of `breadcrumbRoot`'s
-            // rendered width. `breadcrumbRoot` itself is taken out of
-            // the flex flow and right-aligned just past the anchor (see
-            // the absolute span below).
-            left: 'calc(max(0px, (100vw - 1320px) / 2) + 268px)',
-            top: 0,
-            bottom: 0,
+            gridColumn: 2,
+            gridRow: 1,
+            justifySelf: 'start',
+            marginLeft: 8,
             fontFamily: 'var(--font-doc-template-mono)',
             fontSize: 10,
             fontWeight: 500,
             letterSpacing: '0.04em',
+            whiteSpace: 'nowrap',
             opacity: searchOpen ? 0 : merged ? 1 : 0,
             transform: merged && !searchOpen ? 'translateY(0)' : 'translateY(6px)',
             transition: `opacity 0.25s ease, transform 0.25s ${SPRING}`,
@@ -351,22 +325,7 @@ export function Topbar({ searchOpen, onOpenSearch, onCloseSearch, query, setQuer
         >
           {siteConfig.breadcrumbRoot && (
             <>
-              {/* Out-of-flow: right-aligned just left of the nav's left
-                  edge, so the first `/` (the next in-flow child) sits
-                  at the anchor. `marginRight: 6` matches the flex gap so
-                  spacing reads identical to a normal flex item. */}
-              <span
-                style={{
-                  position: 'absolute',
-                  right: '100%',
-                  marginRight: 6,
-                  whiteSpace: 'nowrap',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                }}
-              >
-                {siteConfig.breadcrumbRoot}
-              </span>
+              <span>{siteConfig.breadcrumbRoot}</span>
               <span style={{ opacity: 0.5 }}>/</span>
             </>
           )}
@@ -387,7 +346,7 @@ export function Topbar({ searchOpen, onOpenSearch, onCloseSearch, query, setQuer
         // is redundant and noisy.
         className={
           searchOpen
-            ? 'flex items-center gap-2 max-w-full bg-doc-template-search border border-transparent cursor-text'
+            ? 'flex items-center gap-2 max-w-full bg-doc-template-search border border-doc-template-faint cursor-text'
             : 'flex items-center gap-2 max-w-full bg-doc-template-search border border-transparent focus-within:border-doc-template-accent/50 cursor-text'
         }
         style={searchStyle}
