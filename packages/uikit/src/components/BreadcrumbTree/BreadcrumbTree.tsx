@@ -102,7 +102,7 @@ function ChevronToggle({
           'group-data-[open]/chev:rotate-180',
         )}
       >
-        <ChevronDown size={10} />
+        <ChevronDown size={10} strokeWidth={1.5} />
       </span>
     </button>
   )
@@ -130,8 +130,12 @@ function TreeRow({
       data-selected={selected || undefined}
       className={cn(
         'group/row appearance-none border-0 outline-none w-full text-left',
-        'flex items-center gap-2 px-2 py-1.5 rounded-[var(--radius)]',
-        'font-uikit-ui text-uikit-13 tracking-uikit-snug cursor-pointer',
+        'flex items-center gap-2 px-2 py-[5px] rounded-[var(--radius)]',
+        // `leading-[15.5px]` pins the row's text line-box to the design's
+        // height. Without it the row inherits `line-height: 1.5` from the
+        // preflight reset, which on 13px text balloons to 19.5px and
+        // makes the row taller than the design's spec.
+        'font-uikit-ui text-uikit-13 leading-[15.5px] tracking-uikit-snug cursor-pointer',
         'transition-[background-color] duration-[120ms]',
         // Default: ink text, transparent bg.
         'text-uikit-ink bg-transparent font-normal',
@@ -149,6 +153,7 @@ function TreeRow({
     >
       <Folder
         size={14}
+        strokeWidth={1.5}
         className={cn(
           'shrink-0 text-uikit-muted',
           'group-data-[selected]/row:text-uikit-accent',
@@ -158,7 +163,11 @@ function TreeRow({
         {node.name}
       </span>
       {node.hasChildren !== false && (
-        <ChevronRight size={11} className="shrink-0 text-uikit-muted opacity-50" />
+        <ChevronRight
+          size={11}
+          strokeWidth={1.5}
+          className="shrink-0 text-uikit-muted opacity-50"
+        />
       )}
     </button>
   )
@@ -450,7 +459,7 @@ export function BreadcrumbTree({
                         className={cn(
                           'appearance-none border-0 outline-none bg-transparent text-left w-full shrink-0',
                           'pt-3 px-3.5 pb-2',
-                          'font-uikit-mono text-uikit-11 font-semibold tracking-uikit-wider uppercase',
+                          'font-uikit-mono text-[11px] font-semibold tracking-[.06em] uppercase',
                           'text-uikit-ink-50',
                           depth === 0 ? 'cursor-default' : 'cursor-pointer',
                         )}
@@ -462,7 +471,12 @@ export function BreadcrumbTree({
                     {/* Column body */}
                     <div
                       className={cn(
-                        'flex-1 overflow-auto flex flex-col',
+                        // `scroll-auto-hide` is the app-side opt-in for the
+                        // auto-hiding scrollbar (paints `var(--faint)` thumb
+                        // only while the container has `.is-scrolling`).
+                        // Apps without the rule fall back to default
+                        // browser scrollbars — harmless.
+                        'scroll-auto-hide flex-1 overflow-auto flex flex-col gap-0.5',
                         headerLabel ? 'pt-0.5 px-1.5 pb-2' : 'py-2 px-1.5',
                       )}
                     >
