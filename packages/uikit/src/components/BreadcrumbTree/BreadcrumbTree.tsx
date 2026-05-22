@@ -65,6 +65,12 @@ function BreadcrumbItem({
       className={cn(
         'appearance-none border-0 outline-none bg-transparent p-0 mr-1 cursor-pointer',
         'font-normal leading-[1.1]',
+        // Inter Tight has heavy hhea metrics (ascent ~1.33em, descent ~0.33em),
+        // which push the baseline to the bottom of any line box tighter than
+        // ~1.66em. The visible cap-letters then sit visibly below the row's
+        // geometric center. A 1px optical shift restores alignment with the
+        // adjacent SVG icons (chevron, expand button).
+        '-translate-y-px',
         'transition-[color,opacity] duration-[120ms]',
         // Default: inherits parent muted color & opacity. Leaf: ink + full opacity.
         'data-[leaf]:text-uikit-ink data-[leaf]:opacity-100',
@@ -350,7 +356,7 @@ export function BreadcrumbTree({
   const columns = Array.from({ length: path.length + 1 }, (_, i) => i)
 
   return (
-    <div ref={wrapRef} className={cn('relative inline-block font-uikit-ui', className)}>
+    <div ref={wrapRef} className={cn('relative inline-flex items-center font-uikit-ui', className)}>
       {/* ── Breadcrumb trigger ── */}
       <div
         role="navigation"
@@ -416,15 +422,19 @@ export function BreadcrumbTree({
               'uikit-panel-in fixed z-[1000] flex overflow-hidden origin-top-left',
               'bg-uikit-bg text-uikit-ink font-uikit-ui',
               'rounded-[calc(var(--radius)+2px)]',
-              // Style Guide §Elevation: popovers use the `soft` ladder.
-              // Theme-aware via `--shadow-tint-*` (was a fixed rgba that
-              // didn't darken in dark mode).
-              'shadow-uikit-soft',
             )}
             style={{
               top: anchorRect.top + anchorRect.height + 6,
               left: anchorRect.left - 14,
               height: 360,
+              // Two-layer drop shadow only — no outset 1px ring. The shared
+              // `--shadow-uikit-soft` token bakes in a `0 0 0 1px var(--faint)`
+              // ring meant for menus/dropdowns; the BreadcrumbTree panel in
+              // the design renders without that ring (a softer, borderless
+              // popover). Theme-aware via `--shadow-tint-*` so dark mode
+              // deepens the cast.
+              boxShadow:
+                '0 2px 6px var(--shadow-tint-1), 0 10px 28px var(--shadow-tint-2)',
             }}
           >
             <div ref={columnsRef} className="flex h-full overflow-x-auto">
