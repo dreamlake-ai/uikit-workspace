@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react'
 import { usePageContext } from 'vike-react/usePageContext'
 import { pages } from '../lib/navigation'
 import { siteConfig } from '../site.config'
@@ -91,7 +91,9 @@ export function Topbar({ searchOpen, onOpenSearch, onCloseSearch, query, setQuer
   const { urlPathname } = usePageContext() as { urlPathname: string }
   const current = pages.find(p => p.path === urlPathname)
   const inputRef = useRef<HTMLInputElement | null>(null)
+  const labelRef = useRef<HTMLLabelElement | null>(null)
   const focusTimerRef = useRef<number | null>(null)
+  const closedRectRef = useRef<DOMRect | null>(null)
   const [isMac, setIsMac] = useState(false)
   const merged = useMerge()
   // <768px: sidebar gone, topbar collapses to auto/1fr/auto, search becomes
@@ -163,6 +165,47 @@ export function Topbar({ searchOpen, onOpenSearch, onCloseSearch, query, setQuer
     }
   }
 
+  useEffect(() => {
+    if (!searchOpen && !isMobile && labelRef.current) {
+      closedRectRef.current = labelRef.current.getBoundingClientRect()
+    }
+  })
+
+  useLayoutEffect(() => {
+    if (!searchOpen || isMobile) return
+    const el = labelRef.current
+    const first = closedRectRef.current
+    if (!el || !first) return
+
+    const last = el.getBoundingClientRect()
+
+    el.style.transition = 'none'
+    el.style.left = `${first.left}px`
+    el.style.width = `${first.width}px`
+    el.style.right = 'auto'
+
+    void el.offsetWidth
+
+    el.style.transition = [
+      `left ${EXPAND_MS}ms ${EXPAND_EASE}`,
+      `width ${EXPAND_MS}ms ${EXPAND_EASE}`,
+      'background 0.2s ease',
+      'border-color 0.2s ease',
+      'box-shadow 0.2s ease',
+    ].join(', ')
+    el.style.left = `${last.left}px`
+    el.style.width = `${last.width}px`
+
+    const tid = setTimeout(() => {
+      el.style.left = SEARCH_INSET
+      el.style.right = SEARCH_INSET
+      el.style.width = ''
+      el.style.transition = `left ${EXPAND_MS}ms ${EXPAND_EASE}, right ${EXPAND_MS}ms ${EXPAND_EASE}, background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease`
+    }, EXPAND_MS + 20)
+
+    return () => clearTimeout(tid)
+  }, [searchOpen, isMobile])
+
   // Brand-cluster pieces (`/`, `docs`, ver chip) collapse to width 0 when
   // merged — same effect as the docs.html `body.is-merged .doc-brand .ver`
   // rule, just expressed as an inline style we toggle on the merge state.
@@ -211,6 +254,8 @@ export function Topbar({ searchOpen, onOpenSearch, onCloseSearch, query, setQuer
         padding: '6px 10px',
         borderRadius: 12,
         zIndex: 71,
+        gridArea: 'auto',
+        placeSelf: 'stretch',
         boxShadow: searchOpen ? '0 4px 14px rgb(0 0 0 / 0.06)' : 'none',
         transition: `left ${EXPAND_MS}ms ${EXPAND_EASE}, right ${EXPAND_MS}ms ${EXPAND_EASE}, background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease`,
       }
@@ -224,6 +269,8 @@ export function Topbar({ searchOpen, onOpenSearch, onCloseSearch, query, setQuer
           padding: '6px 10px',
           borderRadius: 12,
           zIndex: 71,
+          gridArea: 'auto',
+          placeSelf: 'stretch',
           boxShadow: '0 4px 14px rgb(0 0 0 / 0.06)',
           transition: `left ${EXPAND_MS}ms ${EXPAND_EASE}, right ${EXPAND_MS}ms ${EXPAND_EASE}, background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease`,
         }
@@ -340,6 +387,7 @@ export function Topbar({ searchOpen, onOpenSearch, onCloseSearch, query, setQuer
       )}
 
       <label
+        ref={labelRef}
         htmlFor="doc-search-input"
         // While the palette is open, drop the focus-within accent border —
         // the dropdown is the visual cue, an outline on the input itself
