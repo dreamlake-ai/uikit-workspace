@@ -145,8 +145,10 @@ export function SearchPalette({ open, onClose, query }: SearchPaletteProps) {
         <mark
           key={`m${key++}`}
           style={{
-            background: 'color-mix(in srgb, var(--color-doc-template-accent) 28%, transparent)',
-            color: 'inherit',
+            background: 'color-mix(in srgb, var(--color-doc-template-accent) 18%, transparent)',
+            color: 'var(--color-doc-template-ink)',
+            opacity: 1,
+            fontWeight: 600,
             borderRadius: 2,
             padding: '0 1px',
           }}
@@ -208,7 +210,7 @@ export function SearchPalette({ open, onClose, query }: SearchPaletteProps) {
           }}
         >
           <ul
-            className="m-0 overflow-y-auto list-none"
+            className="m-0 overflow-y-auto list-none select-none"
             style={{
               padding: 6,
               borderRight: isSingleCol ? '0' : '1px solid var(--color-doc-template-faint)',
@@ -233,7 +235,7 @@ export function SearchPalette({ open, onClose, query }: SearchPaletteProps) {
                     : 'flex items-center gap-2.5 cursor-pointer text-doc-template-ink'
                 }
                 style={{
-                  padding: '8px 10px',
+                  padding: '4px 10px',
                   borderRadius: 10,
                   fontFamily: 'var(--font-doc-template-ui)',
                   fontSize: 13,
@@ -270,50 +272,82 @@ export function SearchPalette({ open, onClose, query }: SearchPaletteProps) {
                     <path d="M14 2v6h6" />
                   </svg>
                 </span>
-                <span className="flex flex-col min-w-0 flex-1" style={{ gap: 2 }}>
-                  <span
-                    className="text-doc-template-ink"
-                    style={{
-                      fontWeight: 500,
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                    }}
-                  >
-                    {highlight(hit.entry.title, query)}
-                  </span>
-                  {hit.entry.section && (
-                    <span
-                      className="text-doc-template-muted uppercase"
-                      style={{
-                        fontFamily: 'var(--font-doc-template-mono)',
-                        fontSize: 9.5,
-                        fontWeight: 500,
-                        letterSpacing: '0.04em',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                      }}
-                    >
-                      {hit.entry.section}
-                    </span>
-                  )}
-                  {isSingleCol && hit.snippet && (
-                    <span
-                      className="text-doc-template-muted"
-                      style={{
-                        fontFamily: 'var(--font-doc-template-ui)',
-                        fontSize: 11,
-                        lineHeight: 1.4,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        display: '-webkit-box',
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: 'vertical',
-                      }}
-                    >
-                      {highlight(hit.snippet, query)}
-                    </span>
+                <span className="flex flex-col min-w-0 flex-1" style={{ gap: isSingleCol ? 1 : 2 }}>
+                  {isSingleCol ? (
+                    <>
+                      <span
+                        className="text-doc-template-ink"
+                        style={{
+                          fontWeight: 500,
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                        }}
+                      >
+                        {hit.entry.section && (
+                          <span
+                            className="text-doc-template-muted uppercase"
+                            style={{
+                              fontFamily: 'var(--font-doc-template-mono)',
+                              fontSize: 9.5,
+                              fontWeight: 500,
+                              letterSpacing: '0.04em',
+                            }}
+                          >
+                            {hit.entry.section}
+                            <span style={{ margin: '0 3px', opacity: 0.5 }}>/</span>
+                          </span>
+                        )}
+                        {highlight(hit.entry.title, query)}
+                      </span>
+                      {hit.snippet && (
+                        <span
+                          style={{
+                            fontFamily: 'var(--font-doc-template-ui)',
+                            fontSize: 12,
+                            lineHeight: 1.45,
+                            color: 'color-mix(in srgb, var(--color-doc-template-ink) 55%, transparent)',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical',
+                          }}
+                        >
+                          {highlight(hit.snippet, query)}
+                        </span>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <span
+                        className="text-doc-template-ink"
+                        style={{
+                          fontWeight: 500,
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                        }}
+                      >
+                        {highlight(hit.entry.title, query)}
+                      </span>
+                      {hit.entry.section && (
+                        <span
+                          className="text-doc-template-muted uppercase"
+                          style={{
+                            fontFamily: 'var(--font-doc-template-mono)',
+                            fontSize: 9.5,
+                            fontWeight: 500,
+                            letterSpacing: '0.04em',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                          }}
+                        >
+                          {hit.entry.section}
+                        </span>
+                      )}
+                    </>
                   )}
                 </span>
               </li>
