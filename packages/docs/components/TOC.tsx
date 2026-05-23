@@ -1,6 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { usePageContext } from 'vike-react/usePageContext'
 import { pages } from '../lib/navigation'
+
+const TOC_KEY_PREFIX = 'toc-collapsed:'
 
 interface Heading {
   id: string
@@ -125,6 +127,61 @@ export function TOC() {
   useEffect(() => {
     activeIdRef.current = activeId
   }, [activeId])
+
+  // --- Fold state: collapse H3 children under their parent H2 ---
+  const [collapsedH2s, setCollapsedH2s] = useState<Set<string>>(() => {
+    if (typeof window === 'undefined') return new Set()
+    try {
+      return new Set(JSON.parse(localStorage.getItem(TOC_KEY_PREFIX + urlPathname) || '[]'))
+    } catch {
+      return new Set()
+    }
+  })
+  const [foldVersion, setFoldVersion] = useState(0)
+
+  useEffect(() => {
+    try {
+      const stored = JSON.parse(localStorage.getItem(TOC_KEY_PREFIX + urlPathname) || '[]')
+      setCollapsedH2s(new Set(stored))
+    } catch {
+      setCollapsedH2s(new Set())
+    }
+  }, [urlPathname])
+
+  function toggleH2(id: string) {
+    setCollapsedH2s(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      localStorage.setItem(TOC_KEY_PREFIX + urlPathname, JSON.stringify([...next]))
+      return next
+    })
+    setFoldVersion(v => v + 1)
+  }
+
+  const h2HasChildren = useMemo(() => {
+    const set = new Set<string>()
+    let lastH2: string | null = null
+    for (const h of headings) {
+      if (h.level === 2) lastH2 = h.id
+      else if (lastH2) set.add(lastH2)
+    }
+    return set
+  }, [headings])
+
+  const visibleHeadings = useMemo(() => {
+    const result: Heading[] = []
+    let lastH2Id: string | null = null
+    for (const h of headings) {
+      if (h.level === 2) {
+        lastH2Id = h.id
+        result.push(h)
+      } else if (lastH2Id && !collapsedH2s.has(lastH2Id)) {
+        result.push(h)
+      }
+    }
+    return result
+  }, [headings, collapsedH2s])
 
   // 1. Collect headings from main content. Re-runs on route change so
   // Vike's persistent Layout doesn't keep stale headings.
@@ -295,18 +352,20 @@ export function TOC() {
       window.removeEventListener('resize', onResize)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [headings])
+  }, [headings, foldVersion])
 
-  // 3. Scroll-spy: pick last heading whose top ≤ ACTIVATE_LINE.
+  // 3. Scroll-spy: pick last visible heading whose top ≤ ACTIVATE_LINE.
+  // Uses visibleHeadings so collapsed H3s don't steal active state —
+  // the dot stays on the parent H2 while scrolling through folded content.
   useEffect(() => {
-    if (headings.length === 0) return
+    if (visibleHeadings.length === 0) return
     let scheduled = false
     function pick() {
       scheduled = false
-      let id: string | null = headings[0].id
-      for (let i = 0; i < headings.length; i++) {
-        const top = headings[i].el.getBoundingClientRect().top
-        if (top - ACTIVATE_LINE <= 0.5) id = headings[i].id
+      let id: string | null = visibleHeadings[0].id
+      for (let i = 0; i < visibleHeadings.length; i++) {
+        const top = visibleHeadings[i].el.getBoundingClientRect().top
+        if (top - ACTIVATE_LINE <= 0.5) id = visibleHeadings[i].id
         else break
       }
       setActiveId(prev => (prev === id ? prev : id))
@@ -323,7 +382,7 @@ export function TOC() {
       window.removeEventListener('scroll', onScroll)
       window.removeEventListener('resize', onScroll)
     }
-  }, [headings])
+  }, [visibleHeadings])
 
   // 4. Tween the active stroke length toward the target whenever
   // activeId changes.
@@ -484,8 +543,10 @@ export function TOC() {
             className="list-none m-0 p-0 flex flex-col"
             style={{ marginLeft: 14, gap: 1 }}
           >
-            {headings.map(h => {
+            {visibleHeadings.map(h => {
               const active = h.id === activeId
+              const hasFold = h.level === 2 && h2HasChildren.has(h.id)
+              const isFolded = hasFold && collapsedH2s.has(h.id)
               return (
                 <li
                   key={h.id}
@@ -498,8 +559,8 @@ export function TOC() {
                     aria-current={active ? 'location' : undefined}
                     className={
                       active
-                        ? 'block no-underline text-doc-template-accent hover:text-doc-template-accent'
-                        : 'block no-underline text-doc-template-muted hover:text-doc-template-ink'
+                        ? 'flex items-center no-underline text-doc-template-accent hover:text-doc-template-accent'
+                        : 'flex items-center no-underline text-doc-template-muted hover:text-doc-template-ink'
                     }
                     style={{
                       padding: '5px 10px 5px 8px',
@@ -515,7 +576,48 @@ export function TOC() {
                       transition: 'color 0.15s ease',
                     }}
                   >
-                    {h.text}
+                    <span style={{ flex: 1, minWidth: 0 }}>{h.text}</span>
+                    {hasFold && (
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        aria-label={isFolded ? 'Expand' : 'Collapse'}
+                        onClick={e => { e.preventDefault(); e.stopPropagation(); toggleH2(h.id) }}
+                        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); toggleH2(h.id) } }}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          width: 16,
+                          height: 16,
+                          flexShrink: 0,
+                          borderRadius: 3,
+                          cursor: 'pointer',
+                          opacity: 0.5,
+                          transition: 'opacity 0.1s ease',
+                        }}
+                        onMouseEnter={e => (e.currentTarget.style.opacity = '1')}
+                        onMouseLeave={e => (e.currentTarget.style.opacity = '0.5')}
+                      >
+                        <svg
+                          width="8"
+                          height="8"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="3"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          aria-hidden
+                          style={{
+                            transform: isFolded ? 'rotate(0deg)' : 'rotate(90deg)',
+                            transition: 'transform 0.15s ease',
+                          }}
+                        >
+                          <path d="M9 18l6-6-6-6" />
+                        </svg>
+                      </span>
+                    )}
                   </a>
                 </li>
               )

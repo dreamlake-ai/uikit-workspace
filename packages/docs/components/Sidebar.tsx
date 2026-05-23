@@ -1,6 +1,18 @@
+import { useEffect, useState } from 'react'
 import { usePageContext } from 'vike-react/usePageContext'
 import { groupedPages, groupedVisiblePages } from '../lib/navigation'
 import { useHiddenToggle } from '../lib/use-hidden-toggle'
+
+const SIDEBAR_KEY = 'sidebar-collapsed'
+
+function loadCollapsed(): Set<string> {
+  if (typeof window === 'undefined') return new Set()
+  try {
+    return new Set(JSON.parse(localStorage.getItem(SIDEBAR_KEY) || '[]'))
+  } catch {
+    return new Set()
+  }
+}
 
 /**
  * Left sidebar — auto-discovered nav grouped by `section` frontmatter.
@@ -14,6 +26,30 @@ export function Sidebar() {
   const { urlPathname } = usePageContext() as { urlPathname: string }
   const [showHidden] = useHiddenToggle()
   const groups = showHidden ? groupedPages : groupedVisiblePages
+  const [collapsed, setCollapsed] = useState<Set<string>>(loadCollapsed)
+
+  function toggle(label: string) {
+    setCollapsed(prev => {
+      const next = new Set(prev)
+      if (next.has(label)) next.delete(label)
+      else next.add(label)
+      localStorage.setItem(SIDEBAR_KEY, JSON.stringify([...next]))
+      return next
+    })
+  }
+
+  useEffect(() => {
+    const g = groups.find(g => g.items.some(i => i.path === urlPathname))
+    if (g?.label && collapsed.has(g.label)) {
+      setCollapsed(prev => {
+        const next = new Set(prev)
+        next.delete(g.label)
+        localStorage.setItem(SIDEBAR_KEY, JSON.stringify([...next]))
+        return next
+      })
+    }
+  }, [urlPathname])
+
   return (
     <aside
       aria-label="Sections"
@@ -25,26 +61,53 @@ export function Sidebar() {
         gap: 2,
       }}
     >
-      {groups.map(group => (
-        <div key={group.label || '_'} className="flex flex-col" style={{ gap: 1, marginBottom: 14 }}>
+      {groups.map(group => {
+        const isFolded = group.label ? collapsed.has(group.label) : false
+        return (
+        <div key={group.label || '_'} className="flex flex-col" style={{ gap: 1, marginBottom: isFolded ? 4 : 14, transition: 'margin-bottom 0.2s ease' }}>
           {group.label && (
-            <div
-              className="flex items-center gap-1.5 uppercase text-doc-template-muted"
+            <button
+              type="button"
+              onClick={() => toggle(group.label)}
+              className={`group flex items-center gap-1.5 uppercase text-doc-template-muted w-full cursor-pointer ${isFolded ? 'hover:text-doc-template-ink' : 'hover:opacity-90'}`}
               style={{
                 padding: '6px 10px 4px',
                 fontFamily: 'var(--font-doc-template-mono)',
-                fontSize: 9,
+                fontSize: 10.5,
                 fontWeight: 600,
                 opacity: 0.7,
-                letterSpacing: '0.14em',
+                letterSpacing: '0.08em',
+                background: 'none',
+                border: 'none',
+                textAlign: 'left',
               }}
             >
               <span>{group.label}</span>
+              <span
+                className={isFolded ? 'opacity-60' : 'opacity-0 group-hover:opacity-60 transition-opacity'}
+                style={{
+                  fontFamily: 'var(--font-doc-template-mono)',
+                  fontSize: 10,
+                  fontWeight: 400,
+                  lineHeight: 1,
+                  flexShrink: 0,
+                }}
+              >
+                {isFolded ? '+' : '−'}
+              </span>
               <span style={{ marginLeft: 'auto', opacity: 0.85 }}>
                 {String(group.items.length).padStart(2, '0')}
               </span>
-            </div>
+            </button>
           )}
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateRows: isFolded ? '0fr' : '1fr',
+              transition: 'grid-template-rows 0.2s ease',
+            }}
+          >
+          <div style={{ overflow: 'hidden', minHeight: 0 }}>
           {group.items.map(item => {
             const active = item.path === urlPathname
             return (
@@ -122,8 +185,11 @@ export function Sidebar() {
               </a>
             )
           })}
+          </div>
+          </div>
         </div>
-      ))}
+        )
+      })}
     </aside>
   )
 }
