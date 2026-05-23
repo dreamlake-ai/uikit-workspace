@@ -40,8 +40,8 @@ const BEND = 8
 const ACTIVATE_LINE = 110
 const TWEEN_MS = 600
 
-function easeInOutCubic(t: number) {
-  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
+function easeOut(t: number) {
+  return 1 - Math.pow(1 - t, 3)
 }
 
 /** rAF-driven smooth scroll. We do this manually instead of
@@ -101,15 +101,14 @@ function scrollToHeading(e: React.MouseEvent<HTMLAnchorElement>, id: string) {
 export function TOC() {
   const { urlPathname } = usePageContext() as { urlPathname: string }
   const [headings, setHeadings] = useState<Heading[]>([])
-  const [activeId, setActiveId] = useState<string | null>(null)
-  const [segStart, setSegStart] = useState(0)
-  const [segLen, setSegLen] = useState(0)
-  const [dotPos, setDotPos] = useState<{ x: number; y: number } | null>(null)
   const [endPos, setEndPos] = useState<{ x: number; y: number } | null>(null)
   const [pathD, setPathD] = useState('')
 
   const bodyRef = useRef<HTMLDivElement | null>(null)
   const railBaseRef = useRef<SVGPathElement | null>(null)
+  const activeStrokeRef = useRef<SVGPathElement | null>(null)
+  const dotRef = useRef<SVGCircleElement | null>(null)
+  const gradientRef = useRef<SVGLinearGradientElement | null>(null)
 
   const railPointsRef = useRef<RailPoint[]>([])
   const totalLenRef = useRef<number>(0)
@@ -128,9 +127,6 @@ export function TOC() {
   // buildRail effect's closure is created — without this ref the rail
   // would snap to 0 even though the first heading is the active one.
   const activeIdRef = useRef<string | null>(null)
-  useEffect(() => {
-    activeIdRef.current = activeId
-  }, [activeId])
 
   // --- Fold state: collapse H3 children under their parent H2 ---
   const [collapsedH2s, setCollapsedH2s] = useState<Set<string>>(() => {
@@ -244,9 +240,8 @@ export function TOC() {
       animFromRef.current = 0
       animToRef.current = 0
       setPathD('')
-      setSegLen(0)
-      setDotPos(null)
       setEndPos(null)
+      applyRailDOM(0, 0)
       return
     }
 
@@ -345,21 +340,13 @@ export function TOC() {
     }
 
     function snap(len: number, start: number) {
-      const base = railBaseRef.current
       currentLenRef.current = len
       currentStartRef.current = start
       animFromRef.current = len
       animToRef.current = len
       startAnimFromRef.current = start
       startAnimToRef.current = start
-      setSegLen(len)
-      setSegStart(start)
-      if (base && len > 0) {
-        const p = base.getPointAtLength(Math.max(0, len))
-        setDotPos({ x: p.x, y: p.y })
-      } else {
-        setDotPos(null)
-      }
+      applyRailDOM(start, len)
     }
 
     const raf = requestAnimationFrame(buildRail)
@@ -409,7 +396,20 @@ export function TOC() {
           }
         }
       }
-      setActiveId(prev => (prev === id ? prev : id))
+      // Toggle highlight + start tween in the same frame.
+      const body = bodyRef.current
+      if (body) {
+        const prev = body.querySelector<HTMLElement>('a[aria-current="location"]')
+        if (prev) prev.removeAttribute('aria-current')
+        if (id) {
+          const next = body.querySelector<HTMLElement>(`a[href="#${CSS.escape(id)}"]`)
+          if (next) next.setAttribute('aria-current', 'location')
+        }
+      }
+      if (id !== activeIdRef.current) {
+        activeIdRef.current = id
+        tweenToActiveId(id)
+      }
     }
     function onScroll() {
       if (scheduled) return
@@ -425,89 +425,98 @@ export function TOC() {
     }
   }, [headings, collapsedH2s])
 
-  // 3b. Scroll the active TOC entry into view within the panel.
+  // 3b. Scroll the active TOC entry into view only when a section unfolds.
   useEffect(() => {
-    if (!activeId || !bodyRef.current) return
-    const link = bodyRef.current.querySelector<HTMLElement>(`a[href="#${CSS.escape(activeId)}"]`)
-    if (link) link.scrollIntoView({ block: 'nearest', behavior: 'smooth', inline: 'nearest' })
-  }, [activeId, foldVersion])
+    if (!foldVersion || !activeIdRef.current || !bodyRef.current) return
+    const link = bodyRef.current.querySelector<HTMLElement>(`a[href="#${CSS.escape(activeIdRef.current)}"]`)
+    if (link) link.scrollIntoView({ block: 'nearest', behavior: 'auto' })
+  }, [foldVersion])
 
-  // 4. Tween segStart and segLen toward the target whenever activeId changes.
-  useEffect(() => {
+  // Direct DOM write for the rail accent stroke + dot — no React state.
+  function applyRailDOM(start: number, len: number) {
     const base = railBaseRef.current
-    if (!base) return
-
-    function apply(start: number, len: number) {
-      currentStartRef.current = start
-      currentLenRef.current = len
-      setSegStart(start)
-      setSegLen(len)
-      if (base && len > 0) {
+    const stroke = activeStrokeRef.current
+    const dot = dotRef.current
+    const grad = gradientRef.current
+    currentStartRef.current = start
+    currentLenRef.current = len
+    if (stroke) {
+      const dashLen = Math.max(0, len - start)
+      stroke.style.strokeDasharray = `${dashLen} 99999`
+      stroke.style.strokeDashoffset = `${-start}`
+    }
+    if (base && dot) {
+      if (len > 0) {
         const p = base.getPointAtLength(Math.max(0, len))
-        setDotPos({ x: p.x, y: p.y })
+        dot.setAttribute('cx', String(p.x))
+        dot.setAttribute('cy', String(p.y))
+        dot.style.opacity = '1'
       } else {
-        setDotPos(null)
+        dot.style.opacity = '0'
       }
     }
-
-    function animateTo(targetStart: number, targetLen: number) {
-      animFromRef.current = currentLenRef.current
-      animToRef.current = targetLen
-      startAnimFromRef.current = currentStartRef.current
-      startAnimToRef.current = targetStart
-      animStartRef.current = performance.now()
-      if (animReqRef.current === null) {
-        animReqRef.current = requestAnimationFrame(tick)
-      }
+    if (base && grad && len > start) {
+      const startPt = base.getPointAtLength(Math.max(0, start))
+      const endPt = base.getPointAtLength(Math.max(0, len))
+      const ah = visibleHeadings.find(h => h.id === activeIdRef.current)
+      const isH3 = ah && ah.level === 3
+      const fadeLen = isH3
+        ? Math.min(8, (endPt.y - startPt.y) * 0.12)
+        : Math.min(40, (endPt.y - startPt.y) * 0.5)
+      grad.setAttribute('y1', String(startPt.y))
+      grad.setAttribute('y2', String(startPt.y + fadeLen))
     }
+  }
 
-    function tick(now: number) {
-      const t = Math.min(1, (now - animStartRef.current) / TWEEN_MS)
-      const k = easeInOutCubic(t)
-      const s = startAnimFromRef.current + (startAnimToRef.current - startAnimFromRef.current) * k
-      const v = animFromRef.current + (animToRef.current - animFromRef.current) * k
-      apply(s, v)
-      if (t < 1) {
-        animReqRef.current = requestAnimationFrame(tick)
-      } else {
-        animReqRef.current = null
-      }
+  // 4. Tween engine — called directly from pick(), not via useEffect.
+  function tweenTick(now: number) {
+    const t = Math.min(1, (now - animStartRef.current) / TWEEN_MS)
+    const k = easeOut(t)
+    const s = startAnimFromRef.current + (startAnimToRef.current - startAnimFromRef.current) * k
+    const v = animFromRef.current + (animToRef.current - animFromRef.current) * k
+    applyRailDOM(s, v)
+    if (t < 1) {
+      animReqRef.current = requestAnimationFrame(tweenTick)
+    } else {
+      animReqRef.current = null
     }
+  }
 
-    if (!activeId) {
-      animateTo(0, 0)
-      return
+  function tweenTo(targetStart: number, targetLen: number) {
+    animFromRef.current = currentLenRef.current
+    animToRef.current = targetLen
+    startAnimFromRef.current = currentStartRef.current
+    startAnimToRef.current = targetStart
+    animStartRef.current = performance.now()
+    if (animReqRef.current === null) {
+      animReqRef.current = requestAnimationFrame(tweenTick)
     }
-    const match = railPointsRef.current.find(p => p.id === activeId)
+  }
+
+  function tweenToActiveId(id: string | null) {
+    if (!id) { tweenTo(0, 0); return }
+    const match = railPointsRef.current.find(p => p.id === id)
     if (!match) return
 
-    const activeH = visibleHeadings.find(h => h.id === activeId)
+    const activeH = visibleHeadings.find(h => h.id === id)
     let anchorId: string | null = null
     if (activeH && activeH.level === 3) {
       for (const h of visibleHeadings) {
         if (h.level === 2) anchorId = h.id
-        if (h.id === activeId) break
+        if (h.id === id) break
       }
     } else {
       let prev: string | null = null
       for (const h of visibleHeadings) {
-        if (h.id === activeId) break
+        if (h.id === id) break
         if (h.level === 2) prev = h.id
       }
       anchorId = prev
     }
     const anchorPt = anchorId ? railPointsRef.current.find(p => p.id === anchorId) : null
     const startLen = anchorPt ? Math.max(0, anchorPt.len - 20) : 0
-
-    animateTo(startLen, match.len)
-
-    return () => {
-      if (animReqRef.current !== null) {
-        cancelAnimationFrame(animReqRef.current)
-        animReqRef.current = null
-      }
-    }
-  }, [activeId, visibleHeadings])
+    tweenTo(startLen, match.len)
+  }
 
   // Mirror dreamlake-ai's RightTOC: pages with no headings opt out
   // entirely — no empty "On this page" card. This also covers SSR /
@@ -559,22 +568,10 @@ export function TOC() {
               <mask id="toc-rail-mask" maskUnits="userSpaceOnUse">
                 <rect x="0" y="0" width="100%" height="100%" fill="url(#toc-rail-fade)" />
               </mask>
-              {railBaseRef.current && segLen > segStart && (() => {
-                const base = railBaseRef.current!
-                const startPt = base.getPointAtLength(Math.max(0, segStart))
-                const endPt = base.getPointAtLength(Math.max(0, segLen))
-                const ah = visibleHeadings.find(h => h.id === activeId)
-                const isSubsection = ah && ah.level === 3
-                const fadeLen = isSubsection
-                  ? Math.min(8, (endPt.y - startPt.y) * 0.12)
-                  : Math.min(40, (endPt.y - startPt.y) * 0.5)
-                return (
-                  <linearGradient id="toc-accent-fade" gradientUnits="userSpaceOnUse" x1="0" y1={startPt.y} x2="0" y2={startPt.y + fadeLen}>
-                    <stop offset="0" stopColor="var(--color-doc-template-accent)" stopOpacity="0" />
-                    <stop offset="1" stopColor="var(--color-doc-template-accent)" stopOpacity="1" />
-                  </linearGradient>
-                )
-              })()}
+              <linearGradient ref={gradientRef} id="toc-accent-fade" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="0">
+                <stop offset="0" stopColor="var(--color-doc-template-accent)" stopOpacity="0" />
+                <stop offset="1" stopColor="var(--color-doc-template-accent)" stopOpacity="1" />
+              </linearGradient>
             </defs>
             <g mask="url(#toc-rail-mask)">
               <path
@@ -589,15 +586,16 @@ export function TOC() {
                 }}
               />
               <path
+                ref={activeStrokeRef}
                 d={pathD}
                 style={{
-                  stroke: segLen > segStart ? 'url(#toc-accent-fade)' : 'var(--color-doc-template-accent)',
+                  stroke: 'url(#toc-accent-fade)',
                   strokeWidth: 2,
                   fill: 'none',
                   strokeLinecap: 'round',
                   strokeLinejoin: 'round',
-                  strokeDasharray: `${Math.max(0, segLen - segStart)} 99999`,
-                  strokeDashoffset: -segStart,
+                  strokeDasharray: '0 99999',
+                  strokeDashoffset: 0,
                 }}
               />
               {endPos && (
@@ -610,18 +608,16 @@ export function TOC() {
                 />
               )}
             </g>
-            {dotPos && (
-              <circle
-                cx={dotPos.x}
-                cy={dotPos.y}
-                r={3.5}
-                style={{
-                  fill: 'var(--color-doc-template-accent)',
-                  opacity: activeId ? 1 : 0,
-                  transition: 'opacity 0.2s ease',
-                }}
-              />
-            )}
+            <circle
+              ref={dotRef}
+              cx={0}
+              cy={0}
+              r={3.5}
+              style={{
+                fill: 'var(--color-doc-template-accent)',
+                opacity: 0,
+              }}
+            />
           </svg>
 
           <ul
@@ -630,7 +626,6 @@ export function TOC() {
             style={{ marginLeft: 14, gap: 1 }}
           >
             {visibleHeadings.map(h => {
-              const active = h.id === activeId
               const hasFold = h.level === 2 && h2HasChildren.has(h.id)
               const isFolded = hasFold && collapsedH2s.has(h.id)
               return (
@@ -642,25 +637,8 @@ export function TOC() {
                   <a
                     href={`#${h.id}`}
                     onClick={e => scrollToHeading(e, h.id)}
-                    aria-current={active ? 'location' : undefined}
-                    className={
-                      active
-                        ? 'flex items-center no-underline text-doc-template-accent hover:text-doc-template-accent'
-                        : 'flex items-center no-underline text-doc-template-muted hover:text-doc-template-ink'
-                    }
-                    style={{
-                      padding: '5px 10px 5px 8px',
-                      fontFamily:
-                        h.level === 3
-                          ? 'var(--font-doc-template-mono)'
-                          : 'var(--font-doc-template-ui)',
-                      fontSize: h.level === 3 ? 10.5 : 12.5,
-                      fontWeight: active ? 600 : 500,
-                      textTransform: h.level === 3 ? 'lowercase' : undefined,
-                      lineHeight: 1.35,
-                      letterSpacing: h.level === 3 ? '0.005em' : '-0.005em',
-                      transition: 'color 0.15s ease',
-                    }}
+                    data-level={h.level}
+                    className="toc-link"
                   >
                     <span style={{ flex: 1, minWidth: 0 }}>{h.text}</span>
                     {hasFold && (
@@ -668,37 +646,15 @@ export function TOC() {
                         role="button"
                         tabIndex={0}
                         aria-label={isFolded ? 'Expand' : 'Collapse'}
+                        className="toc-fold-toggle"
                         onClick={e => { e.preventDefault(); e.stopPropagation(); toggleH2(h.id) }}
                         onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); toggleH2(h.id) } }}
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          width: 16,
-                          height: 16,
-                          flexShrink: 0,
-                          borderRadius: 3,
-                          cursor: 'pointer',
-                          opacity: 0.5,
-                          transition: 'opacity 0.1s ease',
-                        }}
-                        onMouseEnter={e => (e.currentTarget.style.opacity = '1')}
-                        onMouseLeave={e => (e.currentTarget.style.opacity = '0.5')}
                       >
                         <svg
-                          width="8"
-                          height="8"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="3"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
+                          width="8" height="8" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"
                           aria-hidden
-                          style={{
-                            transform: isFolded ? 'rotate(0deg)' : 'rotate(90deg)',
-                            transition: 'transform 0.15s ease',
-                          }}
+                          style={{ transform: isFolded ? 'rotate(0deg)' : 'rotate(90deg)', transition: 'transform 0.15s ease' }}
                         >
                           <path d="M9 18l6-6-6-6" />
                         </svg>
