@@ -38,7 +38,7 @@ const X0 = 4
 const X_INDENT_H3 = 12
 const BEND = 8
 const ACTIVATE_LINE = 110
-const TWEEN_MS = 350
+const TWEEN_MS = 600
 
 function easeInOutCubic(t: number) {
   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
@@ -102,6 +102,7 @@ export function TOC() {
   const { urlPathname } = usePageContext() as { urlPathname: string }
   const [headings, setHeadings] = useState<Heading[]>([])
   const [activeId, setActiveId] = useState<string | null>(null)
+  const [segStart, setSegStart] = useState(0)
   const [segLen, setSegLen] = useState(0)
   const [dotPos, setDotPos] = useState<{ x: number; y: number } | null>(null)
   const [endPos, setEndPos] = useState<{ x: number; y: number } | null>(null)
@@ -113,8 +114,11 @@ export function TOC() {
   const railPointsRef = useRef<RailPoint[]>([])
   const totalLenRef = useRef<number>(0)
   const currentLenRef = useRef<number>(0)
+  const currentStartRef = useRef<number>(0)
   const animFromRef = useRef<number>(0)
   const animToRef = useRef<number>(0)
+  const startAnimFromRef = useRef<number>(0)
+  const startAnimToRef = useRef<number>(0)
   const animStartRef = useRef<number>(0)
   const animReqRef = useRef<number | null>(null)
 
@@ -321,18 +325,35 @@ export function TOC() {
       const ai = activeIdRef.current
       if (ai) {
         const match = railPointsRef.current.find(p => p.id === ai)
-        if (match) snap(match.len)
+        if (match) {
+          snap(match.len, findParentH2Len(ai))
+        }
       } else {
-        snap(0)
+        snap(0, 0)
       }
     }
 
-    function snap(len: number) {
+    function findParentH2Len(id: string): number {
+      let parentH2Id: string | null = null
+      for (const h of visibleHeadings) {
+        if (h.level === 2) parentH2Id = h.id
+        if (h.id === id) break
+      }
+      if (!parentH2Id) return 0
+      const pt = railPointsRef.current.find(p => p.id === parentH2Id)
+      return pt ? pt.len : 0
+    }
+
+    function snap(len: number, start: number) {
       const base = railBaseRef.current
       currentLenRef.current = len
+      currentStartRef.current = start
       animFromRef.current = len
       animToRef.current = len
+      startAnimFromRef.current = start
+      startAnimToRef.current = start
       setSegLen(len)
+      setSegStart(start)
       if (base && len > 0) {
         const p = base.getPointAtLength(Math.max(0, len))
         setDotPos({ x: p.x, y: p.y })
@@ -354,19 +375,39 @@ export function TOC() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [headings, foldVersion])
 
-  // 3. Scroll-spy: pick last visible heading whose top ≤ ACTIVATE_LINE.
-  // Uses visibleHeadings so collapsed H3s don't steal active state —
-  // the dot stays on the parent H2 while scrolling through folded content.
+  // 3. Scroll-spy: runs against ALL headings to detect the true active
+  // heading. If the active heading is an H3 under a collapsed H2, auto-
+  // expand that H2. The displayed activeId is then set to the visible
+  // heading (which now includes the newly-expanded H3s).
   useEffect(() => {
-    if (visibleHeadings.length === 0) return
+    if (headings.length === 0) return
     let scheduled = false
     function pick() {
       scheduled = false
-      let id: string | null = visibleHeadings[0].id
-      for (let i = 0; i < visibleHeadings.length; i++) {
-        const top = visibleHeadings[i].el.getBoundingClientRect().top
-        if (top - ACTIVATE_LINE <= 0.5) id = visibleHeadings[i].id
+      let id: string | null = headings[0].id
+      for (let i = 0; i < headings.length; i++) {
+        const top = headings[i].el.getBoundingClientRect().top
+        if (top - ACTIVATE_LINE <= 0.5) id = headings[i].id
         else break
+      }
+      if (id) {
+        const h = headings.find(h => h.id === id)
+        if (h && h.level === 3) {
+          let parentH2: string | null = null
+          for (const hh of headings) {
+            if (hh.level === 2) parentH2 = hh.id
+            if (hh.id === id) break
+          }
+          if (parentH2 && collapsedH2s.has(parentH2)) {
+            setCollapsedH2s(prev => {
+              const next = new Set(prev)
+              next.delete(parentH2!)
+              localStorage.setItem(TOC_KEY_PREFIX + urlPathname, JSON.stringify([...next]))
+              return next
+            })
+            setFoldVersion(v => v + 1)
+          }
+        }
       }
       setActiveId(prev => (prev === id ? prev : id))
     }
@@ -382,16 +423,24 @@ export function TOC() {
       window.removeEventListener('scroll', onScroll)
       window.removeEventListener('resize', onScroll)
     }
-  }, [visibleHeadings])
+  }, [headings, collapsedH2s])
 
-  // 4. Tween the active stroke length toward the target whenever
-  // activeId changes.
+  // 3b. Scroll the active TOC entry into view within the panel.
+  useEffect(() => {
+    if (!activeId || !bodyRef.current) return
+    const link = bodyRef.current.querySelector<HTMLElement>(`a[href="#${CSS.escape(activeId)}"]`)
+    if (link) link.scrollIntoView({ block: 'nearest', behavior: 'smooth', inline: 'nearest' })
+  }, [activeId, foldVersion])
+
+  // 4. Tween segStart and segLen toward the target whenever activeId changes.
   useEffect(() => {
     const base = railBaseRef.current
     if (!base) return
 
-    function applyLen(len: number) {
+    function apply(start: number, len: number) {
+      currentStartRef.current = start
       currentLenRef.current = len
+      setSegStart(start)
       setSegLen(len)
       if (base && len > 0) {
         const p = base.getPointAtLength(Math.max(0, len))
@@ -401,10 +450,11 @@ export function TOC() {
       }
     }
 
-    function animateTo(targetLen: number) {
-      if (Math.abs(targetLen - animToRef.current) < 0.5 && animReqRef.current !== null) return
+    function animateTo(targetStart: number, targetLen: number) {
       animFromRef.current = currentLenRef.current
       animToRef.current = targetLen
+      startAnimFromRef.current = currentStartRef.current
+      startAnimToRef.current = targetStart
       animStartRef.current = performance.now()
       if (animReqRef.current === null) {
         animReqRef.current = requestAnimationFrame(tick)
@@ -414,8 +464,9 @@ export function TOC() {
     function tick(now: number) {
       const t = Math.min(1, (now - animStartRef.current) / TWEEN_MS)
       const k = easeInOutCubic(t)
+      const s = startAnimFromRef.current + (startAnimToRef.current - startAnimFromRef.current) * k
       const v = animFromRef.current + (animToRef.current - animFromRef.current) * k
-      applyLen(v)
+      apply(s, v)
       if (t < 1) {
         animReqRef.current = requestAnimationFrame(tick)
       } else {
@@ -424,12 +475,31 @@ export function TOC() {
     }
 
     if (!activeId) {
-      animateTo(0)
+      animateTo(0, 0)
       return
     }
     const match = railPointsRef.current.find(p => p.id === activeId)
     if (!match) return
-    animateTo(match.len)
+
+    const activeH = visibleHeadings.find(h => h.id === activeId)
+    let anchorId: string | null = null
+    if (activeH && activeH.level === 3) {
+      for (const h of visibleHeadings) {
+        if (h.level === 2) anchorId = h.id
+        if (h.id === activeId) break
+      }
+    } else {
+      let prev: string | null = null
+      for (const h of visibleHeadings) {
+        if (h.id === activeId) break
+        if (h.level === 2) prev = h.id
+      }
+      anchorId = prev
+    }
+    const anchorPt = anchorId ? railPointsRef.current.find(p => p.id === anchorId) : null
+    const startLen = anchorPt ? Math.max(0, anchorPt.len - 20) : 0
+
+    animateTo(startLen, match.len)
 
     return () => {
       if (animReqRef.current !== null) {
@@ -437,7 +507,7 @@ export function TOC() {
         animReqRef.current = null
       }
     }
-  }, [activeId])
+  }, [activeId, visibleHeadings])
 
   // Mirror dreamlake-ai's RightTOC: pages with no headings opt out
   // entirely — no empty "On this page" card. This also covers SSR /
@@ -489,6 +559,22 @@ export function TOC() {
               <mask id="toc-rail-mask" maskUnits="userSpaceOnUse">
                 <rect x="0" y="0" width="100%" height="100%" fill="url(#toc-rail-fade)" />
               </mask>
+              {railBaseRef.current && segLen > segStart && (() => {
+                const base = railBaseRef.current!
+                const startPt = base.getPointAtLength(Math.max(0, segStart))
+                const endPt = base.getPointAtLength(Math.max(0, segLen))
+                const ah = visibleHeadings.find(h => h.id === activeId)
+                const isSubsection = ah && ah.level === 3
+                const fadeLen = isSubsection
+                  ? Math.min(8, (endPt.y - startPt.y) * 0.12)
+                  : Math.min(40, (endPt.y - startPt.y) * 0.5)
+                return (
+                  <linearGradient id="toc-accent-fade" gradientUnits="userSpaceOnUse" x1="0" y1={startPt.y} x2="0" y2={startPt.y + fadeLen}>
+                    <stop offset="0" stopColor="var(--color-doc-template-accent)" stopOpacity="0" />
+                    <stop offset="1" stopColor="var(--color-doc-template-accent)" stopOpacity="1" />
+                  </linearGradient>
+                )
+              })()}
             </defs>
             <g mask="url(#toc-rail-mask)">
               <path
@@ -505,13 +591,13 @@ export function TOC() {
               <path
                 d={pathD}
                 style={{
-                  stroke: 'var(--color-doc-template-accent)',
+                  stroke: segLen > segStart ? 'url(#toc-accent-fade)' : 'var(--color-doc-template-accent)',
                   strokeWidth: 2,
                   fill: 'none',
                   strokeLinecap: 'round',
                   strokeLinejoin: 'round',
-                  strokeDasharray: `${segLen} 99999`,
-                  strokeDashoffset: 0,
+                  strokeDasharray: `${Math.max(0, segLen - segStart)} 99999`,
+                  strokeDashoffset: -segStart,
                 }}
               />
               {endPos && (
