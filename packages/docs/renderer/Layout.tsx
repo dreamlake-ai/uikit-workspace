@@ -31,6 +31,7 @@ function PageBreadcrumb() {
   if (!current) return null
   return (
     <nav
+      data-pagefind-ignore
       aria-label="Breadcrumb"
       className="flex items-center text-doc-template-muted uppercase"
       style={{
@@ -162,6 +163,7 @@ export function Layout({ children }: { children: ReactNode }) {
               // NOTE: left-aligned in the grid cell (no mx-auto) to match
               // docs.html — the slack at wide viewports sits to the right,
               // keeping the sidebar tight against the content.
+              data-pagefind-body
               className={
                 wide
                   ? 'doc-content w-full min-w-0 px-[18px] pb-20 lg:px-[56px] lg:pb-[120px]'
@@ -170,7 +172,9 @@ export function Layout({ children }: { children: ReactNode }) {
             >
               <PageBreadcrumb />
               {children}
-              <DocFooter />
+              <div data-pagefind-ignore>
+                <DocFooter />
+              </div>
             </main>
             {!wide && <TOC />}
           </div>

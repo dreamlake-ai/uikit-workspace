@@ -70,6 +70,18 @@ for (const [filePath, raw] of Object.entries(rawSources)) {
   bodyMap.set(pathFromFile(filePath), stripToText(raw))
 }
 
+function stripPreamble(raw: string): string {
+  let s = raw
+  s = s.replace(/^---[\s\S]*?\n---\s*\n?/, '')
+  s = s.replace(/^[ \t]*import[\s\S]*?from\s+['"][^'"]+['"]\s*;?\s*$/gm, '')
+  return s.trim()
+}
+
+export const rawMarkdown = new Map<string, string>()
+for (const [filePath, raw] of Object.entries(rawSources)) {
+  rawMarkdown.set(pathFromFile(filePath), stripPreamble(raw))
+}
+
 export const searchIndex: SearchEntry[] = pages.map(p => {
   const extracted = bodyMap.get(p.path) ?? { headings: [], body: '' }
   return { ...p, headings: extracted.headings, body: extracted.body }
