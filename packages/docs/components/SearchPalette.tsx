@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties, JSX } from 'react'
-import { searchIndex, search, type SearchHit } from '../lib/search-index'
+import { useEffect, useRef, useState, type CSSProperties, JSX } from 'react'
+import { searchPages, defaultResults, type SearchResult } from '../lib/pagefind-search'
 import { useMediaQuery } from '../lib/use-media-query'
 
 interface SearchPaletteProps {
@@ -37,16 +37,93 @@ export function SearchPalette({ open, onClose, query }: SearchPaletteProps) {
   const isNarrowInset = useMediaQuery('(max-width: 767px)')
   const isSingleCol = useMediaQuery('(max-width: 639px)')
 
-  const hits = useMemo<SearchHit[]>(() => {
-    if (!query.trim()) {
-      return searchIndex.slice(0, 12).map(entry => ({
-        entry,
-        score: 0,
-        snippet: entry.description ?? '',
-      }))
-    }
-    return search(query, 30)
+  const [hits, setHits] = useState<SearchResult[]>(defaultResults)
+  const prevQueryRef = useRef('')
+  const prevOrderRef = useRef<string[]>([])
+
+  useEffect(() => {
+    let cancelled = false
+    searchPages(query).then(results => {
+      if (cancelled) return
+
+      const prevQ = prevQueryRef.current
+      const isExtending = query.length > prevQ.length
+        && query.toLowerCase().startsWith(prevQ.toLowerCase())
+        && prevQ.length > 0
+
+      if (isExtending && prevOrderRef.current.length > 0) {
+        const resultMap = new Map(results.map(r => [r.path, r]))
+
+        const stable: SearchResult[] = []
+        for (const path of prevOrderRef.current) {
+          const r = resultMap.get(path)
+          if (r) {
+            stable.push(r)
+            resultMap.delete(path)
+          }
+        }
+
+        const fresh = [...resultMap.values()].sort((a, b) => b.score - a.score)
+        for (const r of fresh) {
+          const insertIdx = stable.findIndex(s => r.score > s.score)
+          if (insertIdx >= 0) stable.splice(insertIdx, 0, r)
+          else stable.push(r)
+        }
+
+        prevOrderRef.current = stable.map(r => r.path)
+        prevQueryRef.current = query
+        setHits(stable)
+      } else {
+        prevOrderRef.current = results.map(r => r.path)
+        prevQueryRef.current = query
+        setHits(results)
+      }
+    })
+    return () => { cancelled = true }
   }, [query])
+
+  const previewBodyRef = useRef<HTMLDivElement>(null)
+  const [pageHtml, setPageHtml] = useState<string>('')
+  const pageCacheRef = useRef<Map<string, string>>(new Map())
+
+  const activePath = hits[active]?.path
+  useEffect(() => {
+    if (!activePath || isSingleCol || query.trim()) {
+      setPageHtml('')
+      return
+    }
+
+    const cached = pageCacheRef.current.get(activePath)
+    if (cached !== undefined) {
+      setPageHtml(cached)
+      return
+    }
+
+    setPageHtml('')
+    let cancelled = false
+    fetch(activePath)
+      .then(r => (r.ok ? r.text() : ''))
+      .then(html => {
+        if (cancelled) return
+        const doc = new DOMParser().parseFromString(html, 'text/html')
+        const main = doc.querySelector('[data-pagefind-body]')
+        main?.querySelectorAll('[data-pagefind-ignore], script, style').forEach(el => el.remove())
+        const h1 = main?.querySelector('h1')
+        h1?.remove()
+        main?.querySelectorAll('h2, h3').forEach(el => {
+          el.removeAttribute('style')
+          el.removeAttribute('class')
+        })
+        const content = main?.innerHTML ?? ''
+        pageCacheRef.current.set(activePath, content)
+        setPageHtml(content)
+      })
+      .catch(() => {
+        if (!cancelled) setPageHtml('')
+      })
+
+    return () => { cancelled = true }
+  }, [active, activePath, isSingleCol])
 
   useEffect(() => {
     if (!open) return
@@ -54,6 +131,16 @@ export function SearchPalette({ open, onClose, query }: SearchPaletteProps) {
   }, [open])
 
   useEffect(() => setActive(0), [query])
+
+  useEffect(() => {
+    const el = previewBodyRef.current
+    if (!el) return
+    requestAnimationFrame(() => {
+      const mark = el.querySelector('mark')
+      if (mark) mark.scrollIntoView({ block: 'center', behavior: 'instant' })
+      else el.scrollTop = 0
+    })
+  }, [activePath, query])
 
   useEffect(() => {
     if (!open) return
@@ -67,7 +154,7 @@ export function SearchPalette({ open, onClose, query }: SearchPaletteProps) {
         setActive(a => Math.max(a - 1, 0))
       } else if (e.key === 'Enter') {
         const hit = hits[active]
-        if (hit) window.location.href = hit.entry.path
+        if (hit) window.location.href = hit.path
       }
     }
     window.addEventListener('keydown', onKey)
@@ -161,6 +248,30 @@ export function SearchPalette({ open, onClose, query }: SearchPaletteProps) {
     return out
   }
 
+  function escapeHtml(text: string): string {
+    return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  }
+
+  function highlightHtml(html: string, q: string): string {
+    if (!q.trim()) return html
+    const ql = q.trim().toLowerCase()
+    return html.split(/(<[^>]*>)/g).map((part, i) => {
+      if (i % 2 === 1) return part
+      const lc = part.toLowerCase()
+      if (!lc.includes(ql)) return part
+      let result = ''
+      let last = 0
+      while (true) {
+        const idx = lc.indexOf(ql, last)
+        if (idx < 0) break
+        result += part.slice(last, idx)
+        result += `<mark>${part.slice(idx, idx + q.trim().length)}</mark>`
+        last = idx + q.trim().length
+      }
+      return result + part.slice(last)
+    }).join('')
+  }
+
   const backdropStyle: CSSProperties = {
     position: 'fixed',
     inset: 0,
@@ -224,10 +335,10 @@ export function SearchPalette({ open, onClose, query }: SearchPaletteProps) {
             )}
             {hits.map((hit, i) => (
               <li
-                key={hit.entry.path}
+                key={hit.path}
                 onMouseEnter={() => setActive(i)}
                 onClick={() => {
-                  window.location.href = hit.entry.path
+                  window.location.href = hit.path
                 }}
                 className={
                   i === active
@@ -284,7 +395,7 @@ export function SearchPalette({ open, onClose, query }: SearchPaletteProps) {
                           textOverflow: 'ellipsis',
                         }}
                       >
-                        {hit.entry.section && (
+                        {hit.section && (
                           <span
                             className="text-doc-template-muted uppercase"
                             style={{
@@ -294,11 +405,11 @@ export function SearchPalette({ open, onClose, query }: SearchPaletteProps) {
                               letterSpacing: '0.04em',
                             }}
                           >
-                            {hit.entry.section}
+                            {hit.section}
                             <span style={{ margin: '0 3px', opacity: 0.5 }}>/</span>
                           </span>
                         )}
-                        {highlight(hit.entry.title, query)}
+                        {highlight(hit.title, query)}
                       </span>
                       {hit.snippet && (
                         <span
@@ -329,9 +440,9 @@ export function SearchPalette({ open, onClose, query }: SearchPaletteProps) {
                           textOverflow: 'ellipsis',
                         }}
                       >
-                        {highlight(hit.entry.title, query)}
+                        {highlight(hit.title, query)}
                       </span>
-                      {hit.entry.section && (
+                      {hit.section && (
                         <span
                           className="text-doc-template-muted uppercase"
                           style={{
@@ -344,8 +455,27 @@ export function SearchPalette({ open, onClose, query }: SearchPaletteProps) {
                             textOverflow: 'ellipsis',
                           }}
                         >
-                          {hit.entry.section}
+                          {hit.section}
                         </span>
+                      )}
+                      {query.trim() && (hit.excerptHtml || hit.snippet) && (
+                        <span
+                          className="pagefind-excerpt"
+                          style={{
+                            fontFamily: 'var(--font-doc-template-ui)',
+                            fontSize: 11.5,
+                            lineHeight: 1.4,
+                            color: 'color-mix(in srgb, var(--color-doc-template-ink) 55%, transparent)',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical',
+                          }}
+                          {...(hit.excerptHtml
+                            ? { dangerouslySetInnerHTML: { __html: hit.excerptHtml } }
+                            : { children: highlight(hit.snippet, query) })}
+                        />
                       )}
                     </>
                   )}
@@ -396,52 +526,96 @@ export function SearchPalette({ open, onClose, query }: SearchPaletteProps) {
           )}
           {!isSingleCol && (
           <aside
-            className="overflow-y-auto"
+            className="overflow-y-auto flex flex-col"
             style={{
-              padding: '18px 18px 14px',
               background: 'color-mix(in srgb, var(--color-doc-template-panel) 60%, transparent)',
               minHeight: 280,
             }}
           >
             {previewHit ? (
               <>
-                <div
-                  className="text-doc-template-muted uppercase"
-                  style={{
-                    fontFamily: 'var(--font-doc-template-mono)',
-                    fontSize: 9.5,
-                    fontWeight: 500,
-                    letterSpacing: '0.05em',
-                    marginBottom: 10,
-                  }}
-                >
-                  {previewHit.entry.section || '—'}
-                </div>
-                <h3
-                  className="text-doc-template-ink"
-                  style={{
-                    margin: '0 0 8px',
-                    fontFamily: 'var(--font-doc-template-ui)',
-                    fontSize: 16,
-                    fontWeight: 600,
-                    letterSpacing: '-0.012em',
-                    lineHeight: 1.25,
-                  }}
-                >
-                  {highlight(previewHit.entry.title, query)}
-                </h3>
-                {previewHit.snippet && (
-                  <p
-                    className="text-doc-template-muted"
+                <div style={{ padding: '14px 18px 0' }}>
+                  <div
+                    className="text-doc-template-muted uppercase"
                     style={{
-                      fontFamily: 'var(--font-doc-template-ui)',
-                      fontSize: 12.5,
-                      lineHeight: 1.55,
-                      margin: '0 0 14px',
+                      fontFamily: 'var(--font-doc-template-mono)',
+                      fontSize: 9.5,
+                      fontWeight: 500,
+                      letterSpacing: '0.05em',
+                      marginBottom: 6,
                     }}
                   >
-                    {highlight(previewHit.snippet, query)}
-                  </p>
+                    {previewHit.section || '—'}
+                  </div>
+                  <h3
+                    className="text-doc-template-ink"
+                    style={{
+                      margin: '0 0 12px',
+                      fontFamily: 'var(--font-doc-template-ui)',
+                      fontSize: 16,
+                      fontWeight: 600,
+                      letterSpacing: '-0.012em',
+                      lineHeight: 1.25,
+                    }}
+                  >
+                    {highlight(previewHit.title, query)}
+                  </h3>
+                </div>
+                {query.trim() && previewHit.subResults.length > 0 ? (
+                  <div ref={previewBodyRef} className="flex-1 overflow-y-auto pagefind-excerpt" style={{ padding: '0 18px 14px' }}>
+                    {previewHit.subResults.map((sr, idx) => {
+                      const multi = previewHit.subResults.length > 1
+                      return (
+                        <div
+                          key={idx}
+                          style={{
+                            padding: '10px 0',
+                            borderTop: idx > 0 ? '1px solid var(--color-doc-template-faint)' : 'none',
+                          }}
+                        >
+                          {sr.title && sr.title !== previewHit.title && (
+                            <div
+                              className="text-doc-template-muted"
+                              style={{
+                                fontFamily: 'var(--font-doc-template-mono)',
+                                fontSize: 10,
+                                fontWeight: 600,
+                                letterSpacing: '0.02em',
+                                marginBottom: 6,
+                                opacity: 0.7,
+                              }}
+                            >
+                              # {sr.title}
+                            </div>
+                          )}
+                          <div
+                            style={{
+                              fontFamily: 'var(--font-doc-template-ui)',
+                              fontSize: 12.5,
+                              lineHeight: 1.6,
+                              color: 'color-mix(in srgb, var(--color-doc-template-ink) 70%, transparent)',
+                              ...(multi ? {
+                                overflow: 'hidden',
+                                display: '-webkit-box',
+                                WebkitLineClamp: 5,
+                                WebkitBoxOrient: 'vertical',
+                              } : {}),
+                            }}
+                            dangerouslySetInnerHTML={{ __html: sr.excerptHtml }}
+                          />
+                        </div>
+                      )
+                    })}
+                  </div>
+                ) : (
+                  <div
+                    ref={previewBodyRef}
+                    className="flex-1 overflow-y-auto preview-body pagefind-excerpt"
+                    style={{ padding: '0 18px 14px' }}
+                    dangerouslySetInnerHTML={{
+                      __html: pageHtml || escapeHtml(previewHit.description || ''),
+                    }}
+                  />
                 )}
                 <div
                   className="text-doc-template-muted"
@@ -449,46 +623,26 @@ export function SearchPalette({ open, onClose, query }: SearchPaletteProps) {
                     fontFamily: 'var(--font-doc-template-mono)',
                     fontSize: 10,
                     fontWeight: 500,
-                    borderTop: '1px dashed var(--color-doc-template-faint)',
-                    paddingTop: 10,
-                    marginTop: 16,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
+                    padding: '10px 18px',
+                    marginTop: 'auto',
+                    opacity: 0.7,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
                   }}
                 >
-                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '60%', opacity: 0.8 }}>
-                    {previewHit.entry.path}
-                  </span>
-                  <span>
-                    Press{' '}
-                    <kbd
-                      style={{
-                        fontFamily: 'var(--font-doc-template-mono)',
-                        fontSize: 9.5,
-                        background: 'var(--color-doc-template-bg)',
-                        border: '1px solid var(--color-doc-template-faint)',
-                        borderRadius: 3,
-                        padding: '1px 4px',
-                        margin: '0 2px',
-                        color: 'var(--color-doc-template-ink)',
-                      }}
-                    >
-                      ↵
-                    </kbd>{' '}
-                    to open
-                  </span>
+                  {previewHit.path}
                 </div>
               </>
             ) : (
-              <p className="text-doc-template-muted" style={{ fontSize: 13 }}>
+              <p className="text-doc-template-muted" style={{ padding: '18px', fontSize: 13 }}>
                 Select a result to preview.
               </p>
             )}
           </aside>
           )}
         </div>
-        {/* Footer with keyboard hints (docs.html lines 1533–1538). */}
+        {/* Footer with keyboard hints (docs.html lines 1533-1538). */}
         <div
           className="flex items-center text-doc-template-muted"
           style={{
@@ -502,12 +656,12 @@ export function SearchPalette({ open, onClose, query }: SearchPaletteProps) {
           }}
         >
           <FootKey>
-            <FootKbd>↑</FootKbd>
-            <FootKbd>↓</FootKbd>
+            <FootKbd>{'↑'}</FootKbd>
+            <FootKbd>{'↓'}</FootKbd>
             <span>navigate</span>
           </FootKey>
           <FootKey>
-            <FootKbd>↵</FootKbd>
+            <FootKbd>{'↵'}</FootKbd>
             <span>open</span>
           </FootKey>
           <FootKey>
