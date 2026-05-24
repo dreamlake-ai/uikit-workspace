@@ -26,6 +26,7 @@ async function getPagefind() {
   if (initPromise) return initPromise
 
   initPromise = (async () => {
+    if (import.meta.env.DEV) return null
     try {
       const path = `/${['pagefind', 'pagefind.js'].join('/')}`
       const pf = await import(/* @vite-ignore */ path)
