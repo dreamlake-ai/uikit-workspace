@@ -88,7 +88,7 @@ export function SearchPalette({ open, onClose, query }: SearchPaletteProps) {
 
   const activePath = hits[active]?.path
   useEffect(() => {
-    if (!activePath || isSingleCol || query.trim()) {
+    if (!activePath || isSingleCol) {
       setPageHtml('')
       return
     }
@@ -607,15 +607,31 @@ export function SearchPalette({ open, onClose, query }: SearchPaletteProps) {
                       )
                     })}
                   </div>
-                ) : (
+                ) : pageHtml ? (
                   <div
                     ref={previewBodyRef}
                     className="flex-1 overflow-y-auto preview-body pagefind-excerpt"
                     style={{ padding: '0 18px 14px' }}
                     dangerouslySetInnerHTML={{
-                      __html: pageHtml || escapeHtml(previewHit.description || ''),
+                      __html: query.trim() ? highlightHtml(pageHtml, query) : pageHtml,
                     }}
                   />
+                ) : (
+                  <div
+                    ref={previewBodyRef}
+                    className="flex-1 overflow-y-auto"
+                    style={{
+                      padding: '0 18px 14px',
+                      fontFamily: 'var(--font-doc-template-ui)',
+                      fontSize: 12.5,
+                      lineHeight: 1.6,
+                      color: 'color-mix(in srgb, var(--color-doc-template-ink) 70%, transparent)',
+                    }}
+                  >
+                    {query.trim() && previewHit.snippet
+                      ? highlight(previewHit.snippet, query)
+                      : previewHit.description || ''}
+                  </div>
                 )}
                 <div
                   className="text-doc-template-muted"
