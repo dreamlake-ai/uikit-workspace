@@ -26,6 +26,14 @@ export function SearchPalette({ open, onClose, query }: SearchPaletteProps) {
   })
   const draggingRef = useRef(false)
   const [gripY, setGripY] = useState<number | null>(null)
+  const [panelH, setPanelH] = useState<number | null>(() => {
+    if (typeof window === 'undefined') return null
+    const stored = Number(localStorage.getItem('palette-h'))
+    return Number.isFinite(stored) && stored > 0 ? stored : null
+  })
+  const [isResizing, setIsResizing] = useState(false)
+  const resizeEdgeRef = useRef<'bottom' | 'corner' | null>(null)
+  const resizeOriginRef = useRef({ x: 0, y: 0, w: 0, h: 0 })
   // Two separate breakpoints:
   // - `isNarrowInset` (<768px): tuck the panel at 12/12 instead of the
   //   240/240 desktop inset. Matches the topbar's `isMobile` so the
@@ -99,6 +107,31 @@ export function SearchPalette({ open, onClose, query }: SearchPaletteProps) {
     }
   }, [splitPx])
 
+  useEffect(() => {
+    function onMove(e: MouseEvent) {
+      if (!resizeEdgeRef.current) return
+      const dx = e.clientX - resizeOriginRef.current.x
+      const dy = e.clientY - resizeOriginRef.current.y
+      if (resizeEdgeRef.current === 'bottom' || resizeEdgeRef.current === 'corner') {
+        setPanelH(Math.max(200, Math.min(resizeOriginRef.current.h + dy, window.innerHeight - 60)))
+      }
+    }
+    function onUp() {
+      if (resizeEdgeRef.current) {
+        resizeEdgeRef.current = null
+        setIsResizing(false)
+        document.body.style.userSelect = ''
+        if (panelH != null) localStorage.setItem('palette-h', String(panelH))
+      }
+    }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+    return () => {
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+    }
+  }, [panelH])
+
   // `mounted` keeps the DOM around during exit animation; `visible` drives
   // the actual entry/exit styles. On open: mount in the entry state
   // (opacity 0, translated up, height 0), then flip `visible` true after
@@ -161,6 +194,24 @@ export function SearchPalette({ open, onClose, query }: SearchPaletteProps) {
     return out
   }
 
+  const maxVh = typeof window !== 'undefined' ? window.innerHeight * 0.7 : 540
+  const effectiveH = panelH ?? (() => {
+    const rowH = Math.max(hits.length, 1) * 48 + 44
+    const totalChars = hits.reduce((sum, h) => sum + h.title.length + (h.snippet?.length || 0) + (h.description?.length || 0), 0)
+    const charH = 120 + Math.min(totalChars * 0.3, 420)
+    return Math.max(250, Math.min(Math.max(rowH, charH), maxVh, 540))
+  })()
+
+  function startResize(edge: 'bottom' | 'corner', e: React.MouseEvent) {
+    const panel = (e.currentTarget as HTMLElement).closest('[data-palette-panel]') as HTMLElement
+    if (!panel) return
+    const rect = panel.getBoundingClientRect()
+    resizeEdgeRef.current = edge
+    resizeOriginRef.current = { x: e.clientX, y: e.clientY, w: rect.width, h: rect.height }
+    setIsResizing(true)
+    document.body.style.userSelect = 'none'
+  }
+
   const backdropStyle: CSSProperties = {
     position: 'fixed',
     inset: 0,
@@ -189,9 +240,12 @@ export function SearchPalette({ open, onClose, query }: SearchPaletteProps) {
     opacity: visible ? 1 : 0,
     pointerEvents: visible ? 'auto' : 'none',
     transform: visible ? 'translateY(0)' : 'translateY(-8px)',
-    maxHeight: visible ? 'min(70vh, 540px)' : 0,
+    ...(panelH != null ? { height: visible ? panelH : 0 } : {}),
+    maxHeight: visible ? effectiveH : 0,
     transformOrigin: 'top center',
-    transition: `opacity ${PAL_MS}ms ${PAL_EASE}, transform ${PAL_MS}ms ${PAL_EASE}, max-height ${PAL_MS}ms ${PAL_EASE}`,
+    transition: isResizing
+      ? 'none'
+      : `opacity ${PAL_MS}ms ${PAL_EASE}, transform ${PAL_MS}ms ${PAL_EASE}, max-height ${PAL_MS}ms ${PAL_EASE}${panelH != null ? `, height ${PAL_MS}ms ${PAL_EASE}` : ''}`,
   }
 
   return (
@@ -517,6 +571,78 @@ export function SearchPalette({ open, onClose, query }: SearchPaletteProps) {
           <span style={{ flex: 1 }} />
           <span style={{ opacity: 0.8 }}>Search · DocSite docs</span>
         </div>
+        {!isNarrowInset && (
+          <>
+            <style>{`
+              .palette-resize .palette-resize-pill {
+                opacity: 0;
+                transition: opacity 0.15s ease;
+              }
+              .palette-resize:hover .palette-resize-pill {
+                opacity: 0.45;
+              }
+            `}</style>
+            <div
+              className="palette-resize"
+              onMouseDown={(e) => startResize('bottom', e)}
+              onDoubleClick={() => { setPanelH(null); localStorage.removeItem('palette-h') }}
+              style={{
+                position: 'absolute',
+                bottom: 0,
+                left: 32,
+                right: 32,
+                height: 10,
+                cursor: 'ns-resize',
+                zIndex: 10,
+              }}
+            >
+              <div
+                className="palette-resize-pill"
+                style={{
+                  position: 'absolute',
+                  bottom: 3,
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  width: 48,
+                  height: 4,
+                  borderRadius: 9999,
+                  background: 'var(--color-doc-template-muted)',
+                }}
+              />
+            </div>
+            <div
+              className="palette-resize"
+              onMouseDown={(e) => startResize('corner', e)}
+              onDoubleClick={() => { setPanelH(null); localStorage.removeItem('palette-h') }}
+              style={{
+                position: 'absolute',
+                bottom: 0,
+                right: 0,
+                width: 24,
+                height: 24,
+                cursor: 'nwse-resize',
+                zIndex: 11,
+              }}
+            >
+              <svg
+                className="palette-resize-pill"
+                width="10"
+                height="10"
+                viewBox="0 0 10 10"
+                overflow="visible"
+                style={{ position: 'absolute', bottom: 5, right: 5 }}
+              >
+                <path
+                  d="M 9 0 A 9 9 0 0 1 0 9"
+                  stroke="var(--color-doc-template-muted)"
+                  strokeWidth="4"
+                  strokeLinecap="round"
+                  fill="none"
+                />
+              </svg>
+            </div>
+          </>
+        )}
       </div>
     </>
   )
