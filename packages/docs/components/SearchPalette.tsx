@@ -28,8 +28,11 @@ export function SearchPalette({ open, onClose, query }: SearchPaletteProps) {
   const [gripY, setGripY] = useState<number | null>(null)
   const [panelH, setPanelH] = useState<number | null>(() => {
     if (typeof window === 'undefined') return null
-    const stored = Number(localStorage.getItem('palette-h'))
-    return Number.isFinite(stored) && stored > 0 ? stored : null
+    try {
+      const raw = JSON.parse(localStorage.getItem('palette-h') ?? '')
+      if (Date.now() - raw.ts > 86_400_000) { localStorage.removeItem('palette-h'); return null }
+      return Number.isFinite(raw.v) && raw.v > 0 ? raw.v : null
+    } catch { return null }
   })
   const [isResizing, setIsResizing] = useState(false)
   const resizeEdgeRef = useRef<'bottom' | 'corner' | null>(null)
@@ -121,7 +124,7 @@ export function SearchPalette({ open, onClose, query }: SearchPaletteProps) {
         resizeEdgeRef.current = null
         setIsResizing(false)
         document.body.style.userSelect = ''
-        if (panelH != null) localStorage.setItem('palette-h', String(panelH))
+        if (panelH != null) localStorage.setItem('palette-h', JSON.stringify({ v: panelH, ts: Date.now() }))
       }
     }
     window.addEventListener('mousemove', onMove)
