@@ -1,4 +1,5 @@
 import { search as fallbackSearch, searchIndex } from './search-index'
+import { pages } from './navigation'
 
 export interface SubResult {
   title: string
@@ -95,23 +96,27 @@ export const defaultResults: SearchResult[] = searchIndex.slice(0, 12).map(entry
   score: 0,
 }))
 
-export async function searchPages(query: string, limit = 30): Promise<SearchResult[]> {
+const hiddenPaths = new Set(pages.filter(p => p.hidden).map(p => p.path))
+
+export async function searchPages(query: string, limit = 30, showHidden = false): Promise<SearchResult[]> {
   const q = query.trim()
   if (!q) return defaultResults
 
   const pf = await getPagefind()
 
   if (!pf) {
-    return fallbackSearch(q, limit).map(h => ({
-      path: h.entry.path,
-      title: h.entry.title,
-      section: h.entry.section,
-      description: h.entry.description ?? '',
-      snippet: h.snippet,
-      excerptHtml: '',
-      subResults: [],
-      score: h.score,
-    }))
+    return fallbackSearch(q, limit)
+      .filter(h => showHidden || !hiddenPaths.has(h.entry.path))
+      .map(h => ({
+        path: h.entry.path,
+        title: h.entry.title,
+        section: h.entry.section,
+        description: h.entry.description ?? '',
+        snippet: h.snippet,
+        excerptHtml: '',
+        subResults: [],
+        score: h.score,
+      }))
   }
 
   const results = await pf.search(q)
@@ -179,5 +184,5 @@ export async function searchPages(query: string, limit = 30): Promise<SearchResu
   })
 
   mapped.sort((a, b) => b.score - a.score)
-  return mapped.filter(r => r.score >= 0)
+  return mapped.filter(r => r.score >= 0 && (showHidden || !hiddenPaths.has(r.path)))
 }

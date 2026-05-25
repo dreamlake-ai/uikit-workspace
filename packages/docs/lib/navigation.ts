@@ -11,6 +11,10 @@ export interface PageMeta {
    *  Toggle visibility via the "show hidden" global state (Cmd+Shift+D).
    *  The page is still reachable via direct URL. */
   hidden?: boolean
+  /** True to emit `<meta name="robots" content="noindex, nofollow">`
+   *  and exclude the page from the pagefind search index. Use for
+   *  internal/dev pages that should not be discoverable by spiders. */
+  noindex?: boolean
   /** Right-rail TOC depth. 3 (default) surfaces H2 + H3; 2 limits the
    *  rail to H2 only. Set in frontmatter on long pages where H3 noise
    *  crowds the rail. */
@@ -27,6 +31,7 @@ interface PageFrontmatter {
   description?: string
   draft?: boolean
   hidden?: boolean
+  noindex?: boolean
   tocLevel?: 2 | 3
   wide?: boolean
 }
@@ -50,6 +55,7 @@ export const pages: PageMeta[] = Object.entries(modules)
       description: fm.description,
       draft: fm.draft === true,
       hidden: fm.hidden === true,
+      noindex: fm.noindex === true,
       tocLevel: fm.tocLevel,
       wide: fm.wide === true,
     }

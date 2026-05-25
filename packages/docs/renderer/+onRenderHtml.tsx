@@ -42,6 +42,7 @@ export async function onRenderHtml(pageContext: any) {
     <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
     <title>${title}</title>
     ${description ? escapeInject`<meta name="description" content="${description}" />` : ''}
+    ${current?.noindex ? escapeInject`<meta name="robots" content="noindex, nofollow" />` : ''}
   </head>
   <body>
     <div id="root">${dangerouslySkipEscape(html)}</div>

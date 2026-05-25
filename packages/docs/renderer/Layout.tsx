@@ -120,6 +120,17 @@ function HeadSync() {
     } else if (tag) {
       tag.remove()
     }
+    let robotsTag = document.querySelector<HTMLMetaElement>('meta[name="robots"]')
+    if (current?.noindex) {
+      if (!robotsTag) {
+        robotsTag = document.createElement('meta')
+        robotsTag.name = 'robots'
+        document.head.appendChild(robotsTag)
+      }
+      robotsTag.content = 'noindex, nofollow'
+    } else if (robotsTag) {
+      robotsTag.remove()
+    }
   }, [urlPathname])
   return null
 }
@@ -164,6 +175,7 @@ export function Layout({ children }: { children: ReactNode }) {
               // docs.html — the slack at wide viewports sits to the right,
               // keeping the sidebar tight against the content.
               data-pagefind-body
+              {...(currentPage?.hidden ? { 'data-pagefind-meta': 'hidden:true' } : {})}
               className={
                 wide
                   ? 'doc-content w-full min-w-0 px-[18px] pb-20 lg:px-[56px] lg:pb-[120px]'

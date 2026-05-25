@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type CSSProperties, JSX } from 'react'
 import { searchPages, defaultResults, type SearchResult } from '../lib/pagefind-search'
 import { useMediaQuery } from '../lib/use-media-query'
 import { useSearchResize, SearchResizeHandles } from './SearchResize'
+import { useHiddenToggle } from '../lib/use-hidden-toggle'
 
 interface SearchPaletteProps {
   open: boolean
@@ -19,6 +20,7 @@ const PAL_EASE = 'cubic-bezier(0.16, 1, 0.3, 1)'
 const PAL_MS = 280
 
 export function SearchPalette({ open, onClose, query }: SearchPaletteProps) {
+  const [showHidden] = useHiddenToggle()
   const [active, setActive] = useState(0)
   const [splitPx, setSplitPx] = useState<number>(() => {
     if (typeof window === 'undefined') return 360
@@ -46,7 +48,7 @@ export function SearchPalette({ open, onClose, query }: SearchPaletteProps) {
 
   useEffect(() => {
     let cancelled = false
-    searchPages(query).then(results => {
+    searchPages(query, 30, showHidden).then(results => {
       if (cancelled) return
 
       const prevQ = prevQueryRef.current
@@ -83,7 +85,7 @@ export function SearchPalette({ open, onClose, query }: SearchPaletteProps) {
       }
     })
     return () => { cancelled = true }
-  }, [query])
+  }, [query, showHidden])
 
   const previewBodyRef = useRef<HTMLDivElement>(null)
   const [pageHtml, setPageHtml] = useState<string>('')
