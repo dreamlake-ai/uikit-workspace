@@ -18,7 +18,7 @@ export interface TabsProps {
   onChange?: (value: string) => void
   variant?: TabsVariant
   size?: TabsSize
-  /** Override indicator thickness (px). Default: 2. */
+  /** Override indicator thickness (px). Default: 4. */
   indicatorHeight?: number
   className?: string
 }
@@ -163,7 +163,7 @@ export function Tabs({
       role="tablist"
       className={cn(
         'relative font-uikit-ui',
-        variant === 'underline' && 'flex items-end border-b border-uikit-faint',
+        variant === 'underline' && 'flex items-end',
         variant === 'segment' && 'inline-flex bg-uikit-ink-5',
         className,
       )}
@@ -184,7 +184,7 @@ export function Tabs({
           style={{
             left: bar.left,
             width: bar.width,
-            height: indicatorHeight ?? 2,
+            height: indicatorHeight ?? 4,
             bottom: -1,
             transition: bar.ready
               ? 'left 280ms cubic-bezier(.4,0,.2,1), width 280ms cubic-bezier(.4,0,.2,1)'
