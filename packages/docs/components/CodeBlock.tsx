@@ -52,59 +52,90 @@ export function CodeBlock({ children, filename, lang }: CodeBlockProps) {
     <div
       ref={wrapRef}
       data-line-numbers={showLines ? 'on' : 'off'}
-      className="group border border-doc-template-faint bg-doc-template-code"
+      className="group relative border border-doc-template-faint bg-doc-template-code"
       style={{
         margin: '18px 0 22px',
         borderRadius: 'var(--radius-doc-template)',
         overflow: 'hidden',
       }}
     >
-      <div
-        className="flex items-center border-b border-doc-template-faint text-doc-template-muted uppercase"
-        style={{
-          gap: 12,
-          padding: '6px 10px 6px 14px',
-          fontFamily: 'var(--font-doc-template-mono)',
-          fontSize: 10,
-          letterSpacing: '0.06em',
-          background: 'color-mix(in srgb, var(--color-doc-template-ink) 3%, transparent)',
-        }}
-      >
-        {lang && <span style={{ fontWeight: 600 }}>{lang}</span>}
-        {filename && (
-          <span className="text-doc-template-muted" style={{ textTransform: 'none', letterSpacing: 0 }}>
+      {/* Header bar — only when a filename is specified */}
+      {filename && (
+        <div
+          className="flex items-center border-b border-doc-template-faint text-doc-template-muted"
+          style={{
+            gap: 12,
+            padding: '6px 10px 6px 14px',
+            fontFamily: 'var(--font-doc-template-mono)',
+            fontSize: 10,
+            letterSpacing: '0.06em',
+            background: 'color-mix(in srgb, var(--color-doc-template-ink) 3%, transparent)',
+          }}
+        >
+          <span style={{ fontWeight: 600, textTransform: 'none', letterSpacing: 0 }}>
             {filename}
           </span>
-        )}
-        <span style={{ flex: 1 }} />
-        {/* Buttons stay hidden until the user hovers the codeblock (or
-            tabs into them) — reduces visual noise in long pages while
-            keeping the controls discoverable on intent. */}
-        <span
-          className="inline-flex items-center opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-150"
-          style={{ gap: 12 }}
+          {lang && (
+            <span className="uppercase" style={{ fontWeight: 600, letterSpacing: '0.06em' }}>
+              {lang}
+            </span>
+          )}
+          <span style={{ flex: 1 }} />
+          <span className="inline-flex items-center" style={{ gap: 6 }}>
+            <button
+              type="button"
+              aria-pressed={showLines}
+              title={showLines ? ':set nonu' : ':set nu'}
+              onClick={() => setShowLines(!showLines)}
+              style={headerBtnStyle(showLines)}
+            >
+              <HashIcon />
+            </button>
+            <button type="button" onClick={copy} style={headerBtnStyle(copied)}>
+              {copied ? 'Copied' : 'Copy'}
+            </button>
+          </span>
+        </div>
+      )}
+      {/* Floating controls — no filename: top-right overlay on hover */}
+      {!filename && (
+        <div
+          className="absolute top-0 right-0 z-10 flex items-center opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-150"
+          style={{ gap: 6, padding: '8px 8px' }}
         >
+          {lang && (
+            <span
+              className="text-doc-template-muted uppercase"
+              style={{
+                fontFamily: 'var(--font-doc-template-mono)',
+                fontSize: 10,
+                fontWeight: 600,
+                letterSpacing: '0.04em',
+                marginRight: 2,
+              }}
+            >
+              {lang}
+            </span>
+          )}
           <button
             type="button"
             aria-pressed={showLines}
-            aria-label={showLines ? 'Hide line numbers' : 'Show line numbers'}
             title={showLines ? ':set nonu' : ':set nu'}
             onClick={() => setShowLines(!showLines)}
             style={headerBtnStyle(showLines)}
           >
             <HashIcon />
-            <span>{showLines ? ':set nonu' : ':set nu'}</span>
           </button>
           <button type="button" onClick={copy} style={headerBtnStyle(copied)}>
             {copied ? 'Copied' : 'Copy'}
           </button>
-        </span>
-      </div>
+        </div>
+      )}
       <div
         style={{
           fontFamily: 'var(--font-doc-template-mono)',
           fontSize: 12.5,
-          lineHeight: 1.62,
+          lineHeight: 1.3,
         }}
       >
         {children}
