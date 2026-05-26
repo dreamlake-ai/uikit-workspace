@@ -1,0 +1,52 @@
+---
+title: TextField
+section: Components
+order: 125
+description: Controlled text input with prefix, multiline, mono and invalid states.
+---
+
+import { Preview } from '../../../components/Preview'
+import { BasicSpec } from '../../../components/specimens/components/text-field/BasicSpec'
+import { VariantsSpec } from '../../../components/specimens/components/text-field/VariantsSpec'
+import basicSrc from '../../../components/specimens/components/text-field/BasicSpec.tsx?raw'
+import variantsSrc from '../../../components/specimens/components/text-field/VariantsSpec.tsx?raw'
+
+# TextField
+
+A controlled text input. `onChange` receives the raw string value (not the
+event), so it drops straight into form libraries — e.g. a react-hook-form
+`Controller`'s `field`. Use it inside [Field](/components/field) for a label,
+hint and error.
+
+## Basic
+
+<Preview source={basicSrc} filename="BasicSpec.tsx">
+  <BasicSpec />
+</Preview>
+
+## Prefix, invalid & multiline
+
+`prefix` renders a leading adornment (e.g. `/` for slugs); `mono` switches to
+the monospace face; `invalid` paints a danger border; `multiline` renders a
+`<textarea>` (`rows` controls its height).
+
+<Preview source={variantsSrc} filename="VariantsSpec.tsx">
+  <VariantsSpec />
+</Preview>
+
+## Props
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `value` | `string` | — | Current value (controlled). |
+| `onChange` | `(value: string) => void` | — | Called with the new string value. |
+| `prefix` | `ReactNode` | — | Leading adornment inside the field. |
+| `multiline` | `boolean` | `false` | Render a `<textarea>` instead of `<input>`. |
+| `rows` | `number` | `4` | Textarea row count (when `multiline`). |
+| `invalid` | `boolean` | `false` | Danger border + `aria-invalid`. |
+| `mono` | `boolean` | `false` | Use the monospace face. |
+| `disabled` | `boolean` | `false` | Disables input. |
+| `className` | `string` | — | Extra classes on the field shell. |
+
+Other native `<input>` attributes (`placeholder`, `type`, `onBlur`, `autoFocus`,
+`maxLength`, …) are forwarded.

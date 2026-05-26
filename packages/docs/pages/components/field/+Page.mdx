@@ -1,0 +1,46 @@
+---
+title: Field
+section: Components
+order: 35
+description: Form-field wrapper — label, required marker, hint and error.
+---
+
+import { Preview } from '../../../components/Preview'
+import { BasicSpec } from '../../../components/specimens/components/field/BasicSpec'
+import { ErrorSpec } from '../../../components/specimens/components/field/ErrorSpec'
+import basicSrc from '../../../components/specimens/components/field/BasicSpec.tsx?raw'
+import errorSrc from '../../../components/specimens/components/field/ErrorSpec.tsx?raw'
+
+# Field
+
+A labelled wrapper for a single form control. Renders the label (with an
+optional required marker), the control (its `children` — usually a
+[TextField](/components/text-field) or [Select](/components/select)), and a
+hint or error line below.
+
+## Label & hint
+
+<Preview source={basicSrc} filename="BasicSpec.tsx">
+  <BasicSpec />
+</Preview>
+
+## Error
+
+When `error` is set it replaces the hint and renders in the danger tone. Pair it
+with the control's own `invalid` flag for the red border.
+
+<Preview source={errorSrc} filename="ErrorSpec.tsx">
+  <ErrorSpec />
+</Preview>
+
+## Props
+
+| Prop | Type | Description |
+| --- | --- | --- |
+| `label` | `ReactNode` | Field label (rendered above the control). |
+| `hint` | `ReactNode` | Helper text shown below when there is no error. |
+| `error` | `ReactNode` | Error message; replaces the hint, shown in danger tone. |
+| `required` | `boolean` | Appends a danger `*` to the label. |
+| `htmlFor` | `string` | Associates the label with a control `id`. |
+| `className` | `string` | Extra classes on the wrapper. |
+| `children` | `ReactNode` | The control to wrap. |
