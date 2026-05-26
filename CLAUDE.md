@@ -64,6 +64,11 @@ fixes don't need a changelog entry — judgment call.
 
 ## Versioning and release (load-bearing rules)
 
+**To deploy the docs site to production, run `pnpm prod`** from the workspace
+root — it force-pushes the current `main` HEAD to the `netlify-production`
+branch (after the version-consistency check + `v/<version>` snapshot). Use
+`pnpm staging` for a WIP preview on `netlify-staging`.
+
 - The root `package.json` plus every `packages/*/package.json` must agree on
   `version`. `pnpm prod` runs a check and **refuses to deploy** on mismatch.
 - Bump version with `pnpm set-version <x.y.z>` (rewrites every package.json

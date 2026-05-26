@@ -8,13 +8,19 @@ description: Compact inline dropdown for sort/filter toolbar controls.
 import { Preview } from '../../../components/Preview'
 import { WithIconSpec } from '../../../components/specimens/components/select/WithIconSpec'
 import { BasicSpec } from '../../../components/specimens/components/select/BasicSpec'
+import { FieldSpec } from '../../../components/specimens/components/select/FieldSpec'
 import iconSrc from '../../../components/specimens/components/select/WithIconSpec.tsx?raw'
 import basicSrc from '../../../components/specimens/components/select/BasicSpec.tsx?raw'
+import fieldSrc from '../../../components/specimens/components/select/FieldSpec.tsx?raw'
 
 # Select
 
 A compact inline dropdown for selection. Opens below the trigger, closes on
 outside click. Commonly used for sort/filter controls in toolbars.
+
+The trigger is `w-fit` — it hugs its content even inside a flex container (like a
+[Field](/components/field)), so the dropdown stays anchored to the trigger
+rather than a stretched parent.
 
 ## With icon
 
@@ -32,15 +38,27 @@ Without an icon, only the current label and the caret are shown.
   <BasicSpec />
 </Preview>
 
+## Alignment & forms
+
+`align` controls which edge of the **trigger** the dropdown opens from — `'right'`
+(default) suits a right-aligned toolbar control; `'left'` suits a left-aligned
+control such as one inside a form Field. The label/trigger style is unchanged;
+only the panel's anchor moves.
+
+<Preview source={fieldSrc} filename="FieldSpec.tsx">
+  <FieldSpec />
+</Preview>
+
 ## Props
 
-| Prop | Type | Description |
-| --- | --- | --- |
-| `value` | `string` | Currently selected option value. |
-| `onChange` | `(value: string) => void` | Called when the user picks an option. |
-| `options` | `SelectOption[]` | List of options to display. |
-| `icon` | `ReactNode` | Optional prefix glyph rendered before the label at 65% opacity. |
-| `className` | `string` | Extra classes on the root wrapper. |
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `value` | `string` | — | Currently selected option value. |
+| `onChange` | `(value: string) => void` | — | Called when the user picks an option. |
+| `options` | `SelectOption[]` | — | List of options to display. |
+| `icon` | `ReactNode` | — | Optional prefix glyph rendered before the label at 65% opacity. |
+| `align` | `'left' \| 'right'` | `'right'` | Edge of the trigger the dropdown panel opens from. |
+| `className` | `string` | — | Extra classes on the root wrapper. |
 
 ### SelectOption
 

@@ -11,16 +11,12 @@ export interface SelectProps {
   onChange: (value: string) => void
   options: SelectOption[]
   icon?: ReactNode
+  /** Edge the dropdown panel aligns to, relative to the trigger. Default 'right'. */
+  align?: 'left' | 'right'
   className?: string
 }
 
-export function Select({
-  value,
-  onChange,
-  options,
-  icon,
-  className,
-}: SelectProps) {
+export function Select({ value, onChange, options, icon, align = 'right', className }: SelectProps) {
   const [open, setOpen] = useState(false)
   const wrapRef = useRef<HTMLDivElement>(null)
 
@@ -36,7 +32,10 @@ export function Select({
   const current = options.find((o) => o.value === value) ?? options[0]
 
   return (
-    <div ref={wrapRef} className={cn('relative inline-block', className)}>
+    // w-fit keeps the wrapper at the trigger's width even when placed inside a
+    // flex column (e.g. a Field, which would otherwise stretch it full-width).
+    // That keeps the dropdown anchored to the trigger rather than the container.
+    <div ref={wrapRef} className={cn('relative inline-block w-fit', className)}>
       <span
         onClick={() => setOpen((o) => !o)}
         data-open={open || undefined}
@@ -54,7 +53,8 @@ export function Select({
       {open && (
         <div
           className={cn(
-            'absolute top-[calc(100%+8px)] right-0 z-10',
+            'absolute top-[calc(100%+8px)] z-10',
+            align === 'left' ? 'left-0' : 'right-0',
             'rounded-lg p-1 min-w-[140px]',
             'bg-uikit-bg border border-uikit-faint',
             // Style Guide §Elevation — dropdowns use the `soft` ladder.
