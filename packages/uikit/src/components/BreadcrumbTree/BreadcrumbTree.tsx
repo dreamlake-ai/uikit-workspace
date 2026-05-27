@@ -41,6 +41,13 @@ export interface BreadcrumbTreeProps {
   renderEmpty?: (parentNode: BreadcrumbNode | null) => ReactNode
   /** Increment to re-fetch the deepest visible column. */
   refreshKey?: number
+  /**
+   * Increment to drop the whole column cache (e.g. after the host deletes or
+   * renames a node). Visible columns refetch immediately when the panel is
+   * open; otherwise they refetch fresh on next open. Optional — consumers that
+   * don't mutate the tree can ignore it.
+   */
+  refreshToken?: number
   /** Placeholder shown in the breadcrumb when path is empty and rootPath is not set. */
   placeholder?: string
   className?: string
@@ -188,6 +195,7 @@ export function BreadcrumbTree({
   rootPath,
   renderEmpty,
   refreshKey = 0,
+  refreshToken = 0,
   placeholder = 'Select folder',
   className,
 }: BreadcrumbTreeProps) {
@@ -201,7 +209,7 @@ export function BreadcrumbTree({
   const panelRef = useRef<HTMLDivElement>(null)
   const columnsRef = useRef<HTMLDivElement>(null)
 
-  const { fetchPath, loadMore, getColumnData, cache } =
+  const { fetchPath, loadMore, getColumnData, cache, clearCache } =
     useBreadcrumbTree(fetchChildren)
 
   const buildKey = useCallback(
@@ -257,6 +265,20 @@ export function BreadcrumbTree({
     if (!refreshKey) return
     fetchPath(getColumnPathKey(path.length), 1)
   }, [refreshKey]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Drop the whole column cache on host-driven mutations (delete / rename).
+  // If the panel is open, refetch all currently-visible columns so the user
+  // sees fresh data immediately; otherwise the next open repopulates from
+  // empty cache via the "fetch if empty" effects above.
+  useEffect(() => {
+    if (!refreshToken) return
+    clearCache()
+    if (open) {
+      for (let depth = 0; depth <= path.length; depth++) {
+        fetchPath(getColumnPathKey(depth), 1)
+      }
+    }
+  }, [refreshToken]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!open || !columnsRef.current) return
