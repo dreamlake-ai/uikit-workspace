@@ -34,8 +34,10 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(function T
   { value, onChange, prefix, multiline, rows = 4, invalid, mono, disabled, className, ...rest },
   ref,
 ) {
+  // Underline-only field (matches the dreamlake-profile design's ProfTextField:
+  // a single bottom rule, no boxed border / radius / horizontal padding).
   const shell = cn(
-    'flex items-center gap-1.5 rounded-md border bg-uikit-bg px-2.5 py-1.5',
+    'flex items-center gap-1.5 border-b bg-transparent px-0 py-1.5',
     'transition-[border-color] duration-[120ms]',
     invalid ? 'border-uikit-danger' : 'border-uikit-faint focus-within:border-uikit-accent',
     disabled && 'opacity-60 cursor-not-allowed',

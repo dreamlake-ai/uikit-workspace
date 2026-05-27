@@ -77,6 +77,7 @@ export function Dialog({
         onClick={(e) => e.stopPropagation()}
         className={cn(
           'p-6 rounded-[14px] flex flex-col gap-4',
+          'max-h-[85vh] overflow-y-auto',
           'bg-uikit-bg text-uikit-ink shadow-uikit-deep',
           className,
         )}
