@@ -39,7 +39,7 @@ export async function onRenderHtml(pageContext: any) {
     ${themeScript}
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-    <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet" />
     <title>${title}</title>
     ${description ? escapeInject`<meta name="description" content="${description}" />` : ''}
     ${current?.noindex ? escapeInject`<meta name="robots" content="noindex, nofollow" />` : ''}
