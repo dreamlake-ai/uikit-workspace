@@ -31,7 +31,7 @@
   --color-doc-template-rail-stroke:  #d8d4c8;
 
   --font-doc-template-ui:   "Inter Tight", ui-sans-serif, system-ui, sans-serif;
-  --font-doc-template-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-doc-template-mono: "Fira Code", ui-monospace, SFMono-Regular, Menlo, monospace;
 
   --radius-doc-template:    10px;
   --radius-doc-template-sm: 6px;
