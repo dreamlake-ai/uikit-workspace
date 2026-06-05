@@ -1,0 +1,37 @@
+# DreamLake UIkit
+
+Single source of truth for surfaces, ink, semantic color, type, geometry, and the
+zebra-list patterns shared by every DreamLake page — `ml-dash`, `dreamlake`,
+`dreamlake-pipelines`, `dreamlake-profile`, `dreamlake-timetravel`, `notebook`.
+
+These docs are the design contract: tokens that paint surfaces, six hues that color
+domain concepts, two typefaces that split identity from narrative, a fixed spacing
+and radius scale, layered shadows and z-index, and the zebra-list pattern every
+DreamLake list page reuses.
+
+## Install
+
+```bash file="terminal"
+npm install @dreamlake/uikit
+# or
+pnpm add @dreamlake/uikit
+```
+
+## Style guide
+
+The complete contract on one page: [Style guide](reference/style-guide.md). Eight sections —
+Color, Typography, Spacing & layout, Iconography, Elevation & depth, Border &
+radius, Motion, and the Zebra-list four-band model — sourced from the same
+`staging/dreamlake-design-guide.html` and `staging/design.md` references.
+
+## Components
+
+- [Button](reference/components-button.md) — primary + ghost variants, four states.
+
+The full atom catalog (Chip, Avatar, Status, Kbd, Dropdown, Panel, etc.) lives in the
+eventual `@dreamlake/uikit` npm package — not duplicated here.
+
+> **Note:** Every section in the style guide cites its design-guide reference
+>   (`staging/dreamlake-design-guide.html`) and any cross-referenced reasoning
+>   (`staging/design.md`, `staging/zebra-list-style-guide.md`). What you see is what
+>   `@dreamlake/uikit` ships.

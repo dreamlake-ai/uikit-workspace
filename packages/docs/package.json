@@ -6,8 +6,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && pagefind --site dist/client",
-    "preview": "vite preview"
+    "build": "vite build && node scripts/gen-llms.mjs && pagefind --site dist/client",
+    "preview": "vite preview",
+    "gen:llms": "node scripts/gen-llms.mjs",
+    "check:llms": "node scripts/gen-llms.mjs --check"
   },
   "dependencies": {
     "@dreamlake/uikit": "workspace:*",
