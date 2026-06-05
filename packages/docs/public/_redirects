@@ -1,0 +1,14 @@
+# Netlify redirect rules.
+#
+# Default behavior on this site is SPA fallback (unknown paths -> index.html).
+# That's the right call for client-routed pages, but it would eat the
+# generated LLM-readable assets. The rules below force exact-match (200)
+# for those files before the SPA fallback can grab them.
+#
+# Vike's prerender + Netlify's static-asset detection should already do
+# this, but explicit > implicit.
+
+# LLM-readable docs — exact-match before the SPA fallback can grab them.
+/*.md            /:splat              200!
+/llms.txt        /llms.txt            200!
+/llms-full.txt   /llms-full.txt       200!

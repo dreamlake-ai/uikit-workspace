@@ -1,0 +1,75 @@
+# BreadcrumbTree
+
+A breadcrumb-style picker that opens a Finder-style Miller-column panel,
+anchored to the breadcrumb. The panel is portaled to `document.body` so it
+floats above any clipping ancestor. Children are fetched on demand with
+pagination, results are cached per path, and the columns auto-scroll to the
+deepest level.
+
+## Demo
+
+Click the chevron to open the panel. Drill into nodes by clicking rows. Click a
+breadcrumb item to navigate back (the panel closes).
+
+## rootPath and fetchChildren
+
+When `rootPath` is provided (e.g. `"my-project"`), the component prepends it to
+every `fetchChildren` call:
+
+| Column depth | `path` argument to `fetchChildren` |
+| --- | --- |
+| Root | `"my-project"` |
+| After selecting "datasets" | `"my-project/datasets"` |
+| After selecting "droid-2024" | `"my-project/datasets/droid-2024"` |
+
+Without `rootPath`, the root call uses `""` (empty string) and sub-calls use
+`"datasets"`, `"datasets/droid-2024"`, etc.
+
+Results are cached by the full path key, so drilling into the same node twice
+does not trigger a second request.
+
+## Pagination
+
+Each column loads page 1 on first render. An `IntersectionObserver` sentinel at
+the bottom of each column triggers `loadMore` automatically as the user scrolls
+down.
+
+## Portaled panel
+
+The panel is rendered into `document.body` via React's `createPortal`, so it
+floats above any clipping ancestor (`overflow: hidden`, `transform`, sticky
+containers). Position is recomputed on `resize` and capture-phase `scroll`, so
+the panel tracks the trigger as the page moves.
+
+> **Controlled path** — `BreadcrumbTree` is fully controlled. Row clicks call
+> `onNavigate(node, newPath)`; the caller updates `path`. The panel stays open
+> after a row click and closes when a breadcrumb item is clicked.
+
+## Props
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `path` | `BreadcrumbNode[]` | — | Controlled path from root to the selected node. Empty array = root. |
+| `onNavigate` | `(node, newPath) => void` | — | Fires on row click (panel stays open) and breadcrumb click (panel closes). Update `path` here. |
+| `fetchChildren` | `(path, page, limit) => Promise` | — | Async loader. `path` is slash-separated. Prepended with `rootPath` when set. |
+| `rootPath` | `string` | — | Root prefix shown as the first breadcrumb item. |
+| `renderEmpty` | `(parentNode) => ReactNode` | `"No items"` | Custom empty-state per column. Receives the parent node (`null` at root). |
+| `refreshKey` | `number` | `0` | Increment to re-fetch the deepest visible column. |
+| `placeholder` | `string` | `"Select folder"` | Shown when `path` is empty and `rootPath` is unset. |
+| `className` | `string` | — | Extra classes on the wrapper. |
+
+### Types
+
+```ts
+interface BreadcrumbNode {
+  id: string
+  name: string
+  /** When false, hides the chevron — signals no sub-children exist. */
+  hasChildren?: boolean
+}
+
+interface FetchChildrenResult {
+  items: BreadcrumbNode[]
+  totalPages: number
+}
+```

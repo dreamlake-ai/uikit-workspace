@@ -20,4 +20,13 @@ export const siteConfig = {
   /** Leftmost crumb in both the page-top and merged-topbar breadcrumbs.
    *  Set to an empty string to omit the root crumb entirely. */
   breadcrumbRoot: 'Docs',
+  /** Public origin the site is deployed at. Used to build absolute URLs in
+   *  the LLM-readable artifacts (llms.txt, llms-full.txt, the skill). */
+  url: 'https://uikit.dreamlake.ai',
+  /** Importable agent-skill name (also the slug for the published zip). */
+  skill: 'dreamlake-uikit',
+  /** One-line product summary. Becomes the blockquote in llms.txt and the
+   *  skill description. Keep it tight — it's what an LLM reads first. */
+  summary:
+    'DreamLake uikit is the React component library and design contract — surfaces, ink, semantic color, type, geometry, and the zebra-list patterns shared by every DreamLake page.',
 }

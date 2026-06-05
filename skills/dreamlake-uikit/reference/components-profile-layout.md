@@ -1,0 +1,177 @@
+# ProfileLayout
+
+A full-page profile layout: sticky top bar with animated tabs, a fixed left
+rail with personal info, and a scrollable main column. The top bar gains
+frosted-glass styling and reveals the tab strip on scroll.
+
+## Layout zones
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│ [logo]         [tabs — revealed on scroll]       [actions]   │  sticky top:0
+├─────────────┬────────────────────────────────────────────────┤
+│             │ [TabStrip]              [cols toggle]          │  sticky top:34
+│  HeroRail   ├────────────────────────────────────────────────┤
+│  sticky     │                                                │
+│  top:34     │  activeTab.render(cols, scrolled)              │
+│             │                                                │
+└─────────────┴────────────────────────────────────────────────┘
+```
+
+Both the HeroRail and TabStrip stick at `top: 34px` (collapsed topbar height).
+When the page scrolls past 80px, the TabStrip hides and the topbar reveals its
+own embedded copy with a slide-in animation.
+
+## Demo
+
+Scroll inside the preview to see the sticky topbar and tab-reveal animation.
+Toggle to dark mode to see the frosted-glass topbar.
+
+## Avatar image
+
+By default the HeroRail renders a monogram derived from `profile.name`. Pass
+`profile.image` to render an actual image instead — `1:1 aspect-ratio` with
+`object-cover`, falling back to the monogram if the URL is omitted:
+
+```tsx
+const profile: ProfileLayoutProfile = {
+  name: 'MIT CSAIL',
+  handle: 'mit-csail',
+  kind: 'org',
+  image: '/avatars/mit-csail.png',  // ← when set, an <img> replaces the monogram
+  // …
+}
+```
+
+## Editable avatar
+
+Pass `profile.onAvatarChange` to make the rail avatar interactive. Hovering
+reveals a "change avatar" scrim and clicking opens a built-in upload sheet
+(drag-and-drop, file picker, live preview, optional remove). The callback
+fires with the chosen `File` on save, or `null` when the user clicked the
+in-sheet "remove avatar" affordance before saving. It may return a Promise;
+the sheet keeps itself open with a spinner while it resolves, and surfaces
+a generic error if it rejects.
+
+```tsx
+const profile: ProfileLayoutProfile = {
+  // …
+  image: avatarUrl,
+  onAvatarChange: async (file) => {
+    if (file === null) {
+      await deleteAvatar()
+      setAvatarUrl(null)
+      return
+    }
+    const { picture } = await uploadAvatar(file)
+    setAvatarUrl(picture)
+  },
+}
+```
+
+## Editable name
+
+`profile.onEditClick` adds a pencil button next to the name in the rail.
+The pencil only materialises on group-hover of the name row, matching the
+source design's restraint. The callback is fired-and-forgotten — the
+component does not own any edit dialog; the caller decides what happens
+next (typically a Dialog with its own validation, since profile-edit
+flows tend to be app-specific):
+
+```tsx
+const profile: ProfileLayoutProfile = {
+  // …
+  onEditClick: () => setShowProfileSheet(true),
+}
+```
+
+## Name accessory slot
+
+`profile.nameAccessory` is a render slot anchored to the right of the
+name row. The library stays content-agnostic — pass any React node
+(theme-toggle pill, status badge, settings shortcut, etc.). The slot
+stays visible regardless of hover so the accessory is always reachable
+without opening a menu.
+
+```tsx
+const profile: ProfileLayoutProfile = {
+  // …
+  nameAccessory: ,
+}
+```
+
+## Controlled tabs
+
+By default `ProfileLayout` manages its own active tab — pass `defaultTab` for
+the initial value and the layout takes it from there. For deep-linking,
+in-page navigation, or any case where the active tab needs to live in external
+state, switch to controlled mode by passing `tab` + `onTabChange` together:
+
+```tsx
+function MyProfilePage() {
+  const [tab, setTab] = useState('overview')
+
+  return (
+    
+  )
+}
+```
+
+`tab` wins when both `tab` and `defaultTab` are present.
+
+## Props
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `profile` | `ProfileLayoutProfile` | — | Profile data rendered in the left rail. |
+| `tabs` | `ProfileLayoutTab[]` | — | Tab descriptors with render functions. |
+| `defaultTab` | `string` | `tabs[0]` | Initial tab in uncontrolled mode. Ignored when `tab` is provided. |
+| `tab` | `string` | — | Controlled active tab. Pass alongside `onTabChange` to drive tab selection from outside. |
+| `onTabChange` | `(tab: string) => void` | — | Fires when a tab change is requested. Required when using `tab`. |
+| `logo` | `ReactNode` | — | Slot rendered top-left. Animates vertical position on scroll. |
+| `actions` | `ReactNode` | — | Slot rendered top-right (e.g. account switcher). |
+| `scrollContainerRef` | `RefObject` | `window` | Override scroll source. Pass a ref when embedding inside a bounded div. |
+| `className` | `string` | — | Extra classes on the root element. |
+
+> **Controlled vs uncontrolled tabs** — pass `defaultTab` for fire-and-forget;
+> pass `tab` + `onTabChange` when you need external state (deep-linking,
+> programmatic switching). Don't mix both — `tab` wins when present.
+
+### ProfileLayoutProfile
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `name` | `string` | Display name. Initials derive for the monogram fallback. |
+| `handle` | `string` | Username shown as `@handle` below the name. |
+| `kind` | `'user' \| 'org'` | Org accounts show a members section in the rail. |
+| `image` | `string?` | Avatar image URL. When provided, the HeroRail renders an `<img>` (1:1, object-cover); when omitted, falls back to a monogram. |
+| `bio` | `string?` | Optional bio paragraph. |
+| `facts` | `ProfileLayoutFact[]?` | Key–value pairs in the facts grid (label col 60px, value fills). |
+| `members` | `ProfileLayoutMember[]?` | Org only. Avatar strip capped at 12 with `+N` overflow. |
+| `onAvatarChange` | `(file: File \| null) => Promise<void> \| void` ? | When set, avatar becomes clickable — hover scrim + built-in upload sheet (drag-drop, preview, remove). Receives the chosen `File` (or `null` for remove) on save. May return a Promise; the sheet stays open with a spinner while it resolves and surfaces a generic error on reject. |
+| `onEditClick` | `() => void` ? | When set, the name row shows a pencil button on group-hover. Caller owns the resulting edit dialog. |
+| `nameAccessory` | `ReactNode` ? | Slot rendered right of the pencil on the name row. Stays visible regardless of hover. Library stays content-agnostic — pass any node (theme toggle, status badge, etc.). |
+
+### ProfileLayoutTab
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `value` | `string` | Unique tab identifier. |
+| `label` | `string` | Tab label text. |
+| `count` | `number \| null?` | Optional count badge. The current design omits tab counts — pass nothing to match. |
+| `showColsToggle` | `boolean?` | Show the 1/2-col layout toggle for this tab. |
+| `render` | `(cols: 1 \| 2, scrolled: boolean) => ReactNode` | Renders tab content. Use `scrolled + TOPBAR_H_SMALL` for sticky elements. |
+
+### ProfileLayoutFact
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `label` | `string` | Key label in the 60px left column (uppercase mono). |
+| `value` | `string` | Value displayed in the right column. |
+
+### ProfileLayoutMember
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `id` | `string` | Unique member identifier (used as React key). |
+| `name` | `string` | Display name. Initials derive for the avatar chip. |
