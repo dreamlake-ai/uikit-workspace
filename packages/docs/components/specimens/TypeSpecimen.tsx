@@ -55,7 +55,7 @@ const rows: Row[] = [
   {
     name: 'row · ledger',
     sub: 'zebra lists, ID columns, paths',
-    spec: 'JetBrains Mono 500 · 12 / 18',
+    spec: 'Fira Code 500 · 12 / 18',
     demo: (
       <div className="font-mono font-medium text-[12px] leading-[18px] text-uikit-ink">
         classify · acme/prod · 4m 12s · ok
@@ -65,7 +65,7 @@ const rows: Row[] = [
   {
     name: 'meta · timestamp',
     sub: 'secondary cell text in rows',
-    spec: 'JetBrains Mono 500 · 10 / 14 · +0.04em',
+    spec: 'Fira Code 500 · 10 / 14 · +0.04em',
     demo: (
       <div className="font-mono font-medium text-[10px] leading-[14px] tracking-[0.04em] text-uikit-muted">
         2026-04-12 · 14:23 · run_8a14e2
@@ -75,7 +75,7 @@ const rows: Row[] = [
   {
     name: 'eyebrow',
     sub: 'small caps section labels',
-    spec: 'JetBrains Mono 600 · 9.5 · +0.12em · UPPER',
+    spec: 'Fira Code 600 · 9.5 · +0.12em · UPPER',
     demo: (
       <div className="font-mono font-semibold text-[9.5px] tracking-[0.12em] uppercase text-uikit-muted">
         Sources · live now
@@ -85,7 +85,7 @@ const rows: Row[] = [
   {
     name: 'tag',
     sub: 'inline glyph metadata',
-    spec: 'JetBrains Mono 500 · 9 · +0.04em',
+    spec: 'Fira Code 500 · 9 · +0.04em',
     demo: (
       <div className="font-mono font-medium text-[9px] tracking-[0.04em] text-uikit-muted">
         v1.4.2 · 3 columns · 2 sinks
@@ -95,7 +95,7 @@ const rows: Row[] = [
   {
     name: 'kbd',
     sub: 'keyboard chips inline in copy',
-    spec: 'JetBrains Mono 600 · 10 · 5% ink fill',
+    spec: 'Fira Code 600 · 10 · 5% ink fill',
     demo: (
       <div className="flex items-center gap-1.5 font-ui text-[12px] text-uikit-ink">
         <kbd className="font-mono font-semibold text-[10px] text-uikit-ink bg-uikit-chip border border-uikit-faint rounded px-1.5 py-px">⌘</kbd>
