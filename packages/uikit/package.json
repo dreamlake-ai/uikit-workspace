@@ -1,6 +1,6 @@
 {
   "name": "@dreamlake/uikit",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "DreamLake UI kit — primitives + tokens",
   "license": "MIT",
   "type": "module",
