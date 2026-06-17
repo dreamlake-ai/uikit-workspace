@@ -7,6 +7,8 @@
   "scripts": {
     "dev": "pnpm --filter docs dev",
     "build": "pnpm --filter @dreamlake/uikit build && pnpm --filter docs build",
+    "build:uikit": "pnpm --filter @dreamlake/uikit build",
+    "publish:uikit": "pnpm --filter @dreamlake/uikit publish --access public --no-git-checks",
     "preview": "pnpm --filter docs preview",
     "typecheck": "pnpm -r typecheck",
     "format": "prettier --write .",
