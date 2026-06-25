@@ -1,0 +1,44 @@
+---
+title: Skeleton
+section: Components
+order: 205
+description: Pulsing placeholder block for loading states.
+---
+
+import { Preview } from '../../../components/Preview'
+import { LinesSpec } from '../../../components/specimens/components/skeleton/LinesSpec'
+import { CardSpec } from '../../../components/specimens/components/skeleton/CardSpec'
+import linesSrc from '../../../components/specimens/components/skeleton/LinesSpec.tsx?raw'
+import cardSrc from '../../../components/specimens/components/skeleton/CardSpec.tsx?raw'
+
+# Skeleton
+
+A low-emphasis placeholder shown while content is loading. It's just a tinted,
+pulsing `<div>` — you size and shape it with width/height and border-radius to
+mirror the real content's layout.
+
+## Text lines
+
+Stack a few with varied widths to stand in for a paragraph or list row.
+
+<Preview source={linesSrc} filename="LinesSpec.tsx">
+  <LinesSpec />
+</Preview>
+
+## Composed placeholder
+
+Combine differently sized skeletons to mirror a card (avatar + two text lines).
+
+<Preview source={cardSrc} filename="CardSpec.tsx">
+  <CardSpec />
+</Preview>
+
+## Props
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `className` | `string` | — | Sizing/shape utilities (width, height, rounding). |
+
+Any other native `<div>` attributes (`style`, `aria-*`, …) are forwarded. The
+block uses an `--ink` 8% tint and `animate-pulse`; override the background via
+`className` if you need a different surface.
