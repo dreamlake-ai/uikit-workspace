@@ -87,6 +87,10 @@ export function Popover({
     open,
     onOpenChange: setOpen,
     placement,
+    // Position via top/left, not transform — the panel's `uikit-panel-in`
+    // entrance animation owns `transform`, which would otherwise clobber
+    // floating-ui's transform-based positioning (panel jumps to 0,0).
+    transform: false,
     whileElementsMounted: autoUpdate,
     middleware: [offset(sideOffset), flip({ padding: 8 }), shift({ padding: 8 })],
   })

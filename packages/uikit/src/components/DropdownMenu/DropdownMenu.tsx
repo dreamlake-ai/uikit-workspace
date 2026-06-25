@@ -87,6 +87,10 @@ function useMenuFloating(
     open,
     onOpenChange: setOpen,
     placement,
+    // Position via top/left, not transform — the menu's `uikit-panel-in`
+    // entrance animation owns `transform` (which would otherwise clobber
+    // floating-ui's transform-based positioning).
+    transform: false,
     whileElementsMounted: autoUpdate,
     middleware: [offset(sideOffset), flip({ padding: 8 }), shift({ padding: 8 })],
   })

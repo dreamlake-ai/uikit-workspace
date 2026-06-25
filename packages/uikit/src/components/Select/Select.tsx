@@ -109,6 +109,9 @@ export function Select({
     open,
     onOpenChange: setOpen,
     placement: 'bottom-start',
+    // Position via top/left, not transform — the panel's `uikit-panel-in`
+    // entrance animation owns `transform`.
+    transform: false,
     whileElementsMounted: autoUpdate,
     middleware: [
       offset(4),
