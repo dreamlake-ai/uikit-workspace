@@ -1,0 +1,48 @@
+---
+title: Switch
+section: Components
+order: 210
+description: Binary on/off toggle. Controlled or uncontrolled.
+---
+
+import { Preview } from '../../../components/Preview'
+import { StatesSpec } from '../../../components/specimens/components/switch/StatesSpec'
+import { ControlledSpec } from '../../../components/specimens/components/switch/ControlledSpec'
+import statesSrc from '../../../components/specimens/components/switch/StatesSpec.tsx?raw'
+import controlledSrc from '../../../components/specimens/components/switch/ControlledSpec.tsx?raw'
+
+# Switch
+
+A binary on/off toggle for settings. It's a `role="switch"` button (keyboard
+and screen-reader friendly) that fills with the accent token when on. Use it for
+instant-apply preferences; for form submits prefer a checkbox.
+
+## States
+
+Off, on, and disabled in both positions.
+
+<Preview source={statesSrc} filename="StatesSpec.tsx">
+  <StatesSpec />
+</Preview>
+
+## Controlled
+
+Drive it from state with `checked` + `onCheckedChange`. Omit `checked` and pass
+`defaultChecked` to let the switch manage its own state.
+
+<Preview source={controlledSrc} filename="ControlledSpec.tsx">
+  <ControlledSpec />
+</Preview>
+
+## Props
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `checked` | `boolean` | — | Controlled state. Omit for uncontrolled. |
+| `defaultChecked` | `boolean` | `false` | Initial state when uncontrolled. |
+| `onCheckedChange` | `(checked: boolean) => void` | — | Fired with the next state on toggle. |
+| `disabled` | `boolean` | `false` | Disables interaction. |
+| `className` | `string` | — | Extra classes on the track. |
+| `thumbClassName` | `string` | — | Extra classes on the moving thumb. |
+
+Any other native `<button>` attributes (`aria-*`, `id`, …) are forwarded.
