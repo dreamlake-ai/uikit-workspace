@@ -62,7 +62,7 @@ export interface TagProps {
   /**
    * Override the accent (hover/active) color. Accepts a palette tone name
    * (`'blue'` … `'warmGray'`) or any CSS color string.
-   * Default: the resolved `tone` color, or `var(--accent)` if no tone is set.
+   * Default: the resolved `tone` color, or `var(--uikit-accent)` if no tone is set.
    */
   accent?: TagTone | (string & {})
   /** Reduce the font weight (the design's "light" variant). */
@@ -94,7 +94,7 @@ export function Tag({
 }: TagProps) {
   const toneColor = tone ? TONE_VARS[tone] : undefined
   const staticColor = toneColor ?? 'var(--ink)'
-  const accentColor = resolveColor(accent) ?? toneColor ?? 'var(--accent)'
+  const accentColor = resolveColor(accent) ?? toneColor ?? 'var(--uikit-accent)'
 
   const handleX = (e: MouseEvent) => {
     e.stopPropagation()

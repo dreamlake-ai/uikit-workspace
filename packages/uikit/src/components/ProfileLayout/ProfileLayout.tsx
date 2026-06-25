@@ -458,7 +458,7 @@ function AvatarEditSheet({
               'font-uikit-mono text-uikit-11 font-medium tracking-uikit-snug',
               'inline-block text-uikit-bg bg-uikit-ink rounded-md px-2.5 py-[5px] cursor-pointer select-none',
               'transition-[background] duration-120',
-              'hover:bg-[color-mix(in_oklab,var(--ink)_88%,var(--accent))]',
+              'hover:bg-[color-mix(in_oklab,var(--ink)_88%,var(--uikit-accent))]',
               'data-[disabled]:opacity-60 data-[disabled]:pointer-events-none',
             )}
           >

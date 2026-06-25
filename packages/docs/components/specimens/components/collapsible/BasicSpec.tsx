@@ -11,7 +11,7 @@ export const BasicSpec = () => (
       <div
         style={{
           fontSize: 12,
-          color: 'var(--muted)',
+          color: 'var(--uikit-muted)',
           border: '1px solid var(--faint)',
           borderRadius: 10,
           padding: 12,

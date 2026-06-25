@@ -16,7 +16,7 @@ function PrimaryButton({ onClick, children }: { onClick: () => void; children: R
   return (
     <span
       onClick={onClick}
-      className="font-uikit-mono text-uikit-11 font-medium leading-uikit-snug tracking-uikit-snug text-uikit-bg bg-uikit-ink hover:bg-[color-mix(in_oklab,_var(--ink)_88%,_var(--accent))] px-2.5 py-[5px] rounded-md cursor-pointer transition-[background] duration-[120ms]"
+      className="font-uikit-mono text-uikit-11 font-medium leading-uikit-snug tracking-uikit-snug text-uikit-bg bg-uikit-ink hover:bg-[color-mix(in_oklab,_var(--ink)_88%,_var(--uikit-accent))] px-2.5 py-[5px] rounded-md cursor-pointer transition-[background] duration-[120ms]"
     >
       {children}
     </span>
