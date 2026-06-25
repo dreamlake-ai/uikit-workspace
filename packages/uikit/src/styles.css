@@ -65,6 +65,9 @@
   --shadow-tint-3: rgba(0, 0, 0, 0.16);
   --shadow-inset:  rgba(0, 0, 0, 0.08);
 
+  /* Modal/drawer backdrop. Theme-aware so it dims correctly in both modes. */
+  --scrim: rgba(0, 0, 0, 0.5);
+
   /* ── Typography ─────────────────────────────────────────────── */
   --f-ui:   'Inter Tight', ui-sans-serif, system-ui, sans-serif;
   --f-mono: 'JetBrains Mono', ui-monospace, monospace;
@@ -104,6 +107,7 @@ html[data-theme="dark"] {
   --shadow-tint-2: rgba(0, 0, 0, 0.6);
   --shadow-tint-3: rgba(0, 0, 0, 0.75);
   --shadow-inset:  rgba(0, 0, 0, 0.5);
+  --scrim:         rgba(0, 0, 0, 0.62);
 }
 
 /* System-dark fallback — applied only when the consumer hasn't pinned light.
@@ -136,6 +140,7 @@ html[data-theme="dark"] {
     --shadow-tint-2: rgba(0, 0, 0, 0.6);
     --shadow-tint-3: rgba(0, 0, 0, 0.75);
     --shadow-inset:  rgba(0, 0, 0, 0.5);
+    --scrim:         rgba(0, 0, 0, 0.62);
   }
 }
 
@@ -242,10 +247,18 @@ html[data-theme="dark"] {
   --tracking-uikit-wider:    0.06em;
   --tracking-uikit-widest:   0.14em;
 
+  /* ── Radius ladder ────────────────────────────────────────────
+     Named steps so components stop guessing with literals. Panel/row
+     radius keep using the runtime `var(--radius)` (10px). */
+  --radius-uikit-badge: 6px;  /* chips / badges / small controls */
+  --radius-uikit-card:  8px;  /* content cards */
+
   /* ── Shadows — depth-based ────────────────────────────────────
+     `sm`   for small controls (switch thumb, segmented slider).
      `soft` for popovers / menus / dropdowns.
      `deep` for modal panels (Dialog).
-     Both include the inset 1px var(--faint) ring. */
+     soft/deep include the inset 1px var(--faint) ring. */
+  --shadow-uikit-sm:   0 1px 2px var(--shadow-tint-1);
   --shadow-uikit-soft: 0 8px 28px -8px var(--shadow-tint-3),
                        0 0 0 1px var(--faint);
   --shadow-uikit-deep: 0 1px 2px var(--shadow-tint-1),
