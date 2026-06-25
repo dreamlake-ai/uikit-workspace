@@ -16,7 +16,7 @@
   },
   "files": [
     "dist",
-    "src/styles.css",
+    "src",
     "README.md"
   ],
   "publishConfig": {
