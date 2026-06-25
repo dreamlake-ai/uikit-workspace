@@ -56,7 +56,7 @@ export function PackageBadge({
       style={linkable ? { cursor: 'pointer' } : undefined}
     >
       {(packageName || versionText) && (
-        <span className="inline-flex items-center overflow-hidden rounded-[4px]">
+        <span className="inline-flex items-center overflow-hidden rounded-uikit-badge">
           {packageName && (
             <span className="px-1.5 py-0.5 bg-uikit-accent text-white">{packageName}</span>
           )}

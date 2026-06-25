@@ -213,7 +213,7 @@ export function SelectTrigger({ asChild = false, className, children, ...props }
       {...refProps}
     >
       {children}
-      <span className="ml-0.5 text-[9px] opacity-55">▾</span>
+      <span className="ml-0.5 text-uikit-9 opacity-55">▾</span>
     </button>
   )
 }
@@ -242,7 +242,7 @@ export function SelectContent({ className, children, style, ...props }: SelectCo
           ref={ctx.refs.setFloating as never}
           style={{ ...ctx.floatingStyles, ...style }}
           className={cn(
-            'uikit-panel-in z-[200] min-w-[140px] max-h-[min(60vh,320px)] overflow-y-auto rounded-lg p-1 font-uikit-ui',
+            'uikit-panel-in z-[200] min-w-[140px] max-h-[min(60vh,320px)] overflow-y-auto rounded-[10px] p-1 font-uikit-ui',
             'bg-uikit-bg border border-uikit-faint shadow-uikit-soft outline-none',
             className,
           )}
@@ -311,7 +311,7 @@ export function SelectLabel({ className, ...props }: ComponentProps<'div'>) {
   return (
     <div
       className={cn(
-        'px-3.5 py-1 font-uikit-mono text-[10px] uppercase tracking-uikit-wide text-uikit-muted opacity-70 select-none',
+        'px-3.5 py-1 font-uikit-mono text-uikit-10 uppercase tracking-uikit-wide text-uikit-muted opacity-70 select-none',
         className,
       )}
       {...props}

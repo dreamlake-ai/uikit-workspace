@@ -11,7 +11,7 @@ const PADDING: Record<CardSize, string> = {
 }
 
 const BASE =
-  'relative flex flex-col rounded-[10px] bg-uikit-panel border border-uikit-faint text-uikit-ink'
+  'relative flex flex-col rounded-uikit-card bg-uikit-panel border border-uikit-faint text-uikit-ink shadow-uikit-sm'
 
 export interface CardProps extends ComponentProps<'div'> {
   size?: CardSize

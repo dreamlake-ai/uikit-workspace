@@ -15,7 +15,7 @@ export function Skeleton({ className, ...props }: SkeletonProps) {
   return (
     <div
       data-slot="skeleton"
-      className={cn('bg-uikit-ink-8 rounded-md animate-pulse', className)}
+      className={cn('bg-uikit-ink-8 rounded-uikit-badge animate-pulse', className)}
       {...props}
     />
   )

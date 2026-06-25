@@ -108,7 +108,7 @@ export function ModalContent({ className, children, showCloseButton = true, ...p
     <div
       data-slot="modal-overlay"
       onClick={() => setOpen(false)}
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-[rgba(0,0,0,0.55)] font-uikit-ui"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-[var(--scrim)] font-uikit-ui"
     >
       <div
         role="dialog"
@@ -116,7 +116,7 @@ export function ModalContent({ className, children, showCloseButton = true, ...p
         data-slot="modal-content"
         onClick={(e) => e.stopPropagation()}
         className={cn(
-          'relative flex flex-col gap-4 p-6 rounded-[14px] w-full max-w-[calc(100%-2rem)] sm:max-w-[480px]',
+          'uikit-panel-in relative flex flex-col gap-4 p-6 rounded-[14px] w-full max-w-[calc(100%-2rem)] sm:max-w-[480px]',
           'max-h-[85vh] overflow-y-auto bg-uikit-bg text-uikit-ink shadow-uikit-deep',
           className,
         )}

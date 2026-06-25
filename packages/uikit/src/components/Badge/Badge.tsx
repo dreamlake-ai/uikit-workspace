@@ -8,16 +8,18 @@ export type BadgeVariant =
   | 'destructive'
   | 'success'
   | 'warning'
+  | 'purple'
+  | 'neutral'
 export type BadgeType = 'default' | 'circle' | 'dot'
 
 const BASE =
   'inline-flex items-center justify-center w-fit shrink-0 whitespace-nowrap align-middle ' +
-  'rounded-[5px] px-1.5 py-0.5 text-uikit-10 font-medium leading-none overflow-hidden ' +
+  'rounded-uikit-badge px-1.5 py-0.5 text-uikit-10 font-medium leading-none overflow-hidden ' +
   'transition-colors [&>svg]:size-3 [&>svg]:pointer-events-none'
 
-// variant → fill/border. Filled variants use white text; mapped onto the
-// 6-color semantic palette from the Style Guide (blue/green/amber/red), with
-// `secondary`/`outline` staying neutral.
+// variant → fill/border. Filled variants use white text; mapped onto the full
+// 6-color semantic palette from the Style Guide (blue/green/amber/red/purple/
+// warm-gray), with `secondary`/`outline` staying neutral.
 const VARIANTS: Record<BadgeVariant, string> = {
   default: 'bg-uikit-accent text-white',
   outline: 'bg-transparent text-uikit-ink border border-uikit-faint',
@@ -25,6 +27,8 @@ const VARIANTS: Record<BadgeVariant, string> = {
   destructive: 'bg-uikit-danger text-white',
   success: 'bg-uikit-tone-green text-white',
   warning: 'bg-uikit-tone-amber text-white',
+  purple: 'bg-uikit-tone-purple text-white',
+  neutral: 'bg-uikit-tone-warm-gray text-white',
 }
 
 const TYPES: Record<BadgeType, string> = {

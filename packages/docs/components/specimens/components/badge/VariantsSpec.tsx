@@ -8,5 +8,7 @@ export const VariantsSpec = () => (
     <Badge variant="success">Success</Badge>
     <Badge variant="warning">Warning</Badge>
     <Badge variant="destructive">Error</Badge>
+    <Badge variant="purple">Model</Badge>
+    <Badge variant="neutral">Idle</Badge>
   </div>
 )

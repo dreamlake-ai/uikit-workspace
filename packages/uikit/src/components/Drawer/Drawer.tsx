@@ -153,7 +153,7 @@ export function DrawerContent({ className, children, style, ...props }: DrawerCo
     <div
       data-slot="drawer-overlay"
       onClick={() => setOpen(false)}
-      className="fixed inset-0 z-[100] bg-[rgba(0,0,0,0.55)] font-uikit-ui"
+      className="fixed inset-0 z-[100] bg-[var(--scrim)] font-uikit-ui"
     >
       <div
         role="dialog"

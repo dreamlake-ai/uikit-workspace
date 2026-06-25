@@ -11,8 +11,8 @@ const VARIANTS: Record<ToggleVariant, string> = {
 }
 
 const SIZES: Record<ToggleSize, string> = {
-  sm: "text-uikit-11 gap-1 p-1 rounded-md [&_svg:not([class*='size-'])]:size-3",
-  base: "text-uikit-12 gap-1.5 p-2 rounded-md [&_svg:not([class*='size-'])]:size-4",
+  sm: "text-uikit-11 gap-1 p-1 rounded-uikit-badge [&_svg:not([class*='size-'])]:size-3",
+  base: "text-uikit-12 gap-1.5 p-2 rounded-uikit-badge [&_svg:not([class*='size-'])]:size-4",
   lg: "text-uikit-14 gap-1.5 p-3 rounded-[10px] [&_svg:not([class*='size-'])]:size-5",
 }
 

@@ -103,14 +103,14 @@ export function AlertDialogContent({ className, children, ...props }: AlertDialo
   return createPortal(
     <div
       data-slot="alert-dialog-overlay"
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-[rgba(0,0,0,0.55)] font-uikit-ui"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-[var(--scrim)] font-uikit-ui"
     >
       <div
         role="alertdialog"
         aria-modal="true"
         data-slot="alert-dialog-content"
         className={cn(
-          'flex flex-col gap-4 p-6 rounded-[14px] w-full max-w-[calc(100%-2rem)] sm:max-w-[440px]',
+          'uikit-panel-in flex flex-col gap-4 p-6 rounded-[14px] w-full max-w-[calc(100%-2rem)] sm:max-w-[440px]',
           'max-h-[85vh] overflow-y-auto bg-uikit-bg text-uikit-ink shadow-uikit-deep',
           className,
         )}

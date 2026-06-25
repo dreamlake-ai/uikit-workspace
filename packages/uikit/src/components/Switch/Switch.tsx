@@ -59,7 +59,7 @@ export const Switch = forwardRef<HTMLButtonElement, SwitchProps>(function Switch
       <span
         data-slot="switch-thumb"
         className={cn(
-          'pointer-events-none block size-3 rounded-full bg-white shadow-sm',
+          'pointer-events-none block size-3 rounded-full bg-white shadow-uikit-sm',
           'transition-transform duration-200',
           isOn ? 'translate-x-[18px]' : 'translate-x-[2px]',
           thumbClassName,

@@ -25,9 +25,9 @@ const CONTAINER: Record<ToggleButtonsVariant, string> = {
 }
 
 const HIGHLIGHT: Record<ToggleButtonsVariant, string> = {
-  primary: 'bg-uikit-accent shadow-sm rounded-md',
-  secondary: 'bg-uikit-bg shadow-sm rounded-md',
-  ghost: 'bg-uikit-chip shadow-sm rounded-[10px]',
+  primary: 'bg-uikit-accent shadow-uikit-sm rounded-uikit-badge',
+  secondary: 'bg-uikit-bg shadow-uikit-sm rounded-uikit-badge',
+  ghost: 'bg-uikit-chip shadow-uikit-sm rounded-[10px]',
 }
 
 const BTN_VARIANT: Record<ToggleButtonsVariant, string> = {

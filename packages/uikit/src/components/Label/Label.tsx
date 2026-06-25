@@ -23,7 +23,7 @@ export function Label({ className, size = 'sm', ...props }: LabelProps) {
   return (
     <label
       className={cn(
-        'font-normal leading-none whitespace-nowrap overflow-hidden text-ellipsis',
+        'font-uikit-ui font-normal leading-none whitespace-nowrap overflow-hidden text-ellipsis text-uikit-ink',
         'peer-disabled:cursor-not-allowed peer-disabled:opacity-70',
         SIZE[size],
         className,

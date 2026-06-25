@@ -12,8 +12,8 @@ export interface ToolbarProps extends ComponentProps<'div'> {
 const PAD: Record<ToolbarSize, string> = { sm: 'p-1.5', md: 'p-1.5', lg: 'p-2' }
 const RADIUS: Record<ToolbarSize, string> = {
   sm: 'rounded-[10px]',
-  md: 'rounded-[12px]',
-  lg: 'rounded-[14px]',
+  md: 'rounded-[10px]',
+  lg: 'rounded-[12px]',
 }
 
 /**
