@@ -7,3 +7,4 @@
 
 export * from "./components";
 export { cn } from "./lib/utils";
+export { useIsMobile } from "./lib/useIsMobile";

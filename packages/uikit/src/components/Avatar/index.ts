@@ -1,2 +1,2 @@
-export { Avatar } from "./Avatar";
-export type { AvatarProps } from "./Avatar";
+export { Avatar, AvatarImage, AvatarFallback } from "./Avatar";
+export type { AvatarProps, AvatarImageProps, AvatarFallbackProps } from "./Avatar";

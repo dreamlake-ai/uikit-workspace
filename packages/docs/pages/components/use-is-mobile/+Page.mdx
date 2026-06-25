@@ -1,0 +1,35 @@
+---
+title: useIsMobile
+section: Components
+order: 250
+description: Hook returning true when the viewport is narrower than 768px.
+---
+
+import { Preview } from '../../../components/Preview'
+import { BasicSpec } from '../../../components/specimens/components/use-is-mobile/BasicSpec'
+import basicSrc from '../../../components/specimens/components/use-is-mobile/BasicSpec.tsx?raw'
+
+# useIsMobile
+
+A hook that returns `true` when the viewport is narrower than `768px`. It tracks
+resizes via `matchMedia` and is SSR-safe (returns `false` until mounted, so the
+server and first client render agree).
+
+```tsx
+import { useIsMobile } from '@dreamlake/uikit'
+
+function Nav() {
+  const isMobile = useIsMobile()
+  return isMobile ? <DrawerNav /> : <SideNav />
+}
+```
+
+<Preview source={basicSrc} filename="BasicSpec.tsx">
+  <BasicSpec />
+</Preview>
+
+## Returns
+
+| Type | Description |
+| --- | --- |
+| `boolean` | `true` when `window.innerWidth < 768`. |
