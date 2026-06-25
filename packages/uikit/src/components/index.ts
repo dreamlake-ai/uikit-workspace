@@ -1,4 +1,5 @@
 export * from "./Avatar";
+export * from "./Badge";
 export * from "./BreadcrumbTree";
 export * from "./Button";
 export * from "./Dialog";

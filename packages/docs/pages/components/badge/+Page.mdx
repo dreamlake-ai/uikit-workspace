@@ -1,0 +1,48 @@
+---
+title: Badge
+section: Components
+order: 215
+description: Small inline status/category badge with filled, outline and dot forms.
+---
+
+import { Preview } from '../../../components/Preview'
+import { VariantsSpec } from '../../../components/specimens/components/badge/VariantsSpec'
+import { TypesSpec } from '../../../components/specimens/components/badge/TypesSpec'
+import variantsSrc from '../../../components/specimens/components/badge/VariantsSpec.tsx?raw'
+import typesSrc from '../../../components/specimens/components/badge/TypesSpec.tsx?raw'
+
+# Badge
+
+A compact inline badge for counts and statuses. Filled variants map onto the
+6-color semantic palette; `secondary`/`outline` stay neutral.
+
+> Related: [Tag](/components/tag) is the hashtag/pill primitive for filter chips
+> and categorical labels. Reach for **Badge** for counts and short status
+> markers, **Tag** for selectable/removable category pills.
+
+## Variants
+
+<Preview source={variantsSrc} filename="VariantsSpec.tsx">
+  <VariantsSpec />
+</Preview>
+
+## Shapes
+
+`type` switches the shape: `default` (label pill), `circle` (square-ish single
+glyph / count), and `dot` (a bare colored indicator with no label).
+
+<Preview source={typesSrc} filename="TypesSpec.tsx">
+  <TypesSpec />
+</Preview>
+
+## Props
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `variant` | `'default' \| 'secondary' \| 'outline' \| 'success' \| 'warning' \| 'destructive'` | `'default'` | Color/fill. |
+| `type` | `'default' \| 'circle' \| 'dot'` | `'default'` | Shape. |
+| `asChild` | `boolean` | `false` | Render the single child element instead of a `<span>`, merging classes. |
+| `className` | `string` | — | Extra classes. |
+
+`badgeVariants({ variant, type, className })` is also exported — it returns the
+composed class string for hand-built badge-styled elements.
