@@ -7,7 +7,7 @@ import {
   type CSSProperties,
 } from 'react'
 import { cn } from '../../lib/utils'
-import { SelectBox } from '../Select/SelectBox'
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../Select/Select'
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -284,12 +284,22 @@ export function FilterBar({
 
         {/* Right: sort */}
         {sortOptions && sortOptions.length > 0 && (
-          <SelectBox
-            icon="↕"
+          <Select
             value={sortValue ?? sortOptions[0].value}
-            onChange={(v) => onSortChange?.(v)}
-            options={sortOptions}
-          />
+            onValueChange={(v) => onSortChange?.(v)}
+          >
+            <SelectTrigger>
+              <span className="opacity-65">↕</span>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {sortOptions.map((o) => (
+                <SelectItem key={o.value} value={o.value}>
+                  {o.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         )}
       </div>
     </div>

@@ -1,4 +1,5 @@
 import {
+  Children,
   type ComponentProps,
   type ReactElement,
   type ReactNode,
@@ -6,7 +7,6 @@ import {
   createContext,
   isValidElement,
   useContext,
-  useEffect,
   useMemo,
   useRef,
   useState,
@@ -36,8 +36,7 @@ interface SelectContextValue {
   setOpen: (open: boolean) => void
   value: string | undefined
   setValue: (value: string) => void
-  setLabel: (label: ReactNode) => void
-  label: ReactNode
+  labelMap: Map<string, ReactNode>
   refs: ReturnType<typeof useFloating>['refs']
   floatingStyles: ReturnType<typeof useFloating>['floatingStyles']
   context: ReturnType<typeof useFloating>['context']
@@ -55,6 +54,21 @@ function useSelectContext(name: string) {
   return c
 }
 
+/** Walk the children tree (through SelectGroups) collecting value → label so the
+ *  trigger can show the current selection even while the panel — and its
+ *  items — are unmounted. */
+function collectLabels(children: ReactNode, map: Map<string, ReactNode>) {
+  Children.forEach(children, (child) => {
+    if (!isValidElement(child)) return
+    const el = child as ReactElement<{ value?: string; children?: ReactNode }>
+    if (el.type === SelectItem && el.props.value != null) {
+      map.set(el.props.value, el.props.children)
+    } else if (el.props?.children) {
+      collectLabels(el.props.children, map)
+    }
+  })
+}
+
 export interface SelectProps {
   value?: string
   defaultValue?: string
@@ -70,10 +84,9 @@ export interface SelectProps {
  * `SelectContent` containing `SelectItem`s (optionally grouped with
  * `SelectGroup` / `SelectLabel`).
  *
- * Drop-in for the legacy `@vuer-ai/vuer-uikit` Select (Radix). Reimplemented on
- * `@floating-ui/react` (anchored positioning, keyboard list navigation +
- * typeahead). For the terse `options`-driven inline picker, use
- * [SelectBox](/components/select-box).
+ * Drop-in for the legacy `@vuer-ai/vuer-uikit` Select (Radix), styled like the
+ * kit's compact mono picker. Positioning, keyboard list navigation and typeahead
+ * come from `@floating-ui/react`; the panel matches the trigger width.
  */
 export function Select({
   value: controlledValue,
@@ -100,7 +113,12 @@ export function Select({
     onOpenChange?.(o)
   }
 
-  const [label, setLabel] = useState<ReactNode>(null)
+  const labelMap = useMemo(() => {
+    const m = new Map<string, ReactNode>()
+    collectLabels(children, m)
+    return m
+  }, [children])
+
   const elementsRef = useRef<Array<HTMLElement | null>>([])
   const labelsRef = useRef<Array<string | null>>([])
   const [activeIndex, setActiveIndex] = useState<number | null>(null)
@@ -114,7 +132,7 @@ export function Select({
     transform: false,
     whileElementsMounted: autoUpdate,
     middleware: [
-      offset(4),
+      offset(8),
       flip({ padding: 8 }),
       shift({ padding: 8 }),
       sizeMiddleware({
@@ -153,8 +171,7 @@ export function Select({
       setOpen,
       value,
       setValue,
-      label,
-      setLabel,
+      labelMap,
       refs,
       floatingStyles,
       context,
@@ -166,7 +183,7 @@ export function Select({
       labelsRef,
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [open, value, label, refs, floatingStyles, context, getReferenceProps, getFloatingProps, getItemProps, activeIndex],
+    [open, value, labelMap, refs, floatingStyles, context, getReferenceProps, getFloatingProps, getItemProps, activeIndex],
   )
 
   return <SelectContext.Provider value={ctx}>{children}</SelectContext.Provider>
@@ -175,6 +192,7 @@ export function Select({
 export interface SelectTriggerProps extends ComponentProps<'button'> {
   asChild?: boolean
 }
+/** Compact mono trigger (matches the kit's original Select look). */
 export function SelectTrigger({ asChild = false, className, children, ...props }: SelectTriggerProps) {
   const ctx = useSelectContext('SelectTrigger')
   const refProps = ctx.getReferenceProps({ ...props, 'data-state': ctx.open ? 'open' : 'closed' })
@@ -187,15 +205,15 @@ export function SelectTrigger({ asChild = false, className, children, ...props }
       ref={ctx.refs.setReference as never}
       type="button"
       className={cn(
-        'inline-flex h-8 items-center justify-between gap-2 rounded-[10px] px-3 min-w-[140px]',
-        'bg-uikit-chip text-uikit-12 text-uikit-ink outline-none cursor-pointer',
-        'data-[state=open]:bg-uikit-search',
+        'inline-flex w-fit items-center gap-1 cursor-pointer outline-none',
+        'font-uikit-mono text-uikit-11 font-medium tracking-uikit-snug',
+        'text-uikit-ink opacity-85 data-[state=open]:opacity-100',
         className,
       )}
       {...refProps}
     >
       {children}
-      <span className="text-uikit-muted text-[9px]">▾</span>
+      <span className="ml-0.5 text-[9px] opacity-55">▾</span>
     </button>
   )
 }
@@ -206,11 +224,10 @@ export interface SelectValueProps {
 }
 export function SelectValue({ placeholder, className }: SelectValueProps) {
   const ctx = useSelectContext('SelectValue')
-  const has = ctx.value !== undefined && ctx.label != null
+  const display = ctx.value !== undefined ? ctx.labelMap.get(ctx.value) : undefined
+  const has = display != null
   return (
-    <span className={cn('truncate', !has && 'text-uikit-muted', className)}>
-      {has ? ctx.label : placeholder}
-    </span>
+    <span className={cn('truncate', !has && 'opacity-65', className)}>{has ? display : placeholder}</span>
   )
 }
 
@@ -225,8 +242,8 @@ export function SelectContent({ className, children, style, ...props }: SelectCo
           ref={ctx.refs.setFloating as never}
           style={{ ...ctx.floatingStyles, ...style }}
           className={cn(
-            'uikit-panel-in z-[200] max-h-[min(60vh,320px)] overflow-y-auto rounded-[10px] p-1 font-uikit-ui',
-            'bg-uikit-panel text-uikit-ink border border-uikit-faint shadow-uikit-soft outline-none',
+            'uikit-panel-in z-[200] min-w-[140px] max-h-[min(60vh,320px)] overflow-y-auto rounded-lg p-1 font-uikit-ui',
+            'bg-uikit-bg border border-uikit-faint shadow-uikit-soft outline-none',
             className,
           )}
           {...ctx.getFloatingProps(props)}
@@ -251,18 +268,10 @@ export function SelectItem({ className, value, disabled, children, ...props }: S
   const active = ctx.activeIndex === index
   const selected = ctx.value === value
 
-  // Surface the selected item's content to <SelectValue> (covers the initial
-  // value set via defaultValue/value before any click).
-  useEffect(() => {
-    if (selected) ctx.setLabel(children)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selected, children])
-
   const itemProps = ctx.getItemProps({
     onClick: () => {
       if (disabled) return
       ctx.setValue(value)
-      ctx.setLabel(children)
       ctx.setOpen(false)
     },
   })
@@ -277,16 +286,19 @@ export function SelectItem({ className, value, disabled, children, ...props }: S
       data-active={active}
       data-selected={selected}
       className={cn(
-        'flex items-center justify-between gap-2 rounded-md px-2 py-1.5 text-uikit-12 leading-uikit-snug',
-        'cursor-pointer select-none outline-none data-[active=true]:bg-uikit-ink-5',
-        'disabled:opacity-50 aria-disabled:opacity-50 aria-disabled:pointer-events-none',
+        'cursor-pointer rounded-md px-3.5 py-[7px] leading-[15px] outline-none select-none',
+        'font-uikit-mono text-[12.5px] font-medium tracking-uikit-snug',
+        'transition-[background-color,color] duration-[120ms]',
+        'bg-transparent text-uikit-muted opacity-85 hover:bg-uikit-ink-4',
+        'data-[active=true]:bg-uikit-ink-4',
+        'data-[selected=true]:bg-uikit-ink-5 data-[selected=true]:text-uikit-ink data-[selected=true]:opacity-100',
+        'aria-disabled:opacity-50 aria-disabled:pointer-events-none',
         className,
       )}
       {...props}
       {...(disabled ? {} : itemProps)}
     >
-      <span className="truncate">{children}</span>
-      {selected && <span className="text-uikit-accent">✓</span>}
+      {children}
     </div>
   )
 }
@@ -298,7 +310,10 @@ export function SelectGroup({ className, ...props }: ComponentProps<'div'>) {
 export function SelectLabel({ className, ...props }: ComponentProps<'div'>) {
   return (
     <div
-      className={cn('px-2 py-1 text-uikit-10 uppercase tracking-uikit-wide text-uikit-muted select-none', className)}
+      className={cn(
+        'px-3.5 py-1 font-uikit-mono text-[10px] uppercase tracking-uikit-wide text-uikit-muted opacity-70 select-none',
+        className,
+      )}
       {...props}
     />
   )

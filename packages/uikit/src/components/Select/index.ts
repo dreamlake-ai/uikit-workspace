@@ -14,6 +14,3 @@ export type {
   SelectContentProps,
   SelectItemProps,
 } from './Select'
-
-export { SelectBox } from './SelectBox'
-export type { SelectBoxProps, SelectBoxOption } from './SelectBox'
