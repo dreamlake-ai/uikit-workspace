@@ -20,7 +20,7 @@
 
   /* ── Ink / muted ─────────────────────────────────────────────── */
   --ink:   #1a1a1a;
-  --muted: #6b6b6b;
+  --uikit-muted: #6b6b6b;
 
   /* ── Hairlines, chips, search ────────────────────────────────── */
   --faint:        rgba(0, 0, 0, 0.08);
@@ -30,14 +30,14 @@
 
   /* ── Selection / accent ──────────────────────────────────────── */
   --selected-bg: #d9e6f7;
-  --accent:      #23aaff;
+  --uikit-accent:      #23aaff;
   --accent-soft: rgba(35, 170, 255, 0.09);
 
   /* ── Semantic palette (Style Guide §Color) ────────────────────
      The six-color set every domain coloring pulls from. Names mirror
      the `TagTone` union so `tone="green"` and `--tone-green` track
      each other. Palette values are theme-invariant — the same hex in
-     light + dark. `--tone-blue` intentionally equals `--accent`. */
+     light + dark. `--tone-blue` intentionally equals `--uikit-accent`. */
   --tone-blue:      #23aaff; /* active · running · accent */
   --tone-green:     #1f8f4a; /* ok · source · success */
   --tone-amber:     #c0922e; /* stale · scheduled · filter */
@@ -86,7 +86,7 @@ html[data-theme="dark"] {
   --rail-bg:  var(--rail-bg-dark);
 
   --ink:          #ececec;
-  --muted:        #8a8a8a;
+  --uikit-muted:        #8a8a8a;
   --faint:        rgba(255, 255, 255, 0.09);
   --faint-dashed: rgba(255, 255, 255, 0.22);
   --chip-bg:      rgba(255, 255, 255, 0.05);
@@ -120,7 +120,7 @@ html[data-theme="dark"] {
     --rail-bg:  var(--rail-bg-dark);
 
     --ink:          #ececec;
-    --muted:        #8a8a8a;
+    --uikit-muted:        #8a8a8a;
     --faint:        rgba(255, 255, 255, 0.09);
     --faint-dashed: rgba(255, 255, 255, 0.22);
     --chip-bg:      rgba(255, 255, 255, 0.05);
@@ -160,11 +160,11 @@ html[data-theme="dark"] {
      accidentally shadow them. Theme-flipping happens at runtime via
      the :root / [data-theme] cascade above, so dark mode "just works". */
   --color-uikit-ink:         var(--ink);
-  --color-uikit-muted:       var(--muted);
+  --color-uikit-muted:       var(--uikit-muted);
   --color-uikit-bg:          var(--bg);
   --color-uikit-panel:       var(--panel-bg);
   --color-uikit-rail:        var(--rail-bg);
-  --color-uikit-accent:      var(--accent);
+  --color-uikit-accent:      var(--uikit-accent);
   --color-uikit-accent-soft: var(--accent-soft);
   --color-uikit-faint:        var(--faint);
   --color-uikit-faint-dashed: var(--faint-dashed);
@@ -204,7 +204,7 @@ html[data-theme="dark"] {
   --color-uikit-ink-8:       color-mix(in srgb, var(--ink) 8%,  transparent);
   --color-uikit-ink-12:      color-mix(in srgb, var(--ink) 12%, transparent);
   --color-uikit-ink-50:      color-mix(in srgb, var(--ink) 50%, transparent);
-  --color-uikit-accent-12:   color-mix(in srgb, var(--accent) 12%, transparent);
+  --color-uikit-accent-12:   color-mix(in srgb, var(--uikit-accent) 12%, transparent);
 
   /* ── Fonts ────────────────────────────────────────────────────── */
   --font-uikit-ui:   var(--f-ui);

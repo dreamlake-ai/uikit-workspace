@@ -21,12 +21,12 @@ export interface ToasterProps {
 }
 
 const TONE: Record<ToastType, string> = {
-  default: 'var(--muted)',
+  default: 'var(--uikit-muted)',
   success: 'var(--tone-green)',
   error: 'var(--tone-red)',
   info: 'var(--tone-blue)',
   warning: 'var(--tone-amber)',
-  loading: 'var(--muted)',
+  loading: 'var(--uikit-muted)',
 }
 
 const POSITION: Record<ToasterPosition, CSSProperties> = {
