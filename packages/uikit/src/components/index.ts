@@ -1,6 +1,7 @@
 export * from "./Avatar";
 export * from "./BreadcrumbTree";
 export * from "./Button";
+export * from "./Collapsible";
 export * from "./Dialog";
 export * from "./Field";
 export * from "./FilterBar";
