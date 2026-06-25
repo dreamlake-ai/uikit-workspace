@@ -10,6 +10,7 @@ export * from "./ProfileLayout";
 export * from "./ResizableLayout";
 export * from "./Select";
 export * from "./SideNav";
+export * from "./Switch";
 export * from "./Tabs";
 export * from "./Tag";
 export * from "./TextField";
