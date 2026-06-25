@@ -1,0 +1,26 @@
+---
+title: Mouse Cursor Icons
+section: Components
+order: 285
+description: Cursor-pointer icons (outline and filled) that inherit currentColor.
+---
+
+import { Preview } from '../../../components/Preview'
+import { BasicSpec } from '../../../components/specimens/components/mouse-cursor/BasicSpec'
+import basicSrc from '../../../components/specimens/components/mouse-cursor/BasicSpec.tsx?raw'
+
+# Mouse Cursor Icons
+
+Two small cursor-pointer glyphs — `MouseCursorIcon` (outline) and
+`MouseCursorAltIcon` (filled). They render at 16×16, inherit `currentColor`, and
+take an optional `strokeWidth`. Used for collaborator/presence cursors.
+
+<Preview source={basicSrc} filename="BasicSpec.tsx">
+  <BasicSpec />
+</Preview>
+
+## Props
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `strokeWidth` | `number` | `2.25` | Stroke width of the glyph. |
