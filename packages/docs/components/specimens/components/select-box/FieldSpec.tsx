@@ -1,14 +1,14 @@
 import { useState } from 'react'
-import { Field, Select } from '@dreamlake/uikit'
+import { Field, SelectBox } from '@dreamlake/uikit'
 
-// Inside a Field the wrapper would otherwise stretch full-width; the Select
-// stays compact (w-fit) and `align="left"` opens the dropdown from the trigger's
-// left edge instead of the container's far right.
+// Inside a Field the wrapper would otherwise stretch full-width; SelectBox stays
+// compact (w-fit) and `align="left"` opens the dropdown from the trigger's left
+// edge instead of the container's far right.
 export const FieldSpec = () => {
   const [value, setValue] = useState('VISIBLE')
   return (
     <Field label="Visibility">
-      <Select
+      <SelectBox
         align="left"
         value={value}
         onChange={setValue}

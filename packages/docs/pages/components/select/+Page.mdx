@@ -2,86 +2,37 @@
 title: Select
 section: Components
 order: 90
-description: Compact inline dropdown for sort/filter toolbar controls.
+description: Composable single-select with a trigger, value, and grouped items.
 ---
 
 import { Preview } from '../../../components/Preview'
-import { WithIconSpec } from '../../../components/specimens/components/select/WithIconSpec'
 import { BasicSpec } from '../../../components/specimens/components/select/BasicSpec'
-import { FieldSpec } from '../../../components/specimens/components/select/FieldSpec'
-import { PlacementSpec } from '../../../components/specimens/components/select/PlacementSpec'
-import iconSrc from '../../../components/specimens/components/select/WithIconSpec.tsx?raw'
 import basicSrc from '../../../components/specimens/components/select/BasicSpec.tsx?raw'
-import fieldSrc from '../../../components/specimens/components/select/FieldSpec.tsx?raw'
-import placementSrc from '../../../components/specimens/components/select/PlacementSpec.tsx?raw'
 
 # Select
 
-A compact inline dropdown for selection. Opens below the trigger by default
-(`placement="top"` opens it upward), closes on outside click. Commonly used for
-sort/filter controls in toolbars.
+A composable single-select. Compose `SelectTrigger` (wrapping a `SelectValue`)
+with a `SelectContent` of `SelectItem`s, optionally grouped via `SelectGroup` /
+`SelectLabel`. Positioning, keyboard list navigation, and typeahead come from
+`@floating-ui/react`; the panel matches the trigger width.
 
-The trigger is `w-fit` — it hugs its content even inside a flex container (like a
-[Field](/components/field)), so the dropdown stays anchored to the trigger
-rather than a stretched parent.
-
-## With icon
-
-Pass any glyph or node as `icon` — it renders before the label at 65% opacity.
-
-<Preview source={iconSrc} filename="WithIconSpec.tsx">
-  <WithIconSpec />
-</Preview>
-
-## Without icon
-
-Without an icon, only the current label and the caret are shown.
+This is a drop-in for the legacy `@vuer-ai/vuer-uikit` Select. For the terse,
+`options`-driven inline picker, see [Select Box](/components/select-box).
 
 <Preview source={basicSrc} filename="BasicSpec.tsx">
   <BasicSpec />
 </Preview>
 
-## Alignment & forms
-
-`align` controls which edge of the **trigger** the dropdown opens from — `'right'`
-(default) suits a right-aligned toolbar control; `'left'` suits a left-aligned
-control such as one inside a form Field. The label/trigger style is unchanged;
-only the panel's anchor moves.
-
-<Preview source={fieldSrc} filename="FieldSpec.tsx">
-  <FieldSpec />
-</Preview>
-
-## Placement & compact trigger
-
-For a trigger near the viewport bottom (a chat composer toolbar, a footer
-control) `placement="top"` opens the panel **upward** so the options aren't
-clipped. Two per-option fields keep the control tight: `triggerLabel` shows a
-compact abbreviation in the collapsed trigger (falling back to `label`), while
-`hint` adds a muted, right-aligned code to each dropdown row. All three are
-optional — omit them and the Select behaves exactly as above.
-
-<Preview source={placementSrc} filename="PlacementSpec.tsx">
-  <PlacementSpec />
-</Preview>
-
 ## Props
+
+### `Select`
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `value` | `string` | — | Currently selected option value. |
-| `onChange` | `(value: string) => void` | — | Called when the user picks an option. |
-| `options` | `SelectOption[]` | — | List of options to display. |
-| `icon` | `ReactNode` | — | Optional prefix glyph rendered before the label at 65% opacity. |
-| `align` | `'left' \| 'right'` | `'right'` | Edge of the trigger the dropdown panel opens from. |
-| `placement` | `'top' \| 'bottom'` | `'bottom'` | Vertical side the panel opens toward. `'top'` opens upward. |
-| `className` | `string` | — | Extra classes on the root wrapper. |
+| `value` | `string` | — | Controlled selected value. |
+| `defaultValue` | `string` | — | Initial value when uncontrolled. |
+| `onValueChange` | `(value: string) => void` | — | Fired when the selection changes. |
+| `open` / `defaultOpen` / `onOpenChange` | — | — | Controlled / uncontrolled open state. |
 
-### SelectOption
-
-| Field | Type | Description |
-| --- | --- | --- |
-| `value` | `string` | Unique identifier for the option. |
-| `label` | `ReactNode` | Content rendered in the dropdown row (and the trigger, unless `triggerLabel` is set). |
-| `triggerLabel` | `ReactNode` | Optional compact content for the collapsed trigger. Falls back to `label`. |
-| `hint` | `ReactNode` | Optional secondary text shown right-aligned and muted in the dropdown row (e.g. a short code). |
+`SelectValue` takes a `placeholder`. `SelectItem` takes `value` and `disabled`.
+`SelectTrigger` accepts `asChild`.

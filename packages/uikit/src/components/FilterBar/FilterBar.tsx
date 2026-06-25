@@ -7,7 +7,7 @@ import {
   type CSSProperties,
 } from 'react'
 import { cn } from '../../lib/utils'
-import { Select } from '../Select/Select'
+import { SelectBox } from '../Select/SelectBox'
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -284,7 +284,7 @@ export function FilterBar({
 
         {/* Right: sort */}
         {sortOptions && sortOptions.length > 0 && (
-          <Select
+          <SelectBox
             icon="↕"
             value={sortValue ?? sortOptions[0].value}
             onChange={(v) => onSortChange?.(v)}

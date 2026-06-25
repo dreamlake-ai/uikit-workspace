@@ -1,149 +1,302 @@
-import { ReactNode, useEffect, useRef, useState } from 'react'
+import {
+  type ComponentProps,
+  type ReactElement,
+  type ReactNode,
+  cloneElement,
+  createContext,
+  isValidElement,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
+import {
+  FloatingFocusManager,
+  FloatingList,
+  FloatingPortal,
+  autoUpdate,
+  flip,
+  offset,
+  shift,
+  size as sizeMiddleware,
+  useClick,
+  useDismiss,
+  useFloating,
+  useInteractions,
+  useListItem,
+  useListNavigation,
+  useRole,
+  useTypeahead,
+} from '@floating-ui/react'
 import { cn } from '../../lib/utils'
 
-export interface SelectOption {
-  value: string
-  /** Content rendered in the dropdown row (and the trigger, unless
-   *  `triggerLabel` is set). */
+interface SelectContextValue {
+  open: boolean
+  setOpen: (open: boolean) => void
+  value: string | undefined
+  setValue: (value: string) => void
+  setLabel: (label: ReactNode) => void
   label: ReactNode
-  /** Optional compact content for the collapsed trigger — use when the trigger
-   *  should be terser than the dropdown row (e.g. an abbreviation). Falls back
-   *  to `label`. */
-  triggerLabel?: ReactNode
-  /** Optional secondary content shown right-aligned and muted within the
-   *  dropdown row — e.g. a short code, shortcut, or count. A row only switches
-   *  to a space-between layout when its `hint` is set; rows without one render
-   *  exactly as before. */
-  hint?: ReactNode
+  refs: ReturnType<typeof useFloating>['refs']
+  floatingStyles: ReturnType<typeof useFloating>['floatingStyles']
+  context: ReturnType<typeof useFloating>['context']
+  getReferenceProps: (p?: Record<string, unknown>) => Record<string, unknown>
+  getFloatingProps: (p?: Record<string, unknown>) => Record<string, unknown>
+  getItemProps: (p?: Record<string, unknown>) => Record<string, unknown>
+  activeIndex: number | null
+  elementsRef: React.MutableRefObject<Array<HTMLElement | null>>
+  labelsRef: React.MutableRefObject<Array<string | null>>
+}
+const SelectContext = createContext<SelectContextValue | null>(null)
+function useSelectContext(name: string) {
+  const c = useContext(SelectContext)
+  if (!c) throw new Error(`<${name}> must be used inside <Select>`)
+  return c
 }
 
 export interface SelectProps {
-  value: string
-  onChange: (value: string) => void
-  options: SelectOption[]
-  icon?: ReactNode
-  /** Edge the dropdown panel aligns to, relative to the trigger. Default 'right'. */
-  align?: 'left' | 'right'
-  /** Vertical side the dropdown panel opens toward, relative to the trigger.
-   *  'bottom' (default) drops the panel below; 'top' opens it upward — use when
-   *  the trigger sits near the viewport bottom (e.g. a composer toolbar) so the
-   *  options aren't clipped off-screen. */
-  placement?: 'top' | 'bottom'
-  className?: string
+  value?: string
+  defaultValue?: string
+  onValueChange?: (value: string) => void
+  open?: boolean
+  defaultOpen?: boolean
+  onOpenChange?: (open: boolean) => void
+  children: ReactNode
 }
 
+/**
+ * Compound single-select. Compose `SelectTrigger` (with `SelectValue`) +
+ * `SelectContent` containing `SelectItem`s (optionally grouped with
+ * `SelectGroup` / `SelectLabel`).
+ *
+ * Drop-in for the legacy `@vuer-ai/vuer-uikit` Select (Radix). Reimplemented on
+ * `@floating-ui/react` (anchored positioning, keyboard list navigation +
+ * typeahead). For the terse `options`-driven inline picker, use
+ * [SelectBox](/components/select-box).
+ */
 export function Select({
-  value,
-  onChange,
-  options,
-  icon,
-  align = 'right',
-  placement = 'bottom',
-  className,
+  value: controlledValue,
+  defaultValue,
+  onValueChange,
+  open: controlledOpen,
+  defaultOpen = false,
+  onOpenChange,
+  children,
 }: SelectProps) {
-  const [open, setOpen] = useState(false)
-  const wrapRef = useRef<HTMLDivElement>(null)
+  const [uncontrolledValue, setUncontrolledValue] = useState<string | undefined>(defaultValue)
+  const isValueControlled = controlledValue !== undefined
+  const value = isValueControlled ? controlledValue : uncontrolledValue
+  const setValue = (v: string) => {
+    if (!isValueControlled) setUncontrolledValue(v)
+    onValueChange?.(v)
+  }
 
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(defaultOpen)
+  const isOpenControlled = controlledOpen !== undefined
+  const open = isOpenControlled ? controlledOpen : uncontrolledOpen
+  const setOpen = (o: boolean) => {
+    if (!isOpenControlled) setUncontrolledOpen(o)
+    onOpenChange?.(o)
+  }
+
+  const [label, setLabel] = useState<ReactNode>(null)
+  const elementsRef = useRef<Array<HTMLElement | null>>([])
+  const labelsRef = useRef<Array<string | null>>([])
+  const [activeIndex, setActiveIndex] = useState<number | null>(null)
+
+  const { refs, floatingStyles, context } = useFloating({
+    open,
+    onOpenChange: setOpen,
+    placement: 'bottom-start',
+    whileElementsMounted: autoUpdate,
+    middleware: [
+      offset(4),
+      flip({ padding: 8 }),
+      shift({ padding: 8 }),
+      sizeMiddleware({
+        apply({ rects, elements }) {
+          Object.assign(elements.floating.style, { minWidth: `${rects.reference.width}px` })
+        },
+      }),
+    ],
+  })
+
+  const click = useClick(context)
+  const dismiss = useDismiss(context)
+  const role = useRole(context, { role: 'listbox' })
+  const listNav = useListNavigation(context, {
+    listRef: elementsRef,
+    activeIndex,
+    onNavigate: setActiveIndex,
+    loop: true,
+  })
+  const typeahead = useTypeahead(context, {
+    listRef: labelsRef,
+    activeIndex,
+    onMatch: open ? setActiveIndex : undefined,
+  })
+  const { getReferenceProps, getFloatingProps, getItemProps } = useInteractions([
+    click,
+    dismiss,
+    role,
+    listNav,
+    typeahead,
+  ])
+
+  const ctx = useMemo<SelectContextValue>(
+    () => ({
+      open,
+      setOpen,
+      value,
+      setValue,
+      label,
+      setLabel,
+      refs,
+      floatingStyles,
+      context,
+      getReferenceProps,
+      getFloatingProps,
+      getItemProps,
+      activeIndex,
+      elementsRef,
+      labelsRef,
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [open, value, label, refs, floatingStyles, context, getReferenceProps, getFloatingProps, getItemProps, activeIndex],
+  )
+
+  return <SelectContext.Provider value={ctx}>{children}</SelectContext.Provider>
+}
+
+export interface SelectTriggerProps extends ComponentProps<'button'> {
+  asChild?: boolean
+}
+export function SelectTrigger({ asChild = false, className, children, ...props }: SelectTriggerProps) {
+  const ctx = useSelectContext('SelectTrigger')
+  const refProps = ctx.getReferenceProps({ ...props, 'data-state': ctx.open ? 'open' : 'closed' })
+  if (asChild && isValidElement(children)) {
+    const child = children as ReactElement<Record<string, unknown>>
+    return cloneElement(child, { ref: ctx.refs.setReference, ...refProps })
+  }
+  return (
+    <button
+      ref={ctx.refs.setReference as never}
+      type="button"
+      className={cn(
+        'inline-flex h-8 items-center justify-between gap-2 rounded-[10px] px-3 min-w-[140px]',
+        'bg-uikit-chip text-uikit-12 text-uikit-ink outline-none cursor-pointer',
+        'data-[state=open]:bg-uikit-search',
+        className,
+      )}
+      {...refProps}
+    >
+      {children}
+      <span className="text-uikit-muted text-[9px]">▾</span>
+    </button>
+  )
+}
+
+export interface SelectValueProps {
+  placeholder?: ReactNode
+  className?: string
+}
+export function SelectValue({ placeholder, className }: SelectValueProps) {
+  const ctx = useSelectContext('SelectValue')
+  const has = ctx.value !== undefined && ctx.label != null
+  return (
+    <span className={cn('truncate', !has && 'text-uikit-muted', className)}>
+      {has ? ctx.label : placeholder}
+    </span>
+  )
+}
+
+export type SelectContentProps = ComponentProps<'div'>
+export function SelectContent({ className, children, style, ...props }: SelectContentProps) {
+  const ctx = useSelectContext('SelectContent')
+  if (!ctx.open) return null
+  return (
+    <FloatingPortal>
+      <FloatingFocusManager context={ctx.context} modal={false}>
+        <div
+          ref={ctx.refs.setFloating as never}
+          style={{ ...ctx.floatingStyles, ...style }}
+          className={cn(
+            'uikit-panel-in z-[200] max-h-[min(60vh,320px)] overflow-y-auto rounded-[10px] p-1 font-uikit-ui',
+            'bg-uikit-panel text-uikit-ink border border-uikit-faint shadow-uikit-soft outline-none',
+            className,
+          )}
+          {...ctx.getFloatingProps(props)}
+        >
+          <FloatingList elementsRef={ctx.elementsRef} labelsRef={ctx.labelsRef}>
+            {children}
+          </FloatingList>
+        </div>
+      </FloatingFocusManager>
+    </FloatingPortal>
+  )
+}
+
+export interface SelectItemProps extends Omit<ComponentProps<'div'>, 'onSelect'> {
+  value: string
+  disabled?: boolean
+}
+export function SelectItem({ className, value, disabled, children, ...props }: SelectItemProps) {
+  const ctx = useSelectContext('SelectItem')
+  const text = typeof children === 'string' ? children : value
+  const { ref, index } = useListItem({ label: disabled ? null : text })
+  const active = ctx.activeIndex === index
+  const selected = ctx.value === value
+
+  // Surface the selected item's content to <SelectValue> (covers the initial
+  // value set via defaultValue/value before any click).
   useEffect(() => {
-    if (!open) return
-    const handler = (e: MouseEvent) => {
-      if (!wrapRef.current?.contains(e.target as Node)) setOpen(false)
-    }
-    window.addEventListener('mousedown', handler)
-    return () => window.removeEventListener('mousedown', handler)
-  }, [open])
+    if (selected) ctx.setLabel(children)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected, children])
 
-  const current = options.find((o) => o.value === value) ?? options[0]
+  const itemProps = ctx.getItemProps({
+    onClick: () => {
+      if (disabled) return
+      ctx.setValue(value)
+      ctx.setLabel(children)
+      ctx.setOpen(false)
+    },
+  })
 
   return (
-    // w-fit keeps the wrapper at the trigger's width even when placed inside a
-    // flex column (e.g. a Field, which would otherwise stretch it full-width).
-    // That keeps the dropdown anchored to the trigger rather than the container.
-    <div ref={wrapRef} className={cn('relative inline-block w-fit', className)}>
-      <span
-        onClick={() => setOpen((o) => !o)}
-        data-open={open || undefined}
-        className={cn(
-          'inline-flex items-center gap-1 cursor-pointer',
-          'font-uikit-mono text-uikit-11 font-medium tracking-uikit-snug',
-          'text-uikit-ink opacity-85 data-[open]:opacity-100',
-        )}
-      >
-        {icon && <span className="opacity-65">{icon}</span>}
-        {current?.triggerLabel ?? current?.label}
-        <span className="text-[9px] ml-0.5 opacity-55">▾</span>
-      </span>
-
-      {open && (
-        <div
-          className={cn(
-            'absolute z-10',
-            // Vertical side: open downward by default, upward when placement="top".
-            placement === 'top' ? 'bottom-[calc(100%+8px)]' : 'top-[calc(100%+8px)]',
-            align === 'left' ? 'left-0' : 'right-0',
-            'rounded-lg p-1 min-w-[140px]',
-            'bg-uikit-bg border border-uikit-faint',
-            // Style Guide §Elevation — dropdowns use the `soft` ladder.
-            'shadow-uikit-soft',
-          )}
-        >
-          {options.map((o) => (
-            <SelectItem
-              key={o.value}
-              active={o.value === value}
-              hint={o.hint}
-              onClick={() => {
-                onChange(o.value)
-                setOpen(false)
-              }}
-            >
-              {o.label}
-            </SelectItem>
-          ))}
-        </div>
+    <div
+      ref={ref as never}
+      role="option"
+      aria-selected={selected}
+      aria-disabled={disabled}
+      tabIndex={active ? 0 : -1}
+      data-active={active}
+      data-selected={selected}
+      className={cn(
+        'flex items-center justify-between gap-2 rounded-md px-2 py-1.5 text-uikit-12 leading-uikit-snug',
+        'cursor-pointer select-none outline-none data-[active=true]:bg-uikit-ink-5',
+        'disabled:opacity-50 aria-disabled:opacity-50 aria-disabled:pointer-events-none',
+        className,
       )}
+      {...props}
+      {...(disabled ? {} : itemProps)}
+    >
+      <span className="truncate">{children}</span>
+      {selected && <span className="text-uikit-accent">✓</span>}
     </div>
   )
 }
 
-function SelectItem({
-  active,
-  hint,
-  onClick,
-  children,
-}: {
-  active: boolean
-  hint?: ReactNode
-  onClick: () => void
-  children: ReactNode
-}) {
-  const hasHint = hint != null
+export function SelectGroup({ className, ...props }: ComponentProps<'div'>) {
+  return <div role="group" className={cn('py-0.5', className)} {...props} />
+}
+
+export function SelectLabel({ className, ...props }: ComponentProps<'div'>) {
   return (
     <div
-      onClick={onClick}
-      data-active={active || undefined}
-      className={cn(
-        'px-3.5 py-[7px] rounded-md cursor-pointer leading-[15px]',
-        'font-uikit-mono text-[12.5px] font-medium tracking-uikit-snug',
-        'transition-[background-color,color] duration-[120ms]',
-        // Inactive defaults
-        'text-uikit-muted opacity-85 bg-transparent',
-        'hover:bg-uikit-ink-4',
-        // Active overrides
-        'data-[active]:text-uikit-ink data-[active]:opacity-100 data-[active]:bg-uikit-ink-5',
-        // A hint turns the row into a label/hint space-between layout. Without
-        // one the row renders the label exactly as before.
-        hasHint && 'flex items-center justify-between gap-3',
-      )}
-    >
-      {hasHint ? (
-        <>
-          <span>{children}</span>
-          <span className="shrink-0 text-[10px] opacity-55">{hint}</span>
-        </>
-      ) : (
-        children
-      )}
-    </div>
+      className={cn('px-2 py-1 text-uikit-10 uppercase tracking-uikit-wide text-uikit-muted select-none', className)}
+      {...props}
+    />
   )
 }

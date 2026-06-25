@@ -1,0 +1,78 @@
+---
+title: Select Box
+section: Components
+order: 92
+description: Compact options-driven inline dropdown for toolbar sort/filter controls.
+---
+
+import { Preview } from '../../../components/Preview'
+import { WithIconSpec } from '../../../components/specimens/components/select-box/WithIconSpec'
+import { BasicSpec } from '../../../components/specimens/components/select-box/BasicSpec'
+import { FieldSpec } from '../../../components/specimens/components/select-box/FieldSpec'
+import { PlacementSpec } from '../../../components/specimens/components/select-box/PlacementSpec'
+import iconSrc from '../../../components/specimens/components/select-box/WithIconSpec.tsx?raw'
+import basicSrc from '../../../components/specimens/components/select-box/BasicSpec.tsx?raw'
+import fieldSrc from '../../../components/specimens/components/select-box/FieldSpec.tsx?raw'
+import placementSrc from '../../../components/specimens/components/select-box/PlacementSpec.tsx?raw'
+
+# Select Box
+
+A compact, `options`-driven inline dropdown with a mono trigger — for toolbar
+sort/filter controls. Opens below the trigger by default (`placement="top"`
+opens upward) and closes on outside click. The trigger is `w-fit`, so it hugs its
+content even inside a flex [Field](/components/field).
+
+> For the composable trigger/value/content/item API (drop-in with the legacy
+> kit's Radix Select), see [Select](/components/select).
+
+## With icon
+
+Pass any glyph or node as `icon` — it renders before the label at 65% opacity.
+
+<Preview source={iconSrc} filename="WithIconSpec.tsx">
+  <WithIconSpec />
+</Preview>
+
+## Without icon
+
+<Preview source={basicSrc} filename="BasicSpec.tsx">
+  <BasicSpec />
+</Preview>
+
+## Alignment & forms
+
+`align` controls which edge of the **trigger** the dropdown opens from.
+
+<Preview source={fieldSrc} filename="FieldSpec.tsx">
+  <FieldSpec />
+</Preview>
+
+## Placement & compact trigger
+
+`placement="top"` opens upward; `triggerLabel` gives a compact collapsed label
+and `hint` adds a muted right-aligned code per row.
+
+<Preview source={placementSrc} filename="PlacementSpec.tsx">
+  <PlacementSpec />
+</Preview>
+
+## Props
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `value` | `string` | — | Selected option value. |
+| `onChange` | `(value: string) => void` | — | Called when an option is picked. |
+| `options` | `SelectBoxOption[]` | — | Options to display. |
+| `icon` | `ReactNode` | — | Prefix glyph before the label. |
+| `align` | `'left' \| 'right'` | `'right'` | Trigger edge the panel opens from. |
+| `placement` | `'top' \| 'bottom'` | `'bottom'` | Vertical side the panel opens toward. |
+| `className` | `string` | — | Extra classes on the wrapper. |
+
+### SelectBoxOption
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `value` | `string` | Unique identifier. |
+| `label` | `ReactNode` | Row content (and trigger, unless `triggerLabel` is set). |
+| `triggerLabel` | `ReactNode` | Compact collapsed-trigger content. Falls back to `label`. |
+| `hint` | `ReactNode` | Muted right-aligned row text (e.g. a short code). |
