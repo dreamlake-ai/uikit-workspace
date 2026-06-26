@@ -15,6 +15,7 @@ export * from "./Layout";
 export * from "./FormLayout";
 export * from "./Icons";
 export * from "./Input";
+export * from "./Inputs";
 export * from "./Label";
 export * from "./Menu";
 export * from "./Modal";

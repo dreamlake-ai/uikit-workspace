@@ -1,19 +1,20 @@
-import { type LogItemWithMeta } from './types'
-import { borderColorClasses, colorClasses, formatDuration } from './utils'
-import { cn } from '../../lib/utils'
+import { type LogItemWithMeta } from "./types";
+import { borderColorClasses, colorClasses, formatDuration } from "./utils";
+import { cn } from "../../lib/utils";
 
-const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max)
+const clamp = (value: number, min: number, max: number) =>
+  Math.min(Math.max(value, min), max);
 
 export interface TimelineEventBarProps {
-  item: LogItemWithMeta
-  isHovered: boolean
-  onMouseEnter: () => void
-  onMouseLeave: () => void
-  onClick?: (time: number) => void
-  viewStart: number
-  viewWindow: number
-  timeToPercent: (time: number) => number
-  index?: number
+  item: LogItemWithMeta;
+  isHovered: boolean;
+  onMouseEnter: () => void;
+  onMouseLeave: () => void;
+  onClick?: (time: number) => void;
+  viewStart: number;
+  viewWindow: number;
+  timeToPercent: (time: number) => number;
+  index?: number;
 }
 
 /**
@@ -30,17 +31,17 @@ export function TimelineProcessBar({
   viewWindow,
   timeToPercent,
 }: TimelineEventBarProps) {
-  const viewEnd = viewStart + viewWindow
-  const isHaltedStep = item.isHaltedStep
-  const barStart = item.startTime
+  const viewEnd = viewStart + viewWindow;
+  const isHaltedStep = item.isHaltedStep;
+  const barStart = item.startTime;
   const barEnd =
     item.startTime !== undefined && item.duration !== undefined
       ? item.startTime + item.duration
-      : undefined
+      : undefined;
 
   return (
     <div
-      className={cn('relative h-[32px] w-full', isHovered && 'bg-uikit-ink-5')}
+      className={cn("relative h-[32px] w-full", isHovered && "bg-uikit-ink-5")}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
@@ -58,19 +59,19 @@ export function TimelineProcessBar({
           >
             <div
               className={cn(
-                'absolute top-1/2 left-0 h-2 w-px -translate-y-1/2',
+                "absolute top-1/2 left-0 h-2 w-px -translate-y-1/2",
                 colorClasses[item.color],
               )}
             />
             <div
               className={cn(
-                'absolute top-1/2 w-full -translate-y-1/2 border-t',
+                "absolute top-1/2 w-full -translate-y-1/2 border-t",
                 borderColorClasses[item.color],
               )}
             />
             <div
               className={cn(
-                'absolute top-1/2 right-0 h-2 w-px -translate-y-1/2',
+                "absolute top-1/2 right-0 h-2 w-px -translate-y-1/2",
                 colorClasses[item.color],
               )}
             />
@@ -78,47 +79,50 @@ export function TimelineProcessBar({
         )}
 
       {/* Execution Bar */}
-      {item.startTime !== undefined && item.duration !== undefined && !isHaltedStep && (
-        <div
-          className={cn(
-            'rounded-[3px] absolute top-1/2 flex h-5 -translate-y-1/2 items-center justify-center overflow-hidden',
-            item.color && colorClasses[item.color],
-            item.hasStripes &&
-              'bg-[repeating-linear-gradient(-45deg,transparent,transparent_4px,rgba(0,0,0,0.1)_4px,rgba(0,0,0,0.1)_8px)]',
-            onClick && 'cursor-pointer',
-          )}
-          style={{
-            left: `${timeToPercent(item.startTime)}%`,
-            width: `${(item.duration / viewWindow) * 100}%`,
-          }}
-          onClick={(e) => {
-            if (onClick && item.startTime !== undefined) {
-              e.stopPropagation()
-              // Calculate click position within the bar
-              const rect = e.currentTarget.getBoundingClientRect()
-              const clickX = e.clientX - rect.left
-              const clickPercent = clickX / rect.width
-              const clickTime = item.startTime + item.duration! * clickPercent
-              onClick(clickTime)
-            }
-          }}
-        />
-      )}
+      {item.startTime !== undefined &&
+        item.duration !== undefined &&
+        !isHaltedStep && (
+          <div
+            className={cn(
+              "rounded-[3px] absolute top-1/2 flex h-5 -translate-y-1/2 items-center justify-center overflow-hidden",
+              item.color && colorClasses[item.color],
+              item.hasStripes &&
+                "bg-[repeating-linear-gradient(-45deg,transparent,transparent_4px,rgba(0,0,0,0.1)_4px,rgba(0,0,0,0.1)_8px)]",
+              onClick && "cursor-pointer",
+            )}
+            style={{
+              left: `${timeToPercent(item.startTime)}%`,
+              width: `${(item.duration / viewWindow) * 100}%`,
+            }}
+            onClick={(e) => {
+              if (onClick && item.startTime !== undefined) {
+                e.stopPropagation();
+                // Calculate click position within the bar
+                const rect = e.currentTarget.getBoundingClientRect();
+                const clickX = e.clientX - rect.left;
+                const clickPercent = clickX / rect.width;
+                const clickTime =
+                  item.startTime + item.duration! * clickPercent;
+                onClick(clickTime);
+              }
+            }}
+          />
+        )}
 
       {/* Visible Label for Execution Bar */}
       {item.startTime !== undefined &&
         item.duration !== undefined &&
         !isHaltedStep &&
         (() => {
-          const visibleStart = Math.max(barStart!, viewStart)
-          const visibleEnd = Math.min(barEnd!, viewEnd)
+          const visibleStart = Math.max(barStart!, viewStart);
+          const visibleEnd = Math.min(barEnd!, viewEnd);
 
-          if (visibleEnd <= visibleStart) return null
+          if (visibleEnd <= visibleStart) return null;
 
-          const visibleDuration = visibleEnd - visibleStart
-          const visibleWidthPercent = (visibleDuration / viewWindow) * 100
+          const visibleDuration = visibleEnd - visibleStart;
+          const visibleWidthPercent = (visibleDuration / viewWindow) * 100;
 
-          if (visibleWidthPercent < 4) return null
+          if (visibleWidthPercent < 4) return null;
 
           return (
             <div
@@ -130,16 +134,16 @@ export function TimelineProcessBar({
             >
               <span
                 className={cn(
-                  'text-uikit-11 font-medium whitespace-nowrap',
-                  item.color === 'gray-light' || item.color === 'gray-medium'
-                    ? 'text-uikit-ink'
-                    : 'text-white',
+                  "text-uikit-11 font-medium whitespace-nowrap",
+                  item.color === "gray-light" || item.color === "gray-medium"
+                    ? "text-uikit-ink"
+                    : "text-white",
                 )}
               >
                 {formatDuration(item.duration)}
               </span>
             </div>
-          )
+          );
         })()}
 
       {/* Start Circle */}
@@ -149,7 +153,7 @@ export function TimelineProcessBar({
         item.color && (
           <div
             className={cn(
-              'bg-uikit-panel absolute top-1/2 z-10 size-2 -translate-x-1/2 -translate-y-1/2 rounded-full border-2',
+              "bg-uikit-panel absolute top-1/2 z-10 size-2 -translate-x-1/2 -translate-y-1/2 rounded-full border-2",
               borderColorClasses[item.color],
             )}
             style={{
@@ -159,34 +163,36 @@ export function TimelineProcessBar({
         )}
 
       {/* Special Halted Step Visualization */}
-      {isHaltedStep && item.startTime !== undefined && item.duration !== undefined && (
-        <div
-          className="absolute top-1/2 flex h-full -translate-y-1/2 items-center"
-          style={{
-            left: `${timeToPercent(item.startTime)}%`,
-            width: `${(item.duration / viewWindow) * 100}%`,
-          }}
-        >
-          <div className="relative flex h-full w-full items-center justify-center">
-            <div className="bg-uikit-faint absolute top-1/2 left-0 h-2 w-px -translate-y-1/2" />
-            <div className="border-uikit-faint w-full border-t border-dashed" />
-            <div className="bg-uikit-faint absolute top-1/2 right-0 h-2 w-px -translate-y-1/2" />
+      {isHaltedStep &&
+        item.startTime !== undefined &&
+        item.duration !== undefined && (
+          <div
+            className="absolute top-1/2 flex h-full -translate-y-1/2 items-center"
+            style={{
+              left: `${timeToPercent(item.startTime)}%`,
+              width: `${(item.duration / viewWindow) * 100}%`,
+            }}
+          >
+            <div className="relative flex h-full w-full items-center justify-center">
+              <div className="bg-uikit-faint absolute top-1/2 left-0 h-2 w-px -translate-y-1/2" />
+              <div className="border-uikit-faint w-full border-t border-dashed" />
+              <div className="bg-uikit-faint absolute top-1/2 right-0 h-2 w-px -translate-y-1/2" />
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
       {/* Halted Step Label */}
       {isHaltedStep &&
         item.startTime !== undefined &&
         item.duration !== undefined &&
         (() => {
-          const visibleStart = Math.max(barStart!, viewStart)
-          const visibleEnd = Math.min(barEnd!, viewEnd)
+          const visibleStart = Math.max(barStart!, viewStart);
+          const visibleEnd = Math.min(barEnd!, viewEnd);
 
-          if (visibleEnd <= visibleStart) return null
+          if (visibleEnd <= visibleStart) return null;
 
-          const visibleDuration = visibleEnd - visibleStart
-          const visibleWidthPercent = (visibleDuration / viewWindow) * 100
+          const visibleDuration = visibleEnd - visibleStart;
+          const visibleWidthPercent = (visibleDuration / viewWindow) * 100;
 
           return (
             <div
@@ -206,8 +212,8 @@ export function TimelineProcessBar({
                 <span className="h-3 w-3 rounded-full bg-uikit-tone-amber" />
               )}
             </div>
-          )
+          );
         })()}
     </div>
-  )
+  );
 }

@@ -1,48 +1,58 @@
-import { type ReactNode, useEffect, useState } from 'react'
+import { type ReactNode, useEffect, useState } from "react";
 
-import { cn } from '../../lib/utils'
-import { TooltipProvider } from '../Tooltip'
-import { CursorOverlay } from './CursorOverlay'
-import { useTimelineState } from './hooks/useTimelineState'
-import { useViewport } from './hooks/useViewport'
-import { NavigationControls } from './NavigationControls'
-import { Tick } from './Tick'
-import { TimelineEvent } from './TimelineEvent'
-import { TimelineProcessBar } from './TimelineProcessBar'
-import { TimeRuleEventDot } from './TimeRuleEventDot'
-import { type LogItemType, type LogItemWithMeta } from './types'
-import { leftWedgeClasses, rightWedgeClasses, TOTAL_DURATION } from './utils'
-import { LeftWedge, RightWedge } from './Wedges'
-import { WheelZoomContext } from './WheelZoomContext'
-import { SyncDragY, SyncScroll, SyncScrollProvider, SyncScrollSlave } from '../SyncScroll'
-import { TreeSearchBar, TreeView, useTreeSearch, useTreeState } from '../TreeView'
+import { cn } from "../../lib/utils";
+import { TooltipProvider } from "../Tooltip";
+import { CursorOverlay } from "./CursorOverlay";
+import { useTimelineState } from "./hooks/useTimelineState";
+import { useViewport } from "./hooks/useViewport";
+import { NavigationControls } from "./NavigationControls";
+import { Tick } from "./Tick";
+import { TimelineEvent } from "./TimelineEvent";
+import { TimelineProcessBar } from "./TimelineProcessBar";
+import { TimeRuleEventDot } from "./TimeRuleEventDot";
+import { type LogItemType, type LogItemWithMeta } from "./types";
+import { leftWedgeClasses, rightWedgeClasses, TOTAL_DURATION } from "./utils";
+import { LeftWedge, RightWedge } from "./Wedges";
+import { WheelZoomContext } from "./WheelZoomContext";
+import {
+  SyncDragY,
+  SyncScroll,
+  SyncScrollProvider,
+  SyncScrollSlave,
+} from "../SyncScroll";
+import {
+  TreeSearchBar,
+  TreeView,
+  useTreeSearch,
+  useTreeState,
+} from "../TreeView";
 
-export * from './types'
-export * from './utils'
+export * from "./types";
+export * from "./utils";
 
 export interface WaterfallProps {
-  logData: LogItemType[]
-  temporalCursor?: number
+  logData: LogItemType[];
+  temporalCursor?: number;
   /** Width of the list view */
-  panelWidth?: number
-  onTemporalCursorChange?: (time: number) => void
-  getIcon: (item: LogItemType) => ReactNode
+  panelWidth?: number;
+  onTemporalCursorChange?: (time: number) => void;
+  getIcon: (item: LogItemType) => ReactNode;
   /** External hover state (optional - will use internal state if not provided) */
-  hoveredId?: string | null
+  hoveredId?: string | null;
   /** External hover setter (optional - will use internal state if not provided) */
-  onItemHover?: (id: string | null) => void
+  onItemHover?: (id: string | null) => void;
   /** Minimum zoom viewWindow duration in seconds (default: 0.01) */
-  minWindow?: number
+  minWindow?: number;
   /** Maximum zoom viewWindow duration in seconds (default: event duration * 10) */
-  maxWindow?: number
+  maxWindow?: number;
   /** Zoom factor for mouse wheel zoom (default: 1.1) */
-  zoomFactor?: number
+  zoomFactor?: number;
   /** Enable wheel handling for pan and zoom (default: true) */
-  enabled?: boolean
+  enabled?: boolean;
   /** Children elements to render within the timeline */
-  children?: ReactNode
+  children?: ReactNode;
   /** Additional CSS classes for the wrapper */
-  className?: string
+  className?: string;
 }
 
 /**
@@ -67,42 +77,56 @@ export function Waterfall({
   enabled = true,
   children,
 }: WaterfallProps) {
-  const [visibleLogData, setVisibleLogData] = useState<LogItemWithMeta[]>([])
-  const [temporalMarkers, setTemporalMarkers] = useState<number[]>([])
+  const [visibleLogData, setVisibleLogData] = useState<LogItemWithMeta[]>([]);
+  const [temporalMarkers, setTemporalMarkers] = useState<number[]>([]);
 
   // Search state
-  const [searchQuery, setSearchQuery] = useState('')
-  const [isCaseSensitive, setIsCaseSensitive] = useState(false)
-  const [isRegex, setIsRegex] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isCaseSensitive, setIsCaseSensitive] = useState(false);
+  const [isRegex, setIsRegex] = useState(false);
 
   // Use external state if provided, otherwise use internal state
-  const internalTimelineState = useTimelineState(logData)
+  const internalTimelineState = useTimelineState(logData);
 
-  const hoveredId = externalHoveredId ?? internalTimelineState.hoveredId
-  const setHoveredId = externalOnItemHover ?? internalTimelineState.setHoveredId
+  const hoveredId = externalHoveredId ?? internalTimelineState.hoveredId;
+  const setHoveredId =
+    externalOnItemHover ?? internalTimelineState.setHoveredId;
 
   // Use the tree hooks for visibility/expansion + search
-  const { visibleData, expandedItems, toggleItem, hasDescendants, dataWithMeta } = useTreeState({
+  const {
+    visibleData,
+    expandedItems,
+    toggleItem,
+    hasDescendants,
+    dataWithMeta,
+  } = useTreeState({
     data: logData,
     defaultExpanded: true,
-  })
+  });
 
-  const { filteredData, searchResultsCount, isRegexValid, renderLabel, hasActiveSearch } =
-    useTreeSearch({
-      data: logData,
-      searchQuery,
-      isCaseSensitive,
-      isRegex,
-    })
+  const {
+    filteredData,
+    searchResultsCount,
+    isRegexValid,
+    renderLabel,
+    hasActiveSearch,
+  } = useTreeSearch({
+    data: logData,
+    searchQuery,
+    isCaseSensitive,
+    isRegex,
+  });
 
   // Update visible log data when filtered data changes
   useEffect(() => {
     // If there's an active search, use filtered data, otherwise use visible data
     const dataToUse = hasActiveSearch
-      ? dataWithMeta.filter((item) => filteredData.some((f) => f.id === item.id))
-      : visibleData
-    setVisibleLogData(dataToUse as LogItemWithMeta[])
-  }, [filteredData, visibleData, dataWithMeta, hasActiveSearch])
+      ? dataWithMeta.filter((item) =>
+          filteredData.some((f) => f.id === item.id),
+        )
+      : visibleData;
+    setVisibleLogData(dataToUse as LogItemWithMeta[]);
+  }, [filteredData, visibleData, dataWithMeta, hasActiveSearch]);
 
   const {
     viewStart,
@@ -123,14 +147,14 @@ export function Waterfall({
     visibleLogData,
     onTemporalCursorChange,
     temporalCursor,
-  })
+  });
 
   return (
     <TooltipProvider>
       <SyncScrollProvider>
         <div
           className={cn(
-            'bg-uikit-panel text-uikit-ink rounded-[12px] mx-auto flex w-full flex-col overflow-hidden font-uikit-ui shadow-uikit-soft',
+            "bg-uikit-panel text-uikit-ink rounded-[12px] mx-auto flex w-full flex-col overflow-hidden font-uikit-ui shadow-uikit-soft",
             className,
           )}
         >
@@ -156,7 +180,9 @@ export function Waterfall({
                 <TreeView
                   data={
                     hasActiveSearch
-                      ? dataWithMeta.filter((item) => filteredData.some((f) => f.id === item.id))
+                      ? dataWithMeta.filter((item) =>
+                          filteredData.some((f) => f.id === item.id),
+                        )
                       : visibleData
                   }
                   getIcon={getIcon}
@@ -220,7 +246,7 @@ export function Waterfall({
                         onMouseEnter={() => setHoveredId(item.id)}
                         onMouseLeave={() => setHoveredId(null)}
                         onClick={(time: number) => {
-                          setTemporalMarkers((prev) => [...prev, time])
+                          setTemporalMarkers((prev) => [...prev, time]);
                         }}
                         viewStart={viewStart}
                         viewWindow={viewDuration}
@@ -235,7 +261,7 @@ export function Waterfall({
                         onMouseEnter={() => setHoveredId(item.id)}
                         onMouseLeave={() => setHoveredId(null)}
                         onClick={(time: number) => {
-                          setTemporalMarkers((prev) => [...prev, time])
+                          setTemporalMarkers((prev) => [...prev, time]);
                         }}
                         timeToPercent={timeToPercent}
                         index={index}
@@ -290,7 +316,9 @@ export function Waterfall({
                     left: `calc(${timeToPercent(time)}% - 2.5rem)`,
                   }}
                   onClick={() => {
-                    setTemporalMarkers((prev) => prev.filter((_, i) => i !== index))
+                    setTemporalMarkers((prev) =>
+                      prev.filter((_, i) => i !== index),
+                    );
                   }}
                   title="Click to remove marker"
                 >
@@ -323,5 +351,5 @@ export function Waterfall({
         </div>
       </SyncScrollProvider>
     </TooltipProvider>
-  )
+  );
 }

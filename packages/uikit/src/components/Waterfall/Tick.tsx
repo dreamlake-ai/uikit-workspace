@@ -1,30 +1,35 @@
 export interface TimelineTickProps {
   /** Time value for this tick */
-  time: number
+  time: number;
   /** Label to display */
-  label: string
+  label: string;
   /** Function to convert time to percentage */
-  timeToPercent: (time: number) => number
+  timeToPercent: (time: number) => number;
   /** Z-index for layering */
-  zIndex?: number
+  zIndex?: number;
 }
 
 /**
  * Timeline tick mark with label. Shows time divisions on the timeline ruler.
  */
-export function Tick({ time, label, timeToPercent, zIndex = 10 }: TimelineTickProps) {
-  const naturalCenterPercent = timeToPercent(time)
+export function Tick({
+  time,
+  label,
+  timeToPercent,
+  zIndex = 10,
+}: TimelineTickProps) {
+  const naturalCenterPercent = timeToPercent(time);
 
   if (naturalCenterPercent < -20 || naturalCenterPercent > 120) {
-    return null
+    return null;
   }
 
   // Keep label visible even when tick is near edges
-  const labelHalfWidthPercent = 3
+  const labelHalfWidthPercent = 3;
   const clampedCenterPercent = Math.min(
     100 - labelHalfWidthPercent,
     Math.max(labelHalfWidthPercent, naturalCenterPercent),
-  )
+  );
 
   return (
     <>
@@ -44,5 +49,5 @@ export function Tick({ time, label, timeToPercent, zIndex = 10 }: TimelineTickPr
         {label}
       </div>
     </>
-  )
+  );
 }

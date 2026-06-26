@@ -1,12 +1,12 @@
-import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { type MouseEvent } from 'react'
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { type MouseEvent } from "react";
 
-import { formatDuration } from './utils'
+import { formatDuration } from "./utils";
 
 export interface NavigationControlsProps {
-  viewDuration: number
-  handlePan: (direction: 'left' | 'right') => void
-  handleZoomDragStart: (e: MouseEvent) => void
+  viewDuration: number;
+  handlePan: (direction: "left" | "right") => void;
+  handleZoomDragStart: (e: MouseEvent) => void;
 }
 
 export function NavigationControls({
@@ -18,7 +18,7 @@ export function NavigationControls({
     <div className="sticky left-1/2 z-20 w-max">
       <div className="bg-uikit-panel/75 flex items-center gap-2 rounded-full p-1 text-sm shadow-uikit-soft backdrop-blur-[2px]">
         <button
-          onClick={() => handlePan('left')}
+          onClick={() => handlePan("left")}
           className="hover:bg-uikit-ink-5 rounded-full p-1"
         >
           <ChevronLeft className="size-4" />
@@ -30,12 +30,12 @@ export function NavigationControls({
           {formatDuration(viewDuration)}
         </span>
         <button
-          onClick={() => handlePan('right')}
+          onClick={() => handlePan("right")}
           className="hover:bg-uikit-ink-5 rounded-full p-1"
         >
           <ChevronRight className="size-4" />
         </button>
       </div>
     </div>
-  )
+  );
 }
