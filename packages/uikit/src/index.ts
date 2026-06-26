@@ -8,11 +8,13 @@
 export * from "./components";
 export { cn } from "./lib/utils";
 export { useIsMobile } from "./lib/useIsMobile";
+// TreeDataItem / TreeDataItemWithMeta come from the TreeView component (./components).
 export type {
   DialSchema,
   GroupSchema,
-  LogItemType,
-  TreeDataItem,
   DialValue,
   DialDtype,
+  DialCustomRenderContext,
+  DialCustomRenderFn,
+  NestedTypeDefinition,
 } from "./lib/dial-types";
