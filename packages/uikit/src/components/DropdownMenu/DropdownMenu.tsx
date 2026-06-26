@@ -229,7 +229,7 @@ export function DropdownMenuContent({
 }
 
 const itemClass =
-  "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-uikit-12 leading-uikit-snug cursor-pointer select-none outline-none data-[active=true]:bg-uikit-ink-5 disabled:opacity-50 disabled:pointer-events-none";
+  "flex w-full items-center gap-2 rounded-uikit-badge px-2 py-1.5 text-uikit-12 leading-uikit-snug cursor-pointer select-none outline-none data-[active=true]:bg-uikit-ink-5 disabled:opacity-50 disabled:pointer-events-none";
 
 export interface DropdownMenuItemProps extends Omit<
   ComponentProps<"div">,

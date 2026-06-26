@@ -40,7 +40,7 @@ export function Tick({
       />
       {/* Label */}
       <div
-        className="bg-uikit-panel text-uikit-muted rounded-[3px] text-uikit-11 pointer-events-none absolute top-1/2 -translate-x-1/2 -translate-y-1/2 px-1 backdrop-blur-sm"
+        className="bg-uikit-panel text-uikit-muted rounded-uikit-badge text-uikit-11 pointer-events-none absolute top-1/2 -translate-x-1/2 -translate-y-1/2 px-1 backdrop-blur-sm"
         style={{
           left: `${clampedCenterPercent}%`,
           zIndex,

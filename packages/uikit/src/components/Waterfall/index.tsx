@@ -154,7 +154,7 @@ export function Waterfall({
       <SyncScrollProvider>
         <div
           className={cn(
-            "bg-uikit-panel text-uikit-ink rounded-[12px] mx-auto flex w-full flex-col overflow-hidden font-uikit-ui shadow-uikit-soft",
+            "bg-uikit-panel text-uikit-ink rounded-[var(--radius)] mx-auto flex w-full flex-col overflow-hidden font-uikit-ui shadow-uikit-soft",
             className,
           )}
         >

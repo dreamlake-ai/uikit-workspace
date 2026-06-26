@@ -423,9 +423,6 @@ export const DialPanel: React.FC<DialSchemaRendererProps> = ({
       {/* Render ungrouped schemas - use grid with 3 columns */}
       {ungrouped.length > 0 && (
         <div className="dial-group">
-          {/*<h3 className="text-sm font-semibold text-uikit-ink mb-2">*/}
-          {/*  General*/}
-          {/*</h3>*/}
           <div className="dial-row grid grid-cols-1 gap-2">
             {ungrouped.map((schema) =>
               wrapWithStyle(schema, renderSchemaInput(schema)),

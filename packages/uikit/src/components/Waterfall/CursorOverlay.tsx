@@ -65,12 +65,12 @@ export function CursorOverlay({
             "text-uikit-11 z-80",
             "border-uikit-faint/50",
             variant === "active" && [
-              "bg-uikit-panel rounded-md border",
+              "bg-uikit-panel rounded-uikit-badge border",
               "shadow-uikit-soft",
             ],
             variant === "static" && [
               "bg-uikit-ink-5 backdrop-blur-sm",
-              "rounded-md",
+              "rounded-uikit-badge",
               "text-uikit-muted",
             ],
           )}

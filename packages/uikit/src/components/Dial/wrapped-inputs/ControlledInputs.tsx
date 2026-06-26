@@ -251,7 +251,7 @@ export const DialSliderInput: React.FC<DialNumInputProps> = ({
     <DialInputWrapper label={label} icon={icon} {...props}>
       <div className={"flex"}>
         <Slider {...sliderProps} />
-        <span className="text-uikit-muted w-12 text-right text-sm">
+        <span className="text-uikit-muted w-12 text-right text-uikit-13">
           {value}
         </span>
       </div>

@@ -16,7 +16,7 @@ export function NavigationControls({
 }: NavigationControlsProps) {
   return (
     <div className="sticky left-1/2 z-20 w-max">
-      <div className="bg-uikit-panel/75 flex items-center gap-2 rounded-full p-1 text-sm shadow-uikit-soft backdrop-blur-[2px]">
+      <div className="bg-uikit-panel/75 flex items-center gap-2 rounded-full p-1 text-uikit-13 shadow-uikit-soft backdrop-blur-[2px]">
         <button
           onClick={() => handlePan("left")}
           className="hover:bg-uikit-ink-5 rounded-full p-1"
