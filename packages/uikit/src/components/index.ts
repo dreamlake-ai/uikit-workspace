@@ -40,3 +40,4 @@ export * from "./Tooltip";
 export * from "./UIKitBadge";
 export * from "./VirtualList";
 export * from "./VirtualListFlow";
+export * from "./Waterfall";

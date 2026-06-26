@@ -1,30 +1,15 @@
 /**
  * Type-only re-exports for drop-in parity with the legacy `@vuer-ai/vuer-uikit`.
  *
- * vuer-web imports `DialSchema`, `GroupSchema` and `LogItemType` purely as type
- * annotations. The full Dial runtime (DialProvider/DialPanel) and its CLI schema
- * system are intentionally out of scope here, so these are faithful but
- * permissive shapes (an index signature keeps forward-compat with the richer
- * upstream types). `TreeDataItem`, `DialValue` and `DialDtype` are included
- * because the others build on them.
+ * vuer-web imports `DialSchema` and `GroupSchema` purely as type annotations.
+ * The full Dial runtime (DialProvider/DialPanel) and its CLI schema system are
+ * intentionally out of scope here, so these are faithful but permissive shapes
+ * (an index signature keeps forward-compat with the richer upstream types).
+ * `DialValue` and `DialDtype` are included because the others build on them.
+ *
+ * `LogItemType` lives with its consumer, the Waterfall component
+ * (`components/Waterfall/types`), and is re-exported from the package root.
  */
-// TreeDataItem is owned by the TreeView component (single source of truth);
-// re-exported from there via the package root.
-import { type TreeDataItem } from '../components/TreeView/types'
-
-/** Timeline/log row used by the legacy Waterfall. */
-export type LogItemType = TreeDataItem & {
-  etype: 'task' | 'attempt' | 'info' | 'step'
-  icon?: 'history' | 'file-code' | 'bot' | 'check-circle' | 'pause-circle'
-  createTime?: number
-  startTime?: number
-  duration?: number
-  time?: number
-  color?: 'blue' | 'green' | 'orange' | 'gray-light' | 'gray-medium' | 'purple'
-  isCollapsible?: boolean
-  hasStripes?: boolean
-  isHaltedStep?: boolean
-}
 
 /** A control's value in the Dial system. */
 export type DialValue =
