@@ -27,6 +27,7 @@ export * from "./SideNav";
 export * from "./Skeleton";
 export * from "./Spinner";
 export * from "./Switch";
+export * from "./SyncScroll";
 export * from "./Tabs";
 export * from "./Tag";
 export * from "./TextField";
