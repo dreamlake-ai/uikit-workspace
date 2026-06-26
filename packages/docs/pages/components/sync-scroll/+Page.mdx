@@ -1,0 +1,74 @@
+---
+title: Sync Scroll
+section: Components
+order: 350
+description: Synchronize scroll position across multiple panes — a master drives its slaves, with optional drag-to-scroll on either axis.
+---
+
+import { Preview } from "../../../components/Preview";
+import { BasicSpec } from "../../../components/specimens/components/sync-scroll/BasicSpec";
+import { DragSpec } from "../../../components/specimens/components/sync-scroll/DragSpec";
+import basicSrc from "../../../components/specimens/components/sync-scroll/BasicSpec.tsx?raw";
+import dragSrc from "../../../components/specimens/components/sync-scroll/DragSpec.tsx?raw";
+
+# Sync Scroll
+
+Keep several scroll containers locked to the same position. A
+`SyncScrollProvider` registers every pane mounted beneath it; a **master**
+broadcasts its `scrollTop` / `scrollLeft` to all the **slaves**, so scrolling
+one moves the others in lockstep. Slaves never drive the group — they only
+follow — which keeps the sync loop one-directional and free of feedback.
+
+Each pane is a plain `div` you style yourself: give it a fixed height (or
+width) and an `overflow` so it actually scrolls. The components just attach the
+right ref and event listener.
+
+## Master / slave panes
+
+Two side-by-side panes inside one provider. The left pane is the `SyncScroll`
+master; the right is a `SyncScrollSlave`. Scroll the master and the slave
+tracks it. By default sync is vertical.
+
+<Preview source={basicSrc} filename="BasicSpec.tsx">
+  <BasicSpec />
+</Preview>
+
+## Drag to scroll
+
+`SyncDragX` / `SyncDragY` (and `SyncDrag` for both axes) add click-and-drag
+panning and act as a master, so paired `SyncDragSlave*` panes follow along.
+Drag either track below horizontally.
+
+<Preview source={dragSrc} filename="DragSpec.tsx">
+  <DragSpec />
+</Preview>
+
+## Exports
+
+| Export               | Kind      | Role                                                                                                              |
+| -------------------- | --------- | ----------------------------------------------------------------------------------------------------------------- |
+| `SyncScrollProvider` | Component | Context boundary that registers panes and relays the master's scroll position to slaves. Wrap every group in one. |
+| `SyncScroll`         | Component | Master pane (`overflow-y-auto`). Its scroll position drives all slaves in the group.                              |
+| `SyncScrollSlave`    | Component | Slave pane (`overflow-y-auto`). Follows the master; its own scrolling does not drive others.                      |
+| `SyncDrag`           | Component | Drag-to-scroll master on both axes. Behaves like a master for syncing.                                            |
+| `SyncDragX`          | Component | Horizontal-only drag-to-scroll master.                                                                            |
+| `SyncDragY`          | Component | Vertical-only drag-to-scroll master.                                                                              |
+| `SyncDragSlave`      | Component | Drag-to-scroll slave on both axes. Follows a master.                                                              |
+| `SyncDragSlaveX`     | Component | Horizontal-only drag-to-scroll slave.                                                                             |
+| `useSyncScroll`      | Hook      | Returns a ref registering the element as a `master`. Backs `SyncScroll`.                                          |
+| `useScrollSlave`     | Hook      | Returns a ref registering the element as a `slave`. Backs the slave components.                                   |
+| `useSyncDrag`        | Hook      | Returns a ref registering the element with the `drag` role (acts as a master). Backs the drag components.         |
+
+All components accept the standard `div` props plus `asChild` — pass `asChild`
+to merge the scroll ref onto your own single child element instead of rendering
+a wrapper `div`.
+
+### Hook options
+
+The hooks accept an options object:
+
+| Option    | Type                                   | Default      | Description                                               |
+| --------- | -------------------------------------- | ------------ | --------------------------------------------------------- |
+| `enabled` | `boolean`                              | `true`       | Toggle registration and listeners off without unmounting. |
+| `axis`    | `'vertical' \| 'horizontal' \| 'both'` | `'vertical'` | Which scroll axes are tracked and synced.                 |
+| `ref`     | `RefObject<HTMLDivElement>`            | —            | Provide your own element ref instead of the internal one. |
