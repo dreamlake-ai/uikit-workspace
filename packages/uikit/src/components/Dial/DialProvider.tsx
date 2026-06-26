@@ -112,7 +112,7 @@ export const DialProvider = ({
   const formatValue = useCallback(
     (value: unknown): DialValue => {
       if (value === null || value === undefined) {
-        return value;
+        return value as DialValue;
       }
 
       // Format single numbers
@@ -131,7 +131,7 @@ export const DialProvider = ({
       }
 
       // Return non-numeric values as-is
-      return value;
+      return value as DialValue;
     },
     [formatNumber],
   );
