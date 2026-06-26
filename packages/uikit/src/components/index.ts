@@ -11,6 +11,7 @@ export * from "./Drawer";
 export * from "./DropdownMenu";
 export * from "./Field";
 export * from "./FilterBar";
+export * from "./Layout";
 export * from "./FormLayout";
 export * from "./Icons";
 export * from "./Input";
