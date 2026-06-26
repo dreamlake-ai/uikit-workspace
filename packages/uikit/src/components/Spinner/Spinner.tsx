@@ -1,9 +1,9 @@
 import { type SVGProps } from 'react'
 import { cn } from '../../lib/utils'
 
-export interface SpinnerProps extends SVGProps<SVGSVGElement> {
-  /** Diameter in px. Default 24. */
-  size?: number
+export interface SpinnerProps extends Omit<SVGProps<SVGSVGElement>, 'size'> {
+  /** Diameter in px. Default 24. Accepts a string for drop-in parity. */
+  size?: number | string
 }
 
 /**

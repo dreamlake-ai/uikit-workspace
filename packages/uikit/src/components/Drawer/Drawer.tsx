@@ -34,6 +34,9 @@ export interface DrawerProps {
   onOpenChange?: (open: boolean) => void
   /** Edge the drawer slides from. Default `bottom`. */
   direction?: DrawerDirection
+  /** Accepted for drop-in parity with vaul (currently always modal/dismissible). */
+  modal?: boolean
+  dismissible?: boolean
   children: ReactNode
 }
 

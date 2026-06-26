@@ -23,6 +23,7 @@ import {
   useRole,
 } from '@floating-ui/react'
 import { cn } from '../../lib/utils'
+import { type LegacyOverlayContentProps, stripLegacyOverlayProps } from '../../lib/legacy-overlay-props'
 
 type Side = 'top' | 'right' | 'bottom' | 'left'
 type Align = 'start' | 'center' | 'end'
@@ -127,10 +128,11 @@ export function PopoverTrigger({ asChild = false, children, ...props }: PopoverT
   )
 }
 
-export type PopoverContentProps = ComponentProps<'div'>
+export interface PopoverContentProps extends ComponentProps<'div'>, LegacyOverlayContentProps {}
 export function PopoverContent({ className, children, style, ...props }: PopoverContentProps) {
   const ctx = usePopoverContext('PopoverContent')
   if (!ctx.open) return null
+  const rest = stripLegacyOverlayProps(props)
   return (
     <FloatingPortal>
       <FloatingFocusManager context={ctx.context} modal={false}>
@@ -142,7 +144,7 @@ export function PopoverContent({ className, children, style, ...props }: Popover
             'bg-uikit-panel text-uikit-ink border border-uikit-faint shadow-uikit-soft outline-none',
             className,
           )}
-          {...ctx.getFloatingProps(props)}
+          {...ctx.getFloatingProps(rest)}
         >
           {children}
         </div>

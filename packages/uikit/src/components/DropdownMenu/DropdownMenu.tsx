@@ -29,6 +29,7 @@ import {
   safePolygon,
 } from '@floating-ui/react'
 import { cn } from '../../lib/utils'
+import { type LegacyOverlayContentProps, stripLegacyOverlayProps } from '../../lib/legacy-overlay-props'
 
 type Side = 'top' | 'right' | 'bottom' | 'left'
 type Align = 'start' | 'center' | 'end'
@@ -170,10 +171,11 @@ export function DropdownMenuTrigger({ asChild = false, children, ...props }: Dro
   )
 }
 
-export type DropdownMenuContentProps = ComponentProps<'div'>
+export interface DropdownMenuContentProps extends ComponentProps<'div'>, LegacyOverlayContentProps {}
 export function DropdownMenuContent({ className, children, style, ...props }: DropdownMenuContentProps) {
   const ctx = useMenuContext('DropdownMenuContent')
   if (!ctx.open) return null
+  const rest = stripLegacyOverlayProps(props)
   return (
     <FloatingPortal>
       <FloatingFocusManager context={ctx.context} modal={false} initialFocus={-1}>
@@ -185,7 +187,7 @@ export function DropdownMenuContent({ className, children, style, ...props }: Dr
             'bg-uikit-panel text-uikit-ink border border-uikit-faint shadow-uikit-soft outline-none',
             className,
           )}
-          {...ctx.getFloatingProps(props)}
+          {...ctx.getFloatingProps(rest)}
         >
           <FloatingList elementsRef={ctx.elementsRef}>{children}</FloatingList>
         </div>
@@ -201,18 +203,35 @@ export interface DropdownMenuItemProps extends Omit<ComponentProps<'div'>, 'onSe
   /** Fired on activation; the menu closes afterward unless prevented. */
   onSelect?: () => void
   disabled?: boolean
+  /** Render the single child element instead of a `<div>`. */
+  asChild?: boolean
 }
-export function DropdownMenuItem({ className, onClick, onSelect, disabled, children, ...props }: DropdownMenuItemProps) {
+export function DropdownMenuItem({ className, onClick, onSelect, disabled, asChild = false, children, ...props }: DropdownMenuItemProps) {
   const ctx = useMenuContext('DropdownMenuItem')
   const { ref, index } = useListItem()
   const active = ctx.activeIndex === index
   const itemProps = ctx.getItemProps({
-    onClick: (e: React.MouseEvent<HTMLDivElement>) => {
-      onClick?.(e)
+    onClick: (e: React.MouseEvent) => {
+      onClick?.(e as React.MouseEvent<HTMLDivElement>)
       onSelect?.()
       ctx.setOpen(false)
     },
   })
+
+  if (asChild && isValidElement(children)) {
+    const child = children as ReactElement<{ className?: string }>
+    return cloneElement(child as ReactElement<Record<string, unknown>>, {
+      ref,
+      role: 'menuitem',
+      tabIndex: active ? 0 : -1,
+      'data-active': active,
+      'aria-disabled': disabled,
+      className: cn(itemClass, className, child.props.className),
+      ...props,
+      ...(disabled ? {} : itemProps),
+    })
+  }
+
   return (
     <div
       ref={ref as never}
@@ -334,10 +353,11 @@ export function DropdownMenuSubTrigger({ className, children, ...props }: Dropdo
   )
 }
 
-export type DropdownMenuSubContentProps = ComponentProps<'div'>
+export interface DropdownMenuSubContentProps extends ComponentProps<'div'>, LegacyOverlayContentProps {}
 export function DropdownMenuSubContent({ className, children, style, ...props }: DropdownMenuSubContentProps) {
   const ctx = useMenuContext('DropdownMenuSubContent')
   if (!ctx.open) return null
+  const rest = stripLegacyOverlayProps(props)
   return (
     <FloatingPortal>
       <div
@@ -348,7 +368,7 @@ export function DropdownMenuSubContent({ className, children, style, ...props }:
           'bg-uikit-panel text-uikit-ink border border-uikit-faint shadow-uikit-soft outline-none',
           className,
         )}
-        {...ctx.getFloatingProps(props)}
+        {...ctx.getFloatingProps(rest)}
       >
         <FloatingList elementsRef={ctx.elementsRef}>{children}</FloatingList>
       </div>

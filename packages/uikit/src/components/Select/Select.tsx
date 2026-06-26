@@ -3,8 +3,10 @@ import {
   type ComponentProps,
   type ReactElement,
   type ReactNode,
+  type Ref,
   cloneElement,
   createContext,
+  forwardRef,
   isValidElement,
   useContext,
   useMemo,
@@ -30,6 +32,16 @@ import {
   useTypeahead,
 } from '@floating-ui/react'
 import { cn } from '../../lib/utils'
+import { type LegacyOverlayContentProps, stripLegacyOverlayProps } from '../../lib/legacy-overlay-props'
+
+function mergeRefs<T>(...refs: (Ref<T> | undefined | ((n: T | null) => void))[]) {
+  return (node: T | null) => {
+    for (const r of refs) {
+      if (typeof r === 'function') r(node)
+      else if (r) (r as { current: T | null }).current = node
+    }
+  }
+}
 
 interface SelectContextValue {
   open: boolean
@@ -76,6 +88,10 @@ export interface SelectProps {
   open?: boolean
   defaultOpen?: boolean
   onOpenChange?: (open: boolean) => void
+  /** Accepted for drop-in parity (currently cosmetic). */
+  disabled?: boolean
+  name?: string
+  font?: string
   children: ReactNode
 }
 
@@ -191,18 +207,26 @@ export function Select({
 
 export interface SelectTriggerProps extends ComponentProps<'button'> {
   asChild?: boolean
+  /** Leading icon rendered before the value. */
+  icon?: ReactNode
+  /** Accepted for drop-in parity (cosmetic). */
+  size?: 'sm' | 'md' | 'lg'
 }
 /** Compact mono trigger (matches the kit's original Select look). */
-export function SelectTrigger({ asChild = false, className, children, ...props }: SelectTriggerProps) {
+export const SelectTrigger = forwardRef<HTMLButtonElement, SelectTriggerProps>(function SelectTrigger(
+  { asChild = false, className, children, icon, size: _size, ...props },
+  ref,
+) {
   const ctx = useSelectContext('SelectTrigger')
+  const setRef = mergeRefs<HTMLButtonElement>(ctx.refs.setReference, ref)
   const refProps = ctx.getReferenceProps({ ...props, 'data-state': ctx.open ? 'open' : 'closed' })
   if (asChild && isValidElement(children)) {
     const child = children as ReactElement<Record<string, unknown>>
-    return cloneElement(child, { ref: ctx.refs.setReference, ...refProps })
+    return cloneElement(child, { ref: setRef, ...refProps })
   }
   return (
     <button
-      ref={ctx.refs.setReference as never}
+      ref={setRef}
       type="button"
       className={cn(
         'inline-flex w-fit items-center gap-1 cursor-pointer outline-none',
@@ -212,11 +236,12 @@ export function SelectTrigger({ asChild = false, className, children, ...props }
       )}
       {...refProps}
     >
+      {icon && <span className="inline-flex shrink-0 opacity-65">{icon}</span>}
       {children}
       <span className="ml-0.5 text-uikit-9 opacity-55">▾</span>
     </button>
   )
-}
+})
 
 export interface SelectValueProps {
   placeholder?: ReactNode
@@ -231,10 +256,11 @@ export function SelectValue({ placeholder, className }: SelectValueProps) {
   )
 }
 
-export type SelectContentProps = ComponentProps<'div'>
+export interface SelectContentProps extends ComponentProps<'div'>, LegacyOverlayContentProps {}
 export function SelectContent({ className, children, style, ...props }: SelectContentProps) {
   const ctx = useSelectContext('SelectContent')
   if (!ctx.open) return null
+  const rest = stripLegacyOverlayProps(props)
   return (
     <FloatingPortal>
       <FloatingFocusManager context={ctx.context} modal={false}>
@@ -246,7 +272,7 @@ export function SelectContent({ className, children, style, ...props }: SelectCo
             'bg-uikit-bg border border-uikit-faint shadow-uikit-soft outline-none',
             className,
           )}
-          {...ctx.getFloatingProps(props)}
+          {...ctx.getFloatingProps(rest)}
         >
           <FloatingList elementsRef={ctx.elementsRef} labelsRef={ctx.labelsRef}>
             {children}
