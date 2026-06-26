@@ -154,7 +154,9 @@ export function ToggleButtons({
             "pointer-events-none absolute transition-all duration-200 ease-out",
             HIGHLIGHT[variant],
           )}
-          style={highlight}
+          // Pill corner = container corner − padding inset, so the selected
+          // pill nests cleanly: 6px when padded (4px inset), 10px flush at p-0.
+          style={{ ...highlight, borderRadius: padding ? 6 : 10 }}
         />
         {children}
       </div>
