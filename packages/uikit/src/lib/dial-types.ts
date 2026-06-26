@@ -8,19 +8,9 @@
  * upstream types). `TreeDataItem`, `DialValue` and `DialDtype` are included
  * because the others build on them.
  */
-import { type ReactNode } from 'react'
-
-/** Tree row base (mirrors the legacy tree-view `TreeDataItem`). */
-export type TreeDataItem = {
-  id: string
-  parentId: string | null
-  label: string
-  isCollapsible?: boolean
-  actions?: ReactNode
-  disable?: boolean
-  selectable?: boolean
-  [key: string]: unknown
-}
+// TreeDataItem is owned by the TreeView component (single source of truth);
+// re-exported from there via the package root.
+import { type TreeDataItem } from '../components/TreeView/types'
 
 /** Timeline/log row used by the legacy Waterfall. */
 export type LogItemType = TreeDataItem & {
