@@ -25,9 +25,9 @@ const CONTAINER: Record<ToggleButtonsVariant, string> = {
 };
 
 const HIGHLIGHT: Record<ToggleButtonsVariant, string> = {
-  primary: "bg-uikit-accent shadow-uikit-sm rounded-uikit-badge",
-  secondary: "bg-uikit-bg shadow-uikit-sm rounded-uikit-badge",
-  ghost: "bg-uikit-chip shadow-uikit-sm rounded-[10px]",
+  primary: "bg-uikit-accent shadow-uikit-sm rounded-[var(--radius)]",
+  secondary: "bg-uikit-bg shadow-uikit-sm rounded-[var(--radius)]",
+  ghost: "bg-uikit-chip shadow-uikit-sm rounded-[var(--radius)]",
 };
 
 const BTN_VARIANT: Record<ToggleButtonsVariant, string> = {
@@ -142,7 +142,7 @@ export function ToggleButtons({
       <div
         ref={containerRef}
         className={cn(
-          "relative inline-flex items-center rounded-[10px]",
+          "relative inline-flex items-center rounded-[var(--radius)]",
           CONTAINER[variant],
           padding ? "p-1" : "p-0",
           className,
@@ -206,7 +206,7 @@ export function ToggleButton({
 
   const classes = cn(
     "relative z-10 inline-flex items-center justify-center font-normal whitespace-nowrap transition-colors outline-none cursor-pointer",
-    "disabled:pointer-events-none disabled:opacity-50 rounded-uikit-badge",
+    "disabled:pointer-events-none disabled:opacity-50 rounded-[var(--radius)]",
     "[&_svg]:shrink-0 [&_svg]:pointer-events-none",
     BTN_VARIANT[ctx.variant],
     btnSizeClass(ctx.size, icon),

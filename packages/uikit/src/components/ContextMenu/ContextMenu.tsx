@@ -196,7 +196,7 @@ export function ContextMenuContent({
           ref={ctx.refs.setFloating as never}
           style={{ ...ctx.floatingStyles, ...style }}
           className={cn(
-            "uikit-panel-in z-[200] min-w-[180px] rounded-[10px] p-1 font-uikit-ui",
+            "uikit-panel-in z-[200] min-w-[180px] rounded-[var(--radius)] p-1 font-uikit-ui",
             "bg-uikit-panel text-uikit-ink border border-uikit-faint shadow-uikit-soft outline-none",
             className,
           )}
