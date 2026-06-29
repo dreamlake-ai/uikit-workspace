@@ -210,7 +210,7 @@ export function ContextMenuContent({
 }
 
 const itemClass =
-  "flex w-full items-center gap-2 rounded-uikit-badge px-2 py-1.5 text-uikit-12 leading-uikit-snug cursor-pointer select-none outline-none data-[active=true]:bg-uikit-ink-5 data-[danger=true]:text-uikit-tone-red disabled:opacity-50 disabled:pointer-events-none";
+  "flex w-full items-center gap-2 rounded-uikit-badge px-2 py-1.5 text-uikit-12 leading-uikit-snug cursor-pointer select-none outline-none data-[active=true]:bg-uikit-ink-5 data-[danger=true]:text-uikit-tone-red disabled:opacity-50 disabled:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-3.5";
 
 export interface ContextMenuItemProps extends Omit<
   ComponentProps<"div">,
