@@ -32,8 +32,9 @@ tokens, deploys triggered by `git push` on a branch.
 4. Get to a reviewable version ASAP.
 5. Convert all scripts to React components.
 6. Convert all CSS into Tailwind v4 + global theming variables.
-7. Deploy. Set up `pnpm staging` / `pnpm prod` to push deploy
-   branches; configure Netlify to auto-build from those branches.
+7. Deploy. Set up a `deploy` script (invoked as `pnpm run deploy`) to
+   push the `netlify-production` branch; configure Netlify to
+   auto-build from it.
 
 ---
 
@@ -127,9 +128,9 @@ unchanged from npm.
 
 **Watch out:** `pnpm deploy` is a built-in workspace command. A
 custom script named `deploy` won't run via `pnpm deploy` — you get
-`ERR_PNPM_CANNOT_DEPLOY` outside a workspace. Rename it (`pnpm prod`,
-`pnpm ship`) or use `pnpm run deploy`. Same gotcha for `install`,
-`add`, `remove`, `publish`, `exec`.
+`ERR_PNPM_NOTHING_TO_DEPLOY` outside a workspace. Either rename it or
+always invoke it as `pnpm run deploy` (what this repo does). Same
+gotcha for `install`, `add`, `remove`, `publish`, `exec`.
 
 ### Netlify
 
@@ -519,31 +520,33 @@ output looks right.
 
 ---
 
-## Deploy workflow: branch-per-environment
+## Deploy workflow: a branch Netlify builds from
 
-A clean pattern that lets `pnpm staging` and `pnpm prod` be one-line
-git pushes:
+A clean pattern that lets `pnpm run deploy` be a one-line git push
+(this repo wraps it with a version-consistency check + `v/<version>`
+snapshot first):
 
 ```json
 {
   "scripts": {
-    "staging": "git push origin HEAD:netlify-staging",
-    "prod":    "git push origin HEAD:netlify-production"
+    "deploy": "git push -f origin HEAD:netlify-production"
   }
 }
 ```
+
+Name the script `deploy` but invoke it as `pnpm run deploy` —
+`pnpm deploy` is a pnpm built-in (see the pnpm gotcha above).
 
 Netlify config (in the dashboard, after linking GitHub once):
 
 - **Production branch:** `netlify-production` (only this branch
   publishes to the apex domain).
-- **Branch deploys:** enable for `netlify-staging` only — gets a
-  predictable preview URL like `netlify-staging--<site>.netlify.app`.
 - **Disable** branch deploys for `main` so dev pushes don't bake into
   any URL.
 
-`main` is your dev branch. Deploys are explicit — you fast-forward
-the deploy branches when you're ready to ship. `git log
+There is a single production environment — no staging branch. `main`
+is your dev branch. Deploys are explicit — you fast-forward
+`netlify-production` when you're ready to ship. `git log
 netlify-production` becomes "history of what's been deployed."
 
 For the very first deploy (before GitHub is linked), fall back to
@@ -634,14 +637,15 @@ recreate.
 - `@custom-variant` for any global state class.
 - Component-scoped class strings as named constants when they get long.
 - Marker classes as a transitional pattern, with code comments.
-- `pnpm staging` / `pnpm prod` branch-push scripts (don't name them
-  `deploy`).
+- A `deploy` branch-push script, always invoked as `pnpm run deploy`
+  (the name collides with pnpm's built-in `deploy`, so never run bare
+  `pnpm deploy`).
 - Pre-hydration script in `+Head.tsx` for any theme/preference state
   that affects initial paint.
 - `createPortal` whenever an element needs to escape a stacking
   context that's not its parent.
-- Branch-per-environment deploys: dev on `main`, fast-forward to
-  `netlify-staging` / `netlify-production` to ship.
+- Deploy by fast-forwarding a branch Netlify builds from: dev on
+  `main`, fast-forward to `netlify-production` to ship.
 - Engineering notes as `.mdx` in `dev-notes/`, with a `README.mdx`
   index and concrete examples. Same files serve humans, AI coding
   agents, and any future site-side doc rendering — no second migration.

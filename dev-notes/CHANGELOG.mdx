@@ -6,6 +6,17 @@ sections. README copy edits and typo fixes are skipped. See
 [`./README.mdx`](./README.mdx) for the folder convention and
 [`../CLAUDE.md`](../CLAUDE.md) for the release-notes policy.
 
+## 2026-06-29 — Single production deploy: `pnpm run deploy`, no staging
+
+- `migration-patterns.mdx`: rewrote the deploy-workflow section and
+  the setup checklist for a single production environment — removed
+  the `netlify-staging` branch and the `pnpm staging` script. There is
+  now one `deploy` script that pushes `netlify-production`.
+- `migration-patterns.mdx`: the script is named `deploy` but must be
+  invoked as `pnpm run deploy` — `pnpm deploy` hits pnpm's built-in
+  command. Corrected the documented error to
+  `ERR_PNPM_NOTHING_TO_DEPLOY` (what pnpm actually emits).
+
 ## 2026-05-19 — VirtualListFlow: flow-layout alternative to VirtualList
 
 Added `VirtualListFlow` next to `VirtualList`. Same external API
