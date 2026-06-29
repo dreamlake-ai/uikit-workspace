@@ -154,9 +154,7 @@ export function ToggleButtons({
             "pointer-events-none absolute transition-all duration-200 ease-out",
             HIGHLIGHT[variant],
           )}
-          // Pill corner = container corner − padding inset, so the selected
-          // pill nests cleanly: 6px when padded (4px inset), 10px flush at p-0.
-          style={{ ...highlight, borderRadius: padding ? 6 : 10 }}
+          style={highlight}
         />
         {children}
       </div>
@@ -208,7 +206,7 @@ export function ToggleButton({
 
   const classes = cn(
     "relative z-10 inline-flex items-center justify-center font-normal whitespace-nowrap transition-colors outline-none cursor-pointer",
-    "disabled:pointer-events-none disabled:opacity-50 rounded-md",
+    "disabled:pointer-events-none disabled:opacity-50 rounded-uikit-badge",
     "[&_svg]:shrink-0 [&_svg]:pointer-events-none",
     BTN_VARIANT[ctx.variant],
     btnSizeClass(ctx.size, icon),
