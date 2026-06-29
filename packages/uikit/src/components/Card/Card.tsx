@@ -100,7 +100,11 @@ export function Card({
     return (
       <div
         data-slot="card"
-        className={cn(BASE, PADDING[size], className)}
+        // flex-none: a collapsed card is just its title row, so it must not grow
+        // or shrink — overrides any `flex-1` a flex-column parent passes in (e.g.
+        // the studio right rail, where expanded panels share height but collapsed
+        // ones stay title-height).
+        className={cn(BASE, PADDING[size], className, "flex-none")}
         {...props}
       >
         <div className={cn("absolute", TOGGLE_POS[size])}>

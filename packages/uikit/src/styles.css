@@ -323,14 +323,36 @@ html[data-theme="dark"] {
   display: none;
 }
 
+/* Panel scroll area — shared by the studio side panels (SceneGraph, Workspace,
+   MainControl, Properties). Bleeds the scrollbar into the host Card's right
+   padding (md Card = p-4 = 16px) so the bar sits flush to the panel edge,
+   consistent across every panel, and reclaims the inset gutter for content.
+   The small padding-right keeps content clear of the bar. Requires no
+   overflow-hidden ancestor between this element and the Card. */
+.uikit-panel-scroll {
+  min-height: 0;
+  overflow-y: auto;
+  margin-right: -1rem;
+  padding-right: 0.375rem;
+}
+
+/* Auto-hide scrollbars (ported from the DreamLake design). The thumb is
+   transparent at rest and fades to var(--faint) only while the element carries
+   the `.is-scrolling` class — a global capture-phase scroll listener (installed
+   in vuer-web's root layout) adds it on scroll and removes it after an idle
+   timeout. var(--faint) is theme-aware, so no separate dark rules are needed. */
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+  scrollbar-color: transparent transparent;
+  transition: scrollbar-color 400ms ease;
+}
+*.is-scrolling {
+  scrollbar-color: var(--faint) transparent;
 }
 
 *::-webkit-scrollbar {
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
 }
 
 *::-webkit-scrollbar-track {
@@ -338,37 +360,11 @@ html[data-theme="dark"] {
 }
 
 *::-webkit-scrollbar-thumb {
-  background-color: rgba(156, 163, 175, 0.5);
-  border-radius: 4px;
-  border: 1px solid transparent;
+  background: transparent;
+  border-radius: 3px;
+  transition: background 400ms ease;
 }
 
-*::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(156, 163, 175, 0.7);
-}
-
-html[data-theme="dark"] * {
-  scrollbar-color: rgba(75, 85, 99, 0.5) transparent;
-}
-
-html[data-theme="dark"] *::-webkit-scrollbar-thumb {
-  background-color: rgba(75, 85, 99, 0.5);
-}
-
-html[data-theme="dark"] *::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(75, 85, 99, 0.7);
-}
-
-@media (prefers-color-scheme: dark) {
-  html:not([data-theme="light"]) * {
-    scrollbar-color: rgba(75, 85, 99, 0.5) transparent;
-  }
-
-  html:not([data-theme="light"]) *::-webkit-scrollbar-thumb {
-    background-color: rgba(75, 85, 99, 0.5);
-  }
-
-  html:not([data-theme="light"]) *::-webkit-scrollbar-thumb:hover {
-    background-color: rgba(75, 85, 99, 0.7);
-  }
+*.is-scrolling::-webkit-scrollbar-thumb {
+  background: var(--faint);
 }
