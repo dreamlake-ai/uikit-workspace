@@ -10,6 +10,15 @@ const PADDING: Record<CardSize, string> = {
   xl: "p-8",
 };
 
+// Collapse toggle sits at the content's top-right corner — its inset must match
+// the card padding so it lines up with the first content row (title / tab bar).
+const TOGGLE_POS: Record<CardSize, string> = {
+  sm: "right-2 top-2",
+  md: "right-4 top-4",
+  lg: "right-6 top-6",
+  xl: "right-8 top-8",
+};
+
 const BASE =
   "relative flex flex-col rounded-[var(--radius)] bg-uikit-panel border border-uikit-faint text-uikit-ink shadow-uikit-sm";
 
@@ -94,7 +103,7 @@ export function Card({
         className={cn(BASE, PADDING[size], className)}
         {...props}
       >
-        <div className="absolute right-4 top-4">
+        <div className={cn("absolute", TOGGLE_POS[size])}>
           <CollapseToggle collapsed onClick={() => setCollapsed(false)} />
         </div>
         {collapsedContent}
@@ -109,7 +118,7 @@ export function Card({
       {...props}
     >
       {collapsible && (
-        <div className="absolute right-4 top-4">
+        <div className={cn("absolute", TOGGLE_POS[size])}>
           <CollapseToggle
             collapsed={false}
             onClick={() => setCollapsed(true)}
