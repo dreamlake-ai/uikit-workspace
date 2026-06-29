@@ -184,7 +184,7 @@ export function Tabs({
           style={{
             left: bar.left,
             width: bar.width,
-            height: indicatorHeight ?? 4,
+            height: indicatorHeight ?? 2,
             bottom: -1,
             transition: bar.ready
               ? 'left 280ms cubic-bezier(.4,0,.2,1), width 280ms cubic-bezier(.4,0,.2,1)'
