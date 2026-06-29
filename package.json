@@ -15,8 +15,7 @@
     "format:check": "prettier --check .",
     "set-version": "node scripts/set-version.mjs",
     "version-branch": "node scripts/push-version-branch.mjs",
-    "prod": "pnpm version-branch && git push -f origin HEAD:netlify-production",
-    "staging": "git push -f origin HEAD:netlify-staging"
+    "deploy": "pnpm version-branch && git push -f origin HEAD:netlify-production"
   },
   "devDependencies": {
     "prettier": "^3.8.1",
