@@ -83,21 +83,21 @@ export function Card({
   const [collapsed, setCollapsed] = useState(defaultCollapsed);
 
   if (collapsible && collapsed) {
+    // Mirror the expanded layout exactly: the toggle is absolutely positioned
+    // top-right so it stays aligned with the content's first row (title / tab
+    // bar) and doesn't jump when collapsing. `items-center` previously centered
+    // it against tall collapsed content (e.g. full-height tabs), pushing it
+    // below the title row.
     return (
       <div
         data-slot="card"
-        className={cn(
-          BASE,
-          PADDING[size],
-          "flex-row items-center justify-between",
-          className,
-        )}
+        className={cn(BASE, PADDING[size], className)}
         {...props}
       >
-        {collapsedContent}
-        <div className="ml-auto">
+        <div className="absolute right-4 top-4">
           <CollapseToggle collapsed onClick={() => setCollapsed(false)} />
         </div>
+        {collapsedContent}
       </div>
     );
   }
