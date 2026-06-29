@@ -7,30 +7,35 @@
 
 :root {
   /* ── Surfaces ────────────────────────────────────────────────── */
-  --bg-light:       #fffefa;
-  --bg-dark:        #2e2e35;
+  --bg-light: #fffefa;
+  --bg-dark: #2e2e35;
   --panel-bg-light: #fcfbf7;
-  --panel-bg-dark:  #2e2e35;
-  --rail-bg-light:  #fcfbf7;
-  --rail-bg-dark:   #2b2b31;
+  --panel-bg-dark: #2e2e35;
+  --rail-bg-light: #fcfbf7;
+  --rail-bg-dark: #2b2b31;
 
-  --bg:       var(--bg-light);
+  --bg: var(--bg-light);
   --panel-bg: var(--panel-bg-light);
-  --rail-bg:  var(--rail-bg-light);
+  --rail-bg: var(--rail-bg-light);
 
   /* ── Ink / muted ─────────────────────────────────────────────── */
-  --ink:   #1a1a1a;
+  --ink: #1a1a1a;
   --uikit-muted: #6b6b6b;
 
   /* ── Hairlines, chips, search ────────────────────────────────── */
-  --faint:        rgba(0, 0, 0, 0.08);
+  --faint: rgba(0, 0, 0, 0.08);
   --faint-dashed: rgba(0, 0, 0, 0.22);
-  --chip-bg:      rgba(0, 0, 0, 0.04);
-  --search-bg:    #f5f4f0;
+  --chip-bg: rgba(0, 0, 0, 0.04);
+  --search-bg: #f5f4f0;
 
   /* ── Selection / accent ──────────────────────────────────────── */
   --selected-bg: #d9e6f7;
-  --uikit-accent:      #23aaff;
+  /* Scene-graph tree row states (ml-dash design): warm-amber hover, neutral-grey
+     selection fill (singleStyle "neutral"), deeper grey on selected-hover. */
+  --tree-hover: #f3e6cc;
+  --tree-sel: #ececec;
+  --tree-sel-hover: #e3e3e3;
+  --uikit-accent: #23aaff;
   --accent-soft: rgba(35, 170, 255, 0.09);
 
   /* ── Semantic palette (Style Guide §Color) ────────────────────
@@ -38,11 +43,11 @@
      the `TagTone` union so `tone="green"` and `--tone-green` track
      each other. Palette values are theme-invariant — the same hex in
      light + dark. `--tone-blue` intentionally equals `--uikit-accent`. */
-  --tone-blue:      #23aaff; /* active · running · accent */
-  --tone-green:     #1f8f4a; /* ok · source · success */
-  --tone-amber:     #c0922e; /* stale · scheduled · filter */
-  --tone-red:       #c8513b; /* error · sink · quarantine · destructive */
-  --tone-purple:    #7c5bd9; /* model · merge · human */
+  --tone-blue: #23aaff; /* active · running · accent */
+  --tone-green: #1f8f4a; /* ok · source · success */
+  --tone-amber: #c0922e; /* stale · scheduled · filter */
+  --tone-red: #c8513b; /* error · sink · quarantine · destructive */
+  --tone-purple: #7c5bd9; /* model · merge · human */
   --tone-warm-gray: #9c907a; /* idle · queued · placeholder */
 
   /* ── Zebra-list row bands (doc Style Guide only) ──────────────
@@ -50,64 +55,67 @@
      ZebraRunSpecimen. Light/dark hex values are inlined here as the
      canonical contract — the specimens render the same hex literals
      alongside the swatches as their grep target. */
-  --row-base:        #fffefa;
-  --row-zebra:       #f3f2ee;
-  --row-hover:       #d9e6f7;
-  --row-hover-warm:  #f3e6cc;
-  --row-selected:    #2174d9;
+  --row-base: #fffefa;
+  --row-zebra: #f3f2ee;
+  --row-hover: #d9e6f7;
+  --row-hover-warm: #f3e6cc;
+  --row-selected: #2174d9;
   --row-selected-fg: #ffffff;
 
   /* ── Geometry / shadow ──────────────────────────────────────── */
   --radius: 10px;
 
   --shadow-tint-1: rgba(0, 0, 0, 0.06);
-  --shadow-tint-2: rgba(0, 0, 0, 0.10);
+  --shadow-tint-2: rgba(0, 0, 0, 0.1);
   --shadow-tint-3: rgba(0, 0, 0, 0.16);
-  --shadow-inset:  rgba(0, 0, 0, 0.08);
+  --shadow-inset: rgba(0, 0, 0, 0.08);
 
   /* Modal/drawer backdrop. Theme-aware so it dims correctly in both modes. */
   --scrim: rgba(0, 0, 0, 0.5);
 
   /* ── Typography ─────────────────────────────────────────────── */
-  --f-ui:   'Inter Tight', ui-sans-serif, system-ui, sans-serif;
-  --f-mono: 'JetBrains Mono', ui-monospace, monospace;
-  --f-hand: 'JetBrains Mono', ui-monospace, monospace;
+  --f-ui: "Inter Tight", ui-sans-serif, system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, monospace;
+  --f-hand: "JetBrains Mono", ui-monospace, monospace;
 }
 
 html[data-theme="light"] {
-  --bg:       var(--bg-light);
+  --bg: var(--bg-light);
   --panel-bg: var(--panel-bg-light);
-  --rail-bg:  var(--rail-bg-light);
+  --rail-bg: var(--rail-bg-light);
 }
 
 html[data-theme="dark"] {
-  --bg:       var(--bg-dark);
+  --bg: var(--bg-dark);
   --panel-bg: var(--panel-bg-dark);
-  --rail-bg:  var(--rail-bg-dark);
+  --rail-bg: var(--rail-bg-dark);
 
-  --ink:          #ececec;
-  --uikit-muted:        #8a8a8a;
-  --faint:        rgba(255, 255, 255, 0.09);
+  --ink: #ececec;
+  --uikit-muted: #8a8a8a;
+  --faint: rgba(255, 255, 255, 0.09);
   --faint-dashed: rgba(255, 255, 255, 0.22);
-  --chip-bg:      rgba(255, 255, 255, 0.05);
-  --search-bg:    #36363c;
+  --chip-bg: rgba(255, 255, 255, 0.05);
+  --search-bg: #36363c;
 
-  --selected-bg:  #3d4856;
-  --accent-soft:  rgba(35, 170, 255, 0.18);
+  --selected-bg: #3d4856;
+  --tree-hover: #3d4856;
+  --tree-sel: #45454a;
+  --tree-sel-hover: #4d4d52;
+  --accent-soft: rgba(35, 170, 255, 0.18);
 
   /* Row bands — dark */
-  --row-base:        #2b2b31;
-  --row-zebra:       #36363c;
-  --row-hover:       #3d4856;
-  --row-hover-warm:  #3d4856;
-  --row-selected:    #2f86e6;
+  --row-base: #2b2b31;
+  --row-zebra: #36363c;
+  --row-hover: #3d4856;
+  --row-hover-warm: #3d4856;
+  --row-selected: #2f86e6;
   --row-selected-fg: #ffffff;
 
   --shadow-tint-1: rgba(0, 0, 0, 0.45);
   --shadow-tint-2: rgba(0, 0, 0, 0.6);
   --shadow-tint-3: rgba(0, 0, 0, 0.75);
-  --shadow-inset:  rgba(0, 0, 0, 0.5);
-  --scrim:         rgba(0, 0, 0, 0.62);
+  --shadow-inset: rgba(0, 0, 0, 0.5);
+  --scrim: rgba(0, 0, 0, 0.62);
 }
 
 /* System-dark fallback — applied only when the consumer hasn't pinned light.
@@ -115,32 +123,35 @@ html[data-theme="dark"] {
    explicit user choice always wins. */
 @media (prefers-color-scheme: dark) {
   html:not([data-theme="light"]) {
-    --bg:       var(--bg-dark);
+    --bg: var(--bg-dark);
     --panel-bg: var(--panel-bg-dark);
-    --rail-bg:  var(--rail-bg-dark);
+    --rail-bg: var(--rail-bg-dark);
 
-    --ink:          #ececec;
-    --uikit-muted:        #8a8a8a;
-    --faint:        rgba(255, 255, 255, 0.09);
+    --ink: #ececec;
+    --uikit-muted: #8a8a8a;
+    --faint: rgba(255, 255, 255, 0.09);
     --faint-dashed: rgba(255, 255, 255, 0.22);
-    --chip-bg:      rgba(255, 255, 255, 0.05);
-    --search-bg:    #36363c;
+    --chip-bg: rgba(255, 255, 255, 0.05);
+    --search-bg: #36363c;
 
-    --selected-bg:  #3d4856;
-    --accent-soft:  rgba(35, 170, 255, 0.18);
+    --selected-bg: #3d4856;
+    --tree-hover: #3d4856;
+    --tree-sel: #45454a;
+    --tree-sel-hover: #4d4d52;
+    --accent-soft: rgba(35, 170, 255, 0.18);
 
-    --row-base:        #2b2b31;
-    --row-zebra:       #36363c;
-    --row-hover:       #3d4856;
-    --row-hover-warm:  #3d4856;
-    --row-selected:    #2f86e6;
+    --row-base: #2b2b31;
+    --row-zebra: #36363c;
+    --row-hover: #3d4856;
+    --row-hover-warm: #3d4856;
+    --row-selected: #2f86e6;
     --row-selected-fg: #ffffff;
 
     --shadow-tint-1: rgba(0, 0, 0, 0.45);
     --shadow-tint-2: rgba(0, 0, 0, 0.6);
     --shadow-tint-3: rgba(0, 0, 0, 0.75);
-    --shadow-inset:  rgba(0, 0, 0, 0.5);
-    --scrim:         rgba(0, 0, 0, 0.62);
+    --shadow-inset: rgba(0, 0, 0, 0.5);
+    --scrim: rgba(0, 0, 0, 0.62);
   }
 }
 
@@ -159,61 +170,68 @@ html[data-theme="dark"] {
      namespaces our utilities so consumer @theme blocks can't
      accidentally shadow them. Theme-flipping happens at runtime via
      the :root / [data-theme] cascade above, so dark mode "just works". */
-  --color-uikit-ink:         var(--ink);
-  --color-uikit-muted:       var(--uikit-muted);
-  --color-uikit-bg:          var(--bg);
-  --color-uikit-panel:       var(--panel-bg);
-  --color-uikit-rail:        var(--rail-bg);
-  --color-uikit-accent:      var(--uikit-accent);
+  --color-uikit-ink: var(--ink);
+  --color-uikit-muted: var(--uikit-muted);
+  --color-uikit-bg: var(--bg);
+  --color-uikit-panel: var(--panel-bg);
+  --color-uikit-rail: var(--rail-bg);
+  --color-uikit-accent: var(--uikit-accent);
   --color-uikit-accent-soft: var(--accent-soft);
-  --color-uikit-faint:        var(--faint);
+  --color-uikit-faint: var(--faint);
   --color-uikit-faint-dashed: var(--faint-dashed);
-  --color-uikit-chip:         var(--chip-bg);
-  --color-uikit-search:       var(--search-bg);
-  --color-uikit-selected:     var(--selected-bg);
+  --color-uikit-chip: var(--chip-bg);
+  --color-uikit-search: var(--search-bg);
+  --color-uikit-selected: var(--selected-bg);
+  --color-uikit-tree-hover: var(--tree-hover);
+  --color-uikit-tree-sel: var(--tree-sel);
+  --color-uikit-tree-sel-hover: var(--tree-sel-hover);
 
   /* Row bands — exposed for the ZebraSpecimen utilities
      (`bg-uikit-row-base`, `bg-uikit-row-zebra`, `bg-uikit-row-hover`,
      `bg-uikit-row-hover-warm`, `bg-uikit-row-selected`,
      `text-uikit-row-selected-fg`). */
-  --color-uikit-row-base:        var(--row-base);
-  --color-uikit-row-zebra:       var(--row-zebra);
-  --color-uikit-row-hover:       var(--row-hover);
-  --color-uikit-row-hover-warm:  var(--row-hover-warm);
-  --color-uikit-row-selected:    var(--row-selected);
+  --color-uikit-row-base: var(--row-base);
+  --color-uikit-row-zebra: var(--row-zebra);
+  --color-uikit-row-hover: var(--row-hover);
+  --color-uikit-row-hover-warm: var(--row-hover-warm);
+  --color-uikit-row-selected: var(--row-selected);
   --color-uikit-row-selected-fg: var(--row-selected-fg);
 
   /* Semantic-palette tones — exposed for `text-uikit-tone-red`,
      `bg-uikit-tone-green`, etc. Mirror the `TagTone` union; values are
      theme-invariant per the Style Guide §Color rule "Never invent a
      near-miss hex." */
-  --color-uikit-tone-blue:      var(--tone-blue);
-  --color-uikit-tone-green:     var(--tone-green);
-  --color-uikit-tone-amber:     var(--tone-amber);
-  --color-uikit-tone-red:       var(--tone-red);
-  --color-uikit-tone-purple:    var(--tone-purple);
+  --color-uikit-tone-blue: var(--tone-blue);
+  --color-uikit-tone-green: var(--tone-green);
+  --color-uikit-tone-amber: var(--tone-amber);
+  --color-uikit-tone-red: var(--tone-red);
+  --color-uikit-tone-purple: var(--tone-purple);
   --color-uikit-tone-warm-gray: var(--tone-warm-gray);
 
   /* ── Color-mix presets — name = base color · alpha % ──────────
      Numeric suffix is the percentage of the base color over a
      transparent backdrop (in srgb). Common hover / selected /
      faded-text recipes. */
-  --color-uikit-ink-4:       color-mix(in srgb, var(--ink) 4%,  transparent);
-  --color-uikit-ink-5:       color-mix(in srgb, var(--ink) 5%,  transparent);
-  --color-uikit-ink-6:       color-mix(in srgb, var(--ink) 6%,  transparent);
-  --color-uikit-ink-8:       color-mix(in srgb, var(--ink) 8%,  transparent);
-  --color-uikit-ink-12:      color-mix(in srgb, var(--ink) 12%, transparent);
-  --color-uikit-ink-50:      color-mix(in srgb, var(--ink) 50%, transparent);
-  --color-uikit-accent-12:   color-mix(in srgb, var(--uikit-accent) 12%, transparent);
+  --color-uikit-ink-4: color-mix(in srgb, var(--ink) 4%, transparent);
+  --color-uikit-ink-5: color-mix(in srgb, var(--ink) 5%, transparent);
+  --color-uikit-ink-6: color-mix(in srgb, var(--ink) 6%, transparent);
+  --color-uikit-ink-8: color-mix(in srgb, var(--ink) 8%, transparent);
+  --color-uikit-ink-12: color-mix(in srgb, var(--ink) 12%, transparent);
+  --color-uikit-ink-50: color-mix(in srgb, var(--ink) 50%, transparent);
+  --color-uikit-accent-12: color-mix(
+    in srgb,
+    var(--uikit-accent) 12%,
+    transparent
+  );
 
   /* ── Fonts ────────────────────────────────────────────────────── */
-  --font-uikit-ui:   var(--f-ui);
+  --font-uikit-ui: var(--f-ui);
   --font-uikit-mono: var(--f-mono);
 
   /* ── Font sizes — integer px ──────────────────────────────────
      Fractional sizes (10.5, 11.5, 12.5, 13.5) are rare enough to use
      `text-[Xpx]` arbitrary values at the call site. */
-  --text-uikit-9:  9px;
+  --text-uikit-9: 9px;
   --text-uikit-10: 10px;
   --text-uikit-11: 11px;
   --text-uikit-12: 12px;
@@ -225,7 +243,7 @@ html[data-theme="dark"] {
   /* ── Line-height — value-based snug / prose pair.
      Tailwind's default leading-* covers 1 / 1.25 / 1.5, so we only
      need to supplement with the two values the design uses heavily. */
-  --leading-uikit-snug:  1.3;
+  --leading-uikit-snug: 1.3;
   --leading-uikit-prose: 1.55;
 
   /* ── Danger color (MenuItem destructive action, Tag × hover, etc.)
@@ -233,44 +251,50 @@ html[data-theme="dark"] {
      oklch so the alpha-mix preset below has a perceptually-uniform base.
      Per §Color rule "Never invent a near-miss hex," anything that wants
      a destructive red points here or at `var(--tone-red)`. */
-  --color-uikit-danger:    var(--tone-red);
-  --color-uikit-danger-8:  color-mix(in srgb, var(--tone-red) 8%, transparent);
+  --color-uikit-danger: var(--tone-red);
+  --color-uikit-danger-8: color-mix(in srgb, var(--tone-red) 8%, transparent);
 
   /* ── Letter-spacing — relative tightness scale.
      The `uikit-` prefix keeps our values fully isolated from
      Tailwind's own tracking-* defaults — both can coexist. */
   --tracking-uikit-tightest: -0.025em;
-  --tracking-uikit-tighter:  -0.02em;
-  --tracking-uikit-tight:    -0.015em;
-  --tracking-uikit-snug:     -0.005em;
-  --tracking-uikit-wide:     0.04em;
-  --tracking-uikit-wider:    0.06em;
-  --tracking-uikit-widest:   0.14em;
+  --tracking-uikit-tighter: -0.02em;
+  --tracking-uikit-tight: -0.015em;
+  --tracking-uikit-snug: -0.005em;
+  --tracking-uikit-wide: 0.04em;
+  --tracking-uikit-wider: 0.06em;
+  --tracking-uikit-widest: 0.14em;
 
   /* ── Radius ladder ────────────────────────────────────────────
      Named steps so components stop guessing with literals. Panel/row
      radius keep using the runtime `var(--radius)` (10px). */
-  --radius-uikit-badge: 6px;  /* chips / badges / small controls */
-  --radius-uikit-card:  8px;  /* content cards */
+  --radius-uikit-badge: 6px; /* chips / badges / small controls */
+  --radius-uikit-card: 8px; /* content cards */
 
   /* ── Shadows — depth-based ────────────────────────────────────
      `sm`   for small controls (switch thumb, segmented slider).
      `soft` for popovers / menus / dropdowns.
      `deep` for modal panels (Dialog).
      soft/deep include the inset 1px var(--faint) ring. */
-  --shadow-uikit-sm:   0 1px 2px var(--shadow-tint-1);
-  --shadow-uikit-soft: 0 8px 28px -8px var(--shadow-tint-3),
-                       0 0 0 1px var(--faint);
-  --shadow-uikit-deep: 0 1px 2px var(--shadow-tint-1),
-                       0 24px 60px var(--shadow-tint-3),
-                       inset 0 0 0 1px var(--faint);
+  --shadow-uikit-sm: 0 1px 2px var(--shadow-tint-1);
+  --shadow-uikit-soft:
+    0 8px 28px -8px var(--shadow-tint-3), 0 0 0 1px var(--faint);
+  --shadow-uikit-deep:
+    0 1px 2px var(--shadow-tint-1), 0 24px 60px var(--shadow-tint-3),
+    inset 0 0 0 1px var(--faint);
 }
 
 /* ── Animations ─────────────────────────────────────────────────── */
 
 @keyframes uikit-panel-in {
-  from { opacity: 0; transform: scale(0.985) translateY(-4px); }
-  to   { opacity: 1; transform: scale(1)     translateY(0); }
+  from {
+    opacity: 0;
+    transform: scale(0.985) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 .uikit-panel-in {
   animation: uikit-panel-in 280ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
@@ -279,8 +303,14 @@ html[data-theme="dark"] {
 /* Row-cascade entry used by BreadcrumbTree's column-fill animation —
    referenced via inline `style={{ animation: 'uikit-row-in …' }}`. */
 @keyframes uikit-row-in {
-  from { opacity: 0; transform: translateX(-6px); }
-  to   { opacity: 1; transform: translateX(0); }
+  from {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 /* ── Scrollbar utilities ────────────────────────────────────────── */
@@ -342,4 +372,3 @@ html[data-theme="dark"] *::-webkit-scrollbar-thumb:hover {
     background-color: rgba(75, 85, 99, 0.7);
   }
 }
-

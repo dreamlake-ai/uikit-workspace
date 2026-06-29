@@ -1,5 +1,5 @@
 import { ChevronDown } from "lucide-react";
-import React, { type ReactNode, useState } from "react";
+import React, { type ReactNode, useMemo, useState } from "react";
 
 import {
   cleanIndirectSelectedNodes,
@@ -10,6 +10,39 @@ import {
 import { type TreeDataItem, type TreeDataItemWithMeta } from "./types";
 import { cn } from "../../lib/utils";
 import { ContextMenu, ContextMenuTrigger } from "../ContextMenu";
+
+/**
+ * Augment a selection (visual-only) so that a group whose entire subtree is
+ * selected reads as selected too — this makes the multi-select ring wrap the
+ * group node along with its children. The real `selectedItemIds` (used by click
+ * handlers and the consumer) is left untouched.
+ */
+function withFullGroupsSelected<T extends TreeDataItem>(
+  selectedIds: Set<string>,
+  data: TreeDataItemWithMeta<T>[],
+): Set<string> {
+  if (selectedIds.size === 0) return selectedIds;
+  const childrenMap = new Map<string, string[]>();
+  for (const it of data) {
+    const p = it.parentId;
+    if (p == null) continue;
+    if (!childrenMap.has(p)) childrenMap.set(p, []);
+    childrenMap.get(p)!.push(it.id);
+  }
+  const augmented = new Set(selectedIds);
+  // Flat order is parent-before-children (DFS pre-order), so iterating in
+  // reverse decides every child before its parent — a clean bottom-up pass.
+  // Only selectable groups auto-select (e.g. the non-selectable Scene/Staging
+  // roots never get pulled in even when their whole subtree is selected).
+  for (let i = data.length - 1; i >= 0; i--) {
+    if (data[i].selectable === false) continue;
+    const kids = childrenMap.get(data[i].id);
+    if (kids && kids.length > 0 && kids.every((k) => augmented.has(k))) {
+      augmented.add(data[i].id);
+    }
+  }
+  return augmented;
+}
 
 export type TreeViewProps<T extends TreeDataItem> = {
   data: TreeDataItemWithMeta<T>[];
@@ -54,16 +87,37 @@ export function TreeView<T extends TreeDataItem>({
   selectionMode = "multi",
 }: TreeViewProps<T>) {
   const [lastSelectedId, setLastSelectedId] = useState<string | null>(null);
+  // Hover is self-managed unless the consumer wires onItemHover (e.g. Waterfall
+  // syncs hover with its timeline). This lets hover — including the subtree
+  // highlight — work out of the box for consumers like the scene graph.
+  const [internalHoveredId, setInternalHoveredId] = useState<string | null>(
+    null,
+  );
+  const hoverControlled = onItemHover !== undefined;
+  const effectiveHoveredId = hoverControlled
+    ? (hoveredId ?? null)
+    : internalHoveredId;
+  const handleHover = onItemHover ?? setInternalHoveredId;
+  // Visual selection: a fully-selected group also reads as selected, so the
+  // ring wraps the group + its subtree. Click logic still uses the real set.
+  const displaySelectedIds = useMemo(
+    () =>
+      selectedItemIds
+        ? withFullGroupsSelected(selectedItemIds, data)
+        : selectedItemIds,
+    [selectedItemIds, data],
+  );
   return (
     <div className={cn("flex-1 overflow-y-auto font-uikit-ui", className)}>
       {data.map((item) => (
         <TreeEntryItem
           key={item.id}
           item={item}
-          hoveredId={hoveredId}
-          onItemHover={onItemHover}
+          hoveredId={effectiveHoveredId}
+          onItemHover={handleHover}
           isSelectable={isSelectable}
           selectedItemIds={selectedItemIds}
+          displaySelectedIds={displaySelectedIds}
           onSelectionChange={onSelectionChange}
           lastSelectedId={lastSelectedId}
           setLastSelectedId={setLastSelectedId}
@@ -88,6 +142,7 @@ export function TreeEntryItem<T extends TreeDataItem>({
   onItemHover,
   isSelectable,
   selectedItemIds,
+  displaySelectedIds,
   onSelectionChange,
   lastSelectedId,
   setLastSelectedId,
@@ -106,6 +161,9 @@ export function TreeEntryItem<T extends TreeDataItem>({
   onItemHover?: (id: string | null) => void;
   isSelectable?: boolean;
   selectedItemIds?: Set<string>;
+  /** Visual selection (real set + fully-selected groups). Defaults to
+   *  selectedItemIds. Used only for hover/ring rendering, not click logic. */
+  displaySelectedIds?: Set<string>;
   onSelectionChange?: (ids: Set<string>) => void;
   lastSelectedId?: string | null;
   setLastSelectedId?: (id: string | null) => void;
@@ -171,24 +229,82 @@ export function TreeEntryItem<T extends TreeDataItem>({
   const indent = item.indent || 0;
   const isLast = item.isLast !== undefined ? item.isLast : false;
 
-  const selectState = selectedItemIds
-    ? getMultiSelectState(item.id, selectedItemIds, dataWithMeta)
-    : "unselected";
+  // Visual selection (includes fully-selected groups); falls back to the real
+  // set when not provided.
+  const visualIds = displaySelectedIds || selectedItemIds || new Set<string>();
+  const selectState = getMultiSelectState(item.id, visualIds, dataWithMeta);
   const isSelected = selectState === "selected";
   const isIndirectlySelected = selectState === "indirect";
 
   const { hasPrevSelected, hasNextSelected } = getAdjacentSelectionState(
     item.id,
-    selectedItemIds || new Set(),
+    visualIds,
     dataWithMeta,
   );
 
+  const isLeaf = !hasDescendants(item.id);
+  // Non-selectable rows (e.g. the top-level Scene/Staging groups) don't react
+  // to hover or selection.
+  const isSelectableRow = isSelectable && item.selectable !== false;
+
+  // Hover follows the subtree: hovering a selectable group highlights the group
+  // and all of its descendants (per the ml-dash design).
+  const isHovered =
+    isSelectableRow &&
+    !item.disable &&
+    hoveredId != null &&
+    (hoveredId === item.id || ancestors.some((a) => a.id === hoveredId));
+
+  // Adjacency within the hover block (hovered node + its descendants) so the
+  // highlight rounds only its outer corners, like the selection block.
+  const inHoverBlock = (row?: TreeDataItemWithMeta<T>) =>
+    !!row &&
+    hoveredId != null &&
+    (row.id === hoveredId ||
+      (row.ancestors || []).some((a) => a.id === hoveredId));
+  const rowIndex = dataWithMeta.findIndex((d) => d.id === item.id);
+  const hasPrevHover = rowIndex > 0 && inHoverBlock(dataWithMeta[rowIndex - 1]);
+  const hasNextHover =
+    rowIndex >= 0 &&
+    rowIndex < dataWithMeta.length - 1 &&
+    inHoverBlock(dataWithMeta[rowIndex + 1]);
+
+  // Selection visuals:
+  //  - lone selected LEAF  → solid system-blue fill + white text
+  //  - everything else selected (a run of ≥2, a group, or a group's indirect
+  //    descendants) → a 2px accent ring tracing the merged block's outer edges
+  //    (inner joined edges cleared) with the row background left unchanged.
+  const isLoneLeafSelected =
+    isSelectable &&
+    isSelected &&
+    isLeaf &&
+    !hasPrevSelected &&
+    !hasNextSelected;
+  const inRing =
+    isSelectable && !isLoneLeafSelected && (isSelected || isIndirectlySelected);
+
+  const ringShadow = (() => {
+    if (!inRing) return undefined;
+    const a = "var(--uikit-accent)";
+    const sides = [`inset 2px 0 0 0 ${a}`, `inset -2px 0 0 0 ${a}`];
+    if (!hasPrevSelected) sides.push(`inset 0 2px 0 0 ${a}`);
+    if (!hasNextSelected) sides.push(`inset 0 -2px 0 0 ${a}`);
+    return sides.join(", ");
+  })();
+
+  // Outer-corner rounding so a run of consecutive rows reads as one rounded
+  // shape — selection block takes precedence, then the hover block.
+  const blockRadius = (hasPrev: boolean, hasNext: boolean) => {
+    if (hasPrev && hasNext) return "";
+    if (hasPrev) return "rounded-b-[var(--radius)]";
+    if (hasNext) return "rounded-t-[var(--radius)]";
+    return "rounded-[var(--radius)]";
+  };
   const getBorderRadiusClass = () => {
-    if (!isSelectable || (!isSelected && !isIndirectlySelected)) return "";
-    if (hasPrevSelected && hasNextSelected) return "";
-    if (hasPrevSelected) return "rounded-b-uikit-badge";
-    if (hasNextSelected) return "rounded-t-uikit-badge";
-    return "rounded-uikit-badge";
+    if (isSelectable && (isLoneLeafSelected || inRing))
+      return blockRadius(hasPrevSelected, hasNextSelected);
+    if (isHovered) return blockRadius(hasPrevHover, hasNextHover);
+    return "";
   };
 
   const handleContextMenuOpenChange = (open: boolean) => {
@@ -209,13 +325,19 @@ export function TreeEntryItem<T extends TreeDataItem>({
       className={cn(
         "group relative flex h-[32px] items-center",
         getBorderRadiusClass(),
-        hoveredId === item.id && !item.disable && "bg-uikit-ink-6",
-        isSelectable &&
-          isSelected &&
-          "bg-uikit-accent-12 text-uikit-accent font-medium",
-        isSelectable && isIndirectlySelected && "bg-uikit-ink-6 text-uikit-ink",
+        // Every selected row — a lone leaf, a run member, or a group + its
+        // indirect descendants — gets the neutral-grey fill, so the selection
+        // reads the same whether one row or many are picked. A multi-row run
+        // adds the accent ring on top (ringShadow) as the grouping cue.
+        (isLoneLeafSelected || inRing) &&
+          "bg-uikit-tree-sel hover:bg-uikit-tree-sel-hover",
+        // hover (warm-amber light / cool-blue dark) for any non-selected row
+        isHovered && !isLoneLeafSelected && !inRing && "bg-uikit-tree-hover",
       )}
-      onMouseEnter={() => onItemHover?.(item.id)}
+      style={ringShadow ? { boxShadow: ringShadow } : undefined}
+      onMouseEnter={() => {
+        if (isSelectableRow && !item.disable) onItemHover?.(item.id);
+      }}
       onMouseLeave={() => onItemHover?.(null)}
       onClick={handleItemSelect}
       onMouseDown={(e) => {
