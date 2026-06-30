@@ -17,7 +17,7 @@ strikethrough preview.
 ## Active state and accent override
 
 `active` underlines the label. By default, hover and the active underline both
-use `var(--accent)`. Pass `accent` to override — accepts a palette tone name
+use `var(--uikit-accent)`. Pass `accent` to override — accepts a palette tone name
 (`'green'`, `'red'`, …) or any CSS color string. The static text stays
 `var(--ink)` — only hover and the active underline pick up the accent.
 
@@ -38,7 +38,7 @@ hairline ring.
 
 | Props | Static text | Hover / active |
 | --- | --- | --- |
-| `` | `var(--ink)` | `var(--accent)` |
+| `` | `var(--ink)` | `var(--uikit-accent)` |
 | `` | `var(--ink)` | `#1f8f4a` |
 | `` | `var(--ink)` | `#abc123` |
 | `` | `#c8513b` | `#c8513b` |

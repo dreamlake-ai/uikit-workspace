@@ -1,0 +1,27 @@
+# Switch
+
+A binary on/off toggle for settings. It's a `role="switch"` button (keyboard
+and screen-reader friendly) that fills with the accent token when on. Use it for
+instant-apply preferences; for form submits prefer a checkbox.
+
+## States
+
+Off, on, and disabled in both positions.
+
+## Controlled
+
+Drive it from state with `checked` + `onCheckedChange`. Omit `checked` and pass
+`defaultChecked` to let the switch manage its own state.
+
+## Props
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `checked` | `boolean` | — | Controlled state. Omit for uncontrolled. |
+| `defaultChecked` | `boolean` | `false` | Initial state when uncontrolled. |
+| `onCheckedChange` | `(checked: boolean) => void` | — | Fired with the next state on toggle. |
+| `disabled` | `boolean` | `false` | Disables interaction. |
+| `className` | `string` | — | Extra classes on the track. |
+| `thumbClassName` | `string` | — | Extra classes on the moving thumb. |
+
+Any other native `<button>` attributes (`aria-*`, `id`, …) are forwarded.

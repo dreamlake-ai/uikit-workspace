@@ -1,0 +1,35 @@
+# Slider
+
+A horizontal slider with one or more thumbs. `value` is always a `number[]`,
+so a single-thumb slider holds one entry and a range holds two. Pointer drag
+and arrow-key stepping are built in. Dependency-free and restyled to DreamLake
+accent / faint tokens.
+
+## Basic
+
+A single-thumb controlled slider. Pass `value` and `onValueChange` to drive it
+from state.
+
+## Range
+
+Provide two entries in `value` for a two-thumb range. Thumbs stay ordered, so
+they never cross.
+
+## Steps
+
+Set `step` to a coarser interval and pass `showStep` to draw tick markers along
+the track. Values snap to the nearest step.
+
+## Props
+
+| Prop            | Type                        | Default | Description                                   |
+| --------------- | --------------------------- | ------- | --------------------------------------------- |
+| `value`         | `number[]`                  | —       | Controlled thumb values. One entry per thumb. |
+| `defaultValue`  | `number[]`                  | `[min]` | Initial values in uncontrolled mode.          |
+| `onValueChange` | `(value: number[]) => void` | —       | Called when a thumb moves.                    |
+| `min`           | `number`                    | `0`     | Minimum value of the track.                   |
+| `max`           | `number`                    | `100`   | Maximum value of the track.                   |
+| `step`          | `number`                    | `1`     | Snap interval for thumb values.               |
+| `disabled`      | `boolean`                   | `false` | Disable pointer and keyboard interaction.     |
+| `showStep`      | `boolean`                   | `false` | Draw step tick markers along the track.       |
+| `className`     | `string`                    | —       | Extra classes on the container.               |

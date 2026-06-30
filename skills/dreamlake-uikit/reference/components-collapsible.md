@@ -1,0 +1,38 @@
+# Collapsible
+
+A region that expands and collapses. Compose three parts: `Collapsible` (state
+owner), `CollapsibleTrigger` (toggles it), and `CollapsibleContent` (the
+animated-height body).
+
+Open state can be controlled (`open` + `onOpenChange`) or uncontrolled
+(`defaultOpen`). The trigger accepts `asChild` to reuse your own button/element.
+
+## How the animation works
+
+`CollapsibleContent` animates with a CSS grid-rows transition
+(`0fr → 1fr`) rather than measuring pixel heights, so there are no extra
+dependencies and content of any height animates smoothly. `className` lands on
+the inner content element, so padding doesn't bleed through while collapsed.
+
+## Props
+
+### `Collapsible`
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `open` | `boolean` | — | Controlled open state. Omit for uncontrolled. |
+| `defaultOpen` | `boolean` | `false` | Initial state when uncontrolled. |
+| `onOpenChange` | `(open: boolean) => void` | — | Fired with the next state on toggle. |
+| `disabled` | `boolean` | `false` | Blocks toggling. |
+
+### `CollapsibleTrigger`
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `asChild` | `boolean` | `false` | Render the single child as the trigger, merging handlers/classes. |
+
+### `CollapsibleContent`
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `className` | `string` | — | Classes on the inner content element. |

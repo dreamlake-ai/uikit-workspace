@@ -1,0 +1,91 @@
+# Dial
+
+The Dial system turns a flat array of control descriptors — the **schemas** —
+into a rendered panel of typed inputs. Each schema has a `name` and a `dtype`;
+the `dtype` decides which input is drawn (a slider, a color picker, a vector3
+field, a button, and so on). You write the data shape, not the widgets.
+
+Two pieces work together:
+
+- **`DialProvider`** owns the values. It holds state, exposes `getValue` /
+  `setValue` through context, and supports both controlled and uncontrolled
+  modes. Inputs read and write through it — they never talk to each other
+  directly.
+- **`DialPanel`** reads the same `schemas` and renders the matching inputs,
+  optionally arranging them into groups.
+
+## Controlled value flow
+
+In **controlled** mode you pass `values` and an `onValueChange` callback to
+`DialProvider`. Every edit fires `onValueChange(name, value)` and you store the
+result yourself, feeding it back through `values` — exactly like a controlled
+`<input>`, but for the whole panel. Omit `values` to run the panel
+**uncontrolled**, where the provider keeps its own internal state seeded from
+each schema's `value` (or `initialValues`).
+
+The example below covers several `dtype`s and mirrors the live values as JSON.
+
+## Grouping
+
+Tag any schema with `grouping` to file it under a section header. Pass a
+matching `groups` config to `DialPanel` to control each section's layout — grid
+column count, flex wrapping, and so on. A group named `transform` always sorts
+first; the rest follow alphabetically.
+
+## DialProvider props
+
+| Prop            | Type                                     | Default | Description                                                                                                         |
+| --------------- | ---------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------- |
+| `schemas`       | `DialSchema[]`                           | —       | The control descriptors. Used to seed defaults and supply context to the inputs.                                    |
+| `values`        | `Record<string, unknown>`                | —       | Controlled value map keyed by schema `name`. Passing a non-empty object switches the provider into controlled mode. |
+| `initialValues` | `Record<string, unknown>`                | `{}`    | Initial values for uncontrolled mode; falls back to each schema's `value`.                                          |
+| `onValueChange` | `(name: string, value: unknown) => void` | —       | Called on every edit. Required to persist changes in controlled mode.                                               |
+| `children`      | `ReactNode`                              | —       | Typically a `DialPanel`, but any consumer of the Dial context works.                                                |
+
+## DialPanel props
+
+| Prop          | Type             | Default | Description                                                                                           |
+| ------------- | ---------------- | ------- | ----------------------------------------------------------------------------------------------------- |
+| `schemas`     | `DialSchema[]`   | —       | The controls to render. Usually the same array passed to `DialProvider`.                              |
+| `groups`      | `GroupSchema[]`  | —       | Per-group layout config, matched to schemas by `grouping` / group `name`.                             |
+| `labelLayout` | `LabelPositionT` | —       | Default label position for inputs (e.g. `"left"`, `"top"`). Overridden per-schema by `labelPosition`. |
+
+## DialSchema fields
+
+Every control is one `DialSchema`. The most commonly used fields:
+
+| Field                 | Type                                                             | Description                                                                      |
+| --------------------- | ---------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `name`                | `string`                                                         | Unique key. Also the key used in the values map.                                 |
+| `dtype`               | `DialDtype`                                                      | Selects the input to render (see below).                                         |
+| `label`               | `string`                                                         | Display label. Defaults to a capitalized `name`.                                 |
+| `value`               | `unknown`                                                        | Seed value used for uncontrolled defaults.                                       |
+| `grouping`            | `string`                                                         | Section tag; matches a `GroupSchema.name`.                                       |
+| `min` / `max`         | `number`                                                         | Bounds for numeric inputs. For `number`, supplying both renders a bounded field. |
+| `step`                | `number`                                                         | Increment for numeric / vector / euler inputs.                                   |
+| `options`             | `string[]`                                                       | Choices for `select` / string inputs (renders a dropdown).                       |
+| `placeholder`         | `string`                                                         | Placeholder for text inputs.                                                     |
+| `icon`                | `string`                                                         | Optional leading icon name.                                                      |
+| `onClick`             | `() => void`                                                     | Click handler for `button` controls.                                             |
+| `variant`             | `'primary' \| 'secondary' \| 'ghost' \| 'destructive' \| 'link'` | Style for `button` controls.                                                     |
+| `disabled`            | `boolean`                                                        | Disables a `button` control.                                                     |
+| `colSpan` / `rowSpan` | `number`                                                         | Grid span when laid out inside a group.                                          |
+
+### Supported `dtype` values
+
+| `dtype`                                          | Renders                                                                                           |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------------- |
+| `number`                                         | Number field; a slider when both `min` and `max` are set, or a dropdown when `options` are given. |
+| `number-int`                                     | Integer stepper.                                                                                  |
+| `number-slider`                                  | Always a slider.                                                                                  |
+| `number-rad`                                     | Radian value displayed in degrees.                                                                |
+| `boolean`                                        | Toggle.                                                                                           |
+| `color`                                          | Color picker (hex).                                                                               |
+| `string` / `text` / `select`                     | Text field, or a dropdown when `options` are present.                                             |
+| `vector3`                                        | Three-component (x, y, z) numeric input.                                                          |
+| `vector` / `vector-6` / `number-group`           | Generic N-component numeric input.                                                                |
+| `euler` / `euler-rad` / `euler-deg` / `euler-pi` | Euler-angle inputs in radians, degrees, or π units.                                               |
+| `array`                                          | List of primitive values (`arrayElementType`).                                                    |
+| `tuple` / `interface` / `object`                 | Nested composite inputs driven by `typeDefinition`.                                               |
+| `button`                                         | Action button (`onClick`, `variant`, `disabled`).                                                 |
+| `custom`                                         | Caller-provided `render` function or `children`.                                                  |
