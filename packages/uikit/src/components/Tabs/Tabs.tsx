@@ -47,8 +47,8 @@ interface SegmentSizeConfig {
 const segmentConfig: Record<TabsSize, SegmentSizeConfig> = {
   xs: { inset: 1, containerR: 4, pillR: 3, buttonR: 3, padV: 1, padH: 4, iconSize:  9 },
   sm: { inset: 1, containerR: 5, pillR: 4, buttonR: 4, padV: 2, padH: 5, iconSize: 10 },
-  md: { inset: 2, containerR: 6, pillR: 5, buttonR: 5, padV: 4, padH: 7, iconSize: 12 },
-  lg: { inset: 2, containerR: 7, pillR: 6, buttonR: 6, padV: 6, padH: 9, iconSize: 14 },
+  md: { inset: 2, containerR: 6, pillR: 5, buttonR: 5, padV: 4, padH: 6, iconSize: 12 },
+  lg: { inset: 3, containerR: 7, pillR: 6, buttonR: 6, padV: 5, padH: 7, iconSize: 14 },
 }
 
 // ── underline tab item ───────────────────────────────────────────────────────
