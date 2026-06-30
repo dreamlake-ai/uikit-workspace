@@ -332,8 +332,28 @@ html[data-theme="dark"] {
 .uikit-panel-scroll {
   min-height: 0;
   overflow-y: auto;
+  /* Reserve the scrollbar gutter so rows don't shift left when the bar appears
+     (keeps the layout identical whether or not content overflows). */
+  scrollbar-gutter: stable;
   margin-right: -1rem;
-  padding-right: 0.375rem;
+  padding-right: 0.125rem;
+}
+
+/* Live-measured native scrollbar width, in CSS px at the current browser zoom.
+   Set by vuer-web's root layout and refreshed on resize (zoom fires resize).
+   Fallback ≈ a thin bar for first paint / SSR. */
+:root {
+  --uikit-sb-gutter: 11px;
+}
+
+/* Trailing row-action group (e.g. the scene-graph eye/lock/trash icons) that
+   must line up with the host Card's collapse chevron. The reserved scrollbar
+   gutter pushes these right-aligned actions inward by the bar's width, so pull
+   them back out by that width — read live from --uikit-sb-gutter so it tracks
+   browser zoom (a fixed-px nudge drifts because the native bar is a fixed
+   device size) — plus the ~2px icon-centering delta vs the chevron glyph. */
+.uikit-tree-actions {
+  margin-right: calc(2.5px - var(--uikit-sb-gutter, 11px));
 }
 
 /* Auto-hide scrollbars (ported from the DreamLake design). The thumb is
