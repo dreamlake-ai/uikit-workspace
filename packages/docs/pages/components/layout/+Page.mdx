@@ -6,8 +6,10 @@ description: Studio layout shells — an edge-docked dock layout and a pointer-t
 ---
 
 import { Preview } from "../../../components/Preview";
+import { SwitchSpec } from "../../../components/specimens/components/layout/SwitchSpec";
 import { DockSpec } from "../../../components/specimens/components/layout/DockSpec";
 import { LiquidSpec } from "../../../components/specimens/components/layout/LiquidSpec";
+import switchSrc from "../../../components/specimens/components/layout/SwitchSpec.tsx?raw";
 import dockSrc from "../../../components/specimens/components/layout/DockSpec.tsx?raw";
 import liquidSrc from "../../../components/specimens/components/layout/LiquidSpec.tsx?raw";
 
@@ -18,6 +20,19 @@ content with optional `left` / `right` / `top` / `bottom` slots. Every slot
 accepts any `ReactNode` — pass your own panels, toolbars, or controls. Both
 fill their parent (`height: 100%`), so constrain the height of the wrapping
 element.
+
+## Switching layouts
+
+Both shells share the same slot API, so swapping between them is a one-line
+change (`const View = liquid ? LiquidLayoutView : DockLayoutView`). Click the
+button to switch the live example: the **dock** layout docks the same cards onto
+solid full-height rails — cards go flat (no border or shadow) since they share
+the rail's surface — while the **liquid** layout floats them over the
+pointer-transparent center content.
+
+<Preview source={switchSrc} filename="SwitchSpec.tsx">
+  <SwitchSpec />
+</Preview>
 
 ## Dock layout
 

@@ -28,7 +28,19 @@ export const DockLayout = forwardRef<HTMLDivElement, ComponentProps<'div'>>(func
     <div
       ref={ref}
       {...props}
-      className={cn('relative flex h-full w-full flex-col justify-between overflow-hidden', className)}
+      className={cn(
+        'relative flex h-full w-full flex-col justify-between overflow-hidden',
+        // The rails are a solid panel surface, so cards docked on them are the
+        // same colour — drop their border + shadow so they read as flat content
+        // on the rail rather than floating cards (liquid layout keeps both).
+        '[&_[data-slot=card]]:border-transparent [&_[data-slot=card]]:shadow-none',
+        // Flat cards stack their full vertical padding into the gap between them
+        // (card A's bottom + card B's top), doubling the apparent spacing. Halve
+        // each card's vertical padding (lg p-6 → py-3) so the docked column reads
+        // as evenly-spaced sections instead of large empty bands.
+        '[&_[data-slot=card]]:py-3',
+        className,
+      )}
     />
   )
 })
