@@ -201,8 +201,17 @@ export const DialSelectInput: React.FC<DialNumInputProps> = ({
 
   const selectComponent = (
     <Select value={String(value)} onValueChange={handleValueChange}>
-      <SelectTrigger size={size}>
-        <SelectValue placeholder="Select an option" />
+      {/* Match the number-input box (bg-chip / rounded / h-6 / px-2) so the
+          value reads as a left-aligned field like the rest of the panel,
+          instead of a bare w-fit button whose text clips at the panel edge. */}
+      <SelectTrigger
+        size={size}
+        className="h-6 w-full rounded-[var(--radius)] bg-uikit-chip px-2 opacity-100"
+      >
+        <SelectValue
+          className="min-w-0 flex-1 text-left"
+          placeholder="Select an option"
+        />
       </SelectTrigger>
       <SelectContent>
         {options.map((opt, i) => (
