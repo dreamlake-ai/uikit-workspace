@@ -4,6 +4,8 @@ import {
   type ReactElement,
   createContext,
   useContext,
+  useEffect,
+  useRef,
   useState,
   cloneElement,
   isValidElement,
@@ -133,26 +135,53 @@ export function CollapsibleTrigger({
 export type CollapsibleContentProps = ComponentProps<'div'>
 
 /**
- * Content that animates open/closed. The outer grid drives the height
- * transition (`grid-template-rows: 0fr → 1fr`); the inner element clips
- * overflow. `className` lands on the inner content element, so padding/spacing
- * doesn't bleed through while collapsed.
+ * Content that animates its height open/closed. Mirrors the legacy Radix
+ * Collapsible's visual: the content's natural height is measured (via a
+ * ResizeObserver, so it tracks dynamic content) and the wrapper animates
+ * between `0` and that height. `className` lands on the inner content element,
+ * so padding/spacing doesn't bleed through while collapsed.
  */
-export function CollapsibleContent({ className, children, ...props }: CollapsibleContentProps) {
+export function CollapsibleContent({
+  className,
+  children,
+  style,
+  ...props
+}: CollapsibleContentProps) {
   const ctx = useCollapsibleContext('CollapsibleContent')
+  const innerRef = useRef<HTMLDivElement>(null)
+  const [contentHeight, setContentHeight] = useState<number | null>(null)
+
+  useEffect(() => {
+    const el = innerRef.current
+    if (!el || typeof ResizeObserver === 'undefined') return
+    const measure = () => setContentHeight(el.scrollHeight)
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+
+  // Before the first measurement, render at natural height when open (no
+  // animation on mount — like Radix, which only animates on state change).
+  // Once measured, animate the pixel height between 0 and the content height.
+  const measured = contentHeight != null
 
   return (
     <div
       data-slot="collapsible-content"
       data-state={ctx.open ? 'open' : 'closed'}
       aria-hidden={!ctx.open}
-      className={cn(
-        'grid transition-[grid-template-rows] duration-200 ease-out',
-        ctx.open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]',
-      )}
+      style={{
+        overflow: 'hidden',
+        height: ctx.open ? (measured ? contentHeight! : 'auto') : 0,
+        transition: measured ? 'height 200ms ease-out' : undefined,
+        ...style,
+      }}
       {...props}
     >
-      <div className={cn('min-h-0 overflow-hidden', className)}>{children}</div>
+      <div ref={innerRef} className={className}>
+        {children}
+      </div>
     </div>
   )
 }
