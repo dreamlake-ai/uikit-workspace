@@ -21,13 +21,5 @@
     "prettier": "^3.8.1",
     "typescript": "^5.7.0"
   },
-  "pnpm": {
-    "//": "Pin to single versions. react/react-dom match the outer workspace's 19.2.4 override so the nested docs install can't resolve a mismatched React copy across the workspace boundary (which crashed lucide's useContext during SSR). lucide-react is deduped to one version (the uikit lib needs >=1.0.0).",
-    "overrides": {
-      "react": "19.2.4",
-      "react-dom": "19.2.4",
-      "lucide-react": "1.21.0"
-    }
-  },
   "packageManager": "pnpm@10.33.0"
 }
