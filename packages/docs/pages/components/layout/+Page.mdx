@@ -89,3 +89,20 @@ right panels are capped to a readable max width and scroll vertically.
 | `topClassName`     | `string`    | —       | Extra classes on the top slot wrapper.                                                                   |
 | `bottomClassName`  | `string`    | —       | Extra classes on the bottom slot wrapper.                                                                |
 | `contentClassName` | `string`    | —       | Extra classes on the center content wrapper.                                                             |
+
+## Composable sub-components
+
+`DockLayoutView` and `LiquidLayoutView` are opinionated compositions of a set of
+lower-level slot primitives. Reach for these directly when you need finer control
+over ordering, nesting, or which slots render. Each accepts the standard `div`
+props; several of the edge slots also accept `asChild` to merge onto your own
+single child element instead of rendering a wrapper `div`.
+
+| Dock                 | Liquid                 | Role                                                       |
+| -------------------- | ---------------------- | ---------------------------------------------------------- |
+| `DockLayout`         | `LiquidLayout`         | Root container establishing the shell layout.              |
+| `DockLayoutContent`  | `LiquidLayoutContent`  | Center content region.                                     |
+| `DockLayoutLeft`     | `LiquidLayoutLeft`     | Left slot wrapper.                                         |
+| `DockLayoutRight`    | `LiquidLayoutRight`    | Right slot wrapper.                                        |
+| `DockLayoutTop`      | `LiquidLayoutTop`      | Top slot wrapper.                                          |
+| `DockLayoutBottom`   | `LiquidLayoutBottom`   | Bottom slot wrapper.                                       |

@@ -35,8 +35,8 @@ taller than one line.
 ## Any control, and `asChild`
 
 The control can be anything — input, switch, number field. With `asChild` the
-layout classes land on the single child (a real `<label>`) instead of a wrapper
-`<div>`, so clicking the label focuses the control.
+layout classes land on the single child element instead of a wrapper `<div>`.
+Make that child a `<label>` if you want clicking it to focus the control.
 
 <Preview source={controlsSrc} filename="ControlsSpec.tsx">
   <ControlsSpec />
