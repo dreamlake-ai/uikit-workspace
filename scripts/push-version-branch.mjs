@@ -2,7 +2,7 @@
 /**
  * Force-push HEAD to a remote `v/<version>` branch where <version> comes
  * from the workspace's package.json files. Netlify is configured to deploy
- * any branch matching `v/*`, so this lets `pnpm prod` stamp the current
+ * any branch matching `v/*`, so this lets `pnpm run deploy` stamp the current
  * commit with a versioned preview URL alongside pushing to the
  * netlify-production environment branch.
  *

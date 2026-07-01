@@ -13,7 +13,7 @@ import type { CSSProperties } from 'react'
  * `define` (see `vite.config.ts`); both chips link into the same
  * GitHub repo:
  * - left chip → `${repoUrl}/tree/v/${__APP_VERSION__}` (the snapshot
- *   branch `pnpm prod` force-pushes on each release)
+ *   branch `pnpm run deploy` force-pushes on each release)
  * - right chip → `${repoUrl}/commit/${__GIT_HASH__}` (the build-time
  *   HEAD)
  *

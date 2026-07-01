@@ -17,10 +17,9 @@ by an agent (and ideally by humans too).
 - Squash-merge unless the branch's history is genuinely worth
   preserving.
 
-`pnpm staging` and `pnpm prod` push to the deploy branches
-(`netlify-staging`, `netlify-production`); those pushes are the
-release trigger, not source-of-truth changes, so they don't go
-through PR. Everything that lands on `main` does.
+`pnpm run deploy` pushes to the `netlify-production` deploy branch;
+that push is the release trigger, not a source-of-truth change, so it
+doesn't go through PR. Everything that lands on `main` does.
 
 ## Documentation release notes
 
@@ -64,20 +63,24 @@ fixes don't need a changelog entry — judgment call.
 
 ## Versioning and release (load-bearing rules)
 
-**To deploy the docs site to production, run `pnpm prod`** from the workspace
-root — it force-pushes the current `main` HEAD to the `netlify-production`
-branch (after the version-consistency check + `v/<version>` snapshot). Use
-`pnpm staging` for a WIP preview on `netlify-staging`.
+**To deploy the docs site to production, run `pnpm run deploy`** from the
+workspace root — it force-pushes the current `main` HEAD to the
+`netlify-production` branch (after the version-consistency check +
+`v/<version>` snapshot). There is a single production environment; no
+staging environment exists. (The script is named `deploy`, but `pnpm deploy`
+is a pnpm built-in, so it must be invoked as `pnpm run deploy`.)
 
 - The root `package.json` plus every `packages/*/package.json` must agree on
-  `version`. `pnpm prod` runs a check and **refuses to deploy** on mismatch.
+  `version`. `pnpm run deploy` runs a check and **refuses to deploy** on mismatch.
 - Bump version with `pnpm set-version <x.y.z>` (rewrites every package.json
   that declares a version), then `pnpm install`, then commit both
   `package.json` files and `pnpm-lock.yaml`.
-- `pnpm prod` does, in order: version-consistency check → force-push HEAD to
-  `v/<version>` snapshot branch → force-push HEAD to `netlify-production`.
-- `pnpm staging` is intentionally lighter: just force-push HEAD to
-  `netlify-staging`. No version check, no snapshot. Use for WIP previews.
+- `pnpm run deploy` does, in order: version-consistency check → force-push HEAD
+  to `v/<version>` snapshot branch → force-push HEAD to `netlify-production`.
+  The script is named `deploy`, but `pnpm deploy` is a pnpm built-in command,
+  so it **must** be invoked as `pnpm run deploy` (bare `pnpm deploy` errors with
+  `ERR_PNPM_NOTHING_TO_DEPLOY`).
+- There is a single production environment — no staging environment exists.
 - The version pipeline source is `scripts/{lib-packages,set-version,
   push-version-branch}.mjs`.
 
@@ -87,5 +90,4 @@ branch (after the version-consistency check + `v/<version>` snapshot). Use
 | --------------------- | --------------------------------------------------------- |
 | `pnpm set-version`    | Sync `version` across root + `packages/*/package.json`    |
 | `pnpm version-branch` | Check versions, then force-push HEAD to `v/<version>`     |
-| `pnpm prod`           | `version-branch` then push to `netlify-production`        |
-| `pnpm staging`        | Push to `netlify-staging` (no check, no snapshot)         |
+| `pnpm run deploy`     | `version-branch` then push to `netlify-production`        |
