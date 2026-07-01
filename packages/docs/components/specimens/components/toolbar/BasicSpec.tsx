@@ -1,7 +1,7 @@
 import { Toolbar, ToolbarGroup, ToolbarSeparator, Button } from '@dreamlake/uikit'
 
 export const BasicSpec = () => (
-  <Toolbar>
+  <Toolbar className="w-fit">
     <ToolbarGroup>
       <Button size="sm" variant="ghost">
         Cut
