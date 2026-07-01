@@ -109,7 +109,10 @@ export function ToggleButtons({
       const raf = requestAnimationFrame(() => {
         const c = container.getBoundingClientRect();
         const r = el.getBoundingClientRect();
-        const offset = padding ? 4 : 0;
+        // Offset the highlight back over the button by the container's own
+        // padding so the pill is button-sized and sits inside the frame — see
+        // the matching `p-1` / `p-0.5` on the container below.
+        const offset = padding ? 4 : 2;
         setHighlight({
           width: r.width,
           height: r.height,
@@ -144,7 +147,10 @@ export function ToggleButtons({
         className={cn(
           "relative inline-flex items-center rounded-[var(--radius)]",
           CONTAINER[variant],
-          padding ? "p-1" : "p-0",
+          // A minimal frame even when padding={false}, so the full-size
+          // selection pill has room to sit inside the container instead of
+          // bleeding past its tight edge.
+          padding ? "p-1" : "p-0.5",
           className,
         )}
         {...props}
