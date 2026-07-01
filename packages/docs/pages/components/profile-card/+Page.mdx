@@ -65,6 +65,7 @@ as the left-side stats.
 | `description` | `ReactNode` | Optional body paragraph. Default: 13px, 75% opacity, 1.5 line-height. |
 | `footer` | `ReactNode` | Optional stats/meta row at the bottom-left. Default: mono 11px, 75% opacity, truncates. |
 | `footerRight` | `ReactNode` | Right-aligned cluster next to `footer` (ACL chips, badges). Shares the footer row. |
+| `tags` | `ReactNode` | Final row inside the card body — a horizontal, wrapping row of `<Tag>` chips (the "Pipelines tab" pattern). Pass an array of nodes or any flex-wrap-friendly subtree. |
 | `topRightActions` | `ReactNode` | Controls anchored top-right, revealed on hover. Used for the edit/delete pattern. Clicks do not bubble to `onClick`. |
 | `hoverActions` | `ReactNode` | Controls anchored bottom-right, revealed on hover. Clicks do not bubble to `onClick`. |
 | `onClick` | `() => void` | Makes the card clickable. Adds pointer cursor. |

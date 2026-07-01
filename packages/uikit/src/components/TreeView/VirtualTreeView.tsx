@@ -1,33 +1,33 @@
-import { type ReactNode, useState } from 'react'
+import { type ReactNode, useState } from "react";
 
-import { TreeEntryItem } from './TreeView'
-import { type TreeDataItem, type TreeDataItemWithMeta } from './types'
-import { cn } from '../../lib/utils'
-import { VirtualList } from '../VirtualList'
+import { TreeEntryItem } from "./TreeView";
+import { type TreeDataItem, type TreeDataItemWithMeta } from "./types";
+import { cn } from "../../lib/utils";
+import { VirtualList } from "../VirtualList";
 
-const TREE_ITEM_HEIGHT = 32
+const TREE_ITEM_HEIGHT = 32;
 
 export type VirtualTreeViewProps<T extends TreeDataItem> = {
-  data: TreeDataItemWithMeta<T>[]
-  getIcon: (item: T, expanded?: boolean) => ReactNode
-  expandedItems?: Set<string>
-  onToggleItem?: (id: string) => void
-  onItemHover?: (id: string | null) => void
-  hoveredId?: string | null
-  isSelectable?: boolean
-  selectedItemIds?: Set<string>
-  onSelectionChange?: (ids: Set<string>) => void
-  hideExpand?: boolean
-  hasDescendants?: (id: string) => boolean
-  renderLabel?: (label: string, itemId: string) => ReactNode
-  className?: string
-  renderContextMenu?: (item: T) => ReactNode
-  selectionMode?: 'single' | 'multi'
+  data: TreeDataItemWithMeta<T>[];
+  getIcon: (item: T, expanded?: boolean) => ReactNode;
+  expandedItems?: Set<string>;
+  onToggleItem?: (id: string) => void;
+  onItemHover?: (id: string | null) => void;
+  hoveredId?: string | null;
+  isSelectable?: boolean;
+  selectedItemIds?: Set<string>;
+  onSelectionChange?: (ids: Set<string>) => void;
+  hideExpand?: boolean;
+  hasDescendants?: (id: string) => boolean;
+  renderLabel?: (label: string, itemId: string) => ReactNode;
+  className?: string;
+  renderContextMenu?: (item: T) => ReactNode;
+  selectionMode?: "single" | "multi";
   /** Container height — required for virtualization (default '100%'). */
-  height?: number | string
+  height?: number | string;
   /** Extra rows rendered outside the viewport (default 5). */
-  overscan?: number
-}
+  overscan?: number;
+};
 
 /**
  * Virtualized {@link TreeView} — only renders visible rows. Use for trees with
@@ -48,11 +48,11 @@ export function VirtualTreeView<T extends TreeDataItem>({
   renderLabel = (label) => label,
   className,
   renderContextMenu,
-  selectionMode = 'multi',
-  height = '100%',
+  selectionMode = "multi",
+  height = "100%",
   overscan = 5,
 }: VirtualTreeViewProps<T>) {
-  const [lastSelectedId, setLastSelectedId] = useState<string | null>(null)
+  const [lastSelectedId, setLastSelectedId] = useState<string | null>(null);
   return (
     <VirtualList
       items={data}
@@ -60,7 +60,7 @@ export function VirtualTreeView<T extends TreeDataItem>({
       height={height}
       overscan={overscan}
       getItemKey={(item) => item.id}
-      className={cn('flex-1 font-uikit-ui', className)}
+      className={cn("flex-1 font-uikit-ui", className)}
     >
       {(item, _index, style) => (
         <div style={style}>
@@ -86,5 +86,5 @@ export function VirtualTreeView<T extends TreeDataItem>({
         </div>
       )}
     </VirtualList>
-  )
+  );
 }

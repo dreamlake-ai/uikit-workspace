@@ -8,8 +8,10 @@ description: Two-state toggle button, plus a segmented ToggleButtons group.
 import { Preview } from '../../../components/Preview'
 import { BasicSpec } from '../../../components/specimens/components/toggle/BasicSpec'
 import { SegmentedSpec } from '../../../components/specimens/components/toggle/SegmentedSpec'
+import { SizesSpec } from '../../../components/specimens/components/toggle/SizesSpec'
 import basicSrc from '../../../components/specimens/components/toggle/BasicSpec.tsx?raw'
 import segmentedSrc from '../../../components/specimens/components/toggle/SegmentedSpec.tsx?raw'
+import sizesSrc from '../../../components/specimens/components/toggle/SizesSpec.tsx?raw'
 
 # Toggle
 
@@ -19,6 +21,14 @@ on/off affordances. Controlled (`pressed` + `onPressedChange`) or uncontrolled
 
 <Preview source={basicSrc} filename="BasicSpec.tsx">
   <BasicSpec />
+</Preview>
+
+## Sizes
+
+`size` scales the padding, text and icon together — `sm`, `base` (default), `lg`.
+
+<Preview source={sizesSrc} filename="SizesSpec.tsx">
+  <SizesSpec />
 </Preview>
 
 ## ToggleButtons (segmented)
@@ -50,5 +60,7 @@ animates to the active `ToggleButton`. Drive it with `value` + `onValueChange`.
 | `onValueChange` | `(value: string) => void` | — | Fired on select. |
 | `variant` | `'primary' \| 'secondary' \| 'ghost'` | `'primary'` | Highlight style. |
 | `size` | `'sm' \| 'md' \| 'lg'` | `'md'` | Item size. |
+| `padding` | `boolean` | `true` | Frame padding around the segments. Set `false` for a tighter, edge-to-edge group. |
 | `value` (item) | `string` | — | This button's value. |
 | `icon` (item) | `boolean` | `false` | Square icon-only sizing. |
+| `asChild` (item) | `boolean` | `false` | Render the single child instead of a `<button>`, forwarding the ref, selected state, and click. |

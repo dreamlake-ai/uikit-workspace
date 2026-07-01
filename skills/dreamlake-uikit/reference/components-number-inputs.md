@@ -1,0 +1,107 @@
+# Number Inputs
+
+A family of compact, drag-to-scrub inputs built on the shared `InputNumbers`
+base. Every numeric field supports the same gesture grammar:
+
+- **Drag horizontally** over a field to scrub its value. Velocity scales the
+  step — flick fast to cover ground, ease off for fine control.
+- **Drag vertically** across stacked fields to extend a selection, then scrub
+  them all at once.
+- **Hold `Shift`** while dragging for a 5× step, **`Alt`** for a 1/5× step.
+- **Click to focus** and type an exact value, or use the **arrow keys** to nudge
+  by one `step`.
+
+The unit wrappers (`Vec3Input`, `IntInput`, `DegInput`, `RadInput`,
+`EulerInput`, `QuaternionInput`, …) are thin presets over `InputNumbers` /
+`VectorInput` — they fix the labels, suffix, and step so callers only deal in
+the value they care about.
+
+## Vector (Vec3Input)
+
+`Vec3Input` renders three labelled fields (`x` / `y` / `z`) and emits a tuple
+through `onValuesChange`. Drag any single field, or drag down across the stack
+to scrub several axes together.
+
+## Scalars with units
+
+`IntInput` rounds to whole numbers, while `DegInput` and `RadInput` append a
+unit suffix. Each takes a single `value` and reports through `onChange`.
+`RadInput` stores radians internally but can `display` them as `deg`, `pi`, or
+`rad`.
+
+## Color (ColorInput)
+
+`ColorInput` pairs a native swatch with a hex field. It accepts hex strings,
+`0x`-prefixed strings, numeric hex values, or CSS color names, and reports the
+normalized hex (without `#`) through `onValueChange`.
+
+## Text (TextInput)
+
+`TextInput` is the string sibling — a plain text field with optional `prefix`
+and `suffix` slots. It reports the raw string through `onChange`.
+
+## Props
+
+### InputNumbers
+
+The base used by every numeric wrapper. Renders one field per entry in `value`.
+
+| Prop                  | Type                          | Default | Description                                                           |
+| --------------------- | ----------------------------- | ------- | --------------------------------------------------------------------- |
+| `value`               | `number[]`                    | —       | Current values, one field per entry. Must be non-empty.               |
+| `onValuesChange`      | `(value: number[]) => void`   | —       | Called with the full array whenever any field changes.                |
+| `step`                | `number \| number[]`          | `0.1`   | Drag/arrow increment, shared or per-field.                            |
+| `min`                 | `number \| number[]`          | —       | Lower clamp, shared or per-field.                                     |
+| `max`                 | `number \| number[]`          | —       | Upper clamp, shared or per-field.                                     |
+| `prefix`              | `ReactNode[]`                 | —       | Left slot content per field (axis labels, icons).                     |
+| `suffix`              | `ReactNode[]`                 | —       | Right slot content per field (unit glyphs).                           |
+| `disabledItems`       | `boolean[]`                   | —       | Per-field disabled state.                                             |
+| `size`                | `'sm' \| 'md' \| 'lg'`        | `'md'`  | Field height and text size.                                           |
+| `gridAutoFlow`        | `'column' \| 'row'`           | `'row'` | Grid flow direction for multi-field layouts.                          |
+| `columns`             | `number`                      | —       | Fixed column count (switches to grid layout).                         |
+| `rows`                | `number`                      | —       | Fixed row count (switches to grid layout).                            |
+| `onSuffixBatchAction` | `(indices: number[]) => void` | —       | Fires when the suffix area is clicked/dragged, with affected indices. |
+
+### VectorInput
+
+Extends `InputNumbers`; swaps `prefix` for the friendlier `labels`.
+
+| Prop             | Type                        | Default | Description                                 |
+| ---------------- | --------------------------- | ------- | ------------------------------------------- |
+| `value`          | `number[]`                  | —       | Current vector values.                      |
+| `onValuesChange` | `(value: number[]) => void` | —       | Called with the full vector on change.      |
+| `labels`         | `ReactNode[]`               | —       | Per-field labels rendered in the left slot. |
+| `step`           | `number \| number[]`        | `0.1`   | Drag/arrow increment, shared or per-field.  |
+
+### Unit wrappers
+
+Single-scalar presets. They take one `value` and report through `onChange`.
+
+| Component         | Value type                         | Reports                 | Extra props                                                                |
+| ----------------- | ---------------------------------- | ----------------------- | -------------------------------------------------------------------------- |
+| `IntInput`        | `number`                           | `onChange(value)`       | Rounds to the nearest integer; `step` defaults to `1`.                     |
+| `DegInput`        | `number`                           | `onChange(value)`       | Appends a `°` suffix.                                                      |
+| `RadInput`        | `number`                           | `onChange(value)`       | Stores radians; `display` (`'deg' \| 'pi' \| 'rad'`) picks the shown unit. |
+| `Vec3Input`       | `[number, number, number]`         | `onValuesChange(tuple)` | Fixed `x` / `y` / `z` labels.                                              |
+| `EulerInput`      | `[number, number, number]`         | `onValuesChange(tuple)` | `unit` (`'deg' \| 'rad'`) sets the label suffix.                           |
+| `QuaternionInput` | `[number, number, number, number]` | `onValuesChange(tuple)` | Fixed `w` / `x` / `y` / `z` labels.                                        |
+
+### ColorInput
+
+| Prop            | Type                         | Default | Description                                              |
+| --------------- | ---------------------------- | ------- | -------------------------------------------------------- |
+| `value`         | `string \| number`           | —       | Hex string, `0x`-string, numeric hex, or CSS color name. |
+| `onValueChange` | `(hexColor: string) => void` | —       | Called with the normalized hex string (without `#`).     |
+| `size`          | `'sm' \| 'md' \| 'lg'`       | `'sm'`  | Field height and text size.                              |
+
+### TextInput
+
+| Prop          | Type                      | Default | Description                           |
+| ------------- | ------------------------- | ------- | ------------------------------------- |
+| `value`       | `string`                  | `''`    | Current text value.                   |
+| `onChange`    | `(value: string) => void` | —       | Called with the raw string on change. |
+| `placeholder` | `string`                  | —       | Placeholder text.                     |
+| `prefix`      | `string`                  | —       | Left slot content.                    |
+| `suffix`      | `string`                  | —       | Right slot content.                   |
+| `maxLength`   | `number`                  | —       | Maximum character length.             |
+| `size`        | `'sm' \| 'md' \| 'lg'`    | `'md'`  | Field height and text size.           |

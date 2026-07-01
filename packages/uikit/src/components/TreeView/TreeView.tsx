@@ -1,33 +1,66 @@
-import { ChevronDown } from 'lucide-react'
-import React, { type ReactNode, useState } from 'react'
+import { ChevronDown } from "lucide-react";
+import React, { type ReactNode, useMemo, useState } from "react";
 
 import {
   cleanIndirectSelectedNodes,
   getAdjacentSelectionState,
   getMultiSelectState,
   getRangeIds,
-} from './hooks'
-import { type TreeDataItem, type TreeDataItemWithMeta } from './types'
-import { cn } from '../../lib/utils'
-import { ContextMenu, ContextMenuTrigger } from '../ContextMenu'
+} from "./hooks";
+import { type TreeDataItem, type TreeDataItemWithMeta } from "./types";
+import { cn } from "../../lib/utils";
+import { ContextMenu, ContextMenuTrigger } from "../ContextMenu";
+
+/**
+ * Augment a selection (visual-only) so that a group whose entire subtree is
+ * selected reads as selected too — this makes the multi-select ring wrap the
+ * group node along with its children. The real `selectedItemIds` (used by click
+ * handlers and the consumer) is left untouched.
+ */
+function withFullGroupsSelected<T extends TreeDataItem>(
+  selectedIds: Set<string>,
+  data: TreeDataItemWithMeta<T>[],
+): Set<string> {
+  if (selectedIds.size === 0) return selectedIds;
+  const childrenMap = new Map<string, string[]>();
+  for (const it of data) {
+    const p = it.parentId;
+    if (p == null) continue;
+    if (!childrenMap.has(p)) childrenMap.set(p, []);
+    childrenMap.get(p)!.push(it.id);
+  }
+  const augmented = new Set(selectedIds);
+  // Flat order is parent-before-children (DFS pre-order), so iterating in
+  // reverse decides every child before its parent — a clean bottom-up pass.
+  // Only selectable groups auto-select (e.g. the non-selectable Scene/Staging
+  // roots never get pulled in even when their whole subtree is selected).
+  for (let i = data.length - 1; i >= 0; i--) {
+    if (data[i].selectable === false) continue;
+    const kids = childrenMap.get(data[i].id);
+    if (kids && kids.length > 0 && kids.every((k) => augmented.has(k))) {
+      augmented.add(data[i].id);
+    }
+  }
+  return augmented;
+}
 
 export type TreeViewProps<T extends TreeDataItem> = {
-  data: TreeDataItemWithMeta<T>[]
-  getIcon: (item: T, expanded?: boolean) => ReactNode
-  expandedItems?: Set<string>
-  onToggleItem?: (id: string) => void
-  onItemHover?: (id: string | null) => void
-  hoveredId?: string | null
-  isSelectable?: boolean
-  selectedItemIds?: Set<string>
-  onSelectionChange?: (ids: Set<string>) => void
-  hideExpand?: boolean
-  hasDescendants?: (id: string) => boolean
-  renderLabel?: (label: string, itemId: string) => ReactNode
-  className?: string
-  renderContextMenu?: (item: T) => ReactNode
-  selectionMode?: 'single' | 'multi'
-}
+  data: TreeDataItemWithMeta<T>[];
+  getIcon: (item: T, expanded?: boolean) => ReactNode;
+  expandedItems?: Set<string>;
+  onToggleItem?: (id: string) => void;
+  onItemHover?: (id: string | null) => void;
+  hoveredId?: string | null;
+  isSelectable?: boolean;
+  selectedItemIds?: Set<string>;
+  onSelectionChange?: (ids: Set<string>) => void;
+  hideExpand?: boolean;
+  hasDescendants?: (id: string) => boolean;
+  renderLabel?: (label: string, itemId: string) => ReactNode;
+  className?: string;
+  renderContextMenu?: (item: T) => ReactNode;
+  selectionMode?: "single" | "multi";
+};
 
 /**
  * A flat-rendered hierarchical tree (scene graph, file tree, …). Map over
@@ -51,19 +84,40 @@ export function TreeView<T extends TreeDataItem>({
   renderLabel = (label) => label,
   className,
   renderContextMenu,
-  selectionMode = 'multi',
+  selectionMode = "multi",
 }: TreeViewProps<T>) {
-  const [lastSelectedId, setLastSelectedId] = useState<string | null>(null)
+  const [lastSelectedId, setLastSelectedId] = useState<string | null>(null);
+  // Hover is self-managed unless the consumer wires onItemHover (e.g. Waterfall
+  // syncs hover with its timeline). This lets hover — including the subtree
+  // highlight — work out of the box for consumers like the scene graph.
+  const [internalHoveredId, setInternalHoveredId] = useState<string | null>(
+    null,
+  );
+  const hoverControlled = onItemHover !== undefined;
+  const effectiveHoveredId = hoverControlled
+    ? (hoveredId ?? null)
+    : internalHoveredId;
+  const handleHover = onItemHover ?? setInternalHoveredId;
+  // Visual selection: a fully-selected group also reads as selected, so the
+  // ring wraps the group + its subtree. Click logic still uses the real set.
+  const displaySelectedIds = useMemo(
+    () =>
+      selectedItemIds
+        ? withFullGroupsSelected(selectedItemIds, data)
+        : selectedItemIds,
+    [selectedItemIds, data],
+  );
   return (
-    <div className={cn('flex-1 overflow-y-auto font-uikit-ui', className)}>
+    <div className={cn("flex-1 overflow-y-auto font-uikit-ui", className)}>
       {data.map((item) => (
         <TreeEntryItem
           key={item.id}
           item={item}
-          hoveredId={hoveredId}
-          onItemHover={onItemHover}
+          hoveredId={effectiveHoveredId}
+          onItemHover={handleHover}
           isSelectable={isSelectable}
           selectedItemIds={selectedItemIds}
+          displaySelectedIds={displaySelectedIds}
           onSelectionChange={onSelectionChange}
           lastSelectedId={lastSelectedId}
           setLastSelectedId={setLastSelectedId}
@@ -79,7 +133,7 @@ export function TreeView<T extends TreeDataItem>({
         />
       ))}
     </div>
-  )
+  );
 }
 
 export function TreeEntryItem<T extends TreeDataItem>({
@@ -88,6 +142,7 @@ export function TreeEntryItem<T extends TreeDataItem>({
   onItemHover,
   isSelectable,
   selectedItemIds,
+  displaySelectedIds,
   onSelectionChange,
   lastSelectedId,
   setLastSelectedId,
@@ -99,85 +154,162 @@ export function TreeEntryItem<T extends TreeDataItem>({
   renderLabel = (label) => label,
   dataWithMeta = [],
   renderContextMenu,
-  selectionMode = 'multi',
+  selectionMode = "multi",
 }: {
-  item: TreeDataItemWithMeta<T>
-  hoveredId?: string | null
-  onItemHover?: (id: string | null) => void
-  isSelectable?: boolean
-  selectedItemIds?: Set<string>
-  onSelectionChange?: (ids: Set<string>) => void
-  lastSelectedId?: string | null
-  setLastSelectedId?: (id: string | null) => void
-  expandedItems?: Set<string>
-  toggleItem?: (id: string) => void
-  hideExpand?: boolean
-  hasDescendants?: (id: string) => boolean
-  getIcon?: (item: T, expanded?: boolean) => ReactNode
-  renderLabel?: (label: string, itemId: string) => ReactNode
-  dataWithMeta?: TreeDataItemWithMeta<T>[]
-  renderContextMenu?: (item: T) => ReactNode
-  selectionMode?: 'single' | 'multi'
+  item: TreeDataItemWithMeta<T>;
+  hoveredId?: string | null;
+  onItemHover?: (id: string | null) => void;
+  isSelectable?: boolean;
+  selectedItemIds?: Set<string>;
+  /** Visual selection (real set + fully-selected groups). Defaults to
+   *  selectedItemIds. Used only for hover/ring rendering, not click logic. */
+  displaySelectedIds?: Set<string>;
+  onSelectionChange?: (ids: Set<string>) => void;
+  lastSelectedId?: string | null;
+  setLastSelectedId?: (id: string | null) => void;
+  expandedItems?: Set<string>;
+  toggleItem?: (id: string) => void;
+  hideExpand?: boolean;
+  hasDescendants?: (id: string) => boolean;
+  getIcon?: (item: T, expanded?: boolean) => ReactNode;
+  renderLabel?: (label: string, itemId: string) => ReactNode;
+  dataWithMeta?: TreeDataItemWithMeta<T>[];
+  renderContextMenu?: (item: T) => ReactNode;
+  selectionMode?: "single" | "multi";
 }) {
   const handleItemSelect = (event: React.MouseEvent) => {
     if (!item.disable && isSelectable && item.selectable !== false) {
-      const isMultiSelectMode = selectionMode === 'multi' && (event.ctrlKey || event.metaKey)
-      const isRangeSelectMode = selectionMode === 'multi' && event.shiftKey
+      const isMultiSelectMode =
+        selectionMode === "multi" && (event.ctrlKey || event.metaKey);
+      const isRangeSelectMode = selectionMode === "multi" && event.shiftKey;
 
       if (isMultiSelectMode) {
-        const selectState = getMultiSelectState(item.id, selectedItemIds || new Set(), dataWithMeta)
-        if (selectState === 'indirect') return
+        const selectState = getMultiSelectState(
+          item.id,
+          selectedItemIds || new Set(),
+          dataWithMeta,
+        );
+        if (selectState === "indirect") return;
       }
 
-      let newSelectedIds: Set<string>
+      let newSelectedIds: Set<string>;
       if (isRangeSelectMode && lastSelectedId) {
         if (selectedItemIds) {
-          newSelectedIds = new Set(selectedItemIds)
-          getRangeIds(lastSelectedId, item.id, dataWithMeta).forEach((id) => newSelectedIds.add(id))
+          newSelectedIds = new Set(selectedItemIds);
+          getRangeIds(lastSelectedId, item.id, dataWithMeta).forEach((id) =>
+            newSelectedIds.add(id),
+          );
         } else {
-          newSelectedIds = new Set([item.id])
+          newSelectedIds = new Set([item.id]);
         }
       } else if (isMultiSelectMode) {
         if (selectedItemIds) {
-          newSelectedIds = new Set(selectedItemIds)
-          if (newSelectedIds.has(item.id)) newSelectedIds.delete(item.id)
-          else newSelectedIds.add(item.id)
+          newSelectedIds = new Set(selectedItemIds);
+          if (newSelectedIds.has(item.id)) newSelectedIds.delete(item.id);
+          else newSelectedIds.add(item.id);
         } else {
-          newSelectedIds = new Set([item.id])
+          newSelectedIds = new Set([item.id]);
         }
       } else {
-        newSelectedIds = new Set([item.id])
+        newSelectedIds = new Set([item.id]);
       }
 
-      const cleanedSelectedIds = cleanIndirectSelectedNodes(newSelectedIds, dataWithMeta)
+      const cleanedSelectedIds = cleanIndirectSelectedNodes(
+        newSelectedIds,
+        dataWithMeta,
+      );
       if (onSelectionChange) {
-        onSelectionChange(cleanedSelectedIds)
-        setLastSelectedId?.(item.id)
+        onSelectionChange(cleanedSelectedIds);
+        setLastSelectedId?.(item.id);
       }
     }
-  }
+  };
 
-  const ancestors = item.ancestors || []
-  const indent = item.indent || 0
-  const isLast = item.isLast !== undefined ? item.isLast : false
+  const ancestors = item.ancestors || [];
+  const indent = item.indent || 0;
+  const isLast = item.isLast !== undefined ? item.isLast : false;
 
-  const selectState = selectedItemIds ? getMultiSelectState(item.id, selectedItemIds, dataWithMeta) : 'unselected'
-  const isSelected = selectState === 'selected'
-  const isIndirectlySelected = selectState === 'indirect'
+  // Visual selection (includes fully-selected groups); falls back to the real
+  // set when not provided.
+  const visualIds = displaySelectedIds || selectedItemIds || new Set<string>();
+  const selectState = getMultiSelectState(item.id, visualIds, dataWithMeta);
+  const isSelected = selectState === "selected";
+  const isIndirectlySelected = selectState === "indirect";
 
   const { hasPrevSelected, hasNextSelected } = getAdjacentSelectionState(
     item.id,
-    selectedItemIds || new Set(),
+    visualIds,
     dataWithMeta,
-  )
+  );
 
+  const isLeaf = !hasDescendants(item.id);
+  // Non-selectable rows (e.g. the top-level Scene/Staging groups) don't react
+  // to selection.
+  const isSelectableRow = isSelectable && item.selectable !== false;
+
+  // Hover is independent of selection: any non-disabled, non-group-header row
+  // reacts to hover — so read-only trees like the Waterfall (which don't enable
+  // selection) still get row hover + the row↔bar hover link.
+  const isHoverable = !item.disable && item.selectable !== false;
+
+  // Hover follows the subtree: hovering a group highlights the group and all of
+  // its descendants (per the ml-dash design).
+  const isHovered =
+    isHoverable &&
+    hoveredId != null &&
+    (hoveredId === item.id || ancestors.some((a) => a.id === hoveredId));
+
+  // Adjacency within the hover block (hovered node + its descendants) so the
+  // highlight rounds only its outer corners, like the selection block.
+  const inHoverBlock = (row?: TreeDataItemWithMeta<T>) =>
+    !!row &&
+    hoveredId != null &&
+    (row.id === hoveredId ||
+      (row.ancestors || []).some((a) => a.id === hoveredId));
+  const rowIndex = dataWithMeta.findIndex((d) => d.id === item.id);
+  const hasPrevHover = rowIndex > 0 && inHoverBlock(dataWithMeta[rowIndex - 1]);
+  const hasNextHover =
+    rowIndex >= 0 &&
+    rowIndex < dataWithMeta.length - 1 &&
+    inHoverBlock(dataWithMeta[rowIndex + 1]);
+
+  // Selection visuals:
+  //  - lone selected LEAF  → solid system-blue fill + white text
+  //  - everything else selected (a run of ≥2, a group, or a group's indirect
+  //    descendants) → a 2px accent ring tracing the merged block's outer edges
+  //    (inner joined edges cleared) with the row background left unchanged.
+  const isLoneLeafSelected =
+    isSelectable &&
+    isSelected &&
+    isLeaf &&
+    !hasPrevSelected &&
+    !hasNextSelected;
+  const inRing =
+    isSelectable && !isLoneLeafSelected && (isSelected || isIndirectlySelected);
+
+  const ringShadow = (() => {
+    if (!inRing) return undefined;
+    const a = "var(--uikit-accent)";
+    const sides = [`inset 2px 0 0 0 ${a}`, `inset -2px 0 0 0 ${a}`];
+    if (!hasPrevSelected) sides.push(`inset 0 2px 0 0 ${a}`);
+    if (!hasNextSelected) sides.push(`inset 0 -2px 0 0 ${a}`);
+    return sides.join(", ");
+  })();
+
+  // Outer-corner rounding so a run of consecutive rows reads as one rounded
+  // shape — selection block takes precedence, then the hover block.
+  const blockRadius = (hasPrev: boolean, hasNext: boolean) => {
+    if (hasPrev && hasNext) return "";
+    if (hasPrev) return "rounded-b-[var(--radius)]";
+    if (hasNext) return "rounded-t-[var(--radius)]";
+    return "rounded-[var(--radius)]";
+  };
   const getBorderRadiusClass = () => {
-    if (!isSelectable || (!isSelected && !isIndirectlySelected)) return ''
-    if (hasPrevSelected && hasNextSelected) return ''
-    if (hasPrevSelected) return 'rounded-b-md'
-    if (hasNextSelected) return 'rounded-t-md'
-    return 'rounded-md'
-  }
+    if (isSelectable && (isLoneLeafSelected || inRing))
+      return blockRadius(hasPrevSelected, hasNextSelected);
+    if (isHovered) return blockRadius(hasPrevHover, hasNextHover);
+    return "";
+  };
 
   const handleContextMenuOpenChange = (open: boolean) => {
     if (
@@ -188,44 +320,63 @@ export function TreeEntryItem<T extends TreeDataItem>({
       !isIndirectlySelected &&
       onSelectionChange
     ) {
-      onSelectionChange(new Set([item.id]))
+      onSelectionChange(new Set([item.id]));
     }
-  }
+  };
 
   const treeItemContent = (
     <div
       className={cn(
-        'group relative flex h-[32px] items-center',
+        "group relative flex h-[32px] items-center",
         getBorderRadiusClass(),
-        hoveredId === item.id && !item.disable && 'bg-uikit-ink-5',
-        isSelectable && isSelected && 'bg-uikit-selected',
-        isSelectable && isIndirectlySelected && 'bg-uikit-ink-6 text-uikit-ink',
+        // Every selected row — a lone leaf, a run member, or a group + its
+        // indirect descendants — gets the neutral-grey fill, so the selection
+        // reads the same whether one row or many are picked. A multi-row run
+        // adds the accent ring on top (ringShadow) as the grouping cue.
+        (isLoneLeafSelected || inRing) &&
+          "bg-uikit-tree-sel hover:bg-uikit-tree-sel-hover",
+        // hover (warm-amber light / cool-blue dark) for any non-selected row
+        isHovered && !isLoneLeafSelected && !inRing && "bg-uikit-tree-hover",
       )}
-      onMouseEnter={() => onItemHover?.(item.id)}
+      style={ringShadow ? { boxShadow: ringShadow } : undefined}
+      onMouseEnter={() => {
+        if (isHoverable) onItemHover?.(item.id);
+      }}
       onMouseLeave={() => onItemHover?.(null)}
       onClick={handleItemSelect}
       onMouseDown={(e) => {
-        if (e.shiftKey || e.ctrlKey || e.metaKey) e.preventDefault()
+        if (e.shiftKey || e.ctrlKey || e.metaKey) e.preventDefault();
       }}
     >
       {/* Guidelines */}
       <div className="absolute top-0 left-[-0.28rem] z-0 flex h-full items-center">
         {ancestors.map((ancestor, index) => {
-          const parentIsLast = dataWithMeta.find((d) => d.id === ancestor.id)?.isLast
+          const parentIsLast = dataWithMeta.find(
+            (d) => d.id === ancestor.id,
+          )?.isLast;
           return (
-            <div key={index} className={cn('h-full w-[1.25rem]', parentIsLast ? '' : 'border-l', 'border-uikit-faint')} />
-          )
+            <div
+              key={index}
+              className={cn(
+                "h-full w-[1.25rem]",
+                parentIsLast ? "" : "border-l",
+                "border-uikit-faint",
+              )}
+            />
+          );
         })}
         {indent > 0 && (
           <div className="relative h-full w-[1.24rem]">
             <div
               className={cn(
-                'absolute top-0 left-0 h-1/2 w-1/2 border-b border-l',
-                isLast ? 'rounded-bl-md' : '',
-                'border-uikit-faint',
+                "absolute top-0 left-0 h-1/2 w-1/2 border-b border-l",
+                isLast ? "rounded-bl-md" : "",
+                "border-uikit-faint",
               )}
             />
-            {!isLast && <div className="border-uikit-faint absolute top-1/2 left-0 h-1/2 w-1/2 border-l" />}
+            {!isLast && (
+              <div className="border-uikit-faint absolute top-1/2 left-0 h-1/2 w-1/2 border-l" />
+            )}
           </div>
         )}
       </div>
@@ -239,21 +390,28 @@ export function TreeEntryItem<T extends TreeDataItem>({
             <>
               <button
                 onClick={(e) => {
-                  e.stopPropagation()
-                  toggleItem(item.id)
+                  e.stopPropagation();
+                  toggleItem(item.id);
                 }}
                 className="flex size-4 cursor-pointer items-center justify-center"
               >
                 <ChevronDown
                   className={cn(
-                    'size-4 transition-transform',
-                    expandedItems && !expandedItems?.has(item.id) && '-rotate-90',
-                    item.disable && 'text-uikit-muted',
+                    "size-4 transition-transform",
+                    expandedItems &&
+                      !expandedItems?.has(item.id) &&
+                      "-rotate-90",
+                    item.disable && "text-uikit-muted",
                   )}
                   strokeWidth={1.5}
                 />
               </button>
-              <div className={cn('flex size-4 items-center justify-center', item.disable && 'text-uikit-muted')}>
+              <div
+                className={cn(
+                  "flex size-4 items-center justify-center",
+                  item.disable && "text-uikit-muted",
+                )}
+              >
                 {getIcon(item, expandedItems?.has?.(item.id))}
               </div>
             </>
@@ -262,16 +420,18 @@ export function TreeEntryItem<T extends TreeDataItem>({
               {item.isCollapsible && (
                 <button
                   onClick={(e) => {
-                    e.stopPropagation()
-                    toggleItem(item.id)
+                    e.stopPropagation();
+                    toggleItem(item.id);
                   }}
                   className="absolute z-20 flex cursor-pointer items-center justify-center opacity-0 transition-opacity group-hover:opacity-100"
                 >
                   <ChevronDown
                     className={cn(
-                      'size-4 transition-transform',
-                      expandedItems && !expandedItems?.has(item.id) && '-rotate-90',
-                      item.disable && 'text-uikit-muted',
+                      "size-4 transition-transform",
+                      expandedItems &&
+                        !expandedItems?.has(item.id) &&
+                        "-rotate-90",
+                      item.disable && "text-uikit-muted",
                     )}
                     strokeWidth={1.5}
                   />
@@ -279,9 +439,9 @@ export function TreeEntryItem<T extends TreeDataItem>({
               )}
               <div
                 className={cn(
-                  'cursor-pointer transition-opacity',
-                  item.isCollapsible && 'group-hover:opacity-0',
-                  item.disable && 'text-uikit-muted',
+                  "cursor-pointer transition-opacity",
+                  item.isCollapsible && "group-hover:opacity-0",
+                  item.disable && "text-uikit-muted",
                 )}
               >
                 {getIcon(item, expandedItems?.has(item.id))}
@@ -289,36 +449,47 @@ export function TreeEntryItem<T extends TreeDataItem>({
             </div>
           )}
           {(() => {
-            const label = item.label
-            const keepEnd = 9
+            const label = item.label;
+            const keepEnd = 9;
             if (label.length <= keepEnd) {
               return (
-                <span className={cn('truncate select-none', item.disable && 'text-uikit-muted')}>
+                <span
+                  className={cn(
+                    "truncate select-none",
+                    item.disable && "text-uikit-muted",
+                  )}
+                >
                   {renderLabel(label, item.id)}
                 </span>
-              )
+              );
             }
-            const firstPart = label.substring(0, label.length - keepEnd)
-            const lastPart = label.substring(label.length - keepEnd)
+            const firstPart = label.substring(0, label.length - keepEnd);
+            const lastPart = label.substring(label.length - keepEnd);
             return (
               <span
-                className={cn('flex min-w-0 flex-1 select-none', item.disable && 'text-uikit-muted')}
-                style={{ maxWidth: '100%' }}
+                className={cn(
+                  "flex min-w-0 flex-1 select-none",
+                  item.disable && "text-uikit-muted",
+                )}
+                style={{ maxWidth: "100%" }}
               >
                 <span className="min-w-0 truncate">{firstPart}</span>
                 <span className="shrink-0">{lastPart}</span>
               </span>
-            )
+            );
           })()}
         </div>
         {item.actions && (
-          <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="flex items-center gap-1"
+            onClick={(e) => e.stopPropagation()}
+          >
             {item.actions}
           </div>
         )}
       </div>
     </div>
-  )
+  );
 
   if (renderContextMenu && item.selectable !== false) {
     return (
@@ -326,8 +497,8 @@ export function TreeEntryItem<T extends TreeDataItem>({
         <ContextMenuTrigger asChild>{treeItemContent}</ContextMenuTrigger>
         {renderContextMenu(item)}
       </ContextMenu>
-    )
+    );
   }
 
-  return treeItemContent
+  return treeItemContent;
 }

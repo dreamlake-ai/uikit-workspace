@@ -8,6 +8,8 @@ const clamp = (value: number, min: number, max: number) =>
 export interface TimelineEventBarProps {
   item: LogItemWithMeta;
   isHovered: boolean;
+  /** Outer-corner rounding class so a hovered subtree reads as one block. */
+  hoverRadiusClass?: string;
   onMouseEnter: () => void;
   onMouseLeave: () => void;
   onClick?: (time: number) => void;
@@ -24,6 +26,7 @@ export interface TimelineEventBarProps {
 export function TimelineProcessBar({
   item,
   isHovered,
+  hoverRadiusClass,
   onMouseEnter,
   onMouseLeave,
   onClick,
@@ -41,7 +44,11 @@ export function TimelineProcessBar({
 
   return (
     <div
-      className={cn("relative h-[32px] w-full", isHovered && "bg-uikit-ink-5")}
+      className={cn(
+        "relative h-[32px] w-full",
+        isHovered && "bg-uikit-tree-hover",
+        hoverRadiusClass,
+      )}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
@@ -84,10 +91,10 @@ export function TimelineProcessBar({
         !isHaltedStep && (
           <div
             className={cn(
-              "rounded-[3px] absolute top-1/2 flex h-5 -translate-y-1/2 items-center justify-center overflow-hidden",
+              "rounded-uikit-badge absolute top-1/2 flex h-5 -translate-y-1/2 items-center justify-center overflow-hidden",
               item.color && colorClasses[item.color],
               item.hasStripes &&
-                "bg-[repeating-linear-gradient(-45deg,transparent,transparent_4px,rgba(0,0,0,0.1)_4px,rgba(0,0,0,0.1)_8px)]",
+                "bg-[repeating-linear-gradient(-45deg,transparent,transparent_4px,var(--shadow-inset)_4px,var(--shadow-inset)_8px)]",
               onClick && "cursor-pointer",
             )}
             style={{
@@ -204,7 +211,7 @@ export function TimelineProcessBar({
               }}
             >
               {visibleWidthPercent > 7 && (
-                <span className="rounded-full bg-uikit-tone-amber px-2 py-0.5 text-xs text-white">
+                <span className="rounded-full bg-uikit-tone-amber px-2 py-0.5 text-uikit-10 text-white">
                   Halted
                 </span>
               )}

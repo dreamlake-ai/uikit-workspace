@@ -31,4 +31,12 @@ focuses the input and places the caret at the matching end.
 | `inputClassName` | `string` | — | Classes on the inner `<input>`. |
 
 All native `<input>` attributes (`placeholder`, `value`, `onChange`, `disabled`,
-…) are forwarded. `InputSlot` takes `side` (`'left'` / `'right'`).
+…) are forwarded.
+
+### `InputSlot`
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `side` | `'left' \| 'right'` | `'left'` | Which end of the input the slot sits at. |
+
+Native `<div>` attributes are forwarded.

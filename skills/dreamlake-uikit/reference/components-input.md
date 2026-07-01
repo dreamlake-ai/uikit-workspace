@@ -1,0 +1,19 @@
+# Input
+
+A styled text field. `InputRoot` (also exported as `Input`) is the container +
+input; drop `InputSlot`s inside for icons, prefixes, or suffixes. Clicking a slot
+focuses the input and places the caret at the matching end.
+
+## Props
+
+### `InputRoot`
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `size` | `'sm' \| 'md' \| 'lg'` | `'md'` | Height/text scale. |
+| `state` | `'default' \| 'error'` | `'default'` | Error tints the surface. |
+| `side` | `'left' \| 'right' \| 'center'` | — | Text alignment of the input. |
+| `inputClassName` | `string` | — | Classes on the inner `<input>`. |
+
+All native `<input>` attributes (`placeholder`, `value`, `onChange`, `disabled`,
+…) are forwarded. `InputSlot` takes `side` (`'left'` / `'right'`).

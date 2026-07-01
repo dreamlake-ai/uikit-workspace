@@ -126,7 +126,7 @@ export const DialArrayInput: React.FC<DialArrayInputProps> = ({
       {/* Array items */}
       {arrayValue.map((item, index) => (
         <div key={`${name}-item-${index}`} className="flex items-center gap-2">
-          <span className="text-uikit-muted min-w-[20px] text-xs">
+          <span className="text-uikit-muted min-w-[20px] text-uikit-11">
             {index + 1}.
           </span>
           {renderItemInput(item, index)}
@@ -156,7 +156,7 @@ export const DialArrayInput: React.FC<DialArrayInputProps> = ({
 
       {/* Empty state */}
       {arrayValue.length === 0 && (
-        <div className="text-uikit-muted text-sm italic">
+        <div className="text-uikit-muted text-uikit-13 italic">
           No items. Click "Add {elementType}" to start.
         </div>
       )}
@@ -176,13 +176,13 @@ export const DialArrayInput: React.FC<DialArrayInputProps> = ({
       <div className="flex flex-col gap-2 pl-1.5">
         {schema.helpText && (
           <span
-            className="text-uikit-muted cursor-help text-xs"
+            className="text-uikit-muted cursor-help text-uikit-11"
             title={schema.helpText as string}
           >
             ⓘ {schema.helpText}
           </span>
         )}
-        <div className="border-uikit-faint rounded-md border p-2">
+        <div className="border-uikit-faint rounded-uikit-badge border p-2">
           {arrayContent}
         </div>
       </div>

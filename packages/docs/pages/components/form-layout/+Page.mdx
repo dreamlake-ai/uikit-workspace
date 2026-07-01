@@ -7,7 +7,11 @@ description: Pairs a label with a control, stacked or side-by-side.
 
 import { Preview } from '../../../components/Preview'
 import { BasicSpec } from '../../../components/specimens/components/form-layout/BasicSpec'
+import { AlignSpec } from '../../../components/specimens/components/form-layout/AlignSpec'
+import { ControlsSpec } from '../../../components/specimens/components/form-layout/ControlsSpec'
 import basicSrc from '../../../components/specimens/components/form-layout/BasicSpec.tsx?raw'
+import alignSrc from '../../../components/specimens/components/form-layout/AlignSpec.tsx?raw'
+import controlsSrc from '../../../components/specimens/components/form-layout/ControlsSpec.tsx?raw'
 
 # Form Layout
 
@@ -17,6 +21,25 @@ control. Pass exactly two children — `[label, control]`.
 
 <Preview source={basicSrc} filename="BasicSpec.tsx">
   <BasicSpec />
+</Preview>
+
+## Alignment
+
+With `label-left`, `align` controls how the label sits against a control that's
+taller than one line.
+
+<Preview source={alignSrc} filename="AlignSpec.tsx">
+  <AlignSpec />
+</Preview>
+
+## Any control, and `asChild`
+
+The control can be anything — input, switch, number field. With `asChild` the
+layout classes land on the single child element instead of a wrapper `<div>`.
+Make that child a `<label>` if you want clicking it to focus the control.
+
+<Preview source={controlsSrc} filename="ControlsSpec.tsx">
+  <ControlsSpec />
 </Preview>
 
 ## Props

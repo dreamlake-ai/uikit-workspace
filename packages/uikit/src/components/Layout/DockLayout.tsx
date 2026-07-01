@@ -28,7 +28,19 @@ export const DockLayout = forwardRef<HTMLDivElement, ComponentProps<'div'>>(func
     <div
       ref={ref}
       {...props}
-      className={cn('relative flex h-full w-full flex-col justify-between overflow-hidden', className)}
+      className={cn(
+        'relative flex h-full w-full flex-col justify-between overflow-hidden',
+        // The rails are a solid panel surface, so cards docked on them are the
+        // same colour — drop their border + shadow so they read as flat content
+        // on the rail rather than floating cards (liquid layout keeps both).
+        '[&_[data-slot=card]]:border-transparent [&_[data-slot=card]]:shadow-none',
+        // Flat cards stack their full vertical padding into the gap between them
+        // (card A's bottom + card B's top), doubling the apparent spacing. Halve
+        // each card's vertical padding (lg p-6 → py-3) so the docked column reads
+        // as evenly-spaced sections instead of large empty bands.
+        '[&_[data-slot=card]]:py-3',
+        className,
+      )}
     />
   )
 })
@@ -51,7 +63,12 @@ export function DockLayoutLeft({ className, asChild, ...props }: DockLayoutChild
   return (
     <Comp
       {...props}
-      className={cn('bg-uikit-panel z-20 flex h-full flex-shrink-0 flex-col items-start gap-4', className)}
+      className={cn(
+        'bg-uikit-panel z-20 flex h-full flex-shrink-0 flex-col items-start gap-4',
+        // Hairline divider between the docked rail and the center content.
+        'border-r border-uikit-faint',
+        className,
+      )}
     />
   )
 }
@@ -73,7 +90,12 @@ export function DockLayoutRight({ className, asChild, ...props }: DockLayoutChil
   return (
     <Comp
       {...props}
-      className={cn('bg-uikit-panel z-20 flex h-full flex-shrink-0 flex-col items-end gap-4', className)}
+      className={cn(
+        'bg-uikit-panel z-20 flex h-full flex-shrink-0 flex-col items-end gap-4',
+        // Hairline divider between the docked rail and the center content.
+        'border-l border-uikit-faint',
+        className,
+      )}
     />
   )
 }
@@ -87,7 +109,18 @@ export const DockLayoutBottom = forwardRef<HTMLDivElement, DockLayoutChildProps>
     <Comp
       ref={ref as never}
       {...props}
-      className={cn('bg-uikit-panel z-20 inline-flex w-full flex-shrink-0 justify-center', className)}
+      className={cn(
+        'bg-uikit-panel z-20 inline-flex w-full flex-shrink-0 justify-center',
+        // Hairline divider between the docked bottom bar and the center content.
+        'border-t border-uikit-faint',
+        // Docked content sits flat on the rail: strip the border + shadow from
+        // any card or toolbar inside (e.g. the playback bar) so the rail divider
+        // above is the only separator. The top toolbar lives in its own slot and
+        // is intentionally left floating.
+        '[&_[data-slot=card]]:border-transparent [&_[data-slot=card]]:shadow-none',
+        '[&_[role=toolbar]]:border-transparent [&_[role=toolbar]]:shadow-none',
+        className,
+      )}
     />
   )
 })

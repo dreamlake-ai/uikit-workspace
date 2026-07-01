@@ -42,7 +42,7 @@ export const DialInterfaceInput: React.FC<DialInterfaceInputProps> = ({
   }
 
   const interfaceContent = (
-    <div className="border-uikit-faint flex flex-col gap-2 rounded-md border p-2">
+    <div className="border-uikit-faint flex flex-col gap-2 rounded-uikit-badge border p-2">
       <DialProvider
         schemas={schema.typeDefinition.schemas}
         values={values}
@@ -70,7 +70,7 @@ export const DialInterfaceInput: React.FC<DialInterfaceInputProps> = ({
       <div className="flex flex-col gap-2 pl-1.5">
         {schema.helpText && (
           <span
-            className="text-uikit-muted cursor-help text-xs"
+            className="text-uikit-muted cursor-help text-uikit-11"
             title={schema.helpText as string}
           >
             ⓘ {schema.helpText}

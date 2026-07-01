@@ -139,7 +139,9 @@ export const DialVectorInput: React.FC<DialVectorInputProps> = ({
         }
 
         if (placeholders[i]) {
-          numberLabels.push(<span className="text-xs">{placeholders[i]}</span>);
+          numberLabels.push(
+            <span className="text-uikit-11">{placeholders[i]}</span>,
+          );
         } else {
           numberLabels.push(undefined);
         }
@@ -213,7 +215,7 @@ export const DialVectorInput: React.FC<DialVectorInputProps> = ({
         <div className="flex flex-row items-start gap-2">
           {schema.helpText && (
             <span
-              className="text-uikit-muted mt-1 cursor-help text-xs"
+              className="text-uikit-muted mt-1 cursor-help text-uikit-11"
               title={schema.helpText as string}
             >
               ⓘ
@@ -236,7 +238,7 @@ export const DialVectorInput: React.FC<DialVectorInputProps> = ({
 
   const labels =
     placeholders.length > 0
-      ? placeholders.map((p) => <span className="text-xs">{p}</span>)
+      ? placeholders.map((p) => <span className="text-uikit-11">{p}</span>)
       : undefined;
 
   const inputComponent = (
@@ -267,7 +269,7 @@ export const DialVectorInput: React.FC<DialVectorInputProps> = ({
       <div className="flex flex-row items-center gap-2">
         {schema.helpText && (
           <span
-            className="text-uikit-muted cursor-help text-xs"
+            className="text-uikit-muted cursor-help text-uikit-11"
             title={schema.helpText as string}
           >
             ⓘ

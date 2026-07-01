@@ -172,7 +172,7 @@ export const InputNumber = forwardRef<HTMLInputElement, InputNumberProps>(
           "data-[hover=y]:bg-uikit-ink-8",
           "data-[hover=x]:cursor-col-resize",
           "data-[hover=y]:cursor-ns-resize",
-          disabled && "cursor-not-allowed opacity-50",
+          disabled && "cursor-not-allowed opacity-60",
         ])}
         inputClassName={cn([
           "cursor-text",

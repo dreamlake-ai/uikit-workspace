@@ -220,7 +220,7 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(function Slider(
           data-slot="slider-thumb"
           onKeyDown={onKeyDown(i)}
           className={cn(
-            "absolute h-4 w-[0.6rem] -translate-x-1/2 shrink-0 rounded-[3px] outline-none",
+            "absolute h-4 w-[0.6rem] -translate-x-1/2 shrink-0 rounded-uikit-badge outline-none",
             "transition-[box-shadow] hover:cursor-ew-resize hover:ring-4 focus-visible:ring-4",
             disabled
               ? "pointer-events-none bg-uikit-ink-12"

@@ -1,0 +1,102 @@
+# Tree View
+
+A flat-rendered hierarchical tree for scene graphs, file trees, and outlines.
+You supply a flat array of `TreeDataItem` nodes (each pointing at its
+`parentId`); the `useTreeState` hook flattens it into renderable rows with
+indent / guideline metadata and manages expand-collapse state. Icons and label
+rendering are left to the caller. For trees with thousands of nodes, swap
+`TreeView` for `VirtualTreeView` — it shares the same props plus a `height`.
+
+## Basic
+
+Pass the `visibleData` from `useTreeState` to `data`, and wire `expandedItems`,
+`onToggleItem`, and `hasDescendants` so collapsible folders get a chevron.
+`getIcon` returns whatever node icon you want, with the expanded flag for
+folder-open states.
+
+## Selectable
+
+Set `isSelectable` and control selection with `selectedItemIds` /
+`onSelectionChange`. With the default `selectionMode="multi"`, Cmd/Ctrl-click
+toggles individual rows and Shift-click selects a range; selecting a parent
+implicitly covers its descendants.
+
+## Searchable
+
+`TreeSearchBar` is a controlled input with case-sensitive and regex toggles.
+Feed its state into `useTreeSearch`, which returns the `filteredData` (matches
+plus their ancestor paths) and a `renderLabel` that highlights the matched
+substring. Pass `filteredData` back through `useTreeState` and hand
+`renderLabel` to the `TreeView`.
+
+## Props
+
+### `TreeView` / `VirtualTreeView`
+
+| Prop                | Type                                           | Default       | Description                                                                      |
+| ------------------- | ---------------------------------------------- | ------------- | -------------------------------------------------------------------------------- |
+| `data`              | `TreeDataItemWithMeta[]`                    | —             | Flattened rows with metadata — pass `visibleData` from `useTreeState`.           |
+| `getIcon`           | `(item: T, expanded?: boolean) => ReactNode`   | —             | Icon for each node. Receives the expanded flag for folder-open states.           |
+| `expandedItems`     | `Set<string>`                                  | —             | IDs of expanded collapsible nodes.                                               |
+| `onToggleItem`      | `(id: string) => void`                         | —             | Called when a chevron is clicked.                                                |
+| `onItemHover`       | `(id: string \| null) => void`                 | —             | Called on row mouse enter / leave.                                               |
+| `hoveredId`         | `string \| null`                               | —             | Controlled hovered row id.                                                       |
+| `isSelectable`      | `boolean`                                      | `false`       | Enables row selection.                                                           |
+| `selectedItemIds`   | `Set<string>`                                  | —             | Controlled set of selected node ids.                                             |
+| `onSelectionChange` | `(ids: Set<string>) => void`                   | —             | Called when the selection changes.                                               |
+| `selectionMode`     | `'single' \| 'multi'`                          | `'multi'`     | `multi` enables Cmd/Ctrl-click toggle and Shift-click range.                     |
+| `hideExpand`        | `boolean`                                      | `false`       | Hide expand chevrons entirely.                                                   |
+| `hasDescendants`    | `(id: string) => boolean`                      | `() => false` | Whether a node has children — pass the helper from `useTreeState`.               |
+| `renderLabel`       | `(label: string, itemId: string) => ReactNode` | identity      | Custom label rendering — pass `renderLabel` from `useTreeSearch` for highlights. |
+| `renderContextMenu` | `(item: T) => ReactNode`                       | —             | Right-click menu content for a row.                                              |
+| `className`         | `string`                                       | —             | Extra classes on the container.                                                  |
+| `height`            | `number \| string`                             | `'100%'`      | **`VirtualTreeView` only** — container height for virtualization.                |
+| `overscan`          | `number`                                       | `5`           | **`VirtualTreeView` only** — extra rows rendered outside the viewport.           |
+
+### `TreeDataItem`
+
+| Field           | Type             | Description                                    |
+| --------------- | ---------------- | ---------------------------------------------- |
+| `id`            | `string`         | Unique node identifier.                        |
+| `parentId`      | `string \| null` | Parent id, or `null` for roots.                |
+| `label`         | `string`         | Display text (also the search target).         |
+| `isCollapsible` | `boolean`        | Marks a node as an expandable folder.          |
+| `actions`       | `ReactNode`      | Trailing action content shown on the row.      |
+| `disable`       | `boolean`        | Dim and disable interaction for the row.       |
+| `selectable`    | `boolean`        | Set `false` to exclude the row from selection. |
+
+### `TreeSearchBar`
+
+| Prop                 | Type                                                       | Description                                                |
+| -------------------- | ---------------------------------------------------------- | ---------------------------------------------------------- |
+| `searchQuery`        | `string`                                                   | Current query text.                                        |
+| `setSearchQuery`     | `(query: string) => void`                                  | Updates the query.                                         |
+| `isCaseSensitive`    | `boolean`                                                  | Case-sensitive toggle state.                               |
+| `setIsCaseSensitive` | `(value: boolean \| ((prev: boolean) => boolean)) => void` | Toggles case sensitivity.                                  |
+| `isRegex`            | `boolean`                                                  | Regex toggle state.                                        |
+| `setIsRegex`         | `(value: boolean \| ((prev: boolean) => boolean)) => void` | Toggles regex mode.                                        |
+| `isRegexValid`       | `boolean`                                                  | Whether the current regex compiles — from `useTreeSearch`. |
+| `searchResultsCount` | `number`                                                   | Number of direct matches — from `useTreeSearch`.           |
+| `className`          | `string`                                                   | Extra classes on the container.                            |
+
+### `useTreeState({ data, defaultExpanded?, expandedItems?, onToggleItem? })`
+
+| Returns          | Type                        | Description                                                                      |
+| ---------------- | --------------------------- | -------------------------------------------------------------------------------- |
+| `visibleData`    | `TreeDataItemWithMeta[]` | Flattened, metadata-tagged rows with collapsed subtrees hidden — pass to `data`. |
+| `dataWithMeta`   | `TreeDataItemWithMeta[]` | All rows with metadata, ignoring collapse state.                                 |
+| `expandedItems`  | `Set<string>`               | Currently expanded node ids.                                                     |
+| `toggleItem`     | `(id: string) => void`      | Toggle one node's expanded state.                                                |
+| `expandAll`      | `() => void`                | Expand every collapsible node.                                                   |
+| `collapseAll`    | `() => void`                | Collapse every node.                                                             |
+| `hasDescendants` | `(id: string) => boolean`   | Whether a node has children.                                                     |
+
+### `useTreeSearch({ data, searchQuery, isCaseSensitive?, isRegex? })`
+
+| Returns              | Type                                           | Description                                                             |
+| -------------------- | ---------------------------------------------- | ----------------------------------------------------------------------- |
+| `filteredData`       | `T[]`                                          | Matching nodes plus their ancestor paths — feed into `useTreeState`.    |
+| `searchResultsCount` | `number`                                       | Count of direct label matches.                                          |
+| `isRegexValid`       | `boolean`                                      | `false` when `isRegex` is on and the query is not a valid pattern.      |
+| `renderLabel`        | `(label: string, itemId: string) => ReactNode` | Label renderer that highlights matched substrings — pass to `TreeView`. |
+| `hasActiveSearch`    | `boolean`                                      | Whether a non-empty query is active.                                    |
