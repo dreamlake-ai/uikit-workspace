@@ -225,8 +225,17 @@ export function useTreeState<T extends TreeDataItem>({
 }) {
   const [internalExpandedItems, setInternalExpandedItems] = useState(() => {
     const initial = new Set<string>();
-    if (defaultExpanded)
-      data.forEach((item) => item.isCollapsible && initial.add(item.id));
+    if (defaultExpanded) {
+      // Any row that is some other row's parent is collapsible (matches the
+      // expand chevron, which shows whenever a row has descendants) — no
+      // explicit `isCollapsible` flag required.
+      const parentIds = new Set(
+        data
+          .map((item) => item.parentId)
+          .filter((p): p is string => p != null),
+      );
+      data.forEach((item) => parentIds.has(item.id) && initial.add(item.id));
+    }
     return initial;
   });
 
@@ -314,10 +323,12 @@ export function useTreeState<T extends TreeDataItem>({
   }, [data, childrenMap]);
 
   const visibleData = useMemo(() => {
+    // A row is hidden when any ancestor is collapsed. Every ancestor is by
+    // definition a parent, so collapsibility follows from having children —
+    // this keeps collapse working even when the data doesn't set the explicit
+    // `isCollapsible` flag (e.g. the Waterfall's log rows).
     const isVisible = (item: TreeDataItemWithMeta<T>) =>
-      item.ancestors.every(
-        (ancestor) => !ancestor.isCollapsible || expandedItems.has(ancestor.id),
-      );
+      item.ancestors.every((ancestor) => expandedItems.has(ancestor.id));
     return dataWithMeta.filter(isVisible);
   }, [dataWithMeta, expandedItems]);
 

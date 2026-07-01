@@ -235,14 +235,37 @@ export function Waterfall({
               >
                 {/* Timeline Events */}
                 <SyncDragY className="scrollbar-hide hide-scrollbar relative h-full w-full">
-                  {visibleLogData.map((item, index) =>
-                    item.time === undefined ? (
+                  {visibleLogData.map((item, index) => {
+                    // Hover mirrors the tree: hovering a row highlights that row
+                    // and its whole subtree, as one block with rounded outer
+                    // corners (same warm-amber token as the left panel).
+                    const inHover = (it: LogItemWithMeta) =>
+                      hoveredId != null &&
+                      (hoveredId === it.id ||
+                        (it.ancestors ?? []).some((a) => a.id === hoveredId));
+                    const hov = inHover(item);
+                    const prevHov =
+                      index > 0 && inHover(visibleLogData[index - 1]);
+                    const nextHov =
+                      index < visibleLogData.length - 1 &&
+                      inHover(visibleLogData[index + 1]);
+                    const hoverRadiusClass = !hov
+                      ? ""
+                      : prevHov && nextHov
+                        ? ""
+                        : prevHov
+                          ? "rounded-b-[var(--radius)]"
+                          : nextHov
+                            ? "rounded-t-[var(--radius)]"
+                            : "rounded-[var(--radius)]";
+                    return item.time === undefined ? (
                       // Render TimelineProcessBar for duration events
                       <TimelineProcessBar
                         index={index}
                         key={item.id}
                         item={item}
-                        isHovered={hoveredId === item.id}
+                        isHovered={hov}
+                        hoverRadiusClass={hoverRadiusClass}
                         onMouseEnter={() => setHoveredId(item.id)}
                         onMouseLeave={() => setHoveredId(null)}
                         onClick={(time: number) => {
@@ -257,7 +280,8 @@ export function Waterfall({
                       <TimelineEvent
                         key={item.id}
                         item={item}
-                        isHovered={hoveredId === item.id}
+                        isHovered={hov}
+                        hoverRadiusClass={hoverRadiusClass}
                         onMouseEnter={() => setHoveredId(item.id)}
                         onMouseLeave={() => setHoveredId(null)}
                         onClick={(time: number) => {
@@ -266,8 +290,8 @@ export function Waterfall({
                         timeToPercent={timeToPercent}
                         index={index}
                       />
-                    ),
-                  )}
+                    );
+                  })}
                 </SyncDragY>
 
                 {/* Out of range wedges (left) */}

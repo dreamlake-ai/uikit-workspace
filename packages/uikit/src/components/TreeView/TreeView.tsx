@@ -244,14 +244,18 @@ export function TreeEntryItem<T extends TreeDataItem>({
 
   const isLeaf = !hasDescendants(item.id);
   // Non-selectable rows (e.g. the top-level Scene/Staging groups) don't react
-  // to hover or selection.
+  // to selection.
   const isSelectableRow = isSelectable && item.selectable !== false;
 
-  // Hover follows the subtree: hovering a selectable group highlights the group
-  // and all of its descendants (per the ml-dash design).
+  // Hover is independent of selection: any non-disabled, non-group-header row
+  // reacts to hover — so read-only trees like the Waterfall (which don't enable
+  // selection) still get row hover + the row↔bar hover link.
+  const isHoverable = !item.disable && item.selectable !== false;
+
+  // Hover follows the subtree: hovering a group highlights the group and all of
+  // its descendants (per the ml-dash design).
   const isHovered =
-    isSelectableRow &&
-    !item.disable &&
+    isHoverable &&
     hoveredId != null &&
     (hoveredId === item.id || ancestors.some((a) => a.id === hoveredId));
 
@@ -336,7 +340,7 @@ export function TreeEntryItem<T extends TreeDataItem>({
       )}
       style={ringShadow ? { boxShadow: ringShadow } : undefined}
       onMouseEnter={() => {
-        if (isSelectableRow && !item.disable) onItemHover?.(item.id);
+        if (isHoverable) onItemHover?.(item.id);
       }}
       onMouseLeave={() => onItemHover?.(null)}
       onClick={handleItemSelect}

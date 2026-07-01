@@ -5,6 +5,8 @@ import { cn } from "../../lib/utils";
 export interface TimelineEventProps {
   item: LogItemWithMeta;
   isHovered: boolean;
+  /** Outer-corner rounding class so a hovered subtree reads as one block. */
+  hoverRadiusClass?: string;
   onMouseEnter: () => void;
   onMouseLeave: () => void;
   onClick?: (time: number) => void;
@@ -19,6 +21,7 @@ export interface TimelineEventProps {
 export function TimelineEvent({
   item,
   isHovered,
+  hoverRadiusClass,
   onMouseEnter,
   onMouseLeave,
   onClick,
@@ -29,7 +32,11 @@ export function TimelineEvent({
 
   return (
     <div
-      className={cn("relative h-[32px]", isHovered && "bg-uikit-ink-5")}
+      className={cn(
+        "relative h-[32px] w-full",
+        isHovered && "bg-uikit-tree-hover",
+        hoverRadiusClass,
+      )}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
