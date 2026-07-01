@@ -6,6 +6,7 @@ import {
   createContext,
   isValidElement,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -67,6 +68,24 @@ export function ContextMenu({ onOpenChange, children }: ContextMenuProps) {
     setOpenState(o);
     onOpenChange?.(o);
   };
+
+  // The menu is anchored to the cursor's viewport position, so page scrolling
+  // would leave it stranded. Match the legacy Radix behaviour: lock body scroll
+  // while open (compensating for the scrollbar width to avoid a layout shift).
+  useEffect(() => {
+    if (!open || typeof document === "undefined") return;
+    const { body } = document;
+    const scrollbar = window.innerWidth - document.documentElement.clientWidth;
+    const prevOverflow = body.style.overflow;
+    const prevPadding = body.style.paddingRight;
+    body.style.overflow = "hidden";
+    if (scrollbar > 0) body.style.paddingRight = `${scrollbar}px`;
+    return () => {
+      body.style.overflow = prevOverflow;
+      body.style.paddingRight = prevPadding;
+    };
+  }, [open]);
+
   const elementsRef = useRef<Array<HTMLElement | null>>([]);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
