@@ -1,18 +1,18 @@
 ---
 title: Pipeline Graph
-section: Components
+section: Pipeline
 order: 245
 description: Renders a traced pipeline's node/edge DAG — dotted canvas, status-tinted cards, orthogonal edges, and six runtime flow states.
 wide: true
 ---
 
 import { Preview } from '../../../components/Preview'
-import { BasicSpec } from '../../../components/specimens/components/pipeline-graph/BasicSpec'
-import { LinkedSourceSpec } from '../../../components/specimens/components/pipeline-graph/LinkedSourceSpec'
-import { RunningSpec } from '../../../components/specimens/components/pipeline-graph/RunningSpec'
-import basicSrc from '../../../components/specimens/components/pipeline-graph/BasicSpec.tsx?raw'
-import linkedSrc from '../../../components/specimens/components/pipeline-graph/LinkedSourceSpec.tsx?raw'
-import runningSrc from '../../../components/specimens/components/pipeline-graph/RunningSpec.tsx?raw'
+import { BasicSpec } from '../../../components/specimens/pipeline-view/pipeline-graph/BasicSpec'
+import { LinkedSourceSpec } from '../../../components/specimens/pipeline-view/pipeline-graph/LinkedSourceSpec'
+import { RunningSpec } from '../../../components/specimens/pipeline-view/pipeline-graph/RunningSpec'
+import basicSrc from '../../../components/specimens/pipeline-view/pipeline-graph/BasicSpec.tsx?raw'
+import linkedSrc from '../../../components/specimens/pipeline-view/pipeline-graph/LinkedSourceSpec.tsx?raw'
+import runningSrc from '../../../components/specimens/pipeline-view/pipeline-graph/RunningSpec.tsx?raw'
 
 # Pipeline Graph
 
@@ -24,7 +24,7 @@ own. `PipelineSource` is the paired read-only source inspector.
 A pipeline is a plain Python function whose stages are `@ls.udf` functions; the
 graph is a **derived view** of that code, never hand-authored. Placeholder
 bodies (`...`) trace like real ones, so a graph renders long before any node is
-implemented. See [Pipeline Graph JSON](/components/pipeline-graph-json) for the
+implemented. See [Pipeline Graph JSON](/pipeline-view/pipeline-graph-json) for the
 exact data shape.
 
 ## Basic
@@ -32,7 +32,7 @@ exact data shape.
 A freshly-traced graph is entirely `idle`. **Drag** nodes to rearrange, **scroll**
 (or two-finger drag) to pan, **⌘/ctrl-scroll or pinch** to zoom, **click** a node
 to select it. Edges come in two kinds — `data` (solid) and `mask` (dashed); see
-[Pipeline Graph JSON](/components/pipeline-graph-json) for what each means.
+[Pipeline Graph JSON](/pipeline-view/pipeline-graph-json) for what each means.
 
 <Preview source={basicSrc} filename="BasicSpec.tsx">
   <BasicSpec />

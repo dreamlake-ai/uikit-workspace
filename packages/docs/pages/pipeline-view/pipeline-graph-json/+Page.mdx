@@ -1,6 +1,6 @@
 ---
 title: Pipeline Graph JSON
-section: Components
+section: Pipeline
 order: 246
 description: The data format PipelineGraph renders — pipeline, node, and edge shapes, static vs runtime fields, and how status drives edge flow.
 ---
@@ -25,7 +25,7 @@ or stored twice.
 {
   "id": "image_object_annotation",     // stable id (the pipeline function name)
   "title": "image_object_annotation",
-  "subtitle": "我想标注这个图像中的物体 — annotate the objects in this image.", // docstring
+  "subtitle": "Annotate the objects in this image.", // docstring
   "nodeCount": 5,
   "code": "\"\"\"…\"\"\"\nimport dreamlake as dl\n…",  // the whole pipeline.py (canonical source)
   "nodes": {
@@ -164,4 +164,4 @@ an edge from each argument's producer; `to_dataset` / `requeue` become sink
 nodes; the pipeline's argument is the synthetic `source`. Method calls,
 subscripts, and boolean-mask operators pass data through without adding nodes —
 so consensus / rework mask algebra doesn't clutter the graph. See the
-[Pipeline Graph](/components/pipeline-graph) component for rendering.
+[Pipeline Graph](/pipeline-view/pipeline-graph) component for rendering.

@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { usePageContext } from 'vike-react/usePageContext'
 import { groupedPages, groupedVisiblePages } from '../lib/navigation'
 import { useHiddenToggle } from '../lib/use-hidden-toggle'
+import { tabForUrl, urlInTab } from '../lib/tabs'
 
 const SIDEBAR_KEY = 'sidebar-collapsed'
 
@@ -25,7 +26,20 @@ function loadCollapsed(): Set<string> {
 export function Sidebar() {
   const { urlPathname } = usePageContext() as { urlPathname: string }
   const [showHidden] = useHiddenToggle()
-  const groups = showHidden ? groupedPages : groupedVisiblePages
+  const allGroups = showHidden ? groupedPages : groupedVisiblePages
+
+  // Filter the sidebar to the pages whose URL belongs to the active tab
+  // (derived from the current URL's first segment). Root + undefined
+  // prefixes fall back to Overview.
+  const activeTab = tabForUrl(urlPathname)
+  const groups = useMemo(
+    () =>
+      allGroups
+        .map(g => ({ ...g, items: g.items.filter(i => urlInTab(i.path, activeTab)) }))
+        .filter(g => g.items.length > 0),
+    [allGroups, activeTab],
+  )
+
   const [collapsed, setCollapsed] = useState<Set<string>>(loadCollapsed)
 
   function toggle(label: string) {

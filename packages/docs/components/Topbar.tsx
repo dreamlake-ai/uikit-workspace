@@ -5,6 +5,7 @@ import { siteConfig } from '../site.config'
 import { useMediaQuery } from '../lib/use-media-query'
 import { useHiddenToggle } from '../lib/use-hidden-toggle'
 import { ThemeToggle } from './ThemeToggle'
+import { TabStrip } from './TabStrip'
 import { VersionBadge } from './VersionBadge'
 import { useMerge } from '../renderer/Layout'
 
@@ -275,15 +276,13 @@ export function Topbar({ searchOpen, onOpenSearch, onCloseSearch, query, setQuer
           transition: `left ${EXPAND_MS}ms ${EXPAND_EASE}, right ${EXPAND_MS}ms ${EXPAND_EASE}, background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease`,
         }
       : {
-          gridColumn: 2,
-          gridRow: 1,
-          justifySelf: 'end',
-          width: '100%',
-          maxWidth: CLOSED_WIDTH,
+          // In-flow flex item inside the col-2 tabs+search cluster, sitting to
+          // the RIGHT of the tabs. (Open state below flips to position:fixed.)
+          width: CLOSED_WIDTH,
+          maxWidth: '100%',
           height: 28,
           padding: '6px 10px',
           borderRadius: 12,
-          marginRight: 8,
           transition: 'background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease',
         }
 
@@ -386,6 +385,16 @@ export function Topbar({ searchOpen, onOpenSearch, onCloseSearch, query, setQuer
         </nav>
       )}
 
+      {/* col 2, packed to the right: the doc tabs sit immediately LEFT of the
+          search field (mirrors the lakeshore topbar). The breadcrumb above
+          shares col 2 but justifies to the start, so they never overlap. */}
+      <div
+        style={{ gridColumn: 2, gridRow: 1, justifySelf: 'end', display: 'flex', alignItems: 'center', gap: 14, minWidth: 0 }}
+      >
+        <div className="hidden md:flex items-stretch" style={palFade(searchOpen)}>
+          <TabStrip />
+        </div>
+
       <label
         ref={labelRef}
         htmlFor="doc-search-input"
@@ -444,6 +453,7 @@ export function Topbar({ searchOpen, onOpenSearch, onCloseSearch, query, setQuer
           {isMac ? '⌘K' : 'Ctrl K'}
         </span>
       </label>
+      </div>
 
       <div
         className="flex items-center gap-3.5 pr-[14px] md:pr-[22px]"
