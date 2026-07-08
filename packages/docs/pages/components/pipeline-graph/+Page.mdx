@@ -1,0 +1,109 @@
+---
+title: Pipeline Graph
+section: Components
+order: 245
+description: Renders a traced pipeline's node/edge DAG — dotted canvas, status-tinted cards, orthogonal edges, and six runtime flow states.
+wide: true
+---
+
+import { Preview } from '../../../components/Preview'
+import { BasicSpec } from '../../../components/specimens/components/pipeline-graph/BasicSpec'
+import { LinkedSourceSpec } from '../../../components/specimens/components/pipeline-graph/LinkedSourceSpec'
+import { RunningSpec } from '../../../components/specimens/components/pipeline-graph/RunningSpec'
+import basicSrc from '../../../components/specimens/components/pipeline-graph/BasicSpec.tsx?raw'
+import linkedSrc from '../../../components/specimens/components/pipeline-graph/LinkedSourceSpec.tsx?raw'
+import runningSrc from '../../../components/specimens/components/pipeline-graph/RunningSpec.tsx?raw'
+
+# Pipeline Graph
+
+`PipelineGraph` draws a **traced pipeline** — the node/edge graph the `dl_trace`
+tracer derives from a `@dl.pipeline` Python function. It's purely presentational:
+you hand it the graph JSON and it renders the DAG, with no data fetching of its
+own. `PipelineSource` is the paired read-only source inspector.
+
+A pipeline is a plain Python function whose stages are `@ls.udf` functions; the
+graph is a **derived view** of that code, never hand-authored. Placeholder
+bodies (`...`) trace like real ones, so a graph renders long before any node is
+implemented. See [Pipeline Graph JSON](/components/pipeline-graph-json) for the
+exact data shape.
+
+## Basic
+
+A freshly-traced graph is entirely `idle`. **Drag** nodes to rearrange, **scroll**
+(or two-finger drag) to pan, **⌘/ctrl-scroll or pinch** to zoom, **click** a node
+to select it. Edges come in two kinds — `data` (solid) and `mask` (dashed); see
+[Pipeline Graph JSON](/components/pipeline-graph-json) for what each means.
+
+<Preview source={basicSrc} filename="BasicSpec.tsx">
+  <BasicSpec />
+</Preview>
+
+## Graph + source, linked
+
+The design layout is a canvas with a source **right rail**. The two share one
+selection: click a node and its source shows on the right; click the background
+to clear. Both components are controlled — you own the `selectedNodeId` state.
+
+<Preview source={linkedSrc} filename="LinkedSourceSpec.tsx">
+  <LinkedSourceSpec />
+</Preview>
+
+## Live status — a runnable pipeline
+
+Edges carry **no** stored style. Each edge's visual *flow* is derived from the
+`status` of its two endpoint nodes, so animating a running pipeline is just a
+matter of feeding node statuses in via the `statusById` overlay.
+
+The demo below is a tiny in-browser "runner". Each node, when it finishes,
+settles to a **random** outcome — mostly `ok`, occasionally `stale` or `error`.
+A node only starts once all its upstreams have settled **and none errored**, so
+a failure **blocks** everything downstream (those nodes never run and stay
+idle), exactly like a real pipeline. Nothing real executes — it only drives
+`statusById`. Press **Run** (each run re-rolls): `running` edges flow blue, `ok`
+edges go green, a `stale` node's edges turn amber, an `error` node's edges turn
+red, and nodes blocked by an upstream failure stay idle.
+
+<Preview source={runningSrc} filename="RunningSpec.tsx">
+  <RunningSpec />
+</Preview>
+
+## Edge flow states
+
+An edge's flow comes from `edgeFlow(srcStatus, dstStatus)` — one derived value,
+six looks. The legend (bottom-right of the canvas) mirrors these.
+
+| Flow | Derived when | Look |
+| --- | --- | --- |
+| `running` | src running, or (src ok & dst running) | blue, flowing dashes |
+| `queued` | src ok, dst still idle | grey, slow drift |
+| `stalled` | src stale | amber, gentle breath |
+| `error` | either endpoint errored | red, tight dashes |
+| `ok` | src ok & dst ok | green, solid |
+| `idle` | anything else | faint, solid |
+
+Because flow is derived, you never store it — keep node `status` live and the
+edges take care of themselves.
+
+## Props
+
+### `PipelineGraph`
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `graph` | `PipelineGraphData` | — | The traced graph JSON. |
+| `statusById` | `StatusOverlay` | — | Live per-node `{ status, progress, ... }`, merged onto the graph. |
+| `selectedNodeId` | `string \| null` | — | Controlled selection. Omit for uncontrolled. |
+| `onSelectNode` | `(id: string \| null) => void` | — | Selection change (also fires on background click). |
+| `className` | `string` | — | Extra classes on the canvas. |
+
+### `PipelineSource`
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `graph` | `PipelineGraphData` | — | The traced graph JSON. |
+| `selectedNodeId` | `string \| null` | — | Which node's source to show (else the whole `.py`). |
+| `onSelectNode` | `(id: string \| null) => void` | — | Fired by the `pipeline.py` tab to clear the selection. |
+| `className` | `string` | — | Extra classes. |
+
+Both are theme-aware (uikit tone tokens) and load `@dreamlake/uikit/styles.css`
+for their colours.

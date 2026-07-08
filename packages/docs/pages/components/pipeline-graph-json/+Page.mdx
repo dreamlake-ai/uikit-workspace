@@ -1,0 +1,167 @@
+---
+title: Pipeline Graph JSON
+section: Components
+order: 246
+description: The data format PipelineGraph renders — pipeline, node, and edge shapes, static vs runtime fields, and how status drives edge flow.
+---
+
+# Pipeline Graph JSON
+
+`PipelineGraph` renders one JSON object: a **traced pipeline**. The Python
+tracer (`dl_trace`) is the source of truth — it reads a `@dl.pipeline` function
+and emits this shape statically (no import, no execution), so placeholder
+bodies trace exactly like real ones. The TypeScript types
+(`PipelineGraphData`, `GraphNode`, `GraphEdge`) mirror it 1:1 and ship from
+`@dreamlake/uikit`.
+
+The shape mirrors the DreamLake Studio design prototype's pipeline data model.
+Its guiding principle: **the graph is a derived view of code, and an edge's
+runtime look is a derived view of node status.** Nothing visual is hand-authored
+or stored twice.
+
+## The whole object
+
+```jsonc
+{
+  "id": "image_object_annotation",     // stable id (the pipeline function name)
+  "title": "image_object_annotation",
+  "subtitle": "我想标注这个图像中的物体 — annotate the objects in this image.", // docstring
+  "nodeCount": 5,
+  "code": "\"\"\"…\"\"\"\nimport dreamlake as dl\n…",  // the whole pipeline.py (canonical source)
+  "nodes": {
+    "detect_objects": { /* GraphNode — see below */ },
+    "review_boxes":   { /* … */ },
+    "to_dataset":     { /* … */ },
+    "requeue":        { /* … */ },
+    "source":         { /* … */ }
+  },
+  "edges": [
+    { "from": "source",         "fromPort": "out", "to": "detect_objects", "toPort": "images", "kind": "data" },
+    { "from": "detect_objects", "fromPort": "out", "to": "review_boxes",   "toPort": "labels", "kind": "data" },
+    { "from": "detect_objects", "fromPort": "out", "to": "to_dataset",     "toPort": "in",     "kind": "data" },
+    { "from": "review_boxes",   "fromPort": "out", "to": "to_dataset",     "toPort": "in",     "kind": "mask" }
+    // …
+  ]
+}
+```
+
+`nodes` is keyed by node **id** (not an array) so a status overlay or a
+selection can address a node in O(1). `code` is the canonical pipeline source —
+the graph is derived from it, so it's kept alongside for the source inspector.
+
+## A node
+
+```jsonc
+{
+  // —— static (the tracer always fills these) ——
+  "id": "detect_objects",
+  "title": "detect_objects",
+  "kind": "transform",                 // source | transform | model | filter | merge | sink | review
+  "inputs": ["images"],                // input ports  = the udf's parameters
+  "outputs": ["out"],                  // ONE output port (the result table); [] for a sink
+  "columns": ["boxes", "classes", "confidence"],  // the result's schema (return columns)
+  "code": "@ls.udf\ndef detect_objects(...): ...",  // this stage's own source
+  "config": {},                        // decorator kwargs, e.g. { "kind": "review" }
+  "pos": { "x": 380, "y": 60 },        // auto-laid-out (longest-path layering)
+  "status": "idle",                    // idle | running | ok | error | stale
+
+  // —— runtime (optional; the tracer omits them, a runner fills them) ——
+  "progress": 0.62,                    // 0..1 while running
+  "duration": 4.2,                     // seconds, last run
+  "rows": 612,                         // output row count
+  "output": { /* preview payload */ }
+}
+```
+
+Two groups of fields:
+
+- **Static** — everything derivable from the code alone. The tracer emits these
+  and sets every `status` to `idle`.
+- **Runtime** — optional, filled while (or after) the pipeline runs. The card
+  renders them when present (progress %, duration) and ignores them when absent.
+
+`kind` is cosmetic — it only tints the card's kind dot. `source` and `sink`
+nodes are synthetic (the pipeline's input, and `to_dataset` / `requeue` sinks);
+their `code` is `null`.
+
+**Ports vs columns.** `inputs` are ports — one per parameter. `outputs` is a
+single port (`["out"]`) because a UDF returns **one** table; passing it
+downstream passes the whole table. The return column names live in `columns`
+(the result's schema), not as separate ports. The card subline shows
+`inputs.length → outputs.length` (e.g. `2 → 1`).
+
+## An edge
+
+```jsonc
+{ "from": "detect_objects", "fromPort": "out", "to": "to_dataset", "toPort": "in", "kind": "data" }
+```
+
+A port-to-port connection plus one tag, `kind`:
+
+- **`data`** — the source's result flows into the target (rendered solid).
+- **`mask`** — the source only *gates/filters* the target: a review veto, or a
+  confidence/consensus mask used as a boolean selector (rendered dashed +
+  fainter in the settled states). This is how the σ-algebra "which rows survive"
+  edges read as gates rather than data flow, without adding filter nodes.
+
+There is still no colour, width, or animation stored — those are derived from
+status (below). `kind` is the one structural tag, decided by the tracer.
+
+### Why edges store no style
+
+An edge's runtime look — its *flow* — is **derived** from the `status` of its
+two endpoint nodes, at render time:
+
+```ts
+edgeFlow(src, dst): 'running' | 'queued' | 'stalled' | 'error' | 'ok' | 'idle'
+```
+
+| Flow | Derived when |
+| --- | --- |
+| `running` | src running, or (src ok & dst running) |
+| `queued` | src ok, dst still idle |
+| `stalled` | src stale |
+| `error` | either endpoint errored |
+| `ok` | src ok & dst ok |
+| `idle` | anything else |
+
+So there is exactly one source of truth for runtime state — `node.status` — and
+the edges follow. This is what makes live updates cheap: you never diff or
+restyle edges, you just push new node statuses.
+
+## Live updates — the status overlay
+
+The static graph is produced once (at trace time) and rarely changes — it only
+changes when the `.py` changes. Runtime state is a **separate, lightweight
+overlay**, keyed by node id:
+
+```ts
+type StatusOverlay = Record<
+  string,
+  { status?: NodeStatus; progress?: number | null; duration?: number | null; rows?: number | null }
+>
+```
+
+Pass it as `statusById`; the component merges it onto the nodes and re-derives
+every edge's flow. A remote runner streams these (over SSE / WebSocket) as jobs
+progress:
+
+```tsx
+<PipelineGraph graph={tracedGraph} statusById={liveStatusFromRunner} />
+```
+
+Structure stays static; status streams live; edges animate — with no re-tracing.
+
+## Producing it
+
+```bash
+python -m dl_trace pipelines/image_object_annotation.py --pretty   # -> stdout
+python -m dl_trace pipelines/image_object_annotation.py -o graph.json
+```
+
+The tracer walks the pipeline's dataflow: calling a `@ls.udf` makes a node with
+an edge from each argument's producer; `to_dataset` / `requeue` become sink
+nodes; the pipeline's argument is the synthetic `source`. Method calls,
+subscripts, and boolean-mask operators pass data through without adding nodes —
+so consensus / rework mask algebra doesn't clutter the graph. See the
+[Pipeline Graph](/components/pipeline-graph) component for rendering.
