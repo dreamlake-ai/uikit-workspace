@@ -309,42 +309,50 @@ export function Topbar({ searchOpen, onOpenSearch, onCloseSearch, query, setQuer
         transition: 'background 0.25s ease, box-shadow 0.25s ease',
       }}
     >
-      <a
-        href="/"
-        className="flex items-center gap-2.5 pl-[14px] md:pl-[18px] no-underline text-doc-template-ink hover:opacity-80 min-w-[72px] shrink-0"
+      {/* Brand cluster. The version badge is a *sibling* of the brand
+          anchor, not a child: the badge contains a dropdown <button>,
+          and a button inside an <a> is invalid HTML — clicks would
+          also navigate home. */}
+      <div
+        className="flex items-center gap-2.5 pl-[14px] md:pl-[18px] min-w-[72px] shrink-0"
         style={{
           fontFamily: 'var(--font-doc-template-ui)',
           fontSize: 14,
           fontWeight: 700,
           letterSpacing: '-0.04em',
-          transition: 'opacity 0.15s ease, color 0.25s ease',
           ...palFade(searchOpen),
         }}
       >
-        <span>
-          {siteConfig.brand}
-          <span
-            aria-hidden
-            className="text-doc-template-accent"
-            style={{ fontWeight: 700, fontSize: '1.4em', lineHeight: 0, marginLeft: 1, verticalAlign: 'baseline' }}
-          >
-            .
+        <a
+          href="/"
+          className="flex items-center gap-2.5 no-underline text-doc-template-ink hover:opacity-80"
+          style={{ transition: 'opacity 0.15s ease, color 0.25s ease' }}
+        >
+          <span>
+            {siteConfig.brand}
+            <span
+              aria-hidden
+              className="text-doc-template-accent"
+              style={{ fontWeight: 700, fontSize: '1.4em', lineHeight: 0, marginLeft: 1, verticalAlign: 'baseline' }}
+            >
+              .
+            </span>
           </span>
-        </span>
-        <span
-          className="hidden md:inline text-doc-template-muted"
-          style={{ fontWeight: 400, opacity: 0.55, marginLeft: -4, marginRight: -4, ...collapsedStyle(merged) }}
-        >
-          /
-        </span>
-        <span
-          className="hidden md:inline text-doc-template-muted"
-          style={{ fontWeight: 500, letterSpacing: '-0.01em', ...collapsedStyle(merged) }}
-        >
-          {siteConfig.subtitle}
-        </span>
+          <span
+            className="hidden md:inline text-doc-template-muted"
+            style={{ fontWeight: 400, opacity: 0.55, marginLeft: -4, marginRight: -4, ...collapsedStyle(merged) }}
+          >
+            /
+          </span>
+          <span
+            className="hidden md:inline text-doc-template-muted"
+            style={{ fontWeight: 500, letterSpacing: '-0.01em', ...collapsedStyle(merged) }}
+          >
+            {siteConfig.subtitle}
+          </span>
+        </a>
         <VersionBadge repoUrl={siteConfig.repoUrl} />
-      </a>
+      </div>
 
       {/* Topbar breadcrumb — fades in when scrolled past <h1>; fades out
           again while the search palette is open (matches docs.html).
