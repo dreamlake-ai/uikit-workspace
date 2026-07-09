@@ -16,6 +16,10 @@ export const siteConfig = {
   /** Drives the GitHub link in the top-right of the header. Set to an
    *  empty string to hide the icon. */
   repoUrl: 'https://github.com/dreamlake-ai/uikit-workspace',
+  /** Production docs origin. The version-switcher dropdown fetches
+   *  `${url}/versions.json` from here first so this (immutable) deploy
+   *  keeps listing versions released after it was built. */
+  url: 'https://uikit.dreamlake.ai',
   /** Leftmost crumb in both the page-top and merged-topbar breadcrumbs.
    *  Set to an empty string to omit the root crumb entirely. */
   breadcrumbRoot: 'Docs',

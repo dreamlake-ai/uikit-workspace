@@ -4,6 +4,7 @@ import { pages } from '../lib/navigation'
 import { siteConfig } from '../site.config'
 import { useMediaQuery } from '../lib/use-media-query'
 import { ThemeToggle } from './ThemeToggle'
+import { VersionBadge } from './VersionBadge'
 import { useMerge } from '../renderer/Layout'
 
 interface TopbarProps {
@@ -202,88 +203,50 @@ export function Topbar({ searchOpen, onOpenSearch, onCloseSearch, query, setQuer
         transition: 'background 0.25s ease, border-color 0.25s ease',
       }}
     >
-      <a
-        href="/"
-        className="flex items-center gap-2.5 pl-[14px] md:pl-[18px] no-underline text-doc-template-ink hover:opacity-80 min-w-0"
+      {/* Brand cluster. The version badge is a *sibling* of the brand
+          anchor, not a child: the badge contains a dropdown <button>,
+          and a button inside an <a> is invalid HTML — clicks would
+          also navigate home. */}
+      <div
+        className="flex items-center gap-2.5 pl-[14px] md:pl-[18px] min-w-0"
         style={{
           fontFamily: 'var(--font-doc-template-ui)',
           fontSize: 14,
           fontWeight: 700,
           letterSpacing: '-0.04em',
-          transition: 'opacity 0.15s ease, color 0.25s ease',
           ...palFade(searchOpen),
         }}
       >
-        <span>
-          {siteConfig.brand}
-          <span
-            aria-hidden
-            className="text-doc-template-accent"
-            style={{ fontWeight: 700, fontSize: '1.4em', lineHeight: 0, marginLeft: 1, verticalAlign: 'baseline' }}
-          >
-            .
-          </span>
-        </span>
-        <span
-          className="hidden md:inline text-doc-template-muted"
-          style={{ fontWeight: 400, opacity: 0.55, marginLeft: -4, marginRight: -4, ...collapsedStyle(merged) }}
+        <a
+          href="/"
+          className="flex items-center gap-2.5 no-underline text-doc-template-ink hover:opacity-80"
+          style={{ transition: 'opacity 0.15s ease, color 0.25s ease' }}
         >
-          /
-        </span>
-        <span
-          className="hidden md:inline text-doc-template-muted"
-          style={{ fontWeight: 500, letterSpacing: '-0.01em', ...collapsedStyle(merged) }}
-        >
-          {siteConfig.subtitle}
-        </span>
-        <span
-          className="hidden md:inline-flex items-stretch border border-doc-template-faint"
-          style={{
-            fontFamily: 'var(--font-doc-template-mono)',
-            fontSize: 10,
-            fontWeight: 500,
-            letterSpacing: '0.02em',
-            marginLeft: 6,
-            borderRadius: 4,
-            ...collapsedStyle(merged),
-          }}
-        >
-          <span
-            className="inline-flex items-center text-doc-template-ink"
-            style={{
-              padding: '2px 6px',
-              background: 'color-mix(in srgb, var(--color-doc-template-ink) 5%, var(--color-doc-template-bg))',
-              fontWeight: 600,
-              borderTopLeftRadius: 3,
-              borderBottomLeftRadius: 3,
-            }}
-          >
-            v{__APP_VERSION__}
-          </span>
-          <span
-            className="inline-flex items-center text-doc-template-muted border-l border-doc-template-faint"
-            style={{ gap: 5, padding: '2px 7px', borderTopRightRadius: 3, borderBottomRightRadius: 3 }}
-            title={`git ${__GIT_HASH__}`}
-          >
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+          <span>
+            {siteConfig.brand}
+            <span
               aria-hidden
-              style={{ width: 9, height: 9, opacity: 0.8, flexShrink: 0 }}
+              className="text-doc-template-accent"
+              style={{ fontWeight: 700, fontSize: '1.4em', lineHeight: 0, marginLeft: 1, verticalAlign: 'baseline' }}
             >
-              <circle cx="18" cy="18" r="3" />
-              <circle cx="6" cy="6" r="3" />
-              <path d="M6 9v6" />
-              <path d="M18 9a9 9 0 0 1-9 9" />
-            </svg>
-            {__GIT_HASH__}
+              .
+            </span>
           </span>
-        </span>
-      </a>
+          <span
+            className="hidden md:inline text-doc-template-muted"
+            style={{ fontWeight: 400, opacity: 0.55, marginLeft: -4, marginRight: -4, ...collapsedStyle(merged) }}
+          >
+            /
+          </span>
+          <span
+            className="hidden md:inline text-doc-template-muted"
+            style={{ fontWeight: 500, letterSpacing: '-0.01em', ...collapsedStyle(merged) }}
+          >
+            {siteConfig.subtitle}
+          </span>
+        </a>
+        <VersionBadge repoUrl={siteConfig.repoUrl} />
+      </div>
 
       {/* Topbar breadcrumb — fades in when scrolled past <h1>; fades out
           again while the search palette is open (matches docs.html).
