@@ -1,0 +1,7 @@
+{
+  "from": "review_boxes",
+  "fromPort": "out",
+  "to": "save_dataset",
+  "toPort": "rows",
+  "kind": "mask"
+}

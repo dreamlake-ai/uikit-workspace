@@ -1,0 +1,7 @@
+{
+  "from": "detect_objects",
+  "fromPort": "out",
+  "to": "save_dataset",
+  "toPort": "rows",
+  "kind": "data"
+}

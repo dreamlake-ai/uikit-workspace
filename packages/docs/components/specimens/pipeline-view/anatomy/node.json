@@ -1,0 +1,12 @@
+{
+  "id": "detect_objects",
+  "title": "detect_objects",
+  "kind": "transform",
+  "inputs": ["images"],
+  "outputs": ["out"],
+  "columns": ["boxes", "classes", "confidence"],
+  "code": "@ls.udf\ndef detect_objects(images): ...",
+  "config": {},
+  "pos": { "x": 40, "y": 40 },
+  "status": "idle"
+}
