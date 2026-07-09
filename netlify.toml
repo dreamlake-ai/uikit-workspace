@@ -5,3 +5,11 @@ publish = "packages/docs/dist/client"
 [build.environment]
 NODE_VERSION = "20"
 PNPM_VERSION = "10.33.0"
+
+# The version-switcher dropdown on old v/* branch deploys fetches the
+# production manifest cross-origin so its list never goes stale.
+[[headers]]
+for = "/versions.json"
+
+[headers.values]
+Access-Control-Allow-Origin = "*"
