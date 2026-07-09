@@ -287,3 +287,19 @@
   user-select: none;
   pointer-events: none;
 }
+
+/* ─────────────────────────────────────────────────────────────────
+   Version-switcher popover (VersionBadge) entrance animations —
+   wedge first, then the panel, then each entry in a quick cascade. */
+@keyframes popover-in {
+  from { opacity: 0; transform: translateY(-4px) scale(0.985); }
+  to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+@keyframes popover-entry-in {
+  from { opacity: 0; transform: translateY(-3px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes popover-wedge-in {
+  from { opacity: 0; transform: translateY(-2px); }
+  to   { opacity: 1; transform: translateY(0); }
+}

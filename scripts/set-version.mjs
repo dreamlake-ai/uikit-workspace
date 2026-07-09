@@ -4,13 +4,24 @@
  * (root + packages/*) so the snapshot branch, the topbar chip, and any
  * embedded library all stamp the same number.
  *
+ * Also upserts the docs version manifest
+ * (packages/docs/public/versions.json, served at /versions.json and
+ * consumed by the topbar version-switcher dropdown): sets `current`
+ * and prepends/refreshes a `{version, url, date}` entry pointing at
+ * the Netlify branch subdomain for the `v/<version>` snapshot branch.
+ *
  * Usage: pnpm set-version <x.y.z>
  *
  * Only files that already have a `version` field are touched — packages
  * that intentionally omit it (private, never-published) stay omitted.
  */
-import { writeFileSync } from 'node:fs'
-import { listVersionedPackages } from './lib-packages.mjs'
+import { readFileSync, writeFileSync } from 'node:fs'
+import { join } from 'node:path'
+import { listVersionedPackages, REPO_ROOT } from './lib-packages.mjs'
+
+// Netlify branch subdomain for branch `v/<x.y.z>` (slashes and dots
+// sanitized to hyphens), e.g. https://v-0-1-6.uikit.dreamlake.ai
+const versionUrl = (version) => `https://v-${version.replace(/\./g, '-')}.uikit.dreamlake.ai`
 
 const SEMVER_RE = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/
 
@@ -55,12 +66,41 @@ if (changes.length === 0) {
   process.exit(0)
 }
 
-const width = Math.max(...changes.map((c) => c.relPath.length))
+// Keep the docs version manifest in step with the package.json bump.
+// Idempotent: re-running with the same version just refreshes url/date.
+const manifestRelPath = 'packages/docs/public/versions.json'
+const manifestPath = join(REPO_ROOT, manifestRelPath)
+let manifestNote = null
+try {
+  const manifest = JSON.parse(readFileSync(manifestPath, 'utf-8'))
+  const url = versionUrl(input)
+  const date = new Date().toISOString().slice(0, 10)
+  manifest.versions ??= []
+  const existing = manifest.versions.find((v) => v.version === input)
+  if (existing) {
+    existing.url = url
+    existing.date = date
+  } else {
+    manifest.versions.unshift({ version: input, url, date })
+  }
+  const manifestChanged = manifest.current !== input || !existing
+  manifest.current = input
+  writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n')
+  manifestNote = { changed: manifestChanged, url }
+} catch (err) {
+  console.error(`set-version: failed to update ${manifestRelPath}: ${err.message}`)
+  process.exit(1)
+}
+
+const width = Math.max(...changes.map((c) => c.relPath.length), manifestRelPath.length)
 console.log(`Set version to ${input}:`)
 for (const c of changes) {
   const tag = c.changed ? '✓' : '·'
   console.log(`  ${tag} ${c.relPath.padEnd(width)}  ${c.before} → ${c.after}`)
 }
+console.log(
+  `  ${manifestNote.changed ? '✓' : '·'} ${manifestRelPath.padEnd(width)}  current: "${input}", entry: ${manifestNote.url}`,
+)
 
 const anyChanged = changes.some((c) => c.changed)
 if (anyChanged) {
