@@ -1,0 +1,123 @@
+# Pipeline Graph
+
+`PipelineGraph` draws a DreamLake **pipeline** as an interactive flow-chart. It's
+purely presentational: you hand it one JSON object and it renders the DAG —
+dotted canvas, status-tinted node cards, orthogonal edges, live flow animation —
+with **no data fetching of its own**. `PipelineSource` is the paired read-only
+source inspector.
+
+If you just want to render a graph, this page is the whole story. For the exact
+data shape see [Pipeline Graph JSON](reference/pipeline-view-pipeline-graph-json.md); for a
+field-by-field visual map see [Anatomy](reference/pipeline-view-anatomy.md); for how the
+component is built and what's coming, see
+[Architecture & Roadmap](reference/pipeline-view-architecture.md).
+
+## Background — what this renders and why
+
+DreamLake runs an **AI auto-labeling + human-review** loop: models propose
+labels, reviewers gate them, accepted rows land in a dataset and the rest go
+back for rework. That loop is written as a **pipeline** — a plain Python
+`@dl.pipeline` function whose stages are `@ls.udf` functions.
+
+You never draw this graph by hand. The `dl_trace` tracer reads the pipeline's
+Python **statically** (no import, no execution) and derives the node/edge graph
+from its dataflow. So:
+
+- **The graph is a derived view of code.** Change the `.py`, re-trace, the graph
+  updates. There is no separate diagram to keep in sync.
+- **Placeholder bodies (`...`) trace like real ones**, so a graph renders long
+  before any stage is implemented.
+- **This component only draws.** Tracing happens elsewhere (a Python service);
+  the runtime status that animates the graph streams in separately.
+
+**Who this is for:** anyone rendering a traced pipeline in a UI — a Studio view,
+a dashboard, a docs page. You supply the traced JSON (and optionally a live
+status overlay); the component owns the canvas.
+
+## One stage, three faces
+
+The thing that makes the data model click: **a node is one stage seen three
+ways.** You write a Python UDF; the tracer emits a JSON node; the component
+draws a card. They are the same object.
+
+**① The Python you write** — a `@ls.udf` stage. Its parameters become input
+ports; its return columns become the result schema:
+
+```python
+@ls.udf
+def detect_objects(images: Tensor["N", "H", "W", 3]) -> Tuple["boxes", "classes", "confidence"]:
+    """Detect objects in each image; one row per box."""
+    ...
+```
+
+**② The node you see, ③ the JSON in between** — flip between the rendered card
+(**Preview**), the render call (**Source**), and the tracer's node JSON
+(**Data**). The card *is* the JSON: the kind dot ← `kind`, the title ← `title`,
+the `1→1` meta ← `inputs`/`outputs` lengths, the edge dots ← the `inputs` /
+`outputs` ports.
+
+The return columns (`boxes`, `classes`, `confidence`) live in `columns` — the
+result's schema, **not** extra ports. A UDF returns one table; passing it
+downstream passes the whole table. See [Anatomy](reference/pipeline-view-anatomy.md) for the
+full field-to-pixel map.
+
+## Basic
+
+A freshly-traced graph is entirely `idle`. **Drag** nodes to rearrange, **scroll**
+(or two-finger drag) to pan, **⌘/ctrl-scroll or pinch** to zoom, **click** a node
+to select it. Edges come in two kinds — `data` (solid) and `mask` (dashed gate);
+the [Anatomy](reference/pipeline-view-anatomy.md) page shows both.
+
+## Graph + source, linked
+
+The design layout is a canvas with a source **right rail**. The two share one
+selection: click a node and its source shows on the right; click the background
+to clear. Both components are controlled — you own the `selectedNodeId` state.
+
+## Live status — a runnable pipeline
+
+Edges carry **no** stored style. Each edge's visual *flow* is derived from the
+`status` of its two endpoint nodes, so animating a running pipeline is just a
+matter of feeding node statuses in via the `statusById` overlay. The six flow
+states, and how each is derived, are catalogued in
+[Anatomy → Connector states](reference/pipeline-view-anatomy.md#connector-states).
+
+The demo below is a tiny in-browser "runner". Each node, when it finishes,
+settles to a **random** outcome — mostly `ok`, occasionally `stale` or `error`.
+A node only starts once all its upstreams have settled **and none errored**, so
+a failure **blocks** everything downstream (those nodes never run and stay
+idle), exactly like a real pipeline. Nothing real executes — it only drives
+`statusById`. Press **Run** (each run re-rolls): `running` edges flow blue, `ok`
+edges go green, a `stale` node's edges turn amber, an `error` node's edges turn
+red, and nodes blocked by an upstream failure stay idle.
+
+## Props
+
+### `PipelineGraph`
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `graph` | `PipelineGraphData` | — | The traced graph JSON. |
+| `statusById` | `StatusOverlay` | — | Live per-node `{ status, progress, ... }`, merged onto the graph. |
+| `selectedNodeId` | `string \| null` | — | Controlled selection. Omit for uncontrolled. |
+| `onSelectNode` | `(id: string \| null) => void` | — | Selection change (also fires on background click). |
+| `className` | `string` | — | Extra classes on the canvas. |
+
+### `PipelineSource`
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `graph` | `PipelineGraphData` | — | The traced graph JSON. |
+| `selectedNodeId` | `string \| null` | — | Which node's source to show (else the whole `.py`). |
+| `onSelectNode` | `(id: string \| null) => void` | — | Fired by the `pipeline.py` tab to clear the selection. |
+| `className` | `string` | — | Extra classes. |
+
+Both are theme-aware (uikit tone tokens) and load `@dreamlake/uikit/styles.css`
+for their colours.
+
+---
+
+**Next:** [Anatomy](reference/pipeline-view-anatomy.md) maps every field to a pixel ·
+[Pipeline Graph JSON](reference/pipeline-view-pipeline-graph-json.md) is the data-model
+reference · [Architecture & Roadmap](reference/pipeline-view-architecture.md) covers the
+internals and what's next.

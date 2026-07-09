@@ -8,19 +8,19 @@ frosted-glass styling and reveals the tab strip on scroll.
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│ [logo]         [tabs — revealed on scroll]       [actions]   │  sticky top:0
+│ [logo]         [tabs — revealed on scroll]       [actions]   │  sticky top bar
 ├─────────────┬────────────────────────────────────────────────┤
-│             │ [TabStrip]              [cols toggle]          │  sticky top:34
+│             │ [TabStrip]              [cols toggle]          │  sticky
 │  HeroRail   ├────────────────────────────────────────────────┤
 │  sticky     │                                                │
-│  top:34     │  activeTab.render(cols, scrolled)              │
+│             │  active tab content                            │
 │             │                                                │
 └─────────────┴────────────────────────────────────────────────┘
 ```
 
-Both the HeroRail and TabStrip stick at `top: 34px` (collapsed topbar height).
-When the page scrolls past 80px, the TabStrip hides and the topbar reveals its
-own embedded copy with a slide-in animation.
+The HeroRail and TabStrip both stick just below the top bar. Once the page
+scrolls far enough, the TabStrip hides and the top bar reveals its own tab strip
+with a slide-in animation.
 
 ## Demo
 
@@ -133,10 +133,6 @@ function MyProfilePage() {
 | `scrollContainerRef` | `RefObject` | `window` | Override scroll source. Pass a ref when embedding inside a bounded div. |
 | `className` | `string` | — | Extra classes on the root element. |
 
-> **Controlled vs uncontrolled tabs** — pass `defaultTab` for fire-and-forget;
-> pass `tab` + `onTabChange` when you need external state (deep-linking,
-> programmatic switching). Don't mix both — `tab` wins when present.
-
 ### ProfileLayoutProfile
 
 | Field | Type | Description |
@@ -146,7 +142,7 @@ function MyProfilePage() {
 | `kind` | `'user' \| 'org'` | Org accounts show a members section in the rail. |
 | `image` | `string?` | Avatar image URL. When provided, the HeroRail renders an `<img>` (1:1, object-cover); when omitted, falls back to a monogram. |
 | `bio` | `string?` | Optional bio paragraph. |
-| `facts` | `ProfileLayoutFact[]?` | Key–value pairs in the facts grid (label col 60px, value fills). |
+| `facts` | `ProfileLayoutFact[]?` | Key–value pairs in the facts grid (label column, value fills). |
 | `members` | `ProfileLayoutMember[]?` | Org only. Avatar strip capped at 12 with `+N` overflow. |
 | `onAvatarChange` | `(file: File \| null) => Promise<void> \| void` ? | When set, avatar becomes clickable — hover scrim + built-in upload sheet (drag-drop, preview, remove). Receives the chosen `File` (or `null` for remove) on save. May return a Promise; the sheet stays open with a spinner while it resolves and surfaces a generic error on reject. |
 | `onEditClick` | `() => void` ? | When set, the name row shows a pencil button on group-hover. Caller owns the resulting edit dialog. |
@@ -160,13 +156,16 @@ function MyProfilePage() {
 | `label` | `string` | Tab label text. |
 | `count` | `number \| null?` | Optional count badge. The current design omits tab counts — pass nothing to match. |
 | `showColsToggle` | `boolean?` | Show the 1/2-col layout toggle for this tab. |
-| `render` | `(cols: 1 \| 2, scrolled: boolean) => ReactNode` | Renders tab content. Use `scrolled + TOPBAR_H_SMALL` for sticky elements. |
+| `render` | `(cols: 1 \| 2, scrolled: boolean) => ReactNode` | Renders tab content. For sticky elements inside the tab, offset by the exported `TOPBAR_H_SMALL` constant (the collapsed top-bar height) using the `scrolled` flag. |
+
+`TOPBAR_H_SMALL` is exported alongside `ProfileLayout` — use it to position
+sticky elements in a tab's `render` output relative to the collapsed top bar.
 
 ### ProfileLayoutFact
 
 | Field | Type | Description |
 | --- | --- | --- |
-| `label` | `string` | Key label in the 60px left column (uppercase mono). |
+| `label` | `string` | Key label in the left column (uppercase mono). |
 | `value` | `string` | Value displayed in the right column. |
 
 ### ProfileLayoutMember

@@ -10,9 +10,8 @@ inside the search field.
 Filter chips on the left slide an animated underline to the active chip. When
 `query` is non-empty and a non-`"all"` filter is selected, the chips are
 replaced by a token pill inside the search field. Pressing Backspace on an
-empty input removes the token. State colors (`accent`) on filter chips pull
-from the Style Guide palette — `var(--tone-green)` (`#1f8f4a`, running/ok) and
-`var(--tone-red)` (`#c8513b`, failed/error).
+empty input removes the token. Filter chips can carry a state color via
+`accent` — see the `FilterOption.accent` prop below.
 
 ## Search only
 
@@ -43,4 +42,4 @@ Omit `filters` and `sortOptions` to render just the search input.
 | `value` | `string` | Unique identifier for this filter. |
 | `label` | `string` | Display text shown in the chip and as the token label. |
 | `count` | `number` | Item count shown as a superscript next to the label. |
-| `accent` | `string` | Tint color applied when `count > 0`. Prefer palette tones — `var(--tone-green)` (running), `var(--tone-red)` (failed). |
+| `accent` | `string` | Tint color applied when `count > 0`. Prefer palette tones — `var(--tone-green)` (running/ok), `var(--tone-red)` (failed/error). |

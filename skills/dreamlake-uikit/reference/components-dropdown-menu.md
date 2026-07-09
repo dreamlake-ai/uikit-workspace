@@ -4,8 +4,9 @@ A menu of actions opened from a trigger. Compose `DropdownMenuTrigger` +
 `DropdownMenuContent` with `DropdownMenuItem`, `DropdownMenuLabel`,
 `DropdownMenuSeparator`, radio items (`DropdownMenuRadioGroup` /
 `DropdownMenuRadioItem`), and nested submenus (`DropdownMenuSub` /
-`DropdownMenuSubTrigger` / `DropdownMenuSubContent`). Positioning, keyboard list
-navigation, and dismissal use `@floating-ui/react`; submenus open on hover.
+`DropdownMenuSubTrigger` / `DropdownMenuSubContent`). The menu anchors to its
+trigger and flips or shifts to stay within the viewport, supports keyboard list
+navigation, and dismisses on outside-click or Esc; submenus open on hover.
 
 ## Props
 
@@ -19,6 +20,9 @@ navigation, and dismissal use `@floating-ui/react`; submenus open on hover.
 
 ### Items
 
-`DropdownMenuItem` takes `onSelect` (fired on activation; the menu then closes)
-and `disabled`. `DropdownMenuRadioGroup` takes `value` + `onValueChange`;
+`DropdownMenuItem` takes `onSelect` (fired on activation; the menu then closes),
+`disabled`, and `asChild` (render through to a single child element instead of a
+`<div>`). `DropdownMenuRadioGroup` takes `value` + `onValueChange`;
 `DropdownMenuRadioItem` takes `value`. `DropdownMenuTrigger` accepts `asChild`.
+`DropdownMenuShortcut` renders a right-aligned keyboard hint (e.g. ⌘C) inside an
+item.

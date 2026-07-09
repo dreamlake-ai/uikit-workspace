@@ -30,6 +30,5 @@ active state.
 | `children` | `ReactNode` | Group content — fully up to the caller. |
 | `className` | `string` | Extra classes on the group wrapper. |
 
-> **Background inheritance** — sticky group titles use `bg-inherit` to cover
-> items scrolling beneath them. The SideNav root paints `var(--rail-bg)`, which
-> propagates through the inheritance chain to the title automatically.
+> **Opaque group headers** — group headers stay opaque as rows scroll beneath
+> them, so pinned titles never show the content passing underneath.

@@ -1,11 +1,11 @@
 # Tree View
 
-A flat-rendered hierarchical tree for scene graphs, file trees, and outlines.
-You supply a flat array of `TreeDataItem` nodes (each pointing at its
-`parentId`); the `useTreeState` hook flattens it into renderable rows with
-indent / guideline metadata and manages expand-collapse state. Icons and label
-rendering are left to the caller. For trees with thousands of nodes, swap
-`TreeView` for `VirtualTreeView` — it shares the same props plus a `height`.
+A hierarchical tree for scene graphs, file trees, and outlines. You supply a
+flat array of `TreeDataItem` nodes (each pointing at its `parentId`); the
+`useTreeState` hook derives the visible rows — with indent and guideline
+metadata — and manages expand-collapse state. Icons and label rendering are
+left to the caller. For trees with thousands of nodes, swap `TreeView` for
+`VirtualTreeView` — it shares the same props plus a `height`.
 
 ## Basic
 

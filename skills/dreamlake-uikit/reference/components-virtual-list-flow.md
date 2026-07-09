@@ -1,52 +1,24 @@
 # VirtualListFlow
 
 Same external API as [`VirtualList`](./virtual-list), but items render in
-**CSS normal flow** instead of as absolutely-positioned children with
-`transform: translateY`. Use this variant when virtualization needs to
-coexist with `position: sticky` inside items, CSS `gap`, or any other
-layout rule that depends on items participating in the document's flow.
+**CSS normal flow** instead of being taken out of flow and positioned
+individually. Use this variant when virtualization needs to coexist with
+`position: sticky` inside items, CSS `gap`, or any other layout rule that
+depends on items participating in the document's flow.
 
 ## Why a second variant
 
-The original `VirtualList` positions every visible item with
-`position: absolute` + `transform: translateY(...)`. Two consequences fall
-out of that:
+In the original `VirtualList`, items don't participate in the document's
+normal flow, so layout rules that depend on flow behave differently:
+`position: sticky` inside an item pins to that item rather than the outer
+scroll container, and CSS `gap` / `margin` between items has to be baked
+into each item's own padding.
 
-1. **Each item becomes a containing block.** A `position: sticky`
-   descendant sticks within its parent item's bounds — not against the
-   outer scroll container. In a tall virtualized list this looks wrong:
-   you see one sticky header per item, each stuck inside its own slot,
-   rather than the conventional "current section's header pinned to
-   viewport top" behavior.
-2. **Items are out-of-flow.** CSS `gap`, `margin-collapsing`, browser
-   scroll anchoring, and other normal-layout rules don't apply between
-   items. Spacing has to be baked into each item's own padding, and the
-   scroll position can drift when off-screen items measure new heights
-   asynchronously.
-
-`VirtualListFlow` rebuilds the same windowing primitive on a different
-internal layout:
-
-```
-<div overflow-auto height>                 ← scroll container
-  [stickyHeader]                            ← optional, position: sticky
-  <div padding-top padding-bottom>          ← flow shell
-      …                     ← visible items, in normal flow
-  </div>
-</div>
-```
-
-`paddingTop` and `paddingBottom` represent the height of the items that
-aren't rendered (above and below the visible window respectively). Since
-the items themselves sit in normal flow, the document's height is just
-`paddingTop + sum(visible item heights) + paddingBottom`, and the
-container scrolls naturally.
-
-The trade-off: changing the padding values on scroll triggers a layout
-reflow on the shell div, where the absolute+transform variant only
-incurred compositor work. In practice the layout cost is a single short
-paint and modern browsers handle it well; the win from `gap`, `sticky`,
-and `overflow-anchor` "just working" is usually worth it.
+`VirtualListFlow` keeps the same windowing behavior but renders items in
+normal flow, so `sticky`, `gap`, and browser scroll anchoring work the
+way they do in a non-virtual list. The trade-off is a slightly heavier
+repositioning cost on scroll — usually well worth it for lists of cards
+or sections with layered structure inside them.
 
 ## When to pick which
 
@@ -64,14 +36,14 @@ with sticky/layered structure inside them, prefer `VirtualListFlow`.
 
 ## Fixed height
 
-Pass `itemHeight` as a number (px). The visible window is calculated in O(1).
+Pass `itemHeight` as a number (px).
 
 ## Dynamic height
 
 Pass `itemHeight="dynamic"` for content-driven heights. Each item is
-wrapped in a `ResizeObserver`-measured div. Use `estimatedItemHeight` to
-set the initial layout estimate; the browser's native scroll-anchoring
-prevents visible scroll jumps when measured heights replace estimates.
+measured after it renders. Use `estimatedItemHeight` to set the initial
+layout estimate; the scroll position stays stable when measured heights
+replace estimates.
 
 ## Infinite scroll
 

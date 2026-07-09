@@ -4,6 +4,17 @@ A small wrapper that pairs a label with a control. `orientation="label-top"
 ` (default) stacks them; `label-left` puts the label in a column beside the
 control. Pass exactly two children — `[label, control]`.
 
+## Alignment
+
+With `label-left`, `align` controls how the label sits against a control that's
+taller than one line.
+
+## Any control, and `asChild`
+
+The control can be anything — input, switch, number field. With `asChild` the
+layout classes land on the single child element instead of a wrapper `<div>`.
+Make that child a `<label>` if you want clicking it to focus the control.
+
 ## Props
 
 | Prop | Type | Default | Description |

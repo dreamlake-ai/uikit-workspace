@@ -2,8 +2,9 @@
 
 A floating panel opened by clicking its trigger — for quick settings, filters,
 or detail cards. Compose `PopoverTrigger` + `PopoverContent`, with an optional
-`PopoverClose`. Positioning, focus management and outside-click/Esc dismissal
-come from `@floating-ui/react`.
+`PopoverClose`. The panel anchors to its trigger and flips or shifts to stay
+within the viewport, moves focus into itself while open, and dismisses on
+outside-click or Esc.
 
 ## Props
 

@@ -8,23 +8,34 @@ variants, sizes and a loading state.
 
 `primary` is an inverted (ink-on-background) fill for the main action;
 `secondary` is a bordered neutral button; `ghost` is transparent with a hover
-tint (for low-emphasis / list actions); `danger` is for destructive actions.
+tint (for low-emphasis / list actions); `danger` is for destructive actions;
+`link` renders as inline underlined text with no padding.
 
 ## Sizes & states
 
-Two sizes (`sm`, `md`). `loading` shows a spinner and disables the button;
-`disabled` greys it out and blocks clicks.
+Three sizes (`sm`, `md`, `lg`). `loading` shows a spinner and disables the
+button; `disabled` greys it out and blocks clicks.
 
 ## Props
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `variant` | `'primary' \| 'secondary' \| 'ghost' \| 'danger'` | `'primary'` | Visual style. |
-| `size` | `'sm' \| 'md'` | `'md'` | Padding/text scale. |
+| `variant` | `'primary' \| 'secondary' \| 'ghost' \| 'danger' \| 'link'` | `'primary'` | Visual style. `'destructive'` is also accepted as an alias for `'danger'`. |
+| `size` | `'sm' \| 'md' \| 'lg'` | `'sm'` | Padding/text scale. |
 | `loading` | `boolean` | `false` | Shows a spinner and disables the button. |
 | `leftIcon` | `ReactNode` | — | Icon rendered before the label. |
+| `icon` | `boolean` | `false` | Square icon-button padding (for a button whose content is a single icon). |
+| `value` | `boolean` | `false` | Active/selected state — renders the label and icon in the accent color. |
+| `asChild` | `boolean` | `false` | Render the single child element with the button styling instead of a `<button>` (merging classes and forwarding props). |
 | `disabled` | `boolean` | `false` | Disables interaction. |
 | `type` | `'button' \| 'submit' \| 'reset'` | `'button'` | Native button type. |
 | `className` | `string` | — | Extra classes on the button. |
 
 Any other native `<button>` attributes (`onClick`, `aria-*`, …) are forwarded.
+
+### `buttonVariants`
+
+`buttonVariants(options)` returns the composed class string for a button
+without rendering one. Accepts `variant`, `size`, `icon`, `value`, and
+`className`, and is useful for styling a non-button element (like a link) to
+match the button set.

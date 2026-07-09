@@ -26,7 +26,7 @@ an item.
 | ---------- | ---------------------------- | ----------- | --------------------------------------------------------------------- |
 | `onSelect` | `() => void`                 | —           | Called when the item is chosen; the menu closes afterward.            |
 | `danger`   | `boolean`                    | `false`     | Renders the item in the danger (destructive) tone.                    |
-| `variant`  | `'default' \| 'destructive'` | `'default'` | Drop-in alias for `danger`; `'destructive'` matches `danger`.         |
+| `variant`  | `'default' \| 'destructive'` | `'default'` | `'destructive'` renders the item in the danger tone.                  |
 | `disabled` | `boolean`                    | `false`     | Dims the item and removes it from pointer and keyboard interaction.   |
 | `asChild`  | `boolean`                    | `false`     | Render through to a single child element instead of a wrapping `div`. |
 
@@ -42,4 +42,4 @@ an item.
 | `ContextMenuGroup`     | Wraps related items for spacing and `role="group"` semantics.                        |
 | `ContextMenuSeparator` | A horizontal divider between sections.                                               |
 | `ContextMenuShortcut`  | Right-aligned keyboard-hint text rendered inside an item.                            |
-| `ContextMenuPortal`    | Passthrough kept for drop-in parity; portalling is folded into `ContextMenuContent`. |
+| `ContextMenuPortal`    | No-op wrapper; the content portals itself, so wrapping it is optional. |

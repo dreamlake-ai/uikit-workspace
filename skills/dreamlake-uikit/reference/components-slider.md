@@ -2,8 +2,7 @@
 
 A horizontal slider with one or more thumbs. `value` is always a `number[]`,
 so a single-thumb slider holds one entry and a range holds two. Pointer drag
-and arrow-key stepping are built in. Dependency-free and restyled to DreamLake
-accent / faint tokens.
+and arrow-key stepping are built in.
 
 ## Basic
 

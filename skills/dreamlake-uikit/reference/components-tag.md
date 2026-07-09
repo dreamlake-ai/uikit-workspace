@@ -39,11 +39,11 @@ hairline ring.
 | Props | Static text | Hover / active |
 | --- | --- | --- |
 | `` | `var(--ink)` | `var(--uikit-accent)` |
-| `` | `var(--ink)` | `#1f8f4a` |
+| `` | `var(--ink)` | `green` tone |
 | `` | `var(--ink)` | `#abc123` |
-| `` | `#c8513b` | `#c8513b` |
-| `` | `#c8513b` | `#c0922e` |
-| `` | `#c8513b` | `#abc123` |
+| `` | `red` tone | `red` tone |
+| `` | `red` tone | `amber` tone |
+| `` | `red` tone | `#abc123` |
 
 > **Confirmation flows** — `Tag` fires `onRemove` immediately on × click. If
 > you want a "are you sure?" step or a "don't ask for the next 10 minutes"
@@ -69,11 +69,11 @@ hairline ring.
 
 Six semantic-palette buckets per `design.md`. Pick by **function**, not vibe.
 
-| Tone | Hex | Description |
-| --- | --- | --- |
-| `'blue'` | `#23aaff` | Active / running / accent. Also the library's `--accent` token. |
-| `'green'` | `#1f8f4a` | Ok / source / success. "passed", "ingest", "draft release". |
-| `'amber'` | `#c0922e` | Stale / scheduled / filter. "Needs review", warnings. |
-| `'red'` | `#c8513b` | Error / sink / quarantine. Failed states, destructive actions. |
-| `'purple'` | `#7c5bd9` | Model / merge / human-authored. PRs, tags, code authorship. |
-| `'warmGray'` | `#9c907a` | Idle / queued / placeholder. Neutral chips, "noop". |
+| Tone | Description |
+| --- | --- |
+| `'blue'` | Active / running / accent. Also the library's `--accent` token. |
+| `'green'` | Ok / source / success. "passed", "ingest", "draft release". |
+| `'amber'` | Stale / scheduled / filter. "Needs review", warnings. |
+| `'red'` | Error / sink / quarantine. Failed states, destructive actions. |
+| `'purple'` | Model / merge / human-authored. PRs, tags, code authorship. |
+| `'warmGray'` | Idle / queued / placeholder. Neutral chips, "noop". |

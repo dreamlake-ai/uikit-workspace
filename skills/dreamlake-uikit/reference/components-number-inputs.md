@@ -81,18 +81,36 @@ Single-scalar presets. They take one `value` and report through `onChange`.
 | ----------------- | ---------------------------------- | ----------------------- | -------------------------------------------------------------------------- |
 | `IntInput`        | `number`                           | `onChange(value)`       | Rounds to the nearest integer; `step` defaults to `1`.                     |
 | `DegInput`        | `number`                           | `onChange(value)`       | Appends a `°` suffix.                                                      |
-| `RadInput`        | `number`                           | `onChange(value)`       | Stores radians; `display` (`'deg' \| 'pi' \| 'rad'`) picks the shown unit. |
+| `RadInput`        | `number`                           | `onChange(value)`       | Stores radians; `display` (`'deg' \| 'pi' \| 'rad'`, default `'rad'`) picks the shown unit. |
+| `CmInput`         | `number`                           | `onChange(value)`       | Appends a `cm` suffix.                                                     |
+| `InchInput`       | `number`                           | `onChange(value)`       | Appends an `in` suffix.                                                    |
+| `TimeInput`       | `number`                           | `onChange(value)`       | Appends an `s` suffix.                                                     |
 | `Vec3Input`       | `[number, number, number]`         | `onValuesChange(tuple)` | Fixed `x` / `y` / `z` labels.                                              |
-| `EulerInput`      | `[number, number, number]`         | `onValuesChange(tuple)` | `unit` (`'deg' \| 'rad'`) sets the label suffix.                           |
+| `EulerInput`      | `[number, number, number]`         | `onValuesChange(tuple)` | `unit` (`'deg' \| 'rad'`, default `'deg'`) sets the label suffix.          |
+| `EulerDegInput`   | `[number, number, number]`         | `onValuesChange(tuple)` | `EulerInput` locked to `deg` labels.                                       |
+| `EulerRadInput`   | `[number, number, number]`         | `onValuesChange(tuple)` | Stores radians; `display` (`'deg' \| 'pi' \| 'rad'`, default `'rad'`) picks the shown unit. |
 | `QuaternionInput` | `[number, number, number, number]` | `onValuesChange(tuple)` | Fixed `w` / `x` / `y` / `z` labels.                                        |
+| `KVectorInput`    | `number[]`                         | `onValuesChange(array)` | N-component vector; labels `0…k-1`. `dimensions` sets `k` (defaults to `value.length`). |
 
 ### ColorInput
 
 | Prop            | Type                         | Default | Description                                              |
 | --------------- | ---------------------------- | ------- | -------------------------------------------------------- |
-| `value`         | `string \| number`           | —       | Hex string, `0x`-string, numeric hex, or CSS color name. |
-| `onValueChange` | `(hexColor: string) => void` | —       | Called with the normalized hex string (without `#`).     |
-| `size`          | `'sm' \| 'md' \| 'lg'`       | `'sm'`  | Field height and text size.                              |
+| `value`         | `string \| number`           | —       | Hex string, `0x`-string, numeric hex, or CSS color name.       |
+| `onValueChange` | `(hexColor: string) => void` | —       | Called with the normalized hex string (without `#`).           |
+
+The hex field is fixed at the `sm` size; `ColorInput` does not take a `size`
+prop.
+
+### Preset pickers
+
+Scalar fields paired with quick-set buttons. Each button jumps the value to one
+of the supplied `presets`.
+
+| Component         | Value type | Reports           | Extra props                                                                              |
+| ----------------- | ---------- | ----------------- | ---------------------------------------------------------------------------------------- |
+| `PresetsInput`    | `number`   | `onChange(value)` | `presets` — three quick-set values shown as buttons below the field.                     |
+| `PresetsRadInput` | `number`   | `onChange(value)` | Radian variant; `presets` in radians, `display` (`'deg' \| 'pi' \| 'rad'`, default `'rad'`) formats both the field and the buttons. |
 
 ### TextInput
 

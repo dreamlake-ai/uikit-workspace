@@ -1,8 +1,8 @@
 # useIsMobile
 
-A hook that returns `true` when the viewport is narrower than `768px`. It tracks
-resizes via `matchMedia` and is SSR-safe (returns `false` until mounted, so the
-server and first client render agree).
+A hook that returns `true` when the viewport is narrower than `768px`. It
+updates as the viewport changes and is SSR-safe (returns `false` until mounted,
+so the server and first client render agree).
 
 ```tsx
 

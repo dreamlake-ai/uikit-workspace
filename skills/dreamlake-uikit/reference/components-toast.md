@@ -19,14 +19,20 @@ toast.promise(upload(), { loading: 'Uploading…', success: 'Done', error: 'Fail
 | Call | Description |
 | --- | --- |
 | `toast(message, opts?)` | Neutral toast. |
-| `toast.success / error / info / warning / message(message, opts?)` | Typed toasts (colored indicator). |
+| `toast.message(message, opts?)` | Neutral toast — alias for `toast()`. |
+| `toast.success / error / info / warning(message, opts?)` | Typed toasts with a colored indicator dot. |
 | `toast.loading(message, opts?)` | Sticky toast with a spinner (until dismissed/updated). |
 | `toast.promise(p, { loading, success, error })` | Shows loading, then resolves to success/error. |
 | `toast.dismiss(id?)` | Dismiss one toast (or all when `id` omitted). |
 
-`opts`: `{ id?, description?, duration?, action? }`. Auto-dismiss defaults to the
-Toaster's `duration` (4000ms); pass `duration: Infinity` to keep a toast until
-dismissed.
+`opts`: `{ id?, description?, duration?, action? }`. Pass an existing `id` to
+reuse and replace that toast in place (a new toast is created when the id is
+new). Auto-dismiss defaults to the Toaster's `duration` (4000ms); pass
+`duration: Infinity` to keep a toast until dismissed.
+
+`toast.promise` also accepts a function that returns the promise (called
+immediately), and its `success` / `error` can be functions — they receive the
+resolved value or the error and return the message to show.
 
 ## `Toaster` props
 

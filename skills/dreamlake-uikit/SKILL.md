@@ -1,6 +1,6 @@
 ---
 name: dreamlake-uikit
-description: DreamLake uikit is the React component library and design contract — surfaces, ink, semantic color, type, geometry, and the zebra-list patterns shared by every DreamLake page. Use when answering questions about DreamLake (Overview, Avatar, Style guide, BreadcrumbTree, LLM-Readable Docs, Button, Dialog, Field, FilterBar, Menu, ProfileCard, ProfileLayout, ResizableLayout, Select, SideNav, Tabs, Tag, TextField, VirtualList, VirtualListFlow, Spinner, Skeleton, Switch, Badge, Collapsible, Card, Alert Dialog, Drawer, Toast, UIKit Badge, useIsMobile, Label, Toggle, Toolbar, Modal, Form Layout, Input, Mouse Cursor Icons, Tooltip, Popover, Dropdown Menu, Theme, Tree View, Context Menu, Dial, Waterfall, Slider, Number Inputs, Layout, Sync Scroll).
+description: DreamLake uikit is the React component library and design contract — surfaces, ink, semantic color, type, geometry, and the zebra-list patterns shared by every DreamLake page. Use when answering questions about DreamLake (Overview, Avatar, Style guide, BreadcrumbTree, LLM-Readable Docs, Button, Dialog, Field, FilterBar, Menu, ProfileCard, ProfileLayout, ResizableLayout, Select, SideNav, Tabs, Tag, TextField, VirtualList, VirtualListFlow, Spinner, Skeleton, Switch, Badge, Collapsible, Card, Alert Dialog, Drawer, Toast, UIKit Badge, Pipeline Graph, Anatomy, Pipeline Graph JSON, Architecture & Roadmap, useIsMobile, Label, Toggle, Toolbar, Modal, Form Layout, Input, Mouse Cursor Icons, Tooltip, Popover, Dropdown Menu, Theme, Tree View, Context Menu, Dial, Waterfall, Slider, Number Inputs, Layout, Sync Scroll).
 ---
 # DreamLake
 
@@ -35,7 +35,7 @@ file that matches the question; each is a self-contained markdown page.
 - `reference/components-tag.md` — Tag: Hashtag or pill tag with a six-color tone palette, accent override, and removable variant.
 - `reference/components-text-field.md` — TextField: Controlled text input with prefix, multiline, mono and invalid states.
 - `reference/components-virtual-list.md` — VirtualList: Windowed list — fixed or dynamic item height, plus infinite-scroll for very large row sets.
-- `reference/components-virtual-list-flow.md` — VirtualListFlow: Flow-layout virtual list — items in CSS normal flow, so sticky / gap / scroll-anchor work like a non-virtual list.
+- `reference/components-virtual-list-flow.md` — VirtualListFlow: Flow-layout virtual list — items in CSS normal flow, so sticky / gap / scroll stability work like a non-virtual list.
 - `reference/components-spinner.md` — Spinner: Indeterminate loading spinner — a dual dot-pulse ring that inherits text color.
 - `reference/components-skeleton.md` — Skeleton: Pulsing placeholder block for loading states.
 - `reference/components-switch.md` — Switch: Binary on/off toggle. Controlled or uncontrolled.
@@ -66,6 +66,13 @@ file that matches the question; each is a self-contained markdown page.
 - `reference/components-number-inputs.md` — Number Inputs: Drag-to-adjust numeric, vector, color, and text inputs for the Dial system.
 - `reference/components-layout.md` — Layout: Studio layout shells — an edge-docked dock layout and a pointer-transparent liquid layout for floating panels over a 3D canvas.
 - `reference/components-sync-scroll.md` — Sync Scroll: Synchronize scroll position across multiple panes — a master drives its slaves, with optional drag-to-scroll on either axis.
+
+**Pipeline**
+
+- `reference/pipeline-view-pipeline-graph.md` — Pipeline Graph: The presentational component that renders a traced DreamLake pipeline — what it's for, the Python↔visual↔JSON round-trip, and the interactive canvas.
+- `reference/pipeline-view-anatomy.md` — Anatomy: Every field mapped to a pixel — the node card, the two connector tags (data vs mask), and the six connector states — each as visual + TypeScript + JSON, side by side.
+- `reference/pipeline-view-pipeline-graph-json.md` — Pipeline Graph JSON: The data format PipelineGraph renders — pipeline, node, and edge shapes, static vs runtime fields, the output artifact, and how status drives edge flow.
+- `reference/pipeline-view-architecture.md` — Architecture & Roadmap: How PipelineGraph is built — the file split, the design principles, the render pipeline, and what it deliberately leaves out — plus the current stage and what's planned next.
 
 ## Canonical source
 

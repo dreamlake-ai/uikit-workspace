@@ -5,13 +5,12 @@ dynamic (content-driven) heights, and infinite scroll.
 
 ## Fixed height
 
-Pass `itemHeight` as a number (px). The visible window is calculated in O(1).
+Pass `itemHeight` as a number (px).
 
 ## Dynamic height
 
-Pass `itemHeight="dynamic"` for content-driven heights. Each item is wrapped in
-a `ResizeObserver`-measured div. Use `estimatedItemHeight` to set the initial
-layout estimate.
+Pass `itemHeight="dynamic"` for content-driven heights. Each item is measured
+after it renders. Use `estimatedItemHeight` to set the initial layout estimate.
 
 ## Infinite scroll
 
@@ -36,4 +35,6 @@ scroll position is within `loadMoreThreshold` px (default `80`) of the bottom.
 | `renderLoadingMore` | `ReactNode` | `"Loading more…"` | Custom content shown while `loadingMore` is true. |
 | `onScroll` | `(scrollTop: number) => void` | — | Fires on scroll with the current `scrollTop` value. |
 | `onRangeChange` | `(start, end) => void` | — | Fires when the visible index range changes. |
+| `stickyHeader` | `ReactNode` | — | Header rendered inside the scroll container with `position: sticky`. Only shown when `stickyHeaderHeight` is greater than `0`. |
+| `stickyHeaderHeight` | `number` | `0` | Height of `stickyHeader`. Subtracted from visible-area calculations so items don't render under it. |
 | `className` | `string` | — | Extra classes on the container. |

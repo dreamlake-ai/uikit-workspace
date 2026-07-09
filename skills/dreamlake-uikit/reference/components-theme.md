@@ -2,8 +2,7 @@
 
 The theme system persists a base theme (`light` / `dark` / `system`) plus an
 optional `liquid` flag, resolves the active theme, and reflects it on
-`html[data-theme]` — the attribute the kit's tokens key off. It's a drop-in for
-the legacy `@vuer-ai/vuer-uikit` theme API.
+`html[data-theme]` — the attribute the kit's tokens key off.
 
 > Live toggles drive `html[data-theme]` for the whole page, so this page documents
 > them with code rather than an embedded demo (which would fight the docs site's
@@ -41,7 +40,9 @@ function Example() {
 | `isLiquid` | `boolean` | Liquid flag. |
 | `toggleLiquid` | `() => void` | Flip the liquid flag. |
 | `computedTheme` | `'light' \| 'dark' \| 'liquid-light' \| 'liquid-dark'` | Resolved active theme. |
+| `resolvedTheme` | `'light' \| 'dark' \| 'liquid-light' \| 'liquid-dark'` | Alias of `computedTheme`. |
 | `systemTheme` | `'light' \| 'dark' \| undefined` | OS preference (when `system`). |
+| `storageKey` | `string` | The localStorage key prefix in use. |
 
 ### `ThemeProvider` props
 

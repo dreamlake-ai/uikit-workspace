@@ -1,9 +1,8 @@
 # Dialog
 
 A modal primitive: dimmed backdrop, centered panel with header / body / footer
-slots, Esc and backdrop-click dismissal, body-scroll lock while open. Renders
-into `document.body` via `createPortal` so it floats above any clipping
-ancestor.
+slots, Esc and backdrop-click dismissal, and body-scroll lock while open. It
+floats above the rest of the page, unaffected by any clipping ancestor.
 
 ## Basic
 
@@ -18,17 +17,15 @@ inputs, custom radio dots that fill with `var(--uikit-accent)` when picked.
 
 ## Behavior
 
-- **Portaled** — the dialog renders into `document.body` via
-  `React.createPortal`, so it floats above any clipping ancestor
-  (`overflow: hidden`, `transform`, sticky containers).
-- **Body scroll lock** — `document.body.style.overflow` is set to `hidden`
-  while the dialog is open, restored on close.
+- **Floats above the page** — the dialog appears above all other content and is
+  never clipped by an overflow-hidden, transformed, or sticky ancestor.
+- **Body scroll lock** — the page behind the dialog can't scroll while it's
+  open; scrolling is restored on close.
 - **Esc + backdrop dismissal** — both routes call the same `onClose` handler.
   Caller controls whether to honor the dismissal (e.g. confirm before closing
   if there are unsaved edits).
-- **Tokens** — backdrop is
-  `color-mix(in srgb, var(--ink) 35%, transparent)`, panel is `var(--bg)` with
-  the layered `--shadow-tint-*` shadows, so dark mode flips automatically.
+- **Theme-aware** — the backdrop dims the page and the panel uses the surface
+  and shadow tokens, so it flips automatically in dark mode.
 
 > **No focus trap shipped** — the panel does not steal or trap focus. If you
 > need keyboard-only flow within the dialog (e.g. a multi-step form), wire up
@@ -38,8 +35,8 @@ inputs, custom radio dots that fill with `var(--uikit-accent)` when picked.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `open` | `boolean` | — | Controlled open state. |
-| `onClose` | `() => void` | — | Fires when the user dismisses the dialog (Esc key, backdrop click, or any explicit close affordance the caller renders). Caller must flip `open` to false. |
+| `open` | `boolean` | — | **Required.** Controlled open state. |
+| `onClose` | `() => void` | — | **Required.** Fires when the user dismisses the dialog (Esc key, backdrop click, or any explicit close affordance the caller renders). Caller must flip `open` to false. |
 | `title` | `ReactNode` | — | Heading rendered top-left of the panel. 17px semibold ink. |
 | `eyebrow` | `string` | — | Small uppercase mono label rendered next to the title. |
 | `footer` | `ReactNode` | — | Footer content. Typically a row of action buttons aligned right. |

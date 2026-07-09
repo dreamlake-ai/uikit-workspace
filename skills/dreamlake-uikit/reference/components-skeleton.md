@@ -19,5 +19,5 @@ Combine differently sized skeletons to mirror a card (avatar + two text lines).
 | `className` | `string` | — | Sizing/shape utilities (width, height, rounding). |
 
 Any other native `<div>` attributes (`style`, `aria-*`, …) are forwarded. The
-block uses an `--ink` 8% tint and `animate-pulse`; override the background via
-`className` if you need a different surface.
+block is a subtle pulsing placeholder; override the background via `className`
+if you need a different surface.
