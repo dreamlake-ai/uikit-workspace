@@ -1,0 +1,79 @@
+---
+title: VideoAnnotator
+section: Components
+order: 155
+description: Video player with an editable, contiguous segment timeline — split, merge, drag boundaries, and frame-step transport.
+---
+
+import { Preview } from '../../../components/Preview'
+import { BasicSpec } from '../../../components/specimens/components/video-annotator/BasicSpec'
+import { RefControlSpec } from '../../../components/specimens/components/video-annotator/RefControlSpec'
+import basicSrc from '../../../components/specimens/components/video-annotator/BasicSpec.tsx?raw'
+import refControlSrc from '../../../components/specimens/components/video-annotator/RefControlSpec.tsx?raw'
+
+# VideoAnnotator
+
+A video player with an **editable, contiguous segment timeline** — the labeling
+surface for splitting a clip into consecutive phases and captioning each one.
+It owns the `<video>` element, a transport bar (frame-step, boundary jump,
+play/pause, playback speed) and a percentage-positioned timeline strip with
+drag-to-move boundaries and click-to-scrub. Segments always tile the whole clip
+with no gaps or overlaps (`end === next.start`); any structural edit resets the
+`verified` flag on the affected segments.
+
+The component is **controlled** on `segments` + `selectedIndex`: it runs the
+split/merge/boundary invariants internally and hands the host a fresh array via
+`onSegmentsChange`, so the host owns state and persistence.
+
+## Demo
+
+Drag a boundary to move it, double-click a boundary to merge, click a segment to
+select it, drag anywhere on the track to scrub. Keyboard: `Space` play/pause,
+`←`/`→` step frame (`Shift` = 1s, `Alt` = jump boundary), `,`/`.` prev/next
+boundary, `s` split, `Backspace` merge, `j`/`k` prev/next phase, `a` approve.
+
+<Preview source={basicSrc} filename="BasicSpec.tsx">
+  <BasicSpec />
+</Preview>
+
+## Driving it from a ref
+
+Set `enableKeyboard={false}` and drive the widget through its imperative handle
+(`split`, `merge`, `stepFrame`, `gotoBoundary`, `play`, `pause`, `toggleApprove`)
+when the host owns its own transport chrome or a global shortcut scheme.
+
+<Preview source={refControlSrc} filename="RefControlSpec.tsx">
+  <RefControlSpec />
+</Preview>
+
+## Props
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `videoUrl` | `string \| null` | — | Video source URL. Empty shows a placeholder in the stage. |
+| `videoTitle` | `string` | — | Title shown in a header row above the video (e.g. the clip name). |
+| `videoSubtitle` | `string` | — | Monospace subtitle beside the title (e.g. the file path). |
+| `headerLeading` | `ReactNode` | — | Element at the start of the header row (e.g. a "show list" button). |
+| `showDescription` | `boolean` | `false` | Render the boxed description editor for the selected segment below the timeline. |
+| `onDescriptionChange` | `(index: number, value: string) => void` | — | Fired when the description editor changes. Required for it to be interactive. |
+| `segments` | `Segment[]` | — | Controlled segment list. The component enforces the contiguous invariant. |
+| `selectedIndex` | `number` | — | Controlled index of the active segment. |
+| `onSegmentsChange` | `(next: Segment[]) => void` | — | Fired after any structural edit (split / merge / boundary drag). |
+| `onSelectedChange` | `(index: number) => void` | — | Fired when the active segment changes. |
+| `onApproveToggle` | `(index: number, verified: boolean) => void` | — | Fired when the user toggles verification (`a`). |
+| `duration` | `number` | — | Authoritative clip duration (s). Falls back to the video's `loadedmetadata` duration, then the largest segment end. |
+| `extractFps` | `number \| null` | `30` | Frames-per-second for frame-stepping granularity (`←`/`→`). |
+| `srcFps` | `number \| null` | `30` | Source fps for the "· fN" frame readout. |
+| `loop` | `boolean` | `true` | Loop playback within the selected segment. |
+| `speeds` | `number[]` | `[0.25,0.5,1,1.5,2]` | Playback-speed options for the speed dropdown. |
+| `enableKeyboard` | `boolean` | `true` | Install the document-level keyboard shortcuts. Set `false` to drive only via the ref. |
+| `className` | `string` | — | Extra classes on the root element. |
+
+### Segment
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `start` | `number` | Segment start time in seconds. |
+| `end` | `number` | Segment end time in seconds (`= next.start` after normalization). |
+| `description` | `string` | Free-text caption for the phase. |
+| `verified` | `boolean` | Human-confirmed flag; reset by structural edits. |
