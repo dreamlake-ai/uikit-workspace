@@ -6,6 +6,6 @@ import { MASK_EDGE } from './mini-graphs'
 // `labels[consensus]` reads as a filter without adding a filter node.
 export const TagMaskSpec = () => (
   <div style={{ position: 'relative', height: 150, width: '100%' }}>
-    <PipelineGraph graph={MASK_EDGE} />
+    <PipelineGraph graph={MASK_EDGE} showControls={false} />
   </div>
 )

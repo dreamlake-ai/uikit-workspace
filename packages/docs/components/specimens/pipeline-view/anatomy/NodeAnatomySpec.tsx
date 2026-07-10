@@ -7,6 +7,6 @@ import { ONE_NODE } from './mini-graphs'
 // footer ← `status`. Columns (the result schema) aren't drawn on the card.
 export const NodeAnatomySpec = () => (
   <div style={{ position: 'relative', height: 180, width: '100%' }}>
-    <PipelineGraph graph={ONE_NODE} />
+    <PipelineGraph graph={ONE_NODE} showControls={false} />
   </div>
 )

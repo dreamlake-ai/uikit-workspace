@@ -38,6 +38,10 @@
   --uikit-accent: #23aaff;
   --accent-soft: rgba(35, 170, 255, 0.09);
 
+  /* ── Pipeline graph canvas (light) — beige plane + dot grid. ──── */
+  --canvas-bg: #f4efe2;
+  --canvas-dot: #d6cdb4;
+
   /* ── Semantic palette (Style Guide §Color) ────────────────────
      The six-color set every domain coloring pulls from. Names mirror
      the `TagTone` union so `tone="green"` and `--tone-green` track
@@ -102,6 +106,10 @@ html[data-theme="dark"] {
   --tree-sel: #45454a;
   --tree-sel-hover: #4d4d52;
   --accent-soft: rgba(35, 170, 255, 0.18);
+
+  /* ── Pipeline graph canvas (dark). ──────────────────────────── */
+  --canvas-bg: #131318;
+  --canvas-dot: #2a2a32;
 
   /* Row bands — dark */
   --row-base: #2b2b31;
@@ -175,6 +183,8 @@ html[data-theme="dark"] {
   --color-uikit-bg: var(--bg);
   --color-uikit-panel: var(--panel-bg);
   --color-uikit-rail: var(--rail-bg);
+  --color-uikit-canvas-bg: var(--canvas-bg);
+  --color-uikit-canvas-dot: var(--canvas-dot);
   --color-uikit-accent: var(--uikit-accent);
   --color-uikit-accent-soft: var(--accent-soft);
   --color-uikit-faint: var(--faint);

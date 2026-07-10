@@ -22,7 +22,7 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from 'react'
 import { cn } from '../../lib/utils'
-import type { GraphNode, NodeStatus, PipelineGraphData, StatusOverlay } from './types'
+import type { GraphNode, PipelineGraphData, StatusOverlay } from './types'
 import { FLOW, NODE_H, NODE_W, STATUS, edgeFlow, kindColor, portAlong, portPos } from './flow'
 import { buildEdgePath, type Obstacle } from './edge-path'
 
@@ -33,6 +33,9 @@ export interface PipelineGraphProps {
   /** Controlled selection. Omit for uncontrolled (internal) selection. */
   selectedNodeId?: string | null
   onSelectNode?: (id: string | null) => void
+  /** Show the canvas overlay chrome — the edge legend (top-left) and the
+   *  keyboard-hint strip (bottom). Default true; pass false for tiny embeds. */
+  showControls?: boolean
   className?: string
 }
 
@@ -45,6 +48,7 @@ const CSS = `
 .dl-edge-queued{animation:dlEdgeQueued 2.6s linear infinite;opacity:.8}
 @keyframes dlEdgeStalled{0%,100%{opacity:.55}50%{opacity:.9}}
 .dl-edge-stalled{animation:dlEdgeStalled 2s ease-in-out infinite}
+.dl-kbd{font-family:var(--font-uikit-mono);font-size:10px;font-weight:600;color:var(--color-uikit-ink);opacity:.9;background:color-mix(in oklab,var(--color-uikit-ink) 5%,transparent);border:1px solid color-mix(in oklab,var(--color-uikit-ink) 10%,transparent);border-radius:4px;padding:1px 5px;min-width:14px;text-align:center;line-height:1.2;box-shadow:inset 0 -1px 0 color-mix(in oklab,var(--color-uikit-ink) 6%,transparent);display:inline-block}
 `
 function useInjectedStyles() {
   useEffect(() => {
@@ -60,7 +64,7 @@ function useInjectedStyles() {
 type View = { x: number; y: number; k: number }
 
 export function PipelineGraph({
-  graph, statusById, selectedNodeId, onSelectNode, className,
+  graph, statusById, selectedNodeId, onSelectNode, showControls = true, className,
 }: PipelineGraphProps) {
   useInjectedStyles()
 
@@ -247,10 +251,14 @@ export function PipelineGraph({
       onKeyDown={onKeyDown}
       className={cn('relative w-full h-full overflow-hidden select-none cursor-grab active:cursor-grabbing outline-none', className)}
       style={{
-        backgroundColor: 'var(--color-uikit-bg, var(--color-uikit-panel))',
-        backgroundImage: 'radial-gradient(circle, var(--color-uikit-faint) 1px, transparent 1.4px)',
-        backgroundSize: `${22 * view.k}px ${22 * view.k}px`,
+        // Beige canvas plane + dot grid that translates with the world. Dot
+        // size/radius scale with zoom, floored so the browser never tiles a
+        // sub-pixel background. (Design: pipelines-canvas.jsx.)
+        backgroundColor: 'var(--color-uikit-canvas-bg, var(--color-uikit-panel))',
+        backgroundImage: `radial-gradient(circle, var(--color-uikit-canvas-dot, var(--color-uikit-faint)) ${Math.max(0.6, 1.2 * view.k)}px, transparent ${Math.max(0.9, 1.5 * view.k)}px)`,
+        backgroundSize: `${Math.max(8, 20 * view.k)}px ${Math.max(8, 20 * view.k)}px`,
         backgroundPosition: `${view.x}px ${view.y}px`,
+        backgroundRepeat: 'repeat',
       }}
     >
       <div
@@ -312,7 +320,8 @@ export function PipelineGraph({
         ))}
       </div>
 
-      <Legend />
+      {showControls && <Legend />}
+      {showControls && <KeyHint zoom={view.k} />}
     </div>
   )
 }
@@ -427,9 +436,26 @@ function Port({ dir, along }: { dir: 'in' | 'out'; along: number }) {
 }
 
 // ---------------------------------------------------------------------------
-// Legend — bottom-right, the flow states (design's PipeLegend).
+// Canvas overlay chrome — a floating "glass" card look shared by the legend
+// (top-left) and the key-hint strip (bottom). Ported from the design's
+// .pipe-legend / .pipe-keyhint (panel 88% + blur + faint hairline).
 // ---------------------------------------------------------------------------
 
+const GLASS = {
+  position: 'absolute',
+  background: 'color-mix(in oklab, var(--color-uikit-panel) 88%, transparent)',
+  backdropFilter: 'blur(8px) saturate(1.05)',
+  WebkitBackdropFilter: 'blur(8px) saturate(1.05)',
+  border: '1px solid color-mix(in oklab, var(--color-uikit-faint) 70%, transparent)',
+  borderRadius: 8,
+  boxShadow: '0 1px 2px rgba(0,0,0,.06)',
+  fontFamily: 'var(--font-uikit-mono)',
+  color: 'var(--color-uikit-muted)',
+  pointerEvents: 'none',
+  zIndex: 6,
+} satisfies React.CSSProperties
+
+// Edge legend — top-left, a compact column of flow swatches.
 const LEGEND: { key: keyof typeof FLOW }[] = [
   { key: 'running' }, { key: 'queued' }, { key: 'stalled' }, { key: 'error' }, { key: 'ok' },
 ]
@@ -437,28 +463,95 @@ const LEGEND: { key: keyof typeof FLOW }[] = [
 function Legend() {
   return (
     <div
-      className="absolute bottom-2 right-2 hidden sm:flex items-center gap-3 px-2.5 py-1 rounded-md pointer-events-none"
+      className="hidden sm:flex"
       style={{
-        background: 'color-mix(in srgb, var(--color-uikit-panel) 80%, transparent)',
-        border: '1px solid var(--color-uikit-faint)',
-        backdropFilter: 'blur(6px)',
-        fontFamily: 'var(--font-uikit-mono)',
+        ...GLASS,
+        left: 14, top: 12,
+        flexDirection: 'column', alignItems: 'flex-start', gap: 4,
+        padding: '8px 10px', fontSize: 10, fontWeight: 500,
+        letterSpacing: '.04em', whiteSpace: 'nowrap',
       }}
     >
-      <span style={{ fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--color-uikit-muted)', opacity: 0.7 }}>
+      <span
+        style={{
+          fontSize: 9.5, letterSpacing: '.12em', textTransform: 'uppercase',
+          opacity: 0.7, paddingBottom: 2, marginBottom: 2, width: '100%',
+          borderBottom: '1px solid color-mix(in oklab, var(--color-uikit-faint) 80%, transparent)',
+        }}
+      >
         edges
       </span>
       {LEGEND.map(({ key }) => {
         const s = FLOW[key]
         return (
-          <span key={key} className="flex items-center gap-1.5">
+          <span key={key} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
             <svg width="22" height="8" viewBox="0 0 22 8" style={{ flexShrink: 0 }}>
               <line x1="1" y1="4" x2="21" y2="4" stroke={s.color} strokeWidth={s.width} strokeDasharray={s.dash} strokeLinecap="round" className={s.anim} />
             </svg>
-            <span style={{ fontSize: 10, color: s.color }}>{s.label}</span>
+            <span style={{ fontSize: 10.5, letterSpacing: '.04em', opacity: 0.9, color: s.color }}>{s.label}</span>
           </span>
         )
       })}
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Key-hint strip — bottom of canvas, the real shortcuts this component binds.
+// ---------------------------------------------------------------------------
+
+function Kbd({ children, wide }: { children: React.ReactNode; wide?: boolean }) {
+  return <kbd className="dl-kbd" style={wide ? { minWidth: 18 } : undefined}>{children}</kbd>
+}
+
+function HintGroup({ children }: { children: React.ReactNode }) {
+  return <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>{children}</span>
+}
+
+function HintSep() {
+  return (
+    <span
+      aria-hidden
+      style={{ width: 1, height: 14, flexShrink: 0, background: 'color-mix(in oklab, var(--color-uikit-faint) 80%, transparent)' }}
+    />
+  )
+}
+
+function KeyHint({ zoom }: { zoom: number }) {
+  const showZoom = Math.abs(zoom - 1) > 0.02
+  const label = (t: string) => (
+    <span style={{ marginLeft: 2, opacity: 0.85 }}>{t}</span>
+  )
+  return (
+    <div
+      className="hidden sm:flex"
+      style={{
+        ...GLASS,
+        left: 14, bottom: 12, right: 14, maxWidth: 'max-content',
+        alignItems: 'center', gap: 10, padding: 5,
+        fontSize: 10.5, fontWeight: 500, letterSpacing: '.02em',
+        overflow: 'hidden', whiteSpace: 'nowrap',
+      }}
+    >
+      <HintGroup><Kbd wide>↑</Kbd><Kbd>↓</Kbd>{label('select')}</HintGroup>
+      <HintSep />
+      <HintGroup><Kbd>←</Kbd><Kbd>→</Kbd>{label('neighbor')}</HintGroup>
+      <HintSep />
+      <HintGroup><Kbd>esc</Kbd>{label('clear')}</HintGroup>
+      <HintSep />
+      <HintGroup><Kbd>⌘</Kbd>{label('scroll zoom')}</HintGroup>
+      {showZoom && (
+        <span
+          style={{
+            marginLeft: 2, color: 'var(--color-uikit-ink)', opacity: 0.8,
+            padding: '1px 7px', borderRadius: 999, fontWeight: 600, fontSize: 10, flexShrink: 0,
+            background: 'color-mix(in oklab, var(--color-uikit-ink) 8%, transparent)',
+            fontVariantNumeric: 'tabular-nums',
+          }}
+        >
+          {Math.round(zoom * 100)}%
+        </span>
+      )}
     </div>
   )
 }
