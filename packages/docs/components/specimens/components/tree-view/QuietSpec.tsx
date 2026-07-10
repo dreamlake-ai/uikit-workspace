@@ -39,6 +39,7 @@ export const QuietSpec = () => {
         hoverSubtree={false}
         loneSelectionStyle="ring"
         chevronPosition="trailing"
+        groupSelection="row"
       />
     </div>
   );

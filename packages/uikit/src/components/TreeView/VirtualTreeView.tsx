@@ -29,6 +29,8 @@ export type VirtualTreeViewProps<T extends TreeDataItem> = {
   loneSelectionStyle?: "fill" | "ring";
   /** See {@link TreeViewProps.chevronPosition}. */
   chevronPosition?: "leading" | "trailing";
+  /** See {@link TreeViewProps.groupSelection}. */
+  groupSelection?: "subtree" | "row";
   /** Container height — required for virtualization (default '100%'). */
   height?: number | string;
   /** Extra rows rendered outside the viewport (default 5). */
@@ -58,6 +60,7 @@ export function VirtualTreeView<T extends TreeDataItem>({
   hoverSubtree = true,
   loneSelectionStyle = "fill",
   chevronPosition = "leading",
+  groupSelection = "subtree",
   height = "100%",
   overscan = 5,
 }: VirtualTreeViewProps<T>) {
@@ -94,6 +97,7 @@ export function VirtualTreeView<T extends TreeDataItem>({
             hoverSubtree={hoverSubtree}
             loneSelectionStyle={loneSelectionStyle}
             chevronPosition={chevronPosition}
+            groupSelection={groupSelection}
           />
         </div>
       )}

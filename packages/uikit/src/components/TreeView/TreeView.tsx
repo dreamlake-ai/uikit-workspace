@@ -72,6 +72,11 @@ export type TreeViewProps<T extends TreeDataItem> = {
    *  icon; 'trailing' — a smaller, dimmed chevron right after the label text
    *  (collapsed points LEFT, toward the label it reveals under). */
   chevronPosition?: "leading" | "trailing";
+  /** What selecting a GROUP row means: 'subtree' (default) marks the group
+   *  plus all descendants as one selected block; 'row' marks only the
+   *  clicked row — descendants are untouched and every row stands alone
+   *  (a selected group renders like any lone selection). */
+  groupSelection?: "subtree" | "row";
 };
 
 /**
@@ -100,6 +105,7 @@ export function TreeView<T extends TreeDataItem>({
   hoverSubtree = true,
   loneSelectionStyle = "fill",
   chevronPosition = "leading",
+  groupSelection = "subtree",
 }: TreeViewProps<T>) {
   const [lastSelectedId, setLastSelectedId] = useState<string | null>(null);
   // Hover is self-managed unless the consumer wires onItemHover (e.g. Waterfall
@@ -117,10 +123,10 @@ export function TreeView<T extends TreeDataItem>({
   // ring wraps the group + its subtree. Click logic still uses the real set.
   const displaySelectedIds = useMemo(
     () =>
-      selectedItemIds
+      selectedItemIds && groupSelection === "subtree"
         ? withFullGroupsSelected(selectedItemIds, data)
         : selectedItemIds,
-    [selectedItemIds, data],
+    [selectedItemIds, data, groupSelection],
   );
   return (
     <div className={cn("flex-1 overflow-y-auto font-uikit-ui", className)}>
@@ -148,6 +154,7 @@ export function TreeView<T extends TreeDataItem>({
           hoverSubtree={hoverSubtree}
           loneSelectionStyle={loneSelectionStyle}
           chevronPosition={chevronPosition}
+          groupSelection={groupSelection}
         />
       ))}
     </div>
@@ -176,6 +183,7 @@ export function TreeEntryItem<T extends TreeDataItem>({
   hoverSubtree = true,
   loneSelectionStyle = "fill",
   chevronPosition = "leading",
+  groupSelection = "subtree",
 }: {
   item: TreeDataItemWithMeta<T>;
   hoveredId?: string | null;
@@ -200,6 +208,7 @@ export function TreeEntryItem<T extends TreeDataItem>({
   hoverSubtree?: boolean;
   loneSelectionStyle?: "fill" | "ring";
   chevronPosition?: "leading" | "trailing";
+  groupSelection?: "subtree" | "row";
 }) {
   const handleItemSelect = (event: React.MouseEvent) => {
     if (!item.disable && isSelectable && item.selectable !== false) {
@@ -207,7 +216,7 @@ export function TreeEntryItem<T extends TreeDataItem>({
         selectionMode === "multi" && (event.ctrlKey || event.metaKey);
       const isRangeSelectMode = selectionMode === "multi" && event.shiftKey;
 
-      if (isMultiSelectMode) {
+      if (isMultiSelectMode && groupSelection === "subtree") {
         const selectState = getMultiSelectState(
           item.id,
           selectedItemIds || new Set(),
@@ -238,10 +247,12 @@ export function TreeEntryItem<T extends TreeDataItem>({
         newSelectedIds = new Set([item.id]);
       }
 
-      const cleanedSelectedIds = cleanIndirectSelectedNodes(
-        newSelectedIds,
-        dataWithMeta,
-      );
+      // In 'row' mode a selected ancestor doesn't imply its descendants, so
+      // directly-selected descendants must survive.
+      const cleanedSelectedIds =
+        groupSelection === "row"
+          ? newSelectedIds
+          : cleanIndirectSelectedNodes(newSelectedIds, dataWithMeta);
       if (onSelectionChange) {
         onSelectionChange(cleanedSelectedIds);
         setLastSelectedId?.(item.id);
@@ -254,17 +265,30 @@ export function TreeEntryItem<T extends TreeDataItem>({
   const isLast = item.isLast !== undefined ? item.isLast : false;
 
   // Visual selection (includes fully-selected groups); falls back to the real
-  // set when not provided.
+  // set when not provided. In 'row' group-selection mode an ancestor's
+  // selection does NOT mark its descendants — every row stands alone.
   const visualIds = displaySelectedIds || selectedItemIds || new Set<string>();
-  const selectState = getMultiSelectState(item.id, visualIds, dataWithMeta);
+  const rowIndex = dataWithMeta.findIndex((d) => d.id === item.id);
+  const selectState =
+    groupSelection === "row"
+      ? visualIds.has(item.id)
+        ? "selected"
+        : "unselected"
+      : getMultiSelectState(item.id, visualIds, dataWithMeta);
   const isSelected = selectState === "selected";
   const isIndirectlySelected = selectState === "indirect";
 
-  const { hasPrevSelected, hasNextSelected } = getAdjacentSelectionState(
-    item.id,
-    visualIds,
-    dataWithMeta,
-  );
+  const { hasPrevSelected, hasNextSelected } =
+    groupSelection === "row"
+      ? {
+          hasPrevSelected:
+            rowIndex > 0 && visualIds.has(dataWithMeta[rowIndex - 1].id),
+          hasNextSelected:
+            rowIndex >= 0 &&
+            rowIndex < dataWithMeta.length - 1 &&
+            visualIds.has(dataWithMeta[rowIndex + 1].id),
+        }
+      : getAdjacentSelectionState(item.id, visualIds, dataWithMeta);
 
   const isLeaf = !hasDescendants(item.id);
   // Non-selectable rows (e.g. the top-level Scene/Staging groups) don't react
@@ -292,7 +316,6 @@ export function TreeEntryItem<T extends TreeDataItem>({
     hoveredId != null &&
     (row.id === hoveredId ||
       (hoverSubtree && (row.ancestors || []).some((a) => a.id === hoveredId)));
-  const rowIndex = dataWithMeta.findIndex((d) => d.id === item.id);
   const hasPrevHover = rowIndex > 0 && inHoverBlock(dataWithMeta[rowIndex - 1]);
   const hasNextHover =
     rowIndex >= 0 &&
@@ -304,10 +327,13 @@ export function TreeEntryItem<T extends TreeDataItem>({
   //  - everything else selected (a run of ≥2, a group, or a group's indirect
   //    descendants) → a 2px accent ring tracing the merged block's outer edges
   //    (inner joined edges cleared) with the row background left unchanged.
+  // In 'row' group-selection mode a selected GROUP also counts as a lone
+  // row (there is no subtree block for it to anchor), so it takes the same
+  // lone-selection treatment as a leaf.
   const isLoneLeafSelected =
     isSelectable &&
     isSelected &&
-    isLeaf &&
+    (isLeaf || groupSelection === "row") &&
     !hasPrevSelected &&
     !hasNextSelected;
   const loneFill = loneSelectionStyle === "fill" && isLoneLeafSelected;

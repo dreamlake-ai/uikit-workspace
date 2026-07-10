@@ -67,7 +67,10 @@ the label it reveals under. `hoverSubtree={false}` limits the hover wash to
 the row under the cursor instead of highlighting the whole subtree as one
 block. `loneSelectionStyle="ring"` draws a lone selected row with the same
 accent ring group selections use, leaving the row background transparent
-instead of the solid fill.
+instead of the solid fill. A fourth, `groupSelection="row"`, changes what
+selecting a group MEANS: only the clicked row is marked — descendants are
+untouched, and a selected group renders like any lone selection instead of
+a ring around its whole subtree.
 
 <Preview source={quietSrc} filename="QuietSpec.tsx">
   <QuietSpec />
@@ -96,6 +99,7 @@ instead of the solid fill.
 | `hoverSubtree`       | `boolean`                                      | `true`        | Hovering a group also highlights its whole subtree as one block. Set `false` for row-only hover. |
 | `loneSelectionStyle` | `'fill' \| 'ring'`                             | `'fill'`      | Lone selected row: solid fill, or the accent ring group selections use (transparent background). |
 | `chevronPosition`    | `'leading' \| 'trailing'`                      | `'leading'`   | `trailing` renders a smaller, dimmed chevron after the label text; collapsed points left.        |
+| `groupSelection`     | `'subtree' \| 'row'`                           | `'subtree'`   | `'row'` = selecting a group marks only that row; descendants stay unmarked.                      |
 | `className`          | `string`                                       | —             | Extra classes on the container.                                                                  |
 | `height`             | `number \| string`                             | `'100%'`      | **`VirtualTreeView` only** — container height for virtualization.                                |
 | `overscan`           | `number`                                       | `5`           | **`VirtualTreeView` only** — extra rows rendered outside the viewport.                           |
