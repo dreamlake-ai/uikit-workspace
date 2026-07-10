@@ -54,7 +54,7 @@ export function CodeBlock({ children, filename, lang }: CodeBlockProps) {
       data-line-numbers={showLines ? 'on' : 'off'}
       className="group relative border border-doc-template-faint bg-doc-template-code"
       style={{
-        margin: '18px 0 22px',
+        margin: '28px 0 32px',
         borderRadius: 'var(--radius-doc-template)',
         overflow: 'hidden',
       }}

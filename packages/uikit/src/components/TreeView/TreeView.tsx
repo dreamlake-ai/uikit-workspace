@@ -335,7 +335,7 @@ export function TreeEntryItem<T extends TreeDataItem>({
         // adds the accent ring on top (ringShadow) as the grouping cue.
         (isLoneLeafSelected || inRing) &&
           "bg-uikit-tree-sel hover:bg-uikit-tree-sel-hover",
-        // hover (warm-amber light / cool-blue dark) for any non-selected row
+        // hover (selectable-blue tint, both themes) for any non-selected row
         isHovered && !isLoneLeafSelected && !inRing && "bg-uikit-tree-hover",
       )}
       style={ringShadow ? { boxShadow: ringShadow } : undefined}

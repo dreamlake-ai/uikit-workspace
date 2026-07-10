@@ -163,7 +163,7 @@ const H2: React.FC<ComponentPropsWithoutRef<'h2'>> = ({ id, children, style, ...
         the id on a zero-height non-sticky span just above the h2
         sidesteps the issue: the span's natural position is reliable.
         Margin choreography: the anchor span carries the section gap.
-        The static gap is small (16) — when scrolled the sticky h2
+        The static gap is small (24) — when scrolled the sticky h2
         below already gets a 40px topbar-shelf of breathing room above
         it, so a tall static `margin-top` is redundant and just
         stretches the page. `scrollMarginTop` keeps direct-link jumps
@@ -177,7 +177,7 @@ const H2: React.FC<ComponentPropsWithoutRef<'h2'>> = ({ id, children, style, ...
         style={{
           display: 'block',
           height: 0,
-          marginTop: 16,
+          marginTop: 24,
           scrollMarginTop: 56,
         }}
       />
@@ -196,7 +196,7 @@ const H2: React.FC<ComponentPropsWithoutRef<'h2'>> = ({ id, children, style, ...
         fontSize: 22,
         fontWeight: 600,
         letterSpacing: '-0.018em',
-        marginBottom: 12,
+        marginBottom: 14,
         paddingTop: 12,
         paddingBottom: 8,
         gap: 8,
@@ -223,7 +223,7 @@ const H3: React.FC<ComponentPropsWithoutRef<'h3'>> = ({ id, children, style, ...
       fontSize: 15,
       fontWeight: 600,
       letterSpacing: '-0.005em',
-      margin: '18px 0 6px',
+      margin: '24px 0 8px',
       gap: 8,
       scrollMarginTop: 96,
       ...style,
@@ -248,7 +248,7 @@ const H1: React.FC<ComponentPropsWithoutRef<'h1'>> = ({ id, children, style, ...
       fontSize: 32,
       fontWeight: 700,
       letterSpacing: '-0.025em',
-      margin: '18px 0 10px',
+      margin: '28px 0 14px',
       lineHeight: 1.1,
       gap: 8,
       ...style,
@@ -269,7 +269,7 @@ const P: React.FC<ComponentPropsWithoutRef<'p'>> = ({ children, style, ...rest }
   <p
     {...rest}
     style={{
-      margin: '0 0 14px',
+      margin: '0 0 18px',
       fontSize: BODY_FONT_SIZE,
       lineHeight: BODY_LINE_HEIGHT,
       textWrap: 'pretty',
@@ -284,7 +284,7 @@ const UL: React.FC<ComponentPropsWithoutRef<'ul'>> = ({ children, style, ...rest
   <ul
     {...rest}
     style={{
-      margin: '0 0 14px',
+      margin: '0 0 18px',
       paddingLeft: 22,
       fontSize: BODY_FONT_SIZE,
       lineHeight: BODY_LINE_HEIGHT,
@@ -304,7 +304,7 @@ const OL: React.FC<ComponentPropsWithoutRef<'ol'>> = ({ children, style, ...rest
   <ol
     {...rest}
     style={{
-      margin: '0 0 14px',
+      margin: '0 0 18px',
       paddingLeft: 22,
       fontSize: BODY_FONT_SIZE,
       lineHeight: BODY_LINE_HEIGHT,
@@ -330,7 +330,7 @@ const Blockquote: React.FC<ComponentPropsWithoutRef<'blockquote'>> = ({ children
     style={{
       borderLeft: '3px solid color-mix(in srgb, var(--color-doc-template-ink) 22%, transparent)',
       padding: '2px 0 2px 16px',
-      margin: '14px 0',
+      margin: '18px 0',
       ...style,
     }}
   >
@@ -353,7 +353,7 @@ const A: React.FC<ComponentPropsWithoutRef<'a'>> = ({ children, style, ...rest }
 )
 
 const Table: React.FC<ComponentPropsWithoutRef<'table'>> = ({ children, style, ...rest }) => (
-  <table {...rest} style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, margin: '0 0 14px', ...style }}>
+  <table {...rest} style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, margin: '0 0 18px', ...style }}>
     {children}
   </table>
 )

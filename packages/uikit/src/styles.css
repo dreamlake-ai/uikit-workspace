@@ -30,9 +30,11 @@
 
   /* ── Selection / accent ──────────────────────────────────────── */
   --selected-bg: #d9e6f7;
-  /* Scene-graph tree row states (ml-dash design): warm-amber hover, neutral-grey
-     selection fill (singleStyle "neutral"), deeper grey on selected-hover. */
-  --tree-hover: #f3e6cc;
+  /* Scene-graph tree row states (ml-dash design): selectable-blue hover (the
+     soft active-blue tint that previews selection — same band as --row-hover),
+     neutral-grey selection fill (singleStyle "neutral"), deeper grey on
+     selected-hover. */
+  --tree-hover: #d9e6f7;
   --tree-sel: #ececec;
   --tree-sel-hover: #e3e3e3;
   --uikit-accent: #23aaff;
