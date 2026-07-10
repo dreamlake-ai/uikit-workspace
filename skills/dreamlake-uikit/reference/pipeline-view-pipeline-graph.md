@@ -65,8 +65,11 @@ full field-to-pixel map.
 
 A freshly-traced graph is entirely `idle`. **Drag** nodes to rearrange, **scroll**
 (or two-finger drag) to pan, **⌘/ctrl-scroll or pinch** to zoom, **click** a node
-to select it. Edges come in two kinds — `data` (solid) and `mask` (dashed gate);
-the [Anatomy](reference/pipeline-view-anatomy.md) page shows both.
+to select it. Once the canvas is focused, **arrow keys** walk the selection —
+**↑ / ↓** step through the pipeline in topological order, **← / →** jump to the
+upstream / downstream neighbour, **Esc** clears — and the selected node pans into
+view. Edges come in two kinds — `data` (solid) and `mask` (dashed gate); the
+[Anatomy](reference/pipeline-view-anatomy.md) page shows both.
 
 ## Graph + source, linked
 

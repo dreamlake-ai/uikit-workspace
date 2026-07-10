@@ -9,9 +9,16 @@
  * stalled / queued / idle) is derived from its endpoints' `status`. Pass a live
  * `statusById` overlay (e.g. streamed from a remote runner) and the graph
  * animates without re-tracing.
+ *
+ * Keyboard (once the canvas is focused — click or tab into it): ↑/↓ (or k/j)
+ * step to the previous / next node in topological order; ←/→ (or h/l) select
+ * the upstream / downstream neighbour; Esc clears the selection. The selected
+ * node is panned into view. Keys are scoped to focus, so they never hijack the
+ * page or collide with another graph on the same page.
  */
 import {
   useCallback, useEffect, useMemo, useRef, useState,
+  type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
 } from 'react'
 import { cn } from '../../lib/utils'
@@ -88,6 +95,26 @@ export function PipelineGraph({
 
   const byId = useMemo(() => Object.fromEntries(nodes.map(n => [n.id, n])), [nodes])
 
+  // Topological order of the nodes (Kahn's) — the linear sequence ↑/↓ step
+  // through. Nodes left out by a cycle are appended in insertion order so every
+  // node is reachable. (Design: pipelines-view.jsx `topoOrder`.)
+  const topoOrder = useMemo(() => {
+    const ids = Object.keys(graph.nodes)
+    const indeg: Record<string, number> = Object.fromEntries(ids.map(id => [id, 0]))
+    for (const e of graph.edges) if (indeg[e.to] != null) indeg[e.to] += 1
+    const queue = ids.filter(id => indeg[id] === 0)
+    const order: string[] = []
+    while (queue.length) {
+      const n = queue.shift()!
+      order.push(n)
+      for (const e of graph.edges) {
+        if (e.from === n && indeg[e.to] != null && --indeg[e.to] === 0) queue.push(e.to)
+      }
+    }
+    for (const id of ids) if (!order.includes(id)) order.push(id)
+    return order
+  }, [graph.nodes, graph.edges])
+
   const bounds = useMemo(() => {
     let w = 800, h = 400
     for (const n of nodes) {
@@ -122,6 +149,7 @@ export function PipelineGraph({
   const onBgDown = (e: ReactPointerEvent) => {
     if ((e.target as HTMLElement).closest('[data-node]')) return
     ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
+    ;(e.currentTarget as HTMLElement).focus({ preventScroll: true })
     panRef.current = { x: e.clientX, y: e.clientY, vx: view.x, vy: view.y }
     select(null)
   }
@@ -138,6 +166,7 @@ export function PipelineGraph({
   const onNodeDown = (e: ReactPointerEvent, n: GraphNode) => {
     e.stopPropagation()
     ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
+    containerRef.current?.focus({ preventScroll: true })   // so arrow-key nav works right after a click
     nodeDrag.current = { id: n.id, sx: e.clientX, sy: e.clientY, bx: n.pos.x, by: n.pos.y, moved: false }
   }
   const onNodeMove = (e: ReactPointerEvent) => {
@@ -154,13 +183,69 @@ export function PipelineGraph({
     if (d && !d.moved) select(n.id === selected ? null : n.id)
   }
 
+  // — keyboard navigation (only when the canvas is focused, so it never hijacks
+  //   page arrow keys or collides with other graphs on the same page) —
+
+  // Pan just enough to bring a node fully into the viewport (the graph has no
+  // auto-fit, so keyboard-stepping past the edge would otherwise select an
+  // off-screen node).
+  const ensureVisible = useCallback((id: string) => {
+    const el = containerRef.current
+    const n = byId[id]
+    if (!el || !n) return
+    const rect = el.getBoundingClientRect()
+    const pad = 48
+    setView(v => {
+      let { x, y } = v
+      const sx = v.x + n.pos.x * v.k, sy = v.y + n.pos.y * v.k
+      const w = NODE_W * v.k, h = NODE_H * v.k
+      if (sx < pad) x = v.x + (pad - sx)
+      else if (sx + w > rect.width - pad) x = v.x - (sx + w - (rect.width - pad))
+      if (sy < pad) y = v.y + (pad - sy)
+      else if (sy + h > rect.height - pad) y = v.y - (sy + h - (rect.height - pad))
+      return x === v.x && y === v.y ? v : { ...v, x, y }
+    })
+  }, [byId])
+
+  const onKeyDown = useCallback((e: ReactKeyboardEvent) => {
+    if (e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return
+    const k = e.key
+    const idx = selected ? topoOrder.indexOf(selected) : -1
+    let next: string | undefined
+    if (k === 'ArrowDown' || k === 'j') {
+      next = topoOrder[idx < 0 ? 0 : Math.min(topoOrder.length - 1, idx + 1)]
+    } else if (k === 'ArrowUp' || k === 'k') {
+      next = topoOrder[idx < 0 ? 0 : Math.max(0, idx - 1)]
+    } else if (k === 'ArrowLeft' || k === 'h') {
+      if (!selected) return
+      next = graph.edges.find(ed => ed.to === selected)?.from
+    } else if (k === 'ArrowRight' || k === 'l') {
+      if (!selected) return
+      next = graph.edges.find(ed => ed.from === selected)?.to
+    } else if (k === 'Escape') {
+      if (selected) { e.preventDefault(); select(null) }
+      return
+    } else {
+      return
+    }
+    e.preventDefault()
+    if (next && next !== selected) {
+      select(next)
+      ensureVisible(next)
+    }
+  }, [topoOrder, selected, graph.edges, select, ensureVisible])
+
   return (
     <div
       ref={containerRef}
+      tabIndex={0}
+      role="application"
+      aria-label={`${graph.title} pipeline graph`}
       onPointerDown={onBgDown}
       onPointerMove={onBgMove}
       onPointerUp={onBgUp}
-      className={cn('relative w-full h-full overflow-hidden select-none cursor-grab active:cursor-grabbing', className)}
+      onKeyDown={onKeyDown}
+      className={cn('relative w-full h-full overflow-hidden select-none cursor-grab active:cursor-grabbing outline-none', className)}
       style={{
         backgroundColor: 'var(--color-uikit-bg, var(--color-uikit-panel))',
         backgroundImage: 'radial-gradient(circle, var(--color-uikit-faint) 1px, transparent 1.4px)',

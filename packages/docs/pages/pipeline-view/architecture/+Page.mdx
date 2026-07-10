@@ -78,7 +78,8 @@ full canvas — these are conscious omissions, not bugs:
   at each edge's midpoint; here the legend carries that vocabulary instead.
 - **No draggable edge bends, no auto-fit, no vertical layout mode.** Positions
   come from the tracer's layout; the user pans/zooms/drags nodes.
-- **No vim marks / keyboard-heavy navigation.**
+- **No vim marks** (the `a`–`z` jump labels). Arrow/`hjkl` selection navigation
+  *is* supported — see Current stage.
 - **No node inspector yet** — `PipelineSource` shows source only. That's the
   headline roadmap item below.
 
@@ -88,6 +89,9 @@ Shipping today:
 
 - ✅ Pure, theme-aware renderer — dotted canvas, status-tinted cards, obstacle-
   routed edges, pan/zoom/drag, controlled or uncontrolled selection.
+- ✅ **Keyboard navigation** (focus-scoped) — ↑/↓ (or k/j) step the selection in
+  topological order, ←/→ (or h/l) hop to the upstream/downstream neighbour, Esc
+  clears; the selected node pans into view.
 - ✅ **Connector tags** (`data` / `mask`) and **connector states** (the six
   derived flows), catalogued in [Anatomy](/pipeline-view/anatomy).
 - ✅ Live animation from a `statusById` overlay — structure stays static, status
