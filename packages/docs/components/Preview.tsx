@@ -170,7 +170,7 @@ export function Preview({
       // etc.) opened from inside the preview must be able to extend past the
       // bottom rounded corner. The header strip below carries its own
       // rounded-top via the parent's border-radius + bg cascade.
-      style={{ margin: '18px 0 22px', borderRadius: 'var(--radius-doc-template)' }}
+      style={{ margin: '28px 0 32px', borderRadius: 'var(--radius-doc-template)' }}
     >
       <div
         className="flex items-center border-b border-doc-template-faint"
