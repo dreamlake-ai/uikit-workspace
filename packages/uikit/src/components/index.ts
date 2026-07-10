@@ -42,6 +42,7 @@ export * from "./Toggle";
 export * from "./Toolbar";
 export * from "./Tooltip";
 export * from "./UIKitBadge";
+export * from "./VideoAnnotator";
 export * from "./VirtualList";
 export * from "./VirtualListFlow";
 export * from "./Waterfall";
