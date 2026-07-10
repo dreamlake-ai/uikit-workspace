@@ -9,9 +9,11 @@ import { Preview } from "../../../components/Preview";
 import { BasicSpec } from "../../../components/specimens/components/tree-view/BasicSpec";
 import { SelectableSpec } from "../../../components/specimens/components/tree-view/SelectableSpec";
 import { SearchSpec } from "../../../components/specimens/components/tree-view/SearchSpec";
+import { QuietSpec } from "../../../components/specimens/components/tree-view/QuietSpec";
 import basicSrc from "../../../components/specimens/components/tree-view/BasicSpec.tsx?raw";
 import selectableSrc from "../../../components/specimens/components/tree-view/SelectableSpec.tsx?raw";
 import searchSrc from "../../../components/specimens/components/tree-view/SearchSpec.tsx?raw";
+import quietSrc from "../../../components/specimens/components/tree-view/QuietSpec.tsx?raw";
 
 # Tree View
 
@@ -56,29 +58,47 @@ substring. Pass `filteredData` back through `useTreeState` and hand
   <SearchSpec />
 </Preview>
 
+## Quiet rows
+
+Three opt-outs tune the tree for dense sidebars (the Dream Studio repos list
+uses all three). `chevronPosition="trailing"` moves a smaller, dimmed expand
+chevron to sit right after the label text — collapsed it points left, toward
+the label it reveals under. `hoverSubtree={false}` limits the hover wash to
+the row under the cursor instead of highlighting the whole subtree as one
+block. `loneSelectionStyle="ring"` draws a lone selected row with the same
+accent ring group selections use, leaving the row background transparent
+instead of the solid fill.
+
+<Preview source={quietSrc} filename="QuietSpec.tsx">
+  <QuietSpec />
+</Preview>
+
 ## Props
 
 ### `TreeView` / `VirtualTreeView`
 
-| Prop                | Type                                           | Default       | Description                                                                      |
-| ------------------- | ---------------------------------------------- | ------------- | -------------------------------------------------------------------------------- |
-| `data`              | `TreeDataItemWithMeta<T>[]`                    | —             | Flattened rows with metadata — pass `visibleData` from `useTreeState`.           |
-| `getIcon`           | `(item: T, expanded?: boolean) => ReactNode`   | —             | Icon for each node. Receives the expanded flag for folder-open states.           |
-| `expandedItems`     | `Set<string>`                                  | —             | IDs of expanded collapsible nodes.                                               |
-| `onToggleItem`      | `(id: string) => void`                         | —             | Called when a chevron is clicked.                                                |
-| `onItemHover`       | `(id: string \| null) => void`                 | —             | Called on row mouse enter / leave.                                               |
-| `hoveredId`         | `string \| null`                               | —             | Controlled hovered row id.                                                       |
-| `isSelectable`      | `boolean`                                      | `false`       | Enables row selection.                                                           |
-| `selectedItemIds`   | `Set<string>`                                  | —             | Controlled set of selected node ids.                                             |
-| `onSelectionChange` | `(ids: Set<string>) => void`                   | —             | Called when the selection changes.                                               |
-| `selectionMode`     | `'single' \| 'multi'`                          | `'multi'`     | `multi` enables Cmd/Ctrl-click toggle and Shift-click range.                     |
-| `hideExpand`        | `boolean`                                      | `false`       | Hide expand chevrons entirely.                                                   |
-| `hasDescendants`    | `(id: string) => boolean`                      | `() => false` | Whether a node has children — pass the helper from `useTreeState`.               |
-| `renderLabel`       | `(label: string, itemId: string) => ReactNode` | identity      | Custom label rendering — pass `renderLabel` from `useTreeSearch` for highlights. |
-| `renderContextMenu` | `(item: T) => ReactNode`                       | —             | Right-click menu content for a row.                                              |
-| `className`         | `string`                                       | —             | Extra classes on the container.                                                  |
-| `height`            | `number \| string`                             | `'100%'`      | **`VirtualTreeView` only** — container height for virtualization.                |
-| `overscan`          | `number`                                       | `5`           | **`VirtualTreeView` only** — extra rows rendered outside the viewport.           |
+| Prop                 | Type                                           | Default       | Description                                                                                      |
+| -------------------- | ---------------------------------------------- | ------------- | ------------------------------------------------------------------------------------------------ |
+| `data`               | `TreeDataItemWithMeta<T>[]`                    | —             | Flattened rows with metadata — pass `visibleData` from `useTreeState`.                           |
+| `getIcon`            | `(item: T, expanded?: boolean) => ReactNode`   | —             | Icon for each node. Receives the expanded flag for folder-open states.                           |
+| `expandedItems`      | `Set<string>`                                  | —             | IDs of expanded collapsible nodes.                                                               |
+| `onToggleItem`       | `(id: string) => void`                         | —             | Called when a chevron is clicked.                                                                |
+| `onItemHover`        | `(id: string \| null) => void`                 | —             | Called on row mouse enter / leave.                                                               |
+| `hoveredId`          | `string \| null`                               | —             | Controlled hovered row id.                                                                       |
+| `isSelectable`       | `boolean`                                      | `false`       | Enables row selection.                                                                           |
+| `selectedItemIds`    | `Set<string>`                                  | —             | Controlled set of selected node ids.                                                             |
+| `onSelectionChange`  | `(ids: Set<string>) => void`                   | —             | Called when the selection changes.                                                               |
+| `selectionMode`      | `'single' \| 'multi'`                          | `'multi'`     | `multi` enables Cmd/Ctrl-click toggle and Shift-click range.                                     |
+| `hideExpand`         | `boolean`                                      | `false`       | Hide expand chevrons entirely.                                                                   |
+| `hasDescendants`     | `(id: string) => boolean`                      | `() => false` | Whether a node has children — pass the helper from `useTreeState`.                               |
+| `renderLabel`        | `(label: string, itemId: string) => ReactNode` | identity      | Custom label rendering — pass `renderLabel` from `useTreeSearch` for highlights.                 |
+| `renderContextMenu`  | `(item: T) => ReactNode`                       | —             | Right-click menu content for a row.                                                              |
+| `hoverSubtree`       | `boolean`                                      | `true`        | Hovering a group also highlights its whole subtree as one block. Set `false` for row-only hover. |
+| `loneSelectionStyle` | `'fill' \| 'ring'`                             | `'fill'`      | Lone selected row: solid fill, or the accent ring group selections use (transparent background). |
+| `chevronPosition`    | `'leading' \| 'trailing'`                      | `'leading'`   | `trailing` renders a smaller, dimmed chevron after the label text; collapsed points left.        |
+| `className`          | `string`                                       | —             | Extra classes on the container.                                                                  |
+| `height`             | `number \| string`                             | `'100%'`      | **`VirtualTreeView` only** — container height for virtualization.                                |
+| `overscan`           | `number`                                       | `5`           | **`VirtualTreeView` only** — extra rows rendered outside the viewport.                           |
 
 ### `TreeDataItem`
 

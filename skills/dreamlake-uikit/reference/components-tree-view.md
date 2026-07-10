@@ -29,6 +29,17 @@ plus their ancestor paths) and a `renderLabel` that highlights the matched
 substring. Pass `filteredData` back through `useTreeState` and hand
 `renderLabel` to the `TreeView`.
 
+## Quiet rows
+
+Three opt-outs tune the tree for dense sidebars (the Dream Studio repos list
+uses all three). `chevronPosition="trailing"` moves a smaller, dimmed expand
+chevron to sit right after the label text — collapsed it points left, toward
+the label it reveals under. `hoverSubtree={false}` limits the hover wash to
+the row under the cursor instead of highlighting the whole subtree as one
+block. `loneSelectionStyle="ring"` draws a lone selected row with the same
+accent ring group selections use, leaving the row background transparent
+instead of the solid fill.
+
 ## Props
 
 ### `TreeView` / `VirtualTreeView`
@@ -49,6 +60,9 @@ substring. Pass `filteredData` back through `useTreeState` and hand
 | `hasDescendants`    | `(id: string) => boolean`                      | `() => false` | Whether a node has children — pass the helper from `useTreeState`.               |
 | `renderLabel`       | `(label: string, itemId: string) => ReactNode` | identity      | Custom label rendering — pass `renderLabel` from `useTreeSearch` for highlights. |
 | `renderContextMenu` | `(item: T) => ReactNode`                       | —             | Right-click menu content for a row.                                              |
+| `hoverSubtree`      | `boolean`                                      | `true`        | Hovering a group also highlights its whole subtree as one block. Set `false` for row-only hover. |
+| `loneSelectionStyle`| `'fill' \| 'ring'`                             | `'fill'`      | Lone selected row: solid fill, or the accent ring group selections use (transparent background). |
+| `chevronPosition`   | `'leading' \| 'trailing'`                      | `'leading'`   | `trailing` renders a smaller, dimmed chevron after the label text; collapsed points left.        |
 | `className`         | `string`                                       | —             | Extra classes on the container.                                                  |
 | `height`            | `number \| string`                             | `'100%'`      | **`VirtualTreeView` only** — container height for virtualization.                |
 | `overscan`          | `number`                                       | `5`           | **`VirtualTreeView` only** — extra rows rendered outside the viewport.           |

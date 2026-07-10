@@ -60,6 +60,18 @@ export type TreeViewProps<T extends TreeDataItem> = {
   className?: string;
   renderContextMenu?: (item: T) => ReactNode;
   selectionMode?: "single" | "multi";
+  /** Hovering a group also highlights its whole subtree as one block (the
+   *  scene-graph behavior). Set false for plain row-only hover. */
+  hoverSubtree?: boolean;
+  /** How a LONE selected row (a single leaf with no adjacent selection)
+   *  renders: 'fill' (default) = solid bg-uikit-tree-sel row; 'ring' = the
+   *  same accent ring as group selections, with the row background left
+   *  transparent. Group / multi-row selections always use the ring. */
+  loneSelectionStyle?: "fill" | "ring";
+  /** Where the expand chevron renders: 'leading' (default) — before the row
+   *  icon; 'trailing' — a smaller, dimmed chevron right after the label text
+   *  (collapsed points LEFT, toward the label it reveals under). */
+  chevronPosition?: "leading" | "trailing";
 };
 
 /**
@@ -85,6 +97,9 @@ export function TreeView<T extends TreeDataItem>({
   className,
   renderContextMenu,
   selectionMode = "multi",
+  hoverSubtree = true,
+  loneSelectionStyle = "fill",
+  chevronPosition = "leading",
 }: TreeViewProps<T>) {
   const [lastSelectedId, setLastSelectedId] = useState<string | null>(null);
   // Hover is self-managed unless the consumer wires onItemHover (e.g. Waterfall
@@ -130,6 +145,9 @@ export function TreeView<T extends TreeDataItem>({
           dataWithMeta={data}
           renderContextMenu={renderContextMenu}
           selectionMode={selectionMode}
+          hoverSubtree={hoverSubtree}
+          loneSelectionStyle={loneSelectionStyle}
+          chevronPosition={chevronPosition}
         />
       ))}
     </div>
@@ -155,6 +173,9 @@ export function TreeEntryItem<T extends TreeDataItem>({
   dataWithMeta = [],
   renderContextMenu,
   selectionMode = "multi",
+  hoverSubtree = true,
+  loneSelectionStyle = "fill",
+  chevronPosition = "leading",
 }: {
   item: TreeDataItemWithMeta<T>;
   hoveredId?: string | null;
@@ -176,6 +197,9 @@ export function TreeEntryItem<T extends TreeDataItem>({
   dataWithMeta?: TreeDataItemWithMeta<T>[];
   renderContextMenu?: (item: T) => ReactNode;
   selectionMode?: "single" | "multi";
+  hoverSubtree?: boolean;
+  loneSelectionStyle?: "fill" | "ring";
+  chevronPosition?: "leading" | "trailing";
 }) {
   const handleItemSelect = (event: React.MouseEvent) => {
     if (!item.disable && isSelectable && item.selectable !== false) {
@@ -252,12 +276,14 @@ export function TreeEntryItem<T extends TreeDataItem>({
   // selection) still get row hover + the row↔bar hover link.
   const isHoverable = !item.disable && item.selectable !== false;
 
-  // Hover follows the subtree: hovering a group highlights the group and all of
-  // its descendants (per the ml-dash design).
+  // Hover follows the subtree: hovering a group highlights the group and all
+  // of its descendants (per the ml-dash design) — unless hoverSubtree is off,
+  // in which case only the row under the cursor highlights.
   const isHovered =
     isHoverable &&
     hoveredId != null &&
-    (hoveredId === item.id || ancestors.some((a) => a.id === hoveredId));
+    (hoveredId === item.id ||
+      (hoverSubtree && ancestors.some((a) => a.id === hoveredId)));
 
   // Adjacency within the hover block (hovered node + its descendants) so the
   // highlight rounds only its outer corners, like the selection block.
@@ -265,7 +291,7 @@ export function TreeEntryItem<T extends TreeDataItem>({
     !!row &&
     hoveredId != null &&
     (row.id === hoveredId ||
-      (row.ancestors || []).some((a) => a.id === hoveredId));
+      (hoverSubtree && (row.ancestors || []).some((a) => a.id === hoveredId)));
   const rowIndex = dataWithMeta.findIndex((d) => d.id === item.id);
   const hasPrevHover = rowIndex > 0 && inHoverBlock(dataWithMeta[rowIndex - 1]);
   const hasNextHover =
@@ -284,8 +310,9 @@ export function TreeEntryItem<T extends TreeDataItem>({
     isLeaf &&
     !hasPrevSelected &&
     !hasNextSelected;
+  const loneFill = loneSelectionStyle === "fill" && isLoneLeafSelected;
   const inRing =
-    isSelectable && !isLoneLeafSelected && (isSelected || isIndirectlySelected);
+    isSelectable && !loneFill && (isSelected || isIndirectlySelected);
 
   const ringShadow = (() => {
     if (!inRing) return undefined;
@@ -333,10 +360,15 @@ export function TreeEntryItem<T extends TreeDataItem>({
         // indirect descendants — gets the neutral-grey fill, so the selection
         // reads the same whether one row or many are picked. A multi-row run
         // adds the accent ring on top (ringShadow) as the grouping cue.
-        (isLoneLeafSelected || inRing) &&
+        loneSelectionStyle === "fill" &&
+          (isLoneLeafSelected || inRing) &&
           "bg-uikit-tree-sel hover:bg-uikit-tree-sel-hover",
-        // hover (warm-amber light / cool-blue dark) for any non-selected row
-        isHovered && !isLoneLeafSelected && !inRing && "bg-uikit-tree-hover",
+        // hover (warm-amber light / cool-blue dark) for any non-filled row;
+        // with the 'ring' style selected rows stay transparent, so the wash
+        // keeps working on them too
+        isHovered &&
+          (loneSelectionStyle === "ring" || (!isLoneLeafSelected && !inRing)) &&
+          "bg-uikit-tree-hover",
       )}
       style={ringShadow ? { boxShadow: ringShadow } : undefined}
       onMouseEnter={() => {
@@ -386,7 +418,9 @@ export function TreeEntryItem<T extends TreeDataItem>({
         style={{ paddingLeft: `${indent * 1.25 + 0.5}rem` }}
       >
         <div className="flex min-w-0 flex-1 items-center gap-1">
-          {!hideExpand && hasDescendants(item.id) ? (
+          {!hideExpand &&
+          hasDescendants(item.id) &&
+          chevronPosition === "leading" ? (
             <>
               <button
                 onClick={(e) => {
@@ -415,6 +449,15 @@ export function TreeEntryItem<T extends TreeDataItem>({
                 {getIcon(item, expandedItems?.has?.(item.id))}
               </div>
             </>
+          ) : !hideExpand && hasDescendants(item.id) ? (
+            <div
+              className={cn(
+                "flex size-4 items-center justify-center",
+                item.disable && "text-uikit-muted",
+              )}
+            >
+              {getIcon(item, expandedItems?.has?.(item.id))}
+            </div>
           ) : (
             <div className="relative flex size-4 items-center justify-center">
               {item.isCollapsible && (
@@ -468,7 +511,11 @@ export function TreeEntryItem<T extends TreeDataItem>({
             return (
               <span
                 className={cn(
-                  "flex min-w-0 flex-1 select-none",
+                  // In trailing-chevron mode the label hugs its text so the
+                  // chevron sits right after the visible characters; min-w-0
+                  // still lets it shrink + truncate when the row is tight.
+                  "flex min-w-0 select-none",
+                  chevronPosition === "leading" && "flex-1",
                   item.disable && "text-uikit-muted",
                 )}
                 style={{ maxWidth: "100%" }}
@@ -478,6 +525,30 @@ export function TreeEntryItem<T extends TreeDataItem>({
               </span>
             );
           })()}
+          {!hideExpand &&
+            hasDescendants(item.id) &&
+            chevronPosition === "trailing" && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleItem(item.id);
+                }}
+                className="flex size-4 shrink-0 cursor-pointer items-center justify-center"
+              >
+                <ChevronDown
+                  className={cn(
+                    // Quiet affordance: smaller + dimmed vs the leading
+                    // chevron, so it doesn't outweigh the row icons.
+                    "size-3 opacity-50 transition-transform",
+                    expandedItems &&
+                      !expandedItems?.has(item.id) &&
+                      "rotate-90",
+                    item.disable && "text-uikit-muted",
+                  )}
+                  strokeWidth={1.5}
+                />
+              </button>
+            )}
         </div>
         {item.actions && (
           <div
