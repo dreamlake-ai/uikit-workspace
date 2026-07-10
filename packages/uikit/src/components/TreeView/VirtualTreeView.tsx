@@ -23,6 +23,14 @@ export type VirtualTreeViewProps<T extends TreeDataItem> = {
   className?: string;
   renderContextMenu?: (item: T) => ReactNode;
   selectionMode?: "single" | "multi";
+  /** See {@link TreeViewProps.hoverSubtree}. */
+  hoverSubtree?: boolean;
+  /** See {@link TreeViewProps.loneSelectionStyle}. */
+  loneSelectionStyle?: "fill" | "ring";
+  /** See {@link TreeViewProps.chevronPosition}. */
+  chevronPosition?: "leading" | "trailing";
+  /** See {@link TreeViewProps.groupSelection}. */
+  groupSelection?: "subtree" | "row";
   /** Container height — required for virtualization (default '100%'). */
   height?: number | string;
   /** Extra rows rendered outside the viewport (default 5). */
@@ -49,6 +57,10 @@ export function VirtualTreeView<T extends TreeDataItem>({
   className,
   renderContextMenu,
   selectionMode = "multi",
+  hoverSubtree = true,
+  loneSelectionStyle = "fill",
+  chevronPosition = "leading",
+  groupSelection = "subtree",
   height = "100%",
   overscan = 5,
 }: VirtualTreeViewProps<T>) {
@@ -82,6 +94,10 @@ export function VirtualTreeView<T extends TreeDataItem>({
             dataWithMeta={data}
             renderContextMenu={renderContextMenu}
             selectionMode={selectionMode}
+            hoverSubtree={hoverSubtree}
+            loneSelectionStyle={loneSelectionStyle}
+            chevronPosition={chevronPosition}
+            groupSelection={groupSelection}
           />
         </div>
       )}
