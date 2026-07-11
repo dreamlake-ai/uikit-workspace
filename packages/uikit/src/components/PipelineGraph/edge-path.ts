@@ -27,19 +27,32 @@ function hitsV(obstacles: Obstacle[], ya: number, yb: number, xx: number): Obsta
 export function buildEdgePath(
   from: Pt,
   to: Pt,
-  opts: { obstacles?: Obstacle[]; bendFrac?: number } = {},
+  opts: { obstacles?: Obstacle[]; bendFrac?: number; bendX?: number } = {},
 ): string {
   const obstacles = opts.obstacles ?? []
   const bendFrac = opts.bendFrac ?? 0.5
 
-  // Soft curve for shallow edges.
+  // Soft curve for shallow edges. (opts.bendX is intentionally ignored here —
+  // a shallow soft-curve has no vertical jog to pin.)
   if (Math.abs(to.y - from.y) < CURVE_THRESHOLD) {
     const dx = Math.abs(to.x - from.x)
     return `M ${from.x} ${from.y} C ${from.x + dx * 0.5} ${from.y}, ${to.x - dx * 0.5} ${to.y}, ${to.x} ${to.y}`
   }
 
   // Orthogonal rounded routing, horizontal primary axis.
-  const bendX = from.x + (to.x - from.x) * bendFrac
+  // The vertical jog normally sits at bendFrac between the endpoints; an
+  // explicit finite opts.bendX pins it to an absolute x instead. It's clamped
+  // strictly inside [from.x, to.x] with a margin so the corner radii still fit,
+  // and falls back to the computed value if that clamp would collapse the
+  // usable range (endpoints too close to leave room).
+  let bendX = from.x + (to.x - from.x) * bendFrac
+  const bendXOverride = opts.bendX
+  if (bendXOverride !== undefined && Number.isFinite(bendXOverride)) {
+    const margin = R + 2
+    const lo = Math.min(from.x, to.x) + margin
+    const hi = Math.max(from.x, to.x) - margin
+    bendX = lo <= hi ? Math.max(lo, Math.min(hi, bendXOverride)) : bendX
+  }
   if (Math.abs(to.y - from.y) < 0.5) return `M ${from.x} ${from.y} L ${to.x} ${to.y}`
 
   const sgnY = Math.sign(to.y - from.y) || 1
@@ -48,10 +61,20 @@ export function buildEdgePath(
   const backwards = to.x - from.x <= 8
 
   if (backwards) {
-    // Inverted-S when the target sits behind the source.
+    // Inverted-S when the target sits behind the source. Center the middle
+    // horizontal run in the channel between the two nodes' facing edges
+    // (source right edge = from.x, target left edge = to.x) so the loop reads
+    // as symmetric regardless of which input port (upper/lower) the target
+    // uses — both turn columns are placed equidistant from the channel mid-x
+    // rather than a fixed STUB from their own (asymmetric) endpoints, which
+    // otherwise biases the run toward the single-output source's side.
+    // (opts.bendX is intentionally ignored here — a backward loop has no single
+    //  forward vertical jog to pin.)
     const STUB = 28
-    const ax = from.x + STUB
-    const bx = to.x - STUB
+    const midX = (from.x + to.x) / 2
+    const reach = Math.abs(from.x - to.x) / 2 + STUB
+    const ax = midX + reach // right turn column, out past the source edge
+    const bx = midX - reach // left turn column, out past the target edge
     const my = (from.y + to.y) / 2
     const r2 = Math.min(R, STUB / 2, dy / 4, Math.abs(ax - bx) / 2)
     return (
@@ -68,6 +91,8 @@ export function buildEdgePath(
     )
   }
 
+  // A pinned bendX also drives where we probe for obstacles: the jog is tested
+  // (and, on a hit, detoured) around the pinned column rather than the default.
   const hit = hitsV(obstacles, from.y, to.y, bendX)
   if (hit) {
     // Route the vertical jog around the obstacle's nearer side.

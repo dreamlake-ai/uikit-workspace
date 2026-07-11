@@ -11,6 +11,10 @@ import { BasicSpec } from '../../../components/specimens/pipeline-view/pipeline-
 import { LinkedSourceSpec } from '../../../components/specimens/pipeline-view/pipeline-graph/LinkedSourceSpec'
 import { RunningSpec } from '../../../components/specimens/pipeline-view/pipeline-graph/RunningSpec'
 import { NodeAnatomySpec } from '../../../components/specimens/pipeline-view/anatomy/NodeAnatomySpec'
+import { PortCountsSpec } from '../../../components/specimens/pipeline-view/ports/PortCountsSpec'
+import { PortLabelsSpec } from '../../../components/specimens/pipeline-view/ports/PortLabelsSpec'
+import portCountsSrc from '../../../components/specimens/pipeline-view/ports/PortCountsSpec.tsx?raw'
+import portLabelsSrc from '../../../components/specimens/pipeline-view/ports/PortLabelsSpec.tsx?raw'
 import basicSrc from '../../../components/specimens/pipeline-view/pipeline-graph/BasicSpec.tsx?raw'
 import linkedSrc from '../../../components/specimens/pipeline-view/pipeline-graph/LinkedSourceSpec.tsx?raw'
 import runningSrc from '../../../components/specimens/pipeline-view/pipeline-graph/RunningSpec.tsx?raw'
@@ -127,6 +131,27 @@ red, and nodes blocked by an upstream failure stay idle.
 
 <Preview source={runningSrc} filename="RunningSpec.tsx">
   <RunningSpec />
+</Preview>
+
+## Ports & labels
+
+Each stage's parameters become **input ports** and its result becomes the single
+**output port**, so a node's port count reads straight off its signature — from a
+`source` with zero inputs to a `merge` gathering four. Every port is labeled with
+its name, and each edge carries a **connector tag** naming the data it passes.
+The tags are draggable: drag one sideways to move the bend along the edge, or
+drag it up/down to lift the tag onto a leader line so a crowded corner stays
+legible.
+
+<Preview source={portCountsSrc} filename="PortCountsSpec.tsx">
+  <PortCountsSpec />
+</Preview>
+
+The same graph paired with its source rail — click a node to read the UDF whose
+parameters and return columns produced those ports:
+
+<Preview source={portLabelsSrc} filename="PortLabelsSpec.tsx">
+  <PortLabelsSpec />
 </Preview>
 
 ## Props

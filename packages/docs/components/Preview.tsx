@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react'
+import { Maximize2, Minimize2 } from 'lucide-react'
 import { useLineNumbers } from '../lib/use-line-numbers'
 
 export interface PreviewProps {
@@ -148,9 +149,22 @@ export function Preview({
 }: PreviewProps) {
   const [tab, setTab] = useState<Tab>(defaultTab)
   const [copied, setCopied] = useState(false)
+  // Expand the live-demo pane to a full-viewport overlay — handy for the
+  // wide PipelineGraph canvas demos that need real room to breathe.
+  const [fullscreen, setFullscreen] = useState(false)
   // Site-wide toggle — flipping here flips line numbers everywhere.
   const [showLines, setShowLines] = useLineNumbers()
   const visibleSource = tab === 'data' ? (dataSource ?? '') : source
+
+  // Escape exits fullscreen. Listener only lives while fullscreen is on.
+  useEffect(() => {
+    if (!fullscreen) return
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setFullscreen(false)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [fullscreen])
 
   function copy() {
     navigator.clipboard.writeText(visibleSource).then(
@@ -170,7 +184,23 @@ export function Preview({
       // etc.) opened from inside the preview must be able to extend past the
       // bottom rounded corner. The header strip below carries its own
       // rounded-top via the parent's border-radius + bg cascade.
-      style={{ margin: '18px 0 22px', borderRadius: 'var(--radius-doc-template)' }}
+      style={
+        fullscreen
+          ? {
+              // Full-viewport overlay. `--color-doc-template-bg` is the page
+              // surface token (see styles/app.css) so the backdrop matches
+              // the site in both light and dark themes.
+              position: 'fixed',
+              inset: 0,
+              zIndex: 1000,
+              margin: 0,
+              borderRadius: 0,
+              background: 'var(--color-doc-template-bg)',
+              display: 'flex',
+              flexDirection: 'column',
+            }
+          : { margin: '18px 0 22px', borderRadius: 'var(--radius-doc-template)' }
+      }
     >
       <div
         className="flex items-center border-b border-doc-template-faint"
@@ -238,18 +268,53 @@ export function Preview({
             </button>
           </>
         )}
+        {/* Push the fullscreen toggle to the far right. In non-preview tabs
+            the block above already carries a `marginLeft: auto` spacer, so
+            only add one here when we're on the preview tab. */}
+        {tab === 'preview' && <span style={{ marginLeft: 'auto' }} />}
+        <button
+          type="button"
+          aria-pressed={fullscreen}
+          aria-label={fullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+          title={fullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+          onClick={() => setFullscreen(f => !f)}
+          style={headerBtnStyle(fullscreen)}
+        >
+          {fullscreen ? (
+            <Minimize2 style={{ width: 12, height: 12, display: 'block' }} aria-hidden />
+          ) : (
+            <Maximize2 style={{ width: 12, height: 12, display: 'block' }} aria-hidden />
+          )}
+        </button>
       </div>
       {tab === 'preview' ? (
-        <div style={{ padding: 24, minHeight: 80, ...(height ? { height } : null) }}>{children}</div>
+        <div
+          style={
+            fullscreen
+              ? {
+                  // Fill the remaining overlay height so the demo (e.g. the
+                  // PipelineGraph canvas) gets full width and a tall pane.
+                  padding: 24,
+                  flex: 1,
+                  minHeight: 0,
+                  width: '100%',
+                  overflow: 'auto',
+                }
+              : { padding: 24, minHeight: 80, ...(height ? { height } : null) }
+          }
+        >
+          {children}
+        </div>
       ) : (
         <div
           style={{
             background: 'var(--color-doc-template-code)',
             // Round the bottom corners so the cream source bg respects the
             // parent's border-radius now that the parent no longer clips.
-            borderBottomLeftRadius: 'var(--radius-doc-template)',
-            borderBottomRightRadius: 'var(--radius-doc-template)',
-            overflow: 'hidden',
+            borderBottomLeftRadius: fullscreen ? 0 : 'var(--radius-doc-template)',
+            borderBottomRightRadius: fullscreen ? 0 : 'var(--radius-doc-template)',
+            overflow: fullscreen ? 'auto' : 'hidden',
+            ...(fullscreen ? { flex: 1, minHeight: 0 } : null),
           }}
         >
           <HighlightedSource code={visibleSource} filename={filename} />
