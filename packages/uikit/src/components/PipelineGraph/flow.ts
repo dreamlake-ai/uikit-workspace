@@ -6,11 +6,30 @@
  */
 import type { NodeKind, NodeStatus } from './types'
 
-// Node card size (design: 156 × 72).
+// Node card width, and the minimum/legacy height (a portless card is still a
+// card). Height is now derived per node from its port rows — see nodeHeight.
 export const NODE_W = 156
 export const NODE_H = 72
-// Fixed spacing between adjacent port dots, clustered at the node's centre.
+// Fixed spacing between adjacent port dots, clustered at the node's centre —
+// used only by the (currently unused) vertical orientation.
 export const PORT_GAP = 15
+
+// Node body layout: a header band, then one labelled row per port. Ports are
+// listed top-down inside the card (inputs down the left, outputs down the
+// right), so the card grows with whichever side has more ports.
+export const HEADER_H = 28
+export const ROW_H = 16
+export const BODY_PAD = 8
+
+/** Y-centre of port row `idx`, measured from the node's top edge. */
+export const rowCenter = (idx: number): number => HEADER_H + idx * ROW_H + ROW_H / 2
+
+/** A node's rendered height: header + one row per port (the taller side),
+ *  floored at one row so a source/sink still reads as a card. */
+export function nodeHeight(node: { inputs: string[]; outputs: string[] }): number {
+  const rows = Math.max(1, node.inputs.length, node.outputs.length)
+  return HEADER_H + rows * ROW_H + BODY_PAD
+}
 
 /** Kind → CSS colour (uikit tone token, theme-aware). */
 const KIND_TOKEN: Record<string, string> = {
@@ -75,18 +94,20 @@ export function edgeFlow(src: NodeStatus | undefined, dst: NodeStatus | undefine
 }
 
 /**
- * Offset (from the node's top-left corner) of a port dot along the node edge.
- * Horizontal layout → ports on left/right edges, spaced along Y. Ports are
- * clustered at a fixed PORT_GAP around the node's centre (shrinking only when
- * too many would overflow the 12px padding). The 6px dot's top-left is
- * returned. (Design's `portAlong`.)
+ * Offset (from the node's top-left corner) of a port dot's top edge along the
+ * node border. Horizontal layout (the tracer's only orientation) → one dot per
+ * port, aligned with that port's labelled row inside the card, listed top-down.
+ * The (unused) vertical orientation keeps the legacy clustered spacing. The
+ * 6px dot's top-left is returned. (Design's `portAlong`.)
  */
 export function portAlong(count: number, idx: number, vertical = false): number {
-  const full = vertical ? NODE_W : NODE_H
-  if (count <= 1) return full / 2 - 3
-  const gap = Math.min(PORT_GAP, (full - 12) / (count - 1))
-  const start = full / 2 - (gap * (count - 1)) / 2
-  return start + idx * gap - 3
+  if (vertical) {
+    if (count <= 1) return NODE_W / 2 - 3
+    const gap = Math.min(PORT_GAP, (NODE_W - 12) / (count - 1))
+    const start = NODE_W / 2 - (gap * (count - 1)) / 2
+    return start + idx * gap - 3
+  }
+  return rowCenter(idx) - 3
 }
 
 /** Absolute canvas position of a named port. Pure: each port in `inputs` /
@@ -101,7 +122,7 @@ export function portPos(
   const list = dir === 'in' ? node.inputs : node.outputs
   const along = portAlong(list.length, Math.max(list.indexOf(port), 0), vertical) + 3
   if (vertical) {
-    return { x: node.pos.x + along, y: dir === 'in' ? node.pos.y : node.pos.y + NODE_H }
+    return { x: node.pos.x + along, y: dir === 'in' ? node.pos.y : node.pos.y + nodeHeight(node) }
   }
   return {
     x: dir === 'in' ? node.pos.x : node.pos.x + NODE_W,

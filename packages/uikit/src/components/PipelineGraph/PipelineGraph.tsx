@@ -23,7 +23,7 @@ import {
 } from 'react'
 import { cn } from '../../lib/utils'
 import type { GraphNode, PipelineGraphData, StatusOverlay } from './types'
-import { FLOW, NODE_H, NODE_W, STATUS, edgeFlow, kindColor, portAlong, portPos } from './flow'
+import { FLOW, HEADER_H, NODE_W, STATUS, edgeFlow, kindColor, nodeHeight, portPos, rowCenter } from './flow'
 import { buildEdgePath, type Obstacle } from './edge-path'
 
 export interface PipelineGraphProps {
@@ -133,7 +133,7 @@ export function PipelineGraph({
     let h = 400
     for (const n of nodes) {
       w = Math.max(w, n.pos.x + NODE_W + 140)
-      h = Math.max(h, n.pos.y + NODE_H + 140)
+      h = Math.max(h, n.pos.y + nodeHeight(n) + 140)
     }
     return { w, h }
   }, [nodes])
@@ -252,7 +252,7 @@ export function PipelineGraph({
       const sx = v.x + n.pos.x * v.k
       const sy = v.y + n.pos.y * v.k
       const w = NODE_W * v.k
-      const h = NODE_H * v.k
+      const h = nodeHeight(n) * v.k
       if (sx < pad) x = v.x + (pad - sx)
       else if (sx + w > rect.width - pad) x = v.x - (sx + w - (rect.width - pad))
       if (sy < pad) y = v.y + (pad - sy)
@@ -324,7 +324,7 @@ export function PipelineGraph({
             const to = portPos(b, e.toPort, 'in')
             const obstacles: Obstacle[] = nodes
               .filter(n => n.id !== e.from && n.id !== e.to)
-              .map(n => ({ x0: n.pos.x - 4, x1: n.pos.x + NODE_W + 4, y0: n.pos.y - 4, y1: n.pos.y + NODE_H + 4 }))
+              .map(n => ({ x0: n.pos.x - 4, x1: n.pos.x + NODE_W + 4, y0: n.pos.y - 4, y1: n.pos.y + nodeHeight(n) + 4 }))
             // Pin the vertical bend where the (draggable) connector tag sits.
             const bendX = edgeOverrides[i]?.bendX ?? (from.x + to.x) / 2
             const anchorY = (from.y + to.y) / 2
@@ -413,7 +413,7 @@ export function PipelineGraph({
                 fontFamily: 'var(--font-uikit-mono)', fontSize: 9, lineHeight: 1,
                 padding: '2px 6px', borderRadius: 5,
                 background: 'var(--color-uikit-canvas-bg, var(--color-uikit-panel))',
-                border: '2px solid var(--color-uikit-muted)',
+                border: '1px solid var(--color-uikit-muted)',
                 color: 'var(--color-uikit-muted)',
                 whiteSpace: 'nowrap', cursor: 'grab', userSelect: 'none',
               }}
@@ -431,7 +431,10 @@ export function PipelineGraph({
 }
 
 // ---------------------------------------------------------------------------
-// Node card — faithful to the design (156×72, status-tinted, ports on edges).
+// Node card — a header band over an explicit port list: each input is a
+// left-aligned row (dot on the left border), each output a right-aligned row
+// (dot on the right border), all labelled INSIDE the card. Height grows with
+// whichever side has more ports (see nodeHeight); status still tints the card.
 // ---------------------------------------------------------------------------
 
 function PipeNode({ node, selected, dimmed, onPointerDown, onPointerMove, onPointerUp }: {
@@ -466,12 +469,10 @@ function PipeNode({ node, selected, dimmed, onPointerDown, onPointerMove, onPoin
       style={{
         position: 'absolute',
         left: node.pos.x, top: node.pos.y,
-        width: NODE_W, height: NODE_H,
+        width: NODE_W, height: nodeHeight(node),
         background: bg,
         border: `1px solid ${border}`,
         borderRadius: 7,
-        padding: '8px 10px',
-        display: 'flex', flexDirection: 'column', gap: 4,
         cursor: 'grab',
         boxShadow: selected ? '0 1px 0 rgba(0,0,0,.05), 0 6px 18px rgba(0,0,0,.10)' : '0 1px 0 rgba(0,0,0,.04)',
         opacity: dimmed ? 0.4 : 1,
@@ -479,55 +480,55 @@ function PipeNode({ node, selected, dimmed, onPointerDown, onPointerMove, onPoin
         fontFamily: 'var(--font-uikit-mono)',
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 7, minWidth: 0 }}>
-        <span style={{ width: 7, height: 7, borderRadius: 2, background: kc, flexShrink: 0 }} />
+      {/* Header band — kind dot + title, over a hairline divider. */}
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 7, minWidth: 0,
+        height: HEADER_H, padding: '0 10px',
+        borderBottom: '1px solid color-mix(in oklab, var(--color-uikit-faint) 70%, transparent)',
+      }}>
+        <span style={{ width: 7, height: 7, borderRadius: 2, background: kc, flexShrink: 0 }} title={node.kind} />
         <span style={{
           fontSize: 12, fontWeight: 600, color: 'var(--color-uikit-ink)', letterSpacing: '-.005em',
           whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0, flex: 1,
         }}>{node.title}</span>
       </div>
 
-      <div style={{
-        fontSize: 9, fontWeight: 500, color: 'var(--color-uikit-muted)', opacity: 0.7,
-        letterSpacing: '.06em', textTransform: 'uppercase',
-      }}>
-        {node.kind} · {node.inputs.length}→{node.outputs.length}
-      </div>
-
-      {/* Input ports: one per parameter. */}
+      {/* Input rows — dot on the left border, label listed inside. */}
       {node.inputs.map((p, i) => (
-        <Port key={`in-${p}-${i}`} dir="in" along={portAlong(node.inputs.length, i)} label={p} />
+        <Port key={`in-${p}-${i}`} dir="in" idx={i} label={p} />
       ))}
-      {/* Output ports (the tracer emits one — the result table). */}
+      {/* Output rows — dot on the right border, label listed inside. (The
+          tracer emits one output port, the result table; a sink has none.) */}
       {node.outputs.map((p, i) => (
-        <Port key={`out-${p}-${i}`} dir="out" along={portAlong(node.outputs.length, i)} label={p} />
+        <Port key={`out-${p}-${i}`} dir="out" idx={i} label={p} />
       ))}
     </div>
   )
 }
 
-function Port({ dir, along, label }: { dir: 'in' | 'out'; along: number; label: string }) {
-  // Dot center sits at `along + 2` (top-left `along - 1` + 3px half-height).
+function Port({ dir, idx, label }: { dir: 'in' | 'out'; idx: number; label: string }) {
+  const y = rowCenter(idx)   // dot + label centre, measured from the card top
   const labelStyle: React.CSSProperties = {
     position: 'absolute',
-    top: along + 2,
-    ...(dir === 'in'
-      ? { left: -6, transform: 'translate(-100%, -50%)' }
-      : { right: -6, transform: 'translate(100%, -50%)' }),
+    top: y, transform: 'translateY(-50%)',
+    maxWidth: NODE_W / 2 - 8,
     fontFamily: 'var(--font-uikit-mono)', fontSize: 9, lineHeight: 1,
-    color: 'var(--color-uikit-muted)', whiteSpace: 'nowrap', pointerEvents: 'none',
+    color: 'var(--color-uikit-muted)',
+    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+    pointerEvents: 'none',
+    ...(dir === 'in' ? { left: 10, textAlign: 'left' } : { right: 10, textAlign: 'right' }),
   }
   return (
     <>
       <span style={{
         position: 'absolute',
-        top: along - 1,
+        top: y - 3,
         ...(dir === 'in' ? { left: -3 } : { right: -3 }),
         width: 6, height: 6, borderRadius: 3,
         background: 'var(--color-uikit-panel)',
         border: '1px solid var(--color-uikit-muted)',
       }} />
-      <span style={labelStyle}>{label}</span>
+      <span style={labelStyle} title={label}>{label}</span>
     </>
   )
 }

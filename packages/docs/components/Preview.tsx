@@ -15,6 +15,8 @@ export interface PreviewProps {
   defaultTab?: 'preview' | 'source' | 'data'
   /** Force a height for the preview pane. */
   height?: number | string
+  /** Drop the preview pane's 24px gutter so the demo reaches every edge. */
+  flush?: boolean
 }
 
 type Tab = 'preview' | 'source' | 'data'
@@ -146,6 +148,7 @@ export function Preview({
   filename,
   defaultTab = 'preview',
   height,
+  flush = false,
 }: PreviewProps) {
   const [tab, setTab] = useState<Tab>(defaultTab)
   const [copied, setCopied] = useState(false)
@@ -306,7 +309,7 @@ export function Preview({
                   width: '100%',
                   overflow: 'auto',
                 }
-              : { padding: 24, minHeight: 80, ...(height ? { height } : null) }
+              : { padding: flush ? 0 : 24, minHeight: 80, ...(height ? { height } : null) }
           }
         >
           {/* Only in fullscreen: make the demo's own root element fill the

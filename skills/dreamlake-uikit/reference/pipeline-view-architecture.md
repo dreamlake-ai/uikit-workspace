@@ -53,9 +53,9 @@ One render of `PipelineGraph`, end to end:
    picks a flow → `FLOW[flow]` gives colour/width/dash/anim. A `mask` edge stays
    dashed in the settled states so a gate always reads as a gate; a selected
    edge switches to the single accent colour.
-4. **Draw nodes.** Absolutely-positioned cards, tinted by `status`, with a kind
-   dot, the `inputs→outputs` meta, a status footer (pulsing when `running`), and
-   port dots on the edges.
+4. **Draw nodes.** Absolutely-positioned cards, tinted by `status` (pulsing when
+   `running`), with a header (kind dot + title) over an explicit port list — one
+   labelled row per port, `inputs` down the left edge, `outputs` down the right.
 5. **Legend.** Bottom-right, the flow states — rendered from the same `FLOW`.
 
 **Interaction:** background drag pans; ⌘/ctrl-wheel or pinch zooms about the

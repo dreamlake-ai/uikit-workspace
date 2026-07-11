@@ -10,21 +10,23 @@ For the prose reference of the same shapes, see
 
 ## The node card
 
-A node is one stage — a `@ls.udf` — as a `156 × 72` card. Everything on it comes
+A node is one stage — a `@ls.udf` — as a card: a header band over an explicit
+port list. It's `156` wide and grows in height with its ports (a header plus one
+labelled row per port, taking whichever side has more). Everything on it comes
 straight from the node JSON; nothing is styled by hand.
 
 | On the card | JSON field | Notes |
 | --- | --- | --- |
-| Kind dot (top-left square) | `kind` | Tints by category — `source` green, `transform` blue, `model`/`review` purple, `filter` amber, `merge` grey, `sink` red. |
-| Title | `title` | The UDF name. `id` is the stable key (may differ on fan-out: `semantic_match_2`). |
-| Meta line `transform · 1→1` | `kind` · `inputs.length`→`outputs.length` | The `→` is port **counts**, not columns. |
-| Left dots | `inputs` | One input port per UDF parameter. |
-| Right dot | `outputs` | A UDF returns **one** table → a single `["out"]` port. A sink has none (`[]`). |
-| Status dot + label (footer) | `status` | `idle` here; drives tint + the pulse when `running`. |
+| Kind dot (header, left square) | `kind` | Tints by category — `source` green, `transform` blue, `model`/`review` purple, `filter` amber, `merge` grey, `sink` red. |
+| Title (header) | `title` | The UDF name. `id` is the stable key (may differ on fan-out: `semantic_match_2`). |
+| Left rows (dot on the left border + label inside) | `inputs` | One left-aligned row per UDF parameter, listed top-down. |
+| Right rows (dot on the right border + label inside) | `outputs` | A UDF returns **one** table → a single right-aligned `out` row. A sink has none (`[]`). |
+| Card tint | `status` | `idle` here; drives the tint + the pulse when `running`. |
 | _(not drawn on the card)_ | `columns` | The result **schema** — `boxes`, `classes`, `confidence`. Surfaced in the source inspector, not as ports. |
 
-**Ports vs columns** is the one thing to internalise: `inputs` are ports (one
-per parameter), `outputs` is a single port (the whole result table), and the
+Every port is named in place — no `2→1` count line, because the rows *are* the
+count. **Ports vs columns** is the one thing to internalise: `inputs` are ports
+(one per parameter), `outputs` is a single port (the whole result table), and the
 return column names live in `columns` — a schema, not more ports.
 
 ## Connector tags

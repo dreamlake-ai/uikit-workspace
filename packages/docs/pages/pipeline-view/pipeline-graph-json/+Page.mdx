@@ -92,8 +92,8 @@ have real `code`. A sink udf just has no output port (nothing to return).
 **Ports vs columns.** `inputs` are ports — one per parameter. `outputs` is a
 single port (`["out"]`) because a UDF returns **one** table; passing it
 downstream passes the whole table. The return column names live in `columns`
-(the result's schema), not as separate ports. The card subline shows
-`inputs.length → outputs.length` (e.g. `2 → 1`).
+(the result's schema), not as separate ports. On the card each port is its own
+labelled row — `inputs` down the left, `outputs` down the right.
 
 ### The output artifact
 

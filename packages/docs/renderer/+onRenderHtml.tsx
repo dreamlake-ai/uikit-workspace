@@ -53,6 +53,7 @@ export async function onRenderHtml(pageContext: any) {
     ${description ? escapeInject`<meta name="description" content="${description}" />` : ''}
     ${current?.noindex ? escapeInject`<meta name="robots" content="noindex, nofollow" />` : ''}
     ${mdHref ? escapeInject`<link rel="alternate" type="text/markdown" href="${mdHref}" />` : ''}
+    <script defer src="https://docs.studio.dreamlake.ai/design-integration.js"></script>
   </head>
   <body>
     <div id="root">${dangerouslySkipEscape(html)}</div>

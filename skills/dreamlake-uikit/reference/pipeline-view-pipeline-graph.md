@@ -53,8 +53,8 @@ def detect_objects(images: Tensor["N", "H", "W", 3]) -> Tuple["boxes", "classes"
 **② The node you see, ③ the JSON in between** — flip between the rendered card
 (**Preview**), the render call (**Source**), and the tracer's node JSON
 (**Data**). The card *is* the JSON: the kind dot ← `kind`, the title ← `title`,
-the `1→1` meta ← `inputs`/`outputs` lengths, the edge dots ← the `inputs` /
-`outputs` ports.
+and each port is a labelled row — the left rows ← the `inputs`, the right rows ←
+the `outputs`.
 
 The return columns (`boxes`, `classes`, `confidence`) live in `columns` — the
 result's schema, **not** extra ports. A UDF returns one table; passing it
