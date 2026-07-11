@@ -426,7 +426,7 @@ function Port({ dir, along }: { dir: 'in' | 'out'; along: number }) {
   return (
     <span style={{
       position: 'absolute',
-      top: along,
+      top: along - 1,
       ...(dir === 'in' ? { left: -3 } : { right: -3 }),
       width: 6, height: 6, borderRadius: 3,
       background: 'var(--color-uikit-panel)',
