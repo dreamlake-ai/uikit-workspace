@@ -289,12 +289,18 @@ export function Preview({
       </div>
       {tab === 'preview' ? (
         <div
+          {...(fullscreen ? { 'data-preview-fill': '' } : null)}
           style={
             fullscreen
               ? {
-                  // Fill the remaining overlay height so the demo (e.g. the
-                  // PipelineGraph canvas) gets full width and a tall pane.
-                  padding: 24,
+                  // Full-bleed: drop the padding so a canvas demo (e.g. the
+                  // PipelineGraph) reaches every edge of the overlay — that
+                  // 24px gutter was the stray "margin" around the canvas. The
+                  // `[data-preview-fill]` rule below then stretches the demo's
+                  // own wrapper to this pane's height, so a specimen with a
+                  // fixed height (360/440) grows to fill the viewport here
+                  // instead of leaving dead space below it.
+                  padding: 0,
                   flex: 1,
                   minHeight: 0,
                   width: '100%',
@@ -303,6 +309,9 @@ export function Preview({
               : { padding: 24, minHeight: 80, ...(height ? { height } : null) }
           }
         >
+          {/* Only in fullscreen: make the demo's own root element fill the
+              pane's height. `!important` beats a specimen's inline height. */}
+          {fullscreen && <style>{'[data-preview-fill]>:not(style){height:100%!important}'}</style>}
           {children}
         </div>
       ) : (
