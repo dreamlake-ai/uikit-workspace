@@ -124,7 +124,8 @@ export function PipelineGraph({
   }, [graph.nodes, graph.edges])
 
   const bounds = useMemo(() => {
-    let w = 800, h = 400
+    let w = 800
+    let h = 400
     for (const n of nodes) {
       w = Math.max(w, n.pos.x + NODE_W + 140)
       h = Math.max(h, n.pos.y + NODE_H + 140)
@@ -140,10 +141,12 @@ export function PipelineGraph({
       e.preventDefault()
       if (e.ctrlKey || e.metaKey) {
         const rect = el.getBoundingClientRect()
-        const cx = e.clientX - rect.left, cy = e.clientY - rect.top
+        const cx = e.clientX - rect.left
+        const cy = e.clientY - rect.top
         setView(v => {
           const k = Math.min(2.2, Math.max(0.35, v.k * (e.deltaY < 0 ? 1.08 : 1 / 1.08)))
-          const wx = (cx - v.x) / v.k, wy = (cy - v.y) / v.k
+          const wx = (cx - v.x) / v.k
+          const wy = (cy - v.y) / v.k
           return { k, x: cx - wx * k, y: cy - wy * k }
         })
       } else {
@@ -180,7 +183,8 @@ export function PipelineGraph({
   const onNodeMove = (e: ReactPointerEvent) => {
     const d = nodeDrag.current
     if (!d) return
-    const dx = (e.clientX - d.sx) / view.k, dy = (e.clientY - d.sy) / view.k
+    const dx = (e.clientX - d.sx) / view.k
+    const dy = (e.clientY - d.sy) / view.k
     if (Math.abs(dx) + Math.abs(dy) > 2) d.moved = true
     setPosOverride(o => ({ ...o, [d.id]: { x: d.bx + dx, y: d.by + dy } }))
   }
@@ -237,8 +241,10 @@ export function PipelineGraph({
     const pad = 48
     setView(v => {
       let { x, y } = v
-      const sx = v.x + n.pos.x * v.k, sy = v.y + n.pos.y * v.k
-      const w = NODE_W * v.k, h = NODE_H * v.k
+      const sx = v.x + n.pos.x * v.k
+      const sy = v.y + n.pos.y * v.k
+      const w = NODE_W * v.k
+      const h = NODE_H * v.k
       if (sx < pad) x = v.x + (pad - sx)
       else if (sx + w > rect.width - pad) x = v.x - (sx + w - (rect.width - pad))
       if (sy < pad) y = v.y + (pad - sy)
@@ -303,7 +309,8 @@ export function PipelineGraph({
       >
         <svg width={bounds.w} height={bounds.h} className="absolute top-0 left-0 pointer-events-none overflow-visible">
           {graph.edges.map((e, i) => {
-            const a = byId[e.from], b = byId[e.to]
+            const a = byId[e.from]
+            const b = byId[e.to]
             if (!a || !b) return null
             const from = portPos(a, e.fromPort, 'out')
             const to = portPos(b, e.toPort, 'in')
@@ -372,7 +379,8 @@ export function PipelineGraph({
             the tag off the line. Rendered as HTML so it's pointer-interactive
             (the svg above is pointer-events:none). */}
         {graph.edges.map((e, i) => {
-          const a = byId[e.from], b = byId[e.to]
+          const a = byId[e.from]
+          const b = byId[e.to]
           if (!a || !b) return null
           const from = portPos(a, e.fromPort, 'out')
           const to = portPos(b, e.toPort, 'in')
