@@ -395,9 +395,9 @@ export function PipelineGraph({
                 opacity: dim ? 0.28 : 1,
                 transition: 'opacity 160ms ease',
                 fontFamily: 'var(--font-uikit-mono)', fontSize: 9, lineHeight: 1,
-                padding: '2px 5px', borderRadius: 999,
-                background: 'var(--color-uikit-panel)',
-                border: '1px solid var(--color-uikit-faint)',
+                padding: '2px 6px', borderRadius: 5,
+                background: 'var(--color-uikit-canvas-bg, var(--color-uikit-panel))',
+                border: '2px solid var(--color-uikit-muted)',
                 color: 'var(--color-uikit-muted)',
                 whiteSpace: 'nowrap', cursor: 'grab', userSelect: 'none',
               }}
@@ -476,26 +476,6 @@ function PipeNode({ node, selected, dimmed, onPointerDown, onPointerMove, onPoin
         letterSpacing: '.06em', textTransform: 'uppercase',
       }}>
         {node.kind} · {node.inputs.length}→{node.outputs.length}
-      </div>
-
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10, fontWeight: 500, marginTop: 'auto' }}>
-        <span
-          className={node.status === 'running' ? 'dl-node-pulse' : undefined}
-          style={{
-            width: 6, height: 6, borderRadius: 3, background: st.color,
-            animation: node.status === 'running' ? 'dlNodePulse 1.4s ease-in-out infinite' : undefined,
-          }}
-        />
-        <span style={{ color: st.color, letterSpacing: '.04em' }}>{st.label}</span>
-        <span style={{ flex: 1 }} />
-        {node.status === 'running' && node.progress != null && (
-          <span style={{ color: 'var(--color-uikit-muted)', opacity: 0.85 }}>{Math.round(node.progress * 100)}%</span>
-        )}
-        {node.duration != null && node.status !== 'running' && (
-          <span style={{ color: 'var(--color-uikit-muted)', opacity: 0.85 }}>
-            {node.duration < 60 ? `${node.duration.toFixed(1)}s` : `${(node.duration / 60).toFixed(1)}m`}
-          </span>
-        )}
       </div>
 
       {/* Input ports: one per parameter. */}
