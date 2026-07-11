@@ -63,6 +63,11 @@ function useInjectedStyles() {
 
 type View = { x: number; y: number; k: number }
 
+// While dragging a connector tag up/down, snap it flush back onto the edge
+// once it's within this many canvas px of the line — so it clicks home instead
+// of hovering a pixel or two off with a stub leader trailing behind it.
+const TAG_SNAP = 7
+
 export function PipelineGraph({
   graph, statusById, selectedNodeId, onSelectNode, showControls = true, className,
 }: PipelineGraphProps) {
@@ -217,7 +222,10 @@ export function PipelineGraph({
     const dxCanvas = (e.clientX - d.sx) / view.k
     const dyCanvas = (e.clientY - d.sy) / view.k
     const bendX = Math.min(d.maxX, Math.max(d.minX, d.bendX + dxCanvas))
-    const tagDy = d.tagDy + dyCanvas
+    const raw = d.tagDy + dyCanvas
+    // Snap onto the line when close, so the tag settles flush and the dashed
+    // leader (drawn only when |tagDy| > 2) disappears.
+    const tagDy = Math.abs(raw) < TAG_SNAP ? 0 : raw
     setEdgeOverrides(o => ({ ...o, [d.i]: { bendX, tagDy } }))
   }
   const onTagUp = (e: ReactPointerEvent) => {
