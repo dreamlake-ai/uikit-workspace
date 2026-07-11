@@ -77,11 +77,15 @@ export function PipelineGraph({
 
   const [view, setView] = useState<View>({ x: 28, y: 20, k: 1 })
   const [posOverride, setPosOverride] = useState<Record<string, { x: number; y: number }>>({})
-  useEffect(() => { setPosOverride({}) }, [graph.id])
+  // Per-edge overrides: `bendX` pins where the vertical jog sits (absolute
+  // canvas x), `tagDy` lifts the connector tag off the line (canvas y offset).
+  const [edgeOverrides, setEdgeOverrides] = useState<Record<number, { bendX?: number; tagDy?: number }>>({})
+  useEffect(() => { setPosOverride({}); setEdgeOverrides({}) }, [graph.id])
 
   const containerRef = useRef<HTMLDivElement>(null)
   const panRef = useRef<{ x: number; y: number; vx: number; vy: number } | null>(null)
   const nodeDrag = useRef<{ id: string; sx: number; sy: number; bx: number; by: number; moved: boolean } | null>(null)
+  const tagDrag = useRef<{ i: number; sx: number; sy: number; bendX: number; tagDy: number; minX: number; maxX: number } | null>(null)
 
   // Effective nodes: drag overrides + live status overlay merged in.
   const nodes = useMemo(() => {
@@ -187,6 +191,38 @@ export function PipelineGraph({
     if (d && !d.moved) select(n.id === selected ? null : n.id)
   }
 
+  // — connector-tag drag: sideways drag moves the edge's vertical bend, up/down
+  //   drag lifts the tag off the line (a dashed leader then bridges the gap).
+  //   stopPropagation keeps the canvas from panning / nodes from dragging. —
+  const onTagDown = (
+    e: ReactPointerEvent, i: number,
+    from: { x: number; y: number }, to: { x: number; y: number },
+    bendX: number, tagDy: number,
+  ) => {
+    e.stopPropagation()
+    ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
+    tagDrag.current = {
+      i, sx: e.clientX, sy: e.clientY, bendX, tagDy,
+      minX: Math.min(from.x, to.x) + 8, maxX: Math.max(from.x, to.x) - 8,
+    }
+  }
+  const onTagMove = (e: ReactPointerEvent) => {
+    const d = tagDrag.current
+    if (!d) return
+    e.stopPropagation()
+    const dxCanvas = (e.clientX - d.sx) / view.k
+    const dyCanvas = (e.clientY - d.sy) / view.k
+    const bendX = Math.min(d.maxX, Math.max(d.minX, d.bendX + dxCanvas))
+    const tagDy = d.tagDy + dyCanvas
+    setEdgeOverrides(o => ({ ...o, [d.i]: { bendX, tagDy } }))
+  }
+  const onTagUp = (e: ReactPointerEvent) => {
+    if (!tagDrag.current) return
+    e.stopPropagation()
+    tagDrag.current = null
+    try { (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId) } catch { /* noop */ }
+  }
+
   // — keyboard navigation (only when the canvas is focused, so it never hijacks
   //   page arrow keys or collides with other graphs on the same page) —
 
@@ -274,7 +310,12 @@ export function PipelineGraph({
             const obstacles: Obstacle[] = nodes
               .filter(n => n.id !== e.from && n.id !== e.to)
               .map(n => ({ x0: n.pos.x - 4, x1: n.pos.x + NODE_W + 4, y0: n.pos.y - 4, y1: n.pos.y + NODE_H + 4 }))
-            const d = buildEdgePath(from, to, { obstacles })
+            // Pin the vertical bend where the (draggable) connector tag sits.
+            const bendX = edgeOverrides[i]?.bendX ?? (from.x + to.x) / 2
+            const anchorY = (from.y + to.y) / 2
+            const tagDy = edgeOverrides[i]?.tagDy ?? 0
+            const edgeOpts = { obstacles, bendX }
+            const d = buildEdgePath(from, to, edgeOpts)
             const flow = edgeFlow(a.status, b.status)
             const spec = FLOW[flow]
             const hot = !!selected && (e.from === selected || e.to === selected)
@@ -302,6 +343,13 @@ export function PipelineGraph({
                   fill="none" stroke={stroke} strokeWidth={width}
                   strokeLinecap="round" strokeLinejoin="round"
                 />
+                {/* Leader line: bridges the connector tag back to the edge when lifted. */}
+                {Math.abs(tagDy) > 2 && (
+                  <line
+                    x1={bendX} y1={anchorY} x2={bendX} y2={anchorY + tagDy}
+                    stroke="var(--color-uikit-muted)" strokeWidth={1} strokeDasharray="3 3"
+                  />
+                )}
               </g>
             )
           })}
@@ -318,6 +366,46 @@ export function PipelineGraph({
             onPointerUp={e => onNodeUp(e, n)}
           />
         ))}
+
+        {/* Connector tags — a draggable pill on each edge, showing what it
+            carries (`toPort`). Drag sideways to move the bend, up/down to lift
+            the tag off the line. Rendered as HTML so it's pointer-interactive
+            (the svg above is pointer-events:none). */}
+        {graph.edges.map((e, i) => {
+          const a = byId[e.from], b = byId[e.to]
+          if (!a || !b) return null
+          const from = portPos(a, e.fromPort, 'out')
+          const to = portPos(b, e.toPort, 'in')
+          const bendX = edgeOverrides[i]?.bendX ?? (from.x + to.x) / 2
+          const anchorY = (from.y + to.y) / 2
+          const tagDy = edgeOverrides[i]?.tagDy ?? 0
+          const hot = !!selected && (e.from === selected || e.to === selected)
+          const dim = !!selected && !hot
+          return (
+            <div
+              key={`tag-${i}`}
+              onPointerDown={ev => onTagDown(ev, i, from, to, bendX, tagDy)}
+              onPointerMove={onTagMove}
+              onPointerUp={onTagUp}
+              onPointerCancel={onTagUp}
+              style={{
+                position: 'absolute',
+                left: bendX, top: anchorY + tagDy,
+                transform: 'translate(-50%, -50%)',
+                opacity: dim ? 0.28 : 1,
+                transition: 'opacity 160ms ease',
+                fontFamily: 'var(--font-uikit-mono)', fontSize: 9, lineHeight: 1,
+                padding: '2px 6px', borderRadius: 5,
+                background: 'var(--color-uikit-canvas-bg, var(--color-uikit-panel))',
+                border: '2px solid var(--color-uikit-muted)',
+                color: 'var(--color-uikit-muted)',
+                whiteSpace: 'nowrap', cursor: 'grab', userSelect: 'none',
+              }}
+            >
+              {e.toPort}
+            </div>
+          )
+        })}
       </div>
 
       {showControls && <Legend />}
@@ -390,48 +478,41 @@ function PipeNode({ node, selected, dimmed, onPointerDown, onPointerMove, onPoin
         {node.kind} · {node.inputs.length}→{node.outputs.length}
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10, fontWeight: 500, marginTop: 'auto' }}>
-        <span
-          className={node.status === 'running' ? 'dl-node-pulse' : undefined}
-          style={{
-            width: 6, height: 6, borderRadius: 3, background: st.color,
-            animation: node.status === 'running' ? 'dlNodePulse 1.4s ease-in-out infinite' : undefined,
-          }}
-        />
-        <span style={{ color: st.color, letterSpacing: '.04em' }}>{st.label}</span>
-        <span style={{ flex: 1 }} />
-        {node.status === 'running' && node.progress != null && (
-          <span style={{ color: 'var(--color-uikit-muted)', opacity: 0.85 }}>{Math.round(node.progress * 100)}%</span>
-        )}
-        {node.duration != null && node.status !== 'running' && (
-          <span style={{ color: 'var(--color-uikit-muted)', opacity: 0.85 }}>
-            {node.duration < 60 ? `${node.duration.toFixed(1)}s` : `${(node.duration / 60).toFixed(1)}m`}
-          </span>
-        )}
-      </div>
-
       {/* Input ports: one per parameter. */}
       {node.inputs.map((p, i) => (
-        <Port key={`in-${p}-${i}`} dir="in" along={portAlong(node.inputs.length, i)} />
+        <Port key={`in-${p}-${i}`} dir="in" along={portAlong(node.inputs.length, i)} label={p} />
       ))}
       {/* Output ports (the tracer emits one — the result table). */}
       {node.outputs.map((p, i) => (
-        <Port key={`out-${p}-${i}`} dir="out" along={portAlong(node.outputs.length, i)} />
+        <Port key={`out-${p}-${i}`} dir="out" along={portAlong(node.outputs.length, i)} label={p} />
       ))}
     </div>
   )
 }
 
-function Port({ dir, along }: { dir: 'in' | 'out'; along: number }) {
+function Port({ dir, along, label }: { dir: 'in' | 'out'; along: number; label: string }) {
+  // Dot center sits at `along + 2` (top-left `along - 1` + 3px half-height).
+  const labelStyle: React.CSSProperties = {
+    position: 'absolute',
+    top: along + 2,
+    ...(dir === 'in'
+      ? { left: -6, transform: 'translate(-100%, -50%)' }
+      : { right: -6, transform: 'translate(100%, -50%)' }),
+    fontFamily: 'var(--font-uikit-mono)', fontSize: 9, lineHeight: 1,
+    color: 'var(--color-uikit-muted)', whiteSpace: 'nowrap', pointerEvents: 'none',
+  }
   return (
-    <span style={{
-      position: 'absolute',
-      top: along,
-      ...(dir === 'in' ? { left: -3 } : { right: -3 }),
-      width: 6, height: 6, borderRadius: 3,
-      background: 'var(--color-uikit-panel)',
-      border: '1px solid var(--color-uikit-muted)',
-    }} />
+    <>
+      <span style={{
+        position: 'absolute',
+        top: along - 1,
+        ...(dir === 'in' ? { left: -3 } : { right: -3 }),
+        width: 6, height: 6, borderRadius: 3,
+        background: 'var(--color-uikit-panel)',
+        border: '1px solid var(--color-uikit-muted)',
+      }} />
+      <span style={labelStyle}>{label}</span>
+    </>
   )
 }
 

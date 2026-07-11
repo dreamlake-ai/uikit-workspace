@@ -9,6 +9,8 @@ import type { NodeKind, NodeStatus } from './types'
 // Node card size (design: 156 × 72).
 export const NODE_W = 156
 export const NODE_H = 72
+// Fixed spacing between adjacent port dots, clustered at the node's centre.
+export const PORT_GAP = 15
 
 /** Kind → CSS colour (uikit tone token, theme-aware). */
 const KIND_TOKEN: Record<string, string> = {
@@ -74,15 +76,17 @@ export function edgeFlow(src: NodeStatus | undefined, dst: NodeStatus | undefine
 
 /**
  * Offset (from the node's top-left corner) of a port dot along the node edge.
- * Horizontal layout → ports on left/right edges, spaced along Y. The 6px dot's
- * top-left is returned. (Design's `portAlong`.)
+ * Horizontal layout → ports on left/right edges, spaced along Y. Ports are
+ * clustered at a fixed PORT_GAP around the node's centre (shrinking only when
+ * too many would overflow the 12px padding). The 6px dot's top-left is
+ * returned. (Design's `portAlong`.)
  */
 export function portAlong(count: number, idx: number, vertical = false): number {
   const full = vertical ? NODE_W : NODE_H
   if (count <= 1) return full / 2 - 3
-  const span = full - 24
-  const step = span / (count - 1)
-  return 12 + idx * step - 3
+  const gap = Math.min(PORT_GAP, (full - 12) / (count - 1))
+  const start = full / 2 - (gap * (count - 1)) / 2
+  return start + idx * gap - 3
 }
 
 /** Absolute canvas position of a named port. Pure: each port in `inputs` /
