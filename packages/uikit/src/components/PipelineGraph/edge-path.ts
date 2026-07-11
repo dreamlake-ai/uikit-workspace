@@ -16,7 +16,8 @@ const CURVE_THRESHOLD = 30 // |Δy| below this → soft curve instead of orthogo
 
 /** Does the vertical segment at x=`xx` spanning [ya,yb] pass through an obstacle? */
 function hitsV(obstacles: Obstacle[], ya: number, yb: number, xx: number): Obstacle | null {
-  const lo = Math.min(ya, yb), hi = Math.max(ya, yb)
+  const lo = Math.min(ya, yb)
+  const hi = Math.max(ya, yb)
   for (const o of obstacles) {
     if (xx > o.x0 && xx < o.x1 && hi > o.y0 && lo < o.y1) return o
   }
