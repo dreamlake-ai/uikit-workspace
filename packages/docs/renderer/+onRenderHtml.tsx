@@ -38,6 +38,15 @@ export async function onRenderHtml(pageContext: any) {
   const themeScript = dangerouslySkipEscape(
     `<script>(function(){try{var raw=localStorage.getItem('doc:theme');var t=raw;try{t=JSON.parse(raw);}catch(_){}var d=document.documentElement;if(t==='light'){d.setAttribute('data-theme','light');}else if(t==='dark'){d.setAttribute('data-theme','dark');}else{d.setAttribute('data-theme',window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');}}catch(e){}})()</script>`,
   )
+  // Studio Web Preview DOM picker (dev only). Lets Studio's element picker
+  // reach into this site when it's embedded cross-origin in the /preview
+  // panel. `import.meta.env.DEV` is false during `vike build`, so the
+  // prerendered production HTML never carries it.
+  const pickerScript = import.meta.env.DEV
+    ? dangerouslySkipEscape(
+        '<script defer src="https://docs.studio.dreamlake.ai/design-integration.js"></script>',
+      )
+    : ''
 
   return {
     documentHtml: escapeInject`<!DOCTYPE html>
@@ -46,6 +55,7 @@ export async function onRenderHtml(pageContext: any) {
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     ${themeScript}
+    ${pickerScript}
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
     <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet" />
