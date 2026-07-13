@@ -637,11 +637,11 @@ const CSS = `
   border-radius:6px;background:color-mix(in srgb, var(--va-text) 4%, transparent);box-shadow:inset 0 0 0 1px var(--va-line)}
 .va-seg{position:absolute;top:30px;bottom:0;border-radius:6px;display:flex;align-items:center;
   padding:0 9px;overflow:hidden;background:var(--va-panel2);box-shadow:inset 0 0 0 1px var(--va-line)}
-.va-seg:hover{background:color-mix(in srgb, var(--va-selected) 55%, var(--va-panel2));box-shadow:inset 0 0 0 1px var(--va-line)}
+.va-seg:hover{background:#edf6fc;box-shadow:inset 0 0 0 1px var(--va-line)}
 .va-seg.sel{background:#edf6fc;box-shadow:inset 0 0 0 1.5px #23a9ff;z-index:3}
 .va-seg.sel .va-seglabel{color:#1a1a1a}
-.va-seglabel{font-size:11px;color:var(--va-muted);font-weight:500;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
-.va-seg:hover .va-seglabel{color:var(--va-text)}
+.va-seglabel{font-size:11px;color:var(--va-muted);font-weight:400;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
+.va-seg:hover .va-seglabel{color:#1a1a1a}
 .va-handle{position:absolute;top:30px;bottom:0;width:9px;margin-left:-5px;cursor:ew-resize;z-index:5}
 .va-handle::after{content:"";position:absolute;left:4px;top:0;bottom:0;width:1.5px;background:var(--va-accent);opacity:0}
 .va-handle:hover::after{opacity:1}
@@ -668,7 +668,7 @@ const CSS = `
   border:1px solid var(--va-line);border-radius:8px;padding:9px;font:13px/1.45 inherit}
 .va-desc-box:focus{outline:none;border-color:var(--va-accent)}
 .va-desc-meta{display:flex;gap:12px;color:var(--va-muted);
-  font:12px var(--f-mono, ui-monospace, Menlo, monospace)}
+  font:11px var(--f-mono, ui-monospace, Menlo, monospace)}
 .va-desc-meta > span:first-child{width:72px;flex:none}
 
 .va-toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--va-panel);
