@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { VideoAnnotator, type Segment, type VideoAnnotatorHandle } from '@dreamlake/uikit'
 import { Button } from '@dreamlake/uikit'
 
@@ -16,8 +17,8 @@ export const RefControlSpec = () => {
       <div className="flex gap-2">
         <Button size="sm" onClick={() => ref.current?.split()}>Split at playhead</Button>
         <Button size="sm" variant="secondary" onClick={() => ref.current?.merge()}>Merge current</Button>
-        <Button size="sm" variant="ghost" onClick={() => ref.current?.stepFrame(-1)}>◀ frame</Button>
-        <Button size="sm" variant="ghost" onClick={() => ref.current?.stepFrame(1)}>frame ▶</Button>
+        <Button size="sm" variant="ghost" onClick={() => ref.current?.stepFrame(-1)}><ChevronLeft size={14} /> frame</Button>
+        <Button size="sm" variant="ghost" onClick={() => ref.current?.stepFrame(1)}>frame <ChevronRight size={14} /></Button>
       </div>
       <div className="h-[420px]">
         <VideoAnnotator
