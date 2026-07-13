@@ -451,7 +451,7 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
 
           <div className="va-tp-right">
             <button className="va-icon" aria-label="Split at playhead (S)" onClick={doSplit}>
-              <Scissors size={12} />
+              <Scissors size={14} />
             </button>
             <button
               className="va-icon"
@@ -459,7 +459,7 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
               onClick={() => doMerge(sel)}
               disabled={sel <= 0}
             >
-              <ArrowLeftToLine size={12} />
+              <ArrowLeftToLine size={14} />
             </button>
           </div>
         </div>
@@ -507,7 +507,7 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
             {ticks.map((rt, i) => (
               <div
                 key={i}
-                className={cn("va-tick", rt.major && "major", i === ticks.length - 1 && "end")}
+                className={cn("va-tick", rt.major && "major", i === 0 && "start", i === ticks.length - 1 && "end")}
                 style={{ left: `${(rt.t / (D || 1)) * 100}%` }}
               >
                 <span className="va-ticklabel">
@@ -597,7 +597,8 @@ const CSS = `
 .va-tp-right{justify-content:flex-end}
 .va-tp-center{display:flex;align-items:center;gap:2px;flex:none}
 .va-transport button{height:28px}
-.va-icon{width:28px;height:28px;padding:0;border:0;justify-content:center;color:var(--va-text)}
+.va-icon{width:28px;height:28px;padding:0;border:0;justify-content:center;
+  color:color-mix(in srgb, var(--va-text) 75%, var(--va-muted))}
 .va-icon svg{flex:none}
 .va-play{width:28px;height:28px;background:var(--va-panel2)}
 .va-play:hover{background:color-mix(in srgb, var(--va-accent) 16%, var(--va-panel2))}
@@ -658,10 +659,11 @@ const CSS = `
 .va-tick{position:absolute;top:0;height:24px;pointer-events:none}
 .va-tick::before{content:"";position:absolute;top:17px;left:0;width:1px;height:5px;background:var(--va-line)}
 .va-tick.major::before{top:14px;height:8px;background:var(--va-muted)}
-.va-ticklabel{position:absolute;top:1px;left:0;transform:translateX(3px);white-space:nowrap;
+.va-ticklabel{position:absolute;top:1px;left:0;transform:translateX(-50%);white-space:nowrap;
   font:11px var(--f-mono, ui-monospace, Menlo, monospace);color:var(--va-muted);line-height:1}
 .va-tick.major .va-ticklabel{font-weight:600;color:color-mix(in srgb, var(--va-text) 55%, var(--va-muted))}
-.va-tick.end .va-ticklabel{left:auto;right:0;transform:translateX(-3px)}
+.va-tick.start .va-ticklabel{transform:translateX(0)}
+.va-tick.end .va-ticklabel{left:auto;right:0;transform:translateX(0)}
 
 .va-desc{display:flex;flex-direction:column;gap:4px;flex:none}
 .va-desc-box{width:100%;min-height:60px;resize:vertical;background:var(--va-field);color:var(--va-text);
