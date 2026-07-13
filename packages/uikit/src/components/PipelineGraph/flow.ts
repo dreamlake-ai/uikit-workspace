@@ -29,6 +29,8 @@ export const kindColor = (k: NodeKind): string =>
 export const STATUS: Record<NodeStatus, { label: string; color: string }> = {
   idle: { label: 'idle', color: 'var(--color-uikit-muted)' },
   running: { label: 'running', color: 'var(--color-uikit-tone-blue)' },
+  // Human-in-the-loop pause (serving a labeling UI) — purple, not the running blue.
+  waiting: { label: 'waiting', color: 'var(--color-uikit-tone-purple)' },
   ok: { label: 'ok', color: 'var(--color-uikit-tone-green)' },
   error: { label: 'error', color: 'var(--color-uikit-tone-red)' },
   stale: { label: 'stale', color: 'var(--color-uikit-tone-amber)' },

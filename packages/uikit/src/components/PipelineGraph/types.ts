@@ -26,8 +26,10 @@ export type NodeKind =
   | 'review'
   | (string & {})
 
-/** Runtime state. A freshly traced graph is entirely `idle`. */
-export type NodeStatus = 'idle' | 'running' | 'ok' | 'error' | 'stale'
+/** Runtime state. A freshly traced graph is entirely `idle`. `waiting` is the
+ *  human-in-the-loop pause (the node is serving a labeling UI, not computing) —
+ *  distinct from `running`. */
+export type NodeStatus = 'idle' | 'running' | 'waiting' | 'ok' | 'error' | 'stale'
 
 export interface GraphNode {
   // —— static (filled by the tracer) ——
@@ -81,5 +83,12 @@ export interface PipelineGraphData {
  *  onto the static graph so edges re-derive their flow — see PipelineGraph. */
 export type StatusOverlay = Record<
   string,
-  { status?: NodeStatus; progress?: number | null; duration?: number | null; rows?: number | null }
+  {
+    status?: NodeStatus
+    progress?: number | null
+    duration?: number | null
+    rows?: number | null
+    /** Error message when status is `error` (shown in the node status panel). */
+    error?: string | null
+  }
 >
