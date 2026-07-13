@@ -94,6 +94,19 @@ idle), exactly like a real pipeline. Nothing real executes — it only drives
 edges go green, a `stale` node's edges turn amber, an `error` node's edges turn
 red, and nodes blocked by an upstream failure stay idle.
 
+## Ports & labels
+
+Each stage's parameters become **input ports** and its result becomes the single
+**output port**, so a node's port count reads straight off its signature — from a
+`source` with zero inputs to a `merge` gathering four. Every port is labeled with
+its name, and each edge carries a **connector tag** naming the data it passes.
+The tags are draggable: drag one sideways to move the bend along the edge, or
+drag it up/down to lift the tag onto a leader line so a crowded corner stays
+legible.
+
+The same graph paired with its source rail — click a node to read the UDF whose
+parameters and return columns produced those ports:
+
 ## Props
 
 ### `PipelineGraph`
