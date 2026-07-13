@@ -433,19 +433,19 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
 
           <div className="va-tp-center">
             <button className="va-icon" aria-label="Prev boundary (,)" onClick={() => gotoBoundary(-1)}>
-              <SkipBack size={12} />
+              <SkipBack size={14} />
             </button>
             <button className="va-icon" aria-label="Prev frame (←)" onClick={() => stepFrame(-1, false)}>
-              <ChevronLeft size={12} />
+              <ChevronLeft size={14} />
             </button>
             <button className="va-icon va-play" aria-label="Play/Pause (Space)" onClick={togglePlay}>
-              {playing ? <Pause size={12} /> : <Play size={12} />}
+              {playing ? <Pause size={14} /> : <Play size={14} />}
             </button>
             <button className="va-icon" aria-label="Next frame (→)" onClick={() => stepFrame(1, false)}>
-              <ChevronRight size={12} />
+              <ChevronRight size={14} />
             </button>
             <button className="va-icon" aria-label="Next boundary (.)" onClick={() => gotoBoundary(1)}>
-              <SkipForward size={12} />
+              <SkipForward size={14} />
             </button>
           </div>
 
@@ -592,14 +592,14 @@ const CSS = `
 .va-video{max-width:100%;max-height:100%;background:#000}
 .va-stage-msg{position:absolute;color:var(--va-muted);font-size:13px;text-align:center;padding:20px}
 
-.va-transport{display:flex;align-items:center;gap:8px;flex:none}
+.va-transport{display:flex;align-items:center;gap:8px;flex:none;margin-top:-6px}
 .va-tp-left,.va-tp-right{flex:1 1 0;display:flex;align-items:center;gap:6px}
 .va-tp-right{justify-content:flex-end}
 .va-tp-center{display:flex;align-items:center;gap:2px;flex:none}
-.va-transport button{height:24px}
-.va-icon{width:24px;height:24px;padding:0;border:0;justify-content:center;color:var(--va-text)}
+.va-transport button{height:28px}
+.va-icon{width:28px;height:28px;padding:0;border:0;justify-content:center;color:var(--va-text)}
 .va-icon svg{flex:none}
-.va-play{width:24px;height:24px;background:var(--va-panel2)}
+.va-play{width:28px;height:28px;background:var(--va-panel2)}
 .va-play:hover{background:color-mix(in srgb, var(--va-accent) 16%, var(--va-panel2))}
 
 /* Hover tooltip — matches the component's own floating surfaces (speed menu,
@@ -632,14 +632,16 @@ const CSS = `
 .va-speedmenu button[aria-selected="true"]{color:var(--va-accent)}
 .va-speedcheck{position:absolute;left:6px}
 
-.va-timeline{position:relative;height:66px;background:transparent;cursor:pointer;user-select:none;flex:none}
+.va-timeline{position:relative;height:62px;background:transparent;cursor:pointer;user-select:none;flex:none;margin-top:-6px}
 .va-timeline:not(:has(.va-seg))::before{content:"";position:absolute;top:30px;bottom:0;left:0;right:0;
   border-radius:6px;background:color-mix(in srgb, var(--va-text) 4%, transparent);box-shadow:inset 0 0 0 1px var(--va-line)}
 .va-seg{position:absolute;top:30px;bottom:0;border-radius:6px;display:flex;align-items:center;
   padding:0 9px;overflow:hidden;background:var(--va-panel2);box-shadow:inset 0 0 0 1px var(--va-line)}
-.va-seg:hover{background:color-mix(in srgb, var(--va-accent) 20%, var(--va-bg));box-shadow:inset 0 0 0 1.5px var(--va-accent)}
-.va-seg.sel{background:color-mix(in srgb, var(--va-accent) 22%, var(--va-bg));box-shadow:inset 0 0 0 1.5px var(--va-accent);z-index:3}
-.va-seglabel{font-size:11px;color:var(--va-text);font-weight:600;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
+.va-seg:hover{background:color-mix(in srgb, var(--va-selected) 55%, var(--va-panel2));box-shadow:inset 0 0 0 1px var(--va-line)}
+.va-seg.sel{background:#edf6fc;box-shadow:inset 0 0 0 1.5px #23a9ff;z-index:3}
+.va-seg.sel .va-seglabel{color:#1a1a1a}
+.va-seglabel{font-size:11px;color:var(--va-muted);font-weight:500;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
+.va-seg:hover .va-seglabel{color:var(--va-text)}
 .va-handle{position:absolute;top:30px;bottom:0;width:9px;margin-left:-5px;cursor:ew-resize;z-index:5}
 .va-handle::after{content:"";position:absolute;left:4px;top:0;bottom:0;width:1.5px;background:var(--va-accent);opacity:0}
 .va-handle:hover::after{opacity:1}
