@@ -575,6 +575,9 @@ const CSS = `
      so it stays dark in dark mode — not a white glow off the light ink. */
   --va-shadow: var(--shadow-tint-2, rgba(0,0,0,.1));
   --va-hover: color-mix(in srgb, var(--va-text) 5%, var(--va-panel));
+  /* Own stacking context so the timeline/tooltip/menu z-indexes (up to 60) stay
+     contained and can't paint over a host's sticky header when scrolled. */
+  isolation:isolate;
   display:flex; flex-direction:column; gap:12px; min-width:0; min-height:0; height:100%;
   color:var(--va-text);
   font:14px/1.45 var(--f-ui, "Inter Tight", ui-sans-serif, system-ui, -apple-system, sans-serif);
