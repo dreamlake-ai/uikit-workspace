@@ -1,5 +1,5 @@
 export { VideoAnnotator } from "./VideoAnnotator";
-export type { Segment, VideoAnnotatorProps, VideoAnnotatorHandle } from "./types";
+export type { Segment, Track, VideoAnnotatorProps, VideoAnnotatorHandle } from "./types";
 export {
   normalizeSegments,
   splitAt,
