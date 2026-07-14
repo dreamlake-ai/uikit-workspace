@@ -1,4 +1,4 @@
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import React, { type ReactNode, useMemo, useState } from "react";
 
 import {
@@ -455,16 +455,23 @@ export function TreeEntryItem<T extends TreeDataItem>({
                 }}
                 className="flex size-4 cursor-pointer items-center justify-center"
               >
-                <ChevronDown
-                  className={cn(
-                    "size-4 transition-transform",
-                    expandedItems &&
-                      !expandedItems?.has(item.id) &&
-                      "-rotate-90",
-                    item.disable && "text-uikit-muted",
-                  )}
-                  strokeWidth={1.5}
-                />
+                {expandedItems && !expandedItems?.has(item.id) ? (
+                  <ChevronRight
+                    className={cn(
+                      "size-4 transition-transform",
+                      item.disable && "text-uikit-muted",
+                    )}
+                    strokeWidth={1.5}
+                  />
+                ) : (
+                  <ChevronDown
+                    className={cn(
+                      "size-4 transition-transform",
+                      item.disable && "text-uikit-muted",
+                    )}
+                    strokeWidth={1.5}
+                  />
+                )}
               </button>
               <div
                 className={cn(
@@ -494,16 +501,23 @@ export function TreeEntryItem<T extends TreeDataItem>({
                   }}
                   className="absolute z-20 flex cursor-pointer items-center justify-center opacity-0 transition-opacity group-hover:opacity-100"
                 >
-                  <ChevronDown
-                    className={cn(
-                      "size-4 transition-transform",
-                      expandedItems &&
-                        !expandedItems?.has(item.id) &&
-                        "-rotate-90",
-                      item.disable && "text-uikit-muted",
-                    )}
-                    strokeWidth={1.5}
-                  />
+                  {expandedItems && !expandedItems?.has(item.id) ? (
+                    <ChevronRight
+                      className={cn(
+                        "size-4 transition-transform",
+                        item.disable && "text-uikit-muted",
+                      )}
+                      strokeWidth={1.5}
+                    />
+                  ) : (
+                    <ChevronDown
+                      className={cn(
+                        "size-4 transition-transform",
+                        item.disable && "text-uikit-muted",
+                      )}
+                      strokeWidth={1.5}
+                    />
+                  )}
                 </button>
               )}
               <div
@@ -561,18 +575,19 @@ export function TreeEntryItem<T extends TreeDataItem>({
                 }}
                 className="flex size-4 shrink-0 cursor-pointer items-center justify-center"
               >
-                <ChevronDown
-                  className={cn(
-                    // Quiet affordance: smaller + dimmed vs the leading
-                    // chevron, so it doesn't outweigh the row icons.
+                {(() => {
+                  // Quiet affordance: smaller + dimmed vs the leading
+                  // chevron, so it doesn't outweigh the row icons.
+                  const chevronClass = cn(
                     "size-3 opacity-50 transition-transform",
-                    expandedItems &&
-                      !expandedItems?.has(item.id) &&
-                      "rotate-90",
                     item.disable && "text-uikit-muted",
-                  )}
-                  strokeWidth={1.5}
-                />
+                  );
+                  return expandedItems && !expandedItems?.has(item.id) ? (
+                    <ChevronRight className={chevronClass} strokeWidth={1.5} />
+                  ) : (
+                    <ChevronDown className={chevronClass} strokeWidth={1.5} />
+                  );
+                })()}
               </button>
             )}
         </div>
