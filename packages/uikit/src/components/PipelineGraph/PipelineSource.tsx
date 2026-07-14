@@ -35,7 +35,7 @@ export interface PipelineSourceProps {
 
 type Tab = 'pipeline' | 'node' | 'code'
 
-const ALL_STATUSES: NodeStatus[] = ['idle', 'running', 'ok', 'error', 'stale']
+const ALL_STATUSES: NodeStatus[] = ['idle', 'running', 'waiting', 'ok', 'error', 'stale']
 
 export function PipelineSource({ graph, selectedNodeId, onSelectNode, statusById, onRun, className }: PipelineSourceProps) {
   const node = selectedNodeId ? graph.nodes[selectedNodeId] : null
