@@ -12,7 +12,7 @@
  * `onRun`. The tab bar matches the design's DLTabBar (UI-font text tabs over a
  * hairline with a sliding underline).
  */
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { cn } from '../../lib/utils'
 import { STATUS } from './flow'
 import type { GraphNode, NodeStatus, PipelineGraphData, StatusOverlay } from './types'
@@ -106,7 +106,7 @@ export function PipelineSource({ graph, selectedNodeId, onSelectNode, statusById
       {tab === 'pipeline' && (
         <Pane>
           <PipelineStatus graph={graph} statusById={statusById} onRun={onRun} />
-          <Code aria-label={`${graph.id}.py`}>{graph.code}</Code>
+          <CodeBlock code={graph.code} ariaLabel={`${graph.id}.py`} />
         </Pane>
       )}
       {tab === 'node' && node && (
@@ -115,28 +115,124 @@ export function PipelineSource({ graph, selectedNodeId, onSelectNode, statusById
         </div>
       )}
       {tab === 'code' && node && (
-        <Code aria-label={`${node.title}.py`} className="flex-1">{node.code ?? ''}</Code>
+        <CodeBlock code={node.code ?? ''} ariaLabel={`${node.title}.py`} />
       )}
     </div>
   )
 }
 
-// ── layout + code ────────────────────────────────────────────────────────────
+// ── layout ───────────────────────────────────────────────────────────────────
 
 function Pane({ children }: { children: React.ReactNode }) {
   return <div className="flex-1 min-h-0 flex flex-col">{children}</div>
 }
 
-function Code({ children, className, ...rest }: React.HTMLAttributes<HTMLPreElement>) {
+// ── code editor — read-only, line-number gutter + python highlight ──────────
+// A small editor-style view (design's PipeCodeBlock): a sticky line-number
+// gutter and a lightweight regex Python highlighter (theme-aware via uikit
+// tone tokens). Read-only — this is a source inspector.
+
+function CodeBlock({ code, ariaLabel }: { code: string; ariaLabel?: string }) {
+  const lines = useMemo(() => pyHighlight(code), [code])
   return (
-    <pre
-      {...rest}
-      className={cn('flex-1 min-h-0 overflow-auto m-0 px-3 py-2.5 text-[11px] leading-[1.55] text-uikit-ink', className)}
-      style={{ fontFamily: 'var(--font-uikit-mono)' }}
+    <div
+      className="flex-1 min-h-0 overflow-auto"
+      aria-label={ariaLabel}
+      style={{ fontFamily: 'var(--font-uikit-mono)', fontSize: 12, lineHeight: '18px', color: 'var(--color-uikit-ink)' }}
     >
-      {children}
-    </pre>
+      <div style={{ display: 'flex', minHeight: '100%' }}>
+        <div
+          aria-hidden
+          style={{
+            position: 'sticky', left: 0, zIndex: 1, flexShrink: 0,
+            padding: '8px 8px 8px 12px', textAlign: 'right',
+            color: 'var(--color-uikit-muted)', opacity: 0.5, userSelect: 'none',
+            background: 'var(--color-uikit-panel)',
+            borderRight: '1px solid var(--color-uikit-faint)',
+          }}
+        >
+          {lines.map((_, i) => <div key={i}>{i + 1}</div>)}
+        </div>
+        <div style={{ flex: 1, minWidth: 0, whiteSpace: 'pre', padding: '8px 12px' }}>
+          {lines}
+        </div>
+      </div>
+    </div>
   )
+}
+
+type Tok = { kind: string; t: string }
+
+const PY_KEYWORDS = new Set([
+  'def', 'return', 'import', 'from', 'as', 'if', 'else', 'elif', 'for', 'while',
+  'in', 'is', 'not', 'and', 'or', 'lambda', 'class', 'with', 'try', 'except',
+  'pass', 'raise', 'yield', 'await', 'async', 'True', 'False', 'None',
+])
+const PY_BUILTINS = new Set(['print', 'len', 'range', 'list', 'dict', 'set', 'tuple', 'str', 'int', 'float'])
+
+/** Lightweight per-line Python highlighter (ported from the design prototype).
+ *  Pure regex pass — not robust, but enough to read right. Returns one node per line. */
+function pyHighlight(src: string): React.ReactNode[] {
+  return src.split('\n').map((line, li) => {
+    const tokens: Tok[] = []
+    let i = 0
+    while (i < line.length) {
+      const ch = line[i]
+      if (ch === '#') { tokens.push({ kind: 'cm', t: line.slice(i) }); break }
+      if (ch === '"' || ch === "'") {
+        if (line.slice(i, i + 3) === ch + ch + ch) {
+          const close = line.indexOf(ch + ch + ch, i + 3)
+          if (close === -1) { tokens.push({ kind: 's', t: line.slice(i) }); i = line.length; continue }
+          tokens.push({ kind: 's', t: line.slice(i, close + 3) }); i = close + 3; continue
+        }
+        let j = i + 1
+        while (j < line.length && line[j] !== ch) { if (line[j] === '\\') j++; j++ }
+        tokens.push({ kind: 's', t: line.slice(i, j + 1) }); i = j + 1; continue
+      }
+      if (/\d/.test(ch)) {
+        let j = i
+        while (j < line.length && /[\d._]/.test(line[j])) j++
+        tokens.push({ kind: 'n', t: line.slice(i, j) }); i = j; continue
+      }
+      if (/[A-Za-z_]/.test(ch)) {
+        let j = i
+        while (j < line.length && /[A-Za-z0-9_]/.test(line[j])) j++
+        const word = line.slice(i, j)
+        let kind = 'id'
+        if (PY_KEYWORDS.has(word)) kind = 'kw'
+        else if (PY_BUILTINS.has(word)) kind = 'bi'
+        else if (line[j] === '(') kind = 'fn'
+        tokens.push({ kind, t: word }); i = j; continue
+      }
+      if (ch === '@') {
+        let j = i + 1
+        while (j < line.length && /[A-Za-z0-9_.]/.test(line[j])) j++
+        tokens.push({ kind: 'dec', t: line.slice(i, j) }); i = j; continue
+      }
+      tokens.push({ kind: 'p', t: ch }); i++
+    }
+    return (
+      <div key={li} style={{ minHeight: 18 }}>
+        {tokens.map((tok, ti) => (
+          <span key={ti} style={pyTokStyle(tok.kind)}>{tok.t}</span>
+        ))}
+      </div>
+    )
+  })
+}
+
+function pyTokStyle(kind: string): React.CSSProperties {
+  switch (kind) {
+    case 'kw': return { color: 'var(--color-uikit-tone-purple)', fontWeight: 600 }
+    case 'bi': return { color: 'var(--color-uikit-tone-green)' }
+    case 'fn': return { color: 'var(--color-uikit-tone-blue)' }
+    case 's': return { color: 'var(--color-uikit-tone-amber)' }
+    case 'n': return { color: 'var(--color-uikit-tone-amber)' }
+    case 'cm': return { color: 'var(--color-uikit-muted)', fontStyle: 'italic', opacity: 0.8 }
+    case 'dec': return { color: 'var(--color-uikit-tone-red)' }
+    case 'p': return { color: 'var(--color-uikit-ink)', opacity: 0.75 }
+    default: return { color: 'var(--color-uikit-ink)' }
+  }
 }
 
 // ── pipeline status (PIPELINE tab) — counts + graph stats ───────────────────
