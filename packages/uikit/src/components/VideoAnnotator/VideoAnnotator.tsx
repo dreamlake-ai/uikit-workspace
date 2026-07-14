@@ -8,6 +8,7 @@ import {
   useState,
 } from "react";
 import {
+  Check,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -25,12 +26,10 @@ import {
   clamp,
   firstUnverified,
   fmt,
-  fmtShort,
   mergeInto,
   moveBoundary,
   normalizeSegments,
   splitAt,
-  tickStep,
 } from "./segments";
 
 const DEFAULT_SPEEDS = [0.25, 0.5, 1, 1.5, 2];
@@ -76,6 +75,7 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
     const [rate, setRate] = useState(1);
     const [speedOpen, setSpeedOpen] = useState(false);
     const [metaDuration, setMetaDuration] = useState(0);
+    const [hoverFrac, setHoverFrac] = useState<number | null>(null);
     const [toast, setToast] = useState("");
     const toastTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
@@ -347,9 +347,18 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
     // ---- derived readout ---------------------------------------------------
     const fps = srcFps || 30;
     const readout = `${fmt(currentTime)} / ${fmt(D)} · f${Math.round(currentTime * fps)}`;
-    const step = D ? tickStep(D) : 0;
-    const ticks: number[] = [];
-    if (step) for (let s = 0; s <= D + 1e-6; s += step) ticks.push(Math.min(s, D));
+    // Graduated ruler: a coarse "major" step (labeled `Ns`, bold, tall mark)
+    // subdivided into 5 finer "minor" ticks. Picks the smallest nice major so
+    // there are at most ~6 labels across the track.
+    const MAJORS = [5, 10, 15, 30, 60, 120, 300, 600];
+    const majorStep = D ? MAJORS.find((m) => D / m <= 6) ?? MAJORS[MAJORS.length - 1] : 0;
+    const minorStep = majorStep / 5;
+    const ticks: { t: number; major: boolean }[] = [];
+    if (D && minorStep)
+      for (let t = 0; t <= D + 1e-6; t += minorStep) {
+        const tt = Math.min(t, D);
+        ticks.push({ t: tt, major: Math.abs(tt % majorStep) < 1e-6 });
+      }
 
     const hasHeader = Boolean(videoTitle || videoSubtitle || headerLeading);
     const descWords = curSeg ? (curSeg.description || "").trim().split(/\s+/).filter(Boolean).length : 0;
@@ -392,7 +401,7 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
               <button
                 type="button"
                 className="va-speedbtn"
-                title="Playback speed"
+                aria-label="Playback speed"
                 aria-haspopup="listbox"
                 aria-expanded={speedOpen}
                 onClick={(e) => {
@@ -413,6 +422,7 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
                       aria-selected={v === rate}
                       onClick={() => setSpeed(v)}
                     >
+                      {v === rate && <Check size={12} className="va-speedcheck" />}
                       {v}×
                     </button>
                   ))}
@@ -422,34 +432,50 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
           </div>
 
           <div className="va-tp-center">
-            <button className="va-icon" title="Prev boundary (,)" onClick={() => gotoBoundary(-1)}>
-              <SkipBack size={18} />
+            <button className="va-icon" aria-label="Prev boundary (,)" onClick={() => gotoBoundary(-1)}>
+              <SkipBack size={14} />
             </button>
-            <button className="va-icon" title="Prev frame (←)" onClick={() => stepFrame(-1, false)}>
-              <ChevronLeft size={18} />
+            <button className="va-icon" aria-label="Prev frame (←)" onClick={() => stepFrame(-1, false)}>
+              <ChevronLeft size={14} />
             </button>
-            <button className="va-icon va-play" title="Play/Pause (Space)" onClick={togglePlay}>
-              {playing ? <Pause size={20} /> : <Play size={20} />}
+            <button className="va-icon va-play" aria-label="Play/Pause (Space)" onClick={togglePlay}>
+              {playing ? <Pause size={14} /> : <Play size={14} />}
             </button>
-            <button className="va-icon" title="Next frame (→)" onClick={() => stepFrame(1, false)}>
-              <ChevronRight size={18} />
+            <button className="va-icon" aria-label="Next frame (→)" onClick={() => stepFrame(1, false)}>
+              <ChevronRight size={14} />
             </button>
-            <button className="va-icon" title="Next boundary (.)" onClick={() => gotoBoundary(1)}>
-              <SkipForward size={18} />
+            <button className="va-icon" aria-label="Next boundary (.)" onClick={() => gotoBoundary(1)}>
+              <SkipForward size={14} />
             </button>
           </div>
 
           <div className="va-tp-right">
-            <button title="Split at playhead (S)" onClick={doSplit}>
-              <Scissors size={14} /> Split
+            <button className="va-icon" aria-label="Split at playhead (S)" onClick={doSplit}>
+              <Scissors size={14} />
             </button>
-            <button title="Merge into previous (Backspace)" onClick={() => doMerge(sel)} disabled={sel <= 0}>
-              <ArrowLeftToLine size={14} /> Merge
+            <button
+              className="va-icon"
+              aria-label="Merge into previous (Backspace)"
+              onClick={() => doMerge(sel)}
+              disabled={sel <= 0}
+            >
+              <ArrowLeftToLine size={14} />
             </button>
           </div>
         </div>
 
-        <div className="va-timeline" ref={timelineRef} onMouseDown={startScrub}>
+        <div
+          className="va-timeline"
+          ref={timelineRef}
+          onMouseDown={startScrub}
+          onMouseMove={(e) => {
+            const tl = timelineRef.current;
+            if (!tl) return;
+            const rect = tl.getBoundingClientRect();
+            setHoverFrac(clamp((e.clientX - rect.left) / rect.width, 0, 1));
+          }}
+          onMouseLeave={() => setHoverFrac(null)}
+        >
           {segs.map((p, i) => (
             <div
               key={i}
@@ -478,13 +504,29 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
             ) : null
           )}
           <div className="va-ticks">
-            {ticks.map((s, i) => (
-              <div key={i} className="va-tick" style={{ left: `${(s / (D || 1)) * 100}%` }}>
-                {fmtShort(s)}
+            {ticks.map((rt, i) => (
+              <div
+                key={i}
+                className={cn("va-tick", rt.major && "major", i === 0 && "start", i === ticks.length - 1 && "end")}
+                style={{ left: `${(rt.t / (D || 1)) * 100}%` }}
+              >
+                <span className="va-ticklabel">
+                  {rt.major
+                    ? `${Math.round(rt.t)}s`
+                    : Math.round((rt.t % majorStep) / minorStep)}
+                </span>
               </div>
             ))}
           </div>
-          {segs.length > 0 && (
+          {hoverFrac != null && (
+            <>
+              <div className="va-hoverline" style={{ left: `${hoverFrac * 100}%` }} />
+              <div className="va-hovertime" style={{ left: `${hoverFrac * 100}%` }}>
+                {fmt(hoverFrac * D)}
+              </div>
+            </>
+          )}
+          {segs.length > 0 && currentTime > 0.001 && (
             <div className="va-playhead" style={{ left: `${(clamp(currentTime, 0, D) / (D || 1)) * 100}%` }} />
           )}
         </div>
@@ -550,20 +592,34 @@ const CSS = `
 .va-video{max-width:100%;max-height:100%;background:#000}
 .va-stage-msg{position:absolute;color:var(--va-muted);font-size:13px;text-align:center;padding:20px}
 
-.va-transport{display:flex;align-items:center;gap:8px;flex:none}
-.va-tp-left,.va-tp-right{flex:1 1 0;display:flex;align-items:center;gap:6px;min-width:0}
+.va-transport{display:flex;align-items:center;gap:8px;flex:none;margin-top:-6px}
+.va-tp-left,.va-tp-right{flex:1 1 0;display:flex;align-items:center;gap:6px}
 .va-tp-right{justify-content:flex-end}
-.va-tp-center{display:flex;align-items:center;gap:4px;flex:none}
-.va-transport button{height:34px}
-.va-icon{width:34px;height:34px;padding:0;justify-content:center;color:var(--va-text)}
-.va-play{width:40px;height:40px;background:var(--va-panel2)}
+.va-tp-center{display:flex;align-items:center;gap:2px;flex:none}
+.va-transport button{height:28px}
+.va-icon{width:28px;height:28px;padding:0;border:0;justify-content:center;
+  color:color-mix(in srgb, var(--va-text) 75%, var(--va-muted))}
+.va-icon svg{flex:none}
+.va-play{width:28px;height:28px;background:var(--va-panel2)}
 .va-play:hover{background:color-mix(in srgb, var(--va-accent) 16%, var(--va-panel2))}
-.va-readout{font:12px var(--f-mono, ui-monospace, Menlo, monospace);color:var(--va-text);
-  background:var(--va-panel);border:1px solid var(--va-line);border-radius:8px;
-  padding:6px 10px;min-width:150px;text-align:center;flex:none}
+
+/* Hover tooltip — matches the component's own floating surfaces (speed menu,
+   toast): panel fill, 1px hairline border, ink text, soft popover shadow.
+   Reads the button's aria-label so the a11y name and the visible tip stay in
+   sync. */
+.va-transport button[aria-label]{position:relative}
+.va-transport button[aria-label]:hover::after{
+  content:attr(aria-label);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);
+  background:var(--va-panel);color:var(--va-text);border:1px solid var(--va-line);padding:5px 9px;border-radius:8px;
+  font:11px/1.3 var(--f-ui, "Inter Tight", ui-sans-serif, system-ui, -apple-system, sans-serif);
+  white-space:nowrap;pointer-events:none;z-index:60;
+  box-shadow:0 8px 24px color-mix(in srgb, var(--va-text) 18%, transparent)}
+.va-readout{font:11px var(--f-mono, ui-monospace, Menlo, monospace);color:var(--va-muted);
+  padding:6px 0;text-align:left;flex:none;width:170px}
 .va-speedsel{position:relative;display:inline-flex}
-.va-speedbtn{display:inline-flex;align-items:center;gap:3px;height:28px;padding:0 6px 0 9px;
-  background:var(--va-panel);color:var(--va-text);border:1px solid transparent;border-radius:8px;cursor:pointer;font-size:12px}
+.va-speedsel .va-speedbtn{display:inline-flex;align-items:center;gap:3px;height:28px;padding:0 6px 0 9px;
+  background:var(--va-panel);color:var(--va-text);border:1px solid transparent;border-radius:8px;cursor:pointer;
+  font:11px var(--f-mono, ui-monospace, Menlo, monospace)}
 .va-speedbtn .va-caret{color:var(--va-muted)}
 .va-speedbtn:hover{background:var(--va-panel2)}
 .va-speedsel.open .va-speedbtn{border-color:var(--va-accent)}
@@ -571,32 +627,51 @@ const CSS = `
   background:var(--va-panel);border:1px solid var(--va-line);border-radius:10px;
   box-shadow:0 8px 24px color-mix(in srgb,var(--va-text) 22%,transparent);padding:4px}
 .va-speedmenu button{width:100%;display:flex;align-items:center;gap:6px;white-space:nowrap;height:auto;
-  background:transparent;border:none;border-radius:6px;padding:5px 12px 5px 22px;font-size:12px;color:var(--va-text);text-align:left;position:relative}
+  background:transparent;border:none;border-radius:6px;padding:5px 12px 5px 22px;
+  font:11px var(--f-mono, ui-monospace, Menlo, monospace);color:var(--va-text);text-align:left;position:relative}
 .va-speedmenu button:hover{background:var(--va-panel2)}
 .va-speedmenu button[aria-selected="true"]{color:var(--va-accent)}
-.va-speedmenu button[aria-selected="true"]::before{content:"✓";position:absolute;left:8px}
+.va-speedcheck{position:absolute;left:6px}
 
-.va-timeline{position:relative;height:56px;background:transparent;cursor:pointer;user-select:none;flex:none}
-.va-timeline:not(:has(.va-seg))::before{content:"";position:absolute;top:3px;bottom:18px;left:0;right:0;
+.va-timeline{position:relative;height:62px;background:transparent;cursor:pointer;user-select:none;flex:none;margin-top:-6px}
+.va-timeline:not(:has(.va-seg))::before{content:"";position:absolute;top:30px;bottom:0;left:0;right:0;
   border-radius:6px;background:color-mix(in srgb, var(--va-text) 4%, transparent);box-shadow:inset 0 0 0 1px var(--va-line)}
-.va-seg{position:absolute;top:3px;bottom:18px;border-radius:6px;display:flex;align-items:center;
+.va-seg{position:absolute;top:30px;bottom:0;border-radius:6px;display:flex;align-items:center;
   padding:0 9px;overflow:hidden;background:var(--va-panel2);box-shadow:inset 0 0 0 1px var(--va-line)}
-.va-seg:hover{background:color-mix(in srgb, var(--va-accent) 20%, var(--va-bg));box-shadow:inset 0 0 0 1.5px var(--va-accent)}
-.va-seg.sel{background:color-mix(in srgb, var(--va-accent) 22%, var(--va-bg));box-shadow:inset 0 0 0 1.5px var(--va-accent);z-index:3}
-.va-seglabel{font-size:11px;color:var(--va-text);font-weight:600;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
-.va-handle{position:absolute;top:0;bottom:18px;width:9px;margin-left:-5px;cursor:ew-resize;z-index:5}
+.va-seg:hover{background:#edf6fc;box-shadow:inset 0 0 0 1px var(--va-line)}
+.va-seg.sel{background:#edf6fc;box-shadow:inset 0 0 0 1.5px #23a9ff;z-index:3}
+.va-seg.sel .va-seglabel{color:#1a1a1a}
+.va-seglabel{font-size:11px;color:var(--va-muted);font-weight:400;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
+.va-seg:hover .va-seglabel{color:#1a1a1a}
+.va-handle{position:absolute;top:30px;bottom:0;width:9px;margin-left:-5px;cursor:ew-resize;z-index:5}
 .va-handle::after{content:"";position:absolute;left:4px;top:0;bottom:0;width:1.5px;background:var(--va-accent);opacity:0}
 .va-handle:hover::after{opacity:1}
-.va-playhead{position:absolute;top:0;bottom:18px;width:1.5px;background:var(--va-accent);pointer-events:none;z-index:6}
-.va-ticks{position:absolute;left:0;right:0;bottom:0;height:14px;pointer-events:none;z-index:4}
-.va-tick{position:absolute;bottom:0;font:9px var(--f-mono, ui-monospace, Menlo, monospace);
-  color:var(--va-muted);transform:translateX(3px);pointer-events:none}
+.va-playhead{position:absolute;top:14px;bottom:0;width:1.5px;background:var(--va-accent);pointer-events:none;z-index:6}
+.va-hoverline{position:absolute;top:14px;bottom:0;width:1.5px;
+  background:color-mix(in srgb, var(--va-accent) 50%, transparent);pointer-events:none;z-index:5}
+.va-hovertime{position:absolute;top:12px;transform:translateX(4px);
+  background:var(--va-accent);color:#fff;
+  padding:2px 6px;border-radius:4px;white-space:nowrap;pointer-events:none;z-index:7;
+  font-family:var(--f-mono, ui-monospace, Menlo, monospace);font-size:11px;line-height:1.3;
+  box-shadow:0 8px 24px color-mix(in srgb, var(--va-text) 18%, transparent)}
+.va-ticks{position:absolute;left:0;right:0;top:0;height:24px;pointer-events:none;z-index:4}
+.va-ticks::before{content:"";position:absolute;left:0;right:0;top:22px;height:1px;background:var(--va-line)}
+.va-tick{position:absolute;top:0;height:24px;pointer-events:none}
+.va-tick::before{content:"";position:absolute;top:17px;left:0;width:1px;height:5px;background:var(--va-line)}
+.va-tick.major::before{top:14px;height:8px;background:var(--va-muted)}
+.va-ticklabel{position:absolute;top:1px;left:0;transform:translateX(-50%);white-space:nowrap;
+  font:11px var(--f-mono, ui-monospace, Menlo, monospace);color:var(--va-muted);line-height:1}
+.va-tick.major .va-ticklabel{font-weight:600;color:color-mix(in srgb, var(--va-text) 55%, var(--va-muted))}
+.va-tick.start .va-ticklabel{transform:translateX(0)}
+.va-tick.end .va-ticklabel{left:auto;right:0;transform:translateX(0)}
 
 .va-desc{display:flex;flex-direction:column;gap:4px;flex:none}
 .va-desc-box{width:100%;min-height:60px;resize:vertical;background:var(--va-field);color:var(--va-text);
   border:1px solid var(--va-line);border-radius:8px;padding:9px;font:13px/1.45 inherit}
 .va-desc-box:focus{outline:none;border-color:var(--va-accent)}
-.va-desc-meta{display:flex;gap:12px;color:var(--va-muted);font-size:12px}
+.va-desc-meta{display:flex;gap:12px;color:var(--va-muted);
+  font:11px var(--f-mono, ui-monospace, Menlo, monospace)}
+.va-desc-meta > span:first-child{width:72px;flex:none}
 
 .va-toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--va-panel);
   border:1px solid var(--va-line);border-radius:8px;padding:8px 14px;color:var(--va-text);
