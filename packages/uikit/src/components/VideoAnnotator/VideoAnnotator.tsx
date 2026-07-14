@@ -484,9 +484,10 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
             const rect = tl.getBoundingClientRect();
             const px = e.clientX - rect.left;
             setHoverFrac(clamp(px / rect.width, 0, 1));
-            // Once the merge button is shown, freeze it: don't recompute the
-            // target boundary, so moving the cursor up to click can't shift it.
-            if (mergeReady) return;
+            // Keep the button while the cursor is actually over it (or its tail),
+            // so moving up to click never recomputes/hides it. Otherwise it must
+            // disappear as soon as the cursor leaves a boundary's vicinity.
+            if ((e.target as HTMLElement).closest(".va-merge")) return;
             // Nearest internal boundary within 14px of the cursor (so the button,
             // centred on the boundary, stays reachable straight up from here).
             let near: number | null = null;
