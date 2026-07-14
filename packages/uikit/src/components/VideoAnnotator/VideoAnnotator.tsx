@@ -625,6 +625,9 @@ const CSS = `
   font:11px/1.3 var(--f-ui, "Inter Tight", ui-sans-serif, system-ui, -apple-system, sans-serif);
   white-space:nowrap;pointer-events:none;z-index:60;
   box-shadow:0 8px 24px var(--va-shadow)}
+/* While the speed menu is open, suppress the button's hover tooltip — it would
+   otherwise collide with the open menu (both float above the button). */
+.va-speedsel.open .va-speedbtn:hover::after{content:none}
 .va-readout{font:11px var(--f-mono, ui-monospace, Menlo, monospace);color:var(--va-muted);
   padding:6px 0;text-align:left;flex:none;width:150px;white-space:nowrap;overflow:hidden}
 .va-speedsel{position:relative;display:inline-flex}
@@ -633,6 +636,9 @@ const CSS = `
   font:11px var(--f-mono, ui-monospace, Menlo, monospace)}
 .va-speedbtn .va-caret{color:var(--va-muted)}
 .va-speedbtn:hover{background:var(--va-panel2)}
+/* No press-shift on the speed button — the base button:active translate reads
+   as jitter here next to the readout. */
+.va-speedsel .va-speedbtn:active{transform:none}
 .va-speedsel.open .va-speedbtn{border-color:var(--va-accent)}
 .va-speedmenu{position:absolute;bottom:calc(100% + 6px);left:0;z-index:40;min-width:calc(100% + 8px);
   background:var(--va-panel);border:1px solid var(--va-line);border-radius:10px;
