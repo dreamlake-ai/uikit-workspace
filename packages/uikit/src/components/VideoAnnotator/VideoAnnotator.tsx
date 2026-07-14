@@ -571,6 +571,9 @@ const CSS = `
   --va-idle: var(--tone-warm-gray, #9c907a);
   --va-selected: var(--selected-bg, #f5f3ee);
   --va-radius: var(--radius, 10px);
+  /* Popover/tooltip drop shadow. Aliases the kit's theme-aware shadow token
+     so it stays dark in dark mode — not a white glow off the light ink. */
+  --va-shadow: var(--shadow-tint-2, rgba(0,0,0,.1));
   --va-hover: color-mix(in srgb, var(--va-text) 5%, var(--va-panel));
   display:flex; flex-direction:column; gap:12px; min-width:0; min-height:0; height:100%;
   color:var(--va-text);
@@ -613,7 +616,7 @@ const CSS = `
   background:var(--va-panel);color:var(--va-text);border:1px solid var(--va-line);padding:5px 9px;border-radius:8px;
   font:11px/1.3 var(--f-ui, "Inter Tight", ui-sans-serif, system-ui, -apple-system, sans-serif);
   white-space:nowrap;pointer-events:none;z-index:60;
-  box-shadow:0 8px 24px color-mix(in srgb, var(--va-text) 18%, transparent)}
+  box-shadow:0 8px 24px var(--va-shadow)}
 .va-readout{font:11px var(--f-mono, ui-monospace, Menlo, monospace);color:var(--va-muted);
   padding:6px 0;text-align:left;flex:none;width:170px}
 .va-speedsel{position:relative;display:inline-flex}
@@ -625,7 +628,7 @@ const CSS = `
 .va-speedsel.open .va-speedbtn{border-color:var(--va-accent)}
 .va-speedmenu{position:absolute;bottom:calc(100% + 6px);left:0;z-index:40;min-width:calc(100% + 8px);
   background:var(--va-panel);border:1px solid var(--va-line);border-radius:10px;
-  box-shadow:0 8px 24px color-mix(in srgb,var(--va-text) 22%,transparent);padding:4px}
+  box-shadow:0 8px 24px var(--va-shadow);padding:4px}
 .va-speedmenu button{width:100%;display:flex;align-items:center;gap:6px;white-space:nowrap;height:auto;
   background:transparent;border:none;border-radius:6px;padding:5px 12px 5px 22px;
   font:11px var(--f-mono, ui-monospace, Menlo, monospace);color:var(--va-text);text-align:left;position:relative}
@@ -641,6 +644,13 @@ const CSS = `
 .va-seg:hover{background:#edf6fc;box-shadow:inset 0 0 0 1px var(--va-line)}
 .va-seg.sel{background:#edf6fc;box-shadow:inset 0 0 0 1.5px #23a9ff;z-index:3}
 .va-seg.sel .va-seglabel{color:#1a1a1a}
+/* Dark mode swaps the blue selection/hover accent for yellow. The fill is a
+   translucent amber tint so the dark surface reads through it; the label
+   flips to light ink to stay legible over that dark-tinted fill. */
+html[data-theme="dark"] .va-seg:hover{background:rgba(243,230,204,.14)}
+html[data-theme="dark"] .va-seg.sel{background:rgba(243,230,204,.2);box-shadow:inset 0 0 0 1.5px var(--va-warn)}
+html[data-theme="dark"] .va-seg:hover .va-seglabel,
+html[data-theme="dark"] .va-seg.sel .va-seglabel{color:var(--va-text)}
 .va-seglabel{font-size:11px;color:var(--va-muted);font-weight:400;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
 .va-seg:hover .va-seglabel{color:#1a1a1a}
 .va-handle{position:absolute;top:30px;bottom:0;width:9px;margin-left:-5px;cursor:ew-resize;z-index:5}
@@ -653,7 +663,7 @@ const CSS = `
   background:var(--va-accent);color:#fff;
   padding:2px 6px;border-radius:4px;white-space:nowrap;pointer-events:none;z-index:7;
   font-family:var(--f-mono, ui-monospace, Menlo, monospace);font-size:11px;line-height:1.3;
-  box-shadow:0 8px 24px color-mix(in srgb, var(--va-text) 18%, transparent)}
+  box-shadow:0 8px 24px var(--va-shadow)}
 .va-ticks{position:absolute;left:0;right:0;top:0;height:24px;pointer-events:none;z-index:4}
 .va-ticks::before{content:"";position:absolute;left:0;right:0;top:22px;height:1px;background:var(--va-line)}
 .va-tick{position:absolute;top:0;height:24px;pointer-events:none}
@@ -675,5 +685,5 @@ const CSS = `
 
 .va-toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--va-panel);
   border:1px solid var(--va-line);border-radius:8px;padding:8px 14px;color:var(--va-text);
-  box-shadow:0 8px 24px color-mix(in srgb, var(--va-text) 18%, transparent);z-index:50}
+  box-shadow:0 8px 24px var(--va-shadow);z-index:50}
 `;
