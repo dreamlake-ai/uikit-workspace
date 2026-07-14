@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { cn } from '../../lib/utils'
 
 interface ResizeDividerProps {
@@ -203,20 +204,34 @@ export function ResizeDivider({
       : `width 200ms ease, opacity 200ms ease`
 
   return (
-    <div
-      ref={hostRef}
-      className={cn(
-        'group/divider relative flex items-center justify-center shrink-0',
-        isHorizontal ? 'cursor-col-resize h-full' : 'cursor-row-resize w-full',
-        className,
+    <>
+      {/* While dragging, a transparent full-viewport overlay covers any iframe
+          (or other event-swallowing surface) in a sibling column, so the
+          document mousemove/mouseup listeners keep firing — otherwise a drag
+          over an iframe stops tracking and never ends. */}
+      {dragging && typeof document !== 'undefined' && createPortal(
+        <div
+          style={{
+            position: 'fixed', inset: 0, zIndex: 2147483646,
+            cursor: isHorizontal ? 'col-resize' : 'row-resize',
+          }}
+        />,
+        document.body,
       )}
-      style={isHorizontal ? { width: size } : { height: size }}
-      onMouseDown={handleMouseDown}
-      onMouseEnter={handleMouseEnter}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      data-dragging={dragging || undefined}
-    >
+      <div
+        ref={hostRef}
+        className={cn(
+          'group/divider relative flex items-center justify-center shrink-0',
+          isHorizontal ? 'cursor-col-resize h-full' : 'cursor-row-resize w-full',
+          className,
+        )}
+        style={isHorizontal ? { width: size } : { height: size }}
+        onMouseDown={handleMouseDown}
+        onMouseEnter={handleMouseEnter}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
+        data-dragging={dragging || undefined}
+      >
       {!hideCapsule && (
         <div
           aria-hidden
@@ -252,7 +267,8 @@ export function ResizeDivider({
           }}
         />
       )}
-    </div>
+      </div>
+    </>
   )
 }
 
