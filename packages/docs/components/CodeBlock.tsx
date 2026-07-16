@@ -49,56 +49,32 @@ export function CodeBlock({ children, filename, lang }: CodeBlockProps) {
   }
 
   return (
-    <div
-      ref={wrapRef}
-      data-line-numbers={showLines ? 'on' : 'off'}
-      className="group relative border border-doc-template-faint bg-doc-template-code"
-      style={{
-        margin: '18px 0 22px',
-        borderRadius: 'var(--radius-doc-template)',
-        overflow: 'hidden',
-      }}
-    >
-      {/* Header bar — only when a filename is specified */}
+    <div style={{ margin: '18px 0 22px' }}>
+      {/* Filename label — outside the code block, right above it */}
       {filename && (
         <div
-          className="flex items-center border-b border-doc-template-faint text-doc-template-muted"
+          className="text-doc-template-muted"
           style={{
-            gap: 12,
-            padding: '6px 10px 6px 14px',
             fontFamily: 'var(--font-doc-template-mono)',
-            fontSize: 10,
-            letterSpacing: '0.06em',
-            background: 'color-mix(in srgb, var(--color-doc-template-ink) 3%, transparent)',
+            fontSize: 11,
+            fontWeight: 600,
+            letterSpacing: '0.02em',
+            padding: '0 2px 4px 16px',
           }}
         >
-          <span style={{ fontWeight: 600, textTransform: 'none', letterSpacing: 0 }}>
-            {filename}
-          </span>
-          {lang && (
-            <span className="uppercase" style={{ fontWeight: 600, letterSpacing: '0.06em' }}>
-              {lang}
-            </span>
-          )}
-          <span style={{ flex: 1 }} />
-          <span className="inline-flex items-center" style={{ gap: 6 }}>
-            <button
-              type="button"
-              aria-pressed={showLines}
-              title={showLines ? ':set nonu' : ':set nu'}
-              onClick={() => setShowLines(!showLines)}
-              style={headerBtnStyle(showLines)}
-            >
-              <HashIcon />
-            </button>
-            <button type="button" onClick={copy} style={headerBtnStyle(copied)}>
-              {copied ? 'Copied' : 'Copy'}
-            </button>
-          </span>
+          {filename}
         </div>
       )}
-      {/* Floating controls — no filename: top-right overlay on hover */}
-      {!filename && (
+      <div
+        ref={wrapRef}
+        data-line-numbers={showLines ? 'on' : 'off'}
+        className="group relative border border-doc-template-faint bg-doc-template-code"
+        style={{
+          borderRadius: 'var(--radius-doc-template)',
+          overflow: 'hidden',
+        }}
+      >
+        {/* Floating controls — top-right overlay on hover */}
         <div
           className="absolute top-0 right-0 z-10 flex items-center opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-150"
           style={{ gap: 6, padding: '8px 8px' }}
@@ -130,15 +106,15 @@ export function CodeBlock({ children, filename, lang }: CodeBlockProps) {
             {copied ? 'Copied' : 'Copy'}
           </button>
         </div>
-      )}
-      <div
-        style={{
-          fontFamily: 'var(--font-doc-template-mono)',
-          fontSize: 12.5,
-          lineHeight: 1.3,
-        }}
-      >
-        {children}
+        <div
+          style={{
+            fontFamily: 'var(--font-doc-template-mono)',
+            fontSize: 12.5,
+            lineHeight: 1.3,
+          }}
+        >
+          {children}
+        </div>
       </div>
     </div>
   )
