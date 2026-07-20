@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && vike prerender && node scripts/gen-llms.mjs && pagefind --site dist/client",
+    "build": "vite build && ([ -f dist/client/index.html ] || vike prerender) && node scripts/gen-llms.mjs && pagefind --site dist/client",
     "preview": "vite preview",
     "gen:llms": "node scripts/gen-llms.mjs",
     "check:llms": "node scripts/gen-llms.mjs --check"
