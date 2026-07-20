@@ -1,4 +1,1 @@
-export default {
-  passToClient: ['pageProps', 'urlPathname'],
-  clientRouting: true,
-}
+export { default } from '@dreamlake/dockit/vike'

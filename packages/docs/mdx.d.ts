@@ -11,6 +11,9 @@ declare module '*.mdx' {
      *  the rail to H2 only — useful on long pages where the H3 count
      *  would crowd the rail. */
     tocLevel?: 2 | 3
+    /** Drop the right-rail TOC and the 760px main-column cap so a wide
+     *  demo (pipeline graph, profile layout) can use the full width. */
+    fullscreen?: boolean
   }
   export const frontmatter: Frontmatter
   const Component: ComponentType
