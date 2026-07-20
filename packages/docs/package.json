@@ -12,7 +12,7 @@
     "check:llms": "node scripts/gen-llms.mjs --check"
   },
   "dependencies": {
-    "@dreamlake/dockit": "^0.2.2",
+    "@dreamlake/dockit": "^0.2.3",
     "@dreamlake/uikit": "workspace:*",
     "@mdx-js/react": "latest",
     "lucide-react": "^1.21.0",
