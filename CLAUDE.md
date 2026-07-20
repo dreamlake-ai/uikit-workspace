@@ -61,6 +61,30 @@ fixes don't need a changelog entry — judgment call.
 - `dev-notes/CHANGELOG.mdx` — running history of doc changes.
 - `dev-notes/README.mdx` — folder convention + index.
 
+## Docs (dockit)
+
+The docs shell (sidebar, topbar, TOC, search, MDX components) comes from
+the `@dreamlake/dockit` package — there is no vendored `components/` shell
+or `lib/` navigation code in `packages/docs` anymore.
+
+- Doc pages live at `packages/docs/pages/<slug>/+Page.mdx` (Vike file
+  routing — nested folders nest URLs).
+- Frontmatter: `{ title, section, order, description, hidden?, noindex?,
+  tocLevel?, fullscreen? }` (`fullscreen` replaced the old `wide` flag).
+- The sidebar auto-derives from frontmatter. Never edit a nav config —
+  there isn't one.
+- MDX extras: `<Callout variant="info|warn" title="…">`, `<Preview>`, and
+  code fences with `file="…"` for a filename chip. Component specimens
+  stay local under `packages/docs/components/specimens/`.
+- Site config (brand, tabs, section order, version chips) is the
+  `initDocs(...)` call in `packages/docs/site.config.ts`.
+- The docs build generates agent surfaces: `/llms.txt`, a `.md` twin per
+  page, and a skill at `skills/dreamlake-uikit/` in the repo root. Run
+  `pnpm check:llms` before committing page changes and commit the
+  regenerated skill with them.
+- Deep dockit reference (theming, authoring, config, migration):
+  https://dockit.dreamlake.ai/skills
+
 ## Versioning and release (load-bearing rules)
 
 **To deploy the docs site to production, run `pnpm run deploy`** from the
