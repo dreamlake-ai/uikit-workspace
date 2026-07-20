@@ -11,8 +11,8 @@
   "include": [
     "renderer/**/*",
     "components/**/*",
-    "lib/**/*",
     "pages/**/*",
+    "site.config.ts",
     "mdx.d.ts",
     "vite.config.ts"
   ]
