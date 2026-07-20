@@ -2,7 +2,7 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "noEmit": true,
-    "types": ["vite/client"],
+    "types": ["vite/client", "node"],
     "paths": {
       "@dreamlake/uikit": ["../uikit/src/index.ts"],
       "@dreamlake/uikit/*": ["../uikit/src/*"]
