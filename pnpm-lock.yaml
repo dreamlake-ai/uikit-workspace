@@ -51,6 +51,9 @@ importers:
       pagefind:
         specifier: ^1.5.2
         version: 1.5.2
+      tailwindcss:
+        specifier: ^4.3.2
+        version: 4.3.3
       typescript:
         specifier: ^5.7.0
         version: 5.9.3
@@ -1797,6 +1800,9 @@ packages:
   tailwindcss@4.3.0:
     resolution: {integrity: sha512-y6nxMGB1nMW9R6k96e5gdIFzcfL/gTJRNaqGes1YvkLnPVXzWgbqFF2yLC0T8G774n24cx3Pe8XrKoniCOAH+Q==}
 
+  tailwindcss@4.3.3:
+    resolution: {integrity: sha512-gOhV3P7ufE62QDGg1zVaTgCR+EtPv92k2nIhVcVKcLmxT1sUBsQGhnZj175j+MqRt4zLF7ic+sCYjfhxMxj7YQ==}
+
   tapable@2.3.3:
     resolution: {integrity: sha512-uxc/zpqFg6x7C8vOE7lh6Lbda8eEL9zmVm/PLeTPBRhh1xCgdWaQ+J1CUieGpIfm2HdtsUpRv+HshiasBMcc6A==}
     engines: {node: '>=6'}
@@ -2132,7 +2138,7 @@ snapshots:
       remark-gfm: 4.0.1
       remark-mdx-frontmatter: 5.2.0
       shiki: 1.29.2
-      tailwindcss: 4.3.0
+      tailwindcss: 4.3.3
       vike: 0.4.260(react-streaming@0.4.17(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(srvx@0.11.15)(vite@7.3.6(jiti@2.7.0)(lightningcss@1.32.0)(yaml@2.9.0))
       vike-react: 0.5.13(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(vike@0.4.260(react-streaming@0.4.17(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(srvx@0.11.15)(vite@7.3.6(jiti@2.7.0)(lightningcss@1.32.0)(yaml@2.9.0)))
     optionalDependencies:
@@ -3953,6 +3959,8 @@ snapshots:
   tailwind-merge@3.6.0: {}
 
   tailwindcss@4.3.0: {}
+
+  tailwindcss@4.3.3: {}
 
   tapable@2.3.3: {}
 
