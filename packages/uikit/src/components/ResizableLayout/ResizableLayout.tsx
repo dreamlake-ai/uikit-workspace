@@ -269,7 +269,7 @@ export function ResizableLayout({
                 overlay ? (
                   <div
                     className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2"
-                    style={{ width: hitSize, zIndex: 5 }}
+                    style={{ width: hitSize, zIndex: 20 }}
                   >
                     <ResizeDivider
                       axis="x"
@@ -318,7 +318,7 @@ export function ResizableLayout({
                 overlay ? (
                   <div
                     className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2"
-                    style={{ width: hitSize, zIndex: 5 }}
+                    style={{ width: hitSize, zIndex: 20 }}
                   >
                     <ResizeDivider
                       axis="x"
