@@ -126,7 +126,7 @@ export function PipelineSource({ graph, selectedNodeId, onSelectNode, statusById
       )}
       {tab === 'node' && node && (
         <div className="flex-1 min-h-0 overflow-auto">
-          <NodeDetails node={node} ov={statusById?.[node.id]} statusById={statusById} graph={graph} onContinue={onContinue} />
+          <NodeDetails node={node} ov={statusById?.[node.id]} statusById={statusById} graph={graph} onRun={onRun} onContinue={onContinue} />
         </div>
       )}
       {tab === 'code' && node && (
@@ -298,12 +298,13 @@ function PipelineStatus({ graph, statusById, onRun, running, reviewNodeId, done,
 // it reads even before a run.
 
 function NodeDetails({
-  node, ov, statusById, graph, onContinue,
+  node, ov, statusById, graph, onRun, onContinue,
 }: {
   node: GraphNode
   ov?: StatusOverlay[string]
   statusById?: StatusOverlay
   graph: PipelineGraphData
+  onRun?: (t: RunTarget) => void
   onContinue?: (nodeId: string) => void
 }) {
   const status = (ov?.status ?? node.status ?? 'idle') as NodeStatus
@@ -313,9 +314,10 @@ function NodeDetails({
   const progress = status === 'running' ? (ov?.progress ?? node.progress) : null
   const error = ov?.error
   const isReview = node.kind === 'review'
+  const showRun = onRun && isReview
   const showContinue = onContinue && isReview && status === 'waiting'
-  // A review node can only be released once every upstream node is `ok`.
-  // No inputs → nothing to wait on. Drives the CONTINUE disabled state.
+  // A review node can only be run / released once every upstream node is `ok`.
+  // No inputs → nothing to wait on. Drives the RUN / CONTINUE disabled state.
   const upstreamIds = graph.edges.filter((e) => e.to === node.id).map((e) => e.from)
   const upstreamReady = upstreamIds.every((id) => (statusById?.[id]?.status ?? graph.nodes[id]?.status ?? 'idle') === 'ok')
 
@@ -354,6 +356,7 @@ function NodeDetails({
         {progress != null && <span className="text-[11px] text-uikit-muted">{Math.round(progress * 100)}%</span>}
         {status !== 'running' && duration != null && <span className="text-[11px] text-uikit-muted">{duration < 60 ? `${duration.toFixed(1)}s` : `${(duration / 60).toFixed(1)}m`}</span>}
         {rows != null && <span className="text-[11px] text-uikit-muted">· {fmtCount(rows)} rows</span>}
+        {showRun && <RunButton disabled={!upstreamReady} onClick={() => onRun!({ kind: 'node', id: node.id })} />}
         {showContinue && <ContinueButton disabled={!upstreamReady} onClick={() => onContinue!(node.id)} />}
       </div>
 
