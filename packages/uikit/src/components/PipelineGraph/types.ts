@@ -79,6 +79,18 @@ export interface PipelineGraphData {
   edges: GraphEdge[]
 }
 
+/** A sampled table preview of a node's output — the first few rows of the
+ *  result, rendered in the NODE tab's `output` section (design's PipeOutputTab
+ *  table). The runner supplies it; the panel only renders it. */
+export interface NodePreview {
+  /** Column headers (the result schema). */
+  columns: string[]
+  /** Row-major sample cells; each inner array aligns to `columns`. */
+  rows: (string | number)[][]
+  /** Total row count the sample was drawn from (for the "N of M rows" caption). */
+  total?: number | null
+}
+
 /** Per-node live status overlay (e.g. streamed from a remote runner). Merged
  *  onto the static graph so edges re-derive their flow — see PipelineGraph. */
 export type StatusOverlay = Record<
@@ -90,5 +102,7 @@ export type StatusOverlay = Record<
     rows?: number | null
     /** Error message when status is `error` (shown in the node status panel). */
     error?: string | null
+    /** Sampled output preview, rendered as a table in the NODE tab. */
+    preview?: NodePreview | null
   }
 >

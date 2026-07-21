@@ -13,4 +13,5 @@ export type {
   NodeKind,
   NodeStatus,
   StatusOverlay,
+  NodePreview,
 } from './types'
