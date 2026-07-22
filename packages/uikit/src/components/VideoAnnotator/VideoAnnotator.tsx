@@ -686,7 +686,7 @@ const CSS = `
   font:14px/1.45 var(--f-ui, "Inter Tight", ui-sans-serif, system-ui, -apple-system, sans-serif);
 }
 .va-root button{font:inherit;color:var(--va-text);background:transparent;border:1px solid transparent;
-  border-radius:8px;padding:6px 10px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+  border-radius:var(--va-radius);padding:6px 10px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
 .va-root button:hover{background:var(--va-panel2)}
 .va-root button:active{transform:translateY(1px)}
 .va-root button:disabled{opacity:.35;cursor:default}
@@ -731,7 +731,7 @@ const CSS = `
   padding:6px 0;text-align:left;flex:none;width:162px;white-space:nowrap}
 .va-speedsel{position:relative;display:inline-flex}
 .va-speedsel .va-speedbtn{display:inline-flex;align-items:center;gap:3px;height:28px;padding:0 6px 0 9px;
-  background:var(--va-panel);color:var(--va-text);border:1px solid transparent;border-radius:8px;cursor:pointer;
+  background:var(--va-panel);color:var(--va-text);border:1px solid transparent;border-radius:var(--va-radius);cursor:pointer;
   font:11px var(--f-mono, ui-monospace, Menlo, monospace)}
 .va-speedbtn .va-caret{color:var(--va-muted)}
 .va-speedbtn:hover{background:var(--va-panel2)}
@@ -791,7 +791,7 @@ html[data-theme="dark"] .va-seg.sel .va-seglabel{color:var(--va-text)}
   to{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}
 .va-timeline .va-merge{position:absolute;bottom:100%;transform:translateX(-50%);z-index:8;
   width:30px;height:24px;display:inline-flex;align-items:center;justify-content:center;padding:0;
-  background:var(--va-accent);color:#fff;border:0;border-radius:8px;cursor:pointer;
+  background:var(--va-accent);color:#fff;border:0;border-radius:var(--va-radius);cursor:pointer;
   box-shadow:0 4px 12px var(--va-shadow);animation:va-merge-in .18s ease-out}
 .va-timeline .va-merge::after{content:"";position:absolute;top:100%;left:50%;transform:translateX(-50%);
   width:0;height:0;border:5px solid transparent;border-top-color:var(--va-accent)}
@@ -816,7 +816,7 @@ html[data-theme="dark"] .va-seg.sel .va-seglabel{color:var(--va-text)}
    so there's a single frame, and the meta row sits in the same box (separated
    by whitespace, no divider). Focus lifts the whole frame's border. */
 .va-desc{display:flex;flex-direction:column;gap:8px;flex:none;
-  background:var(--va-field);border:1px solid var(--va-line);border-radius:8px;padding:9px}
+  background:var(--va-field);border:1px solid var(--va-line);border-radius:var(--va-radius);padding:9px}
 .va-desc:focus-within{border-color:var(--va-accent)}
 .va-desc-box{width:100%;min-height:60px;resize:vertical;background:transparent;color:var(--va-text);
   border:0;padding:0;font:13px/1.45 inherit}
@@ -826,6 +826,6 @@ html[data-theme="dark"] .va-seg.sel .va-seglabel{color:var(--va-text)}
 .va-desc-meta > span:first-child{width:72px;flex:none}
 
 .va-toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--va-panel);
-  border:1px solid var(--va-line);border-radius:8px;padding:8px 14px;color:var(--va-text);
+  border:1px solid var(--va-line);border-radius:var(--va-radius);padding:8px 14px;color:var(--va-text);
   box-shadow:0 8px 24px var(--va-shadow);z-index:50}
 `;
