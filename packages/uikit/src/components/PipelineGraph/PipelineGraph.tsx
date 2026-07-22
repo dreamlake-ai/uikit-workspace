@@ -22,8 +22,8 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from 'react'
 import { cn } from '../../lib/utils'
-import type { GraphNode, PipelineGraphData, StatusOverlay } from './types'
-import { FLOW, NODE_H, NODE_W, STATUS, edgeFlow, kindColor, portAlong, portPos } from './flow'
+import type { GraphNode, GraphEdge, PipelineGraphData, StatusOverlay } from './types'
+import { FLOW, NODE_H, NODE_W, STATUS, edgeFlow, kindColor, portPos } from './flow'
 import { buildEdgePath, type Obstacle } from './edge-path'
 
 export interface PipelineGraphProps {
@@ -63,10 +63,141 @@ function useInjectedStyles() {
 
 type View = { x: number; y: number; k: number }
 
-// While dragging a connector tag up/down, snap it flush back onto the edge
-// once it's within this many canvas px of the line — so it clicks home instead
-// of hovering a pixel or two off with a stub leader trailing behind it.
-const TAG_SNAP = 7
+// —— Per-edge param tags ————————————————————————————————————————————————————
+// Each node-pair (A→B) gets one tag listing the params it transfers (the edge
+// toPorts). It anchors at the straight-line midpoint between A's out dot and B's
+// in dot — so it tracks both nodes as they move — and is auto-placed into open
+// canvas so it never overlaps a node or another tag. A single straight dashed
+// leader joins it back to the anchor; being one diagonal segment it can't run
+// collinear with the axis-aligned edges, so it never *overlaps* an edge.
+
+// Estimated tag box (mono 9px), used to test candidate placements for collisions.
+const TAG_CHARW = 5.4      // ~advance width of one mono char at 9px
+const TAG_PADX = 7
+const TAG_PADY = 3
+const TAG_ROW = 9          // one param row's height (font-size, line-height 1)
+const TAG_ROWGAP = 3       // vertical gap between rows
+const TAG_LEADCOL = 9      // leading dot (4px) + its 5px gap before the text
+const TAG_MARGIN = 10      // clearance kept around a placed tag
+
+type TagRect = { x0: number; y0: number; x1: number; y1: number }
+const rectsOverlap = (a: TagRect, b: TagRect) =>
+  a.x0 < b.x1 && a.x1 > b.x0 && a.y0 < b.y1 && a.y1 > b.y0
+// Coarse sampled segment∩rect test — keeps a leader from tunnelling under a node.
+function segHitsRect(ax: number, ay: number, bx: number, by: number, r: TagRect): boolean {
+  const N = 16
+  for (let i = 0; i <= N; i++) {
+    const t = i / N
+    const x = ax + (bx - ax) * t
+    const y = ay + (by - ay) * t
+    if (x >= r.x0 && x <= r.x1 && y >= r.y0 && y <= r.y1) return true
+  }
+  return false
+}
+function estTagSize(params: string[]): { w: number; h: number } {
+  const longest = params.reduce((m, p) => Math.max(m, p.length), 0)
+  return {
+    w: TAG_PADX * 2 + TAG_LEADCOL + Math.ceil(longest * TAG_CHARW),
+    h: TAG_PADY * 2 + params.length * TAG_ROW + Math.max(0, params.length - 1) * TAG_ROWGAP,
+  }
+}
+// Placement search directions, preferring straight ABOVE first (near-vertical
+// leader), then fanning up-sideways, then below.
+const TAG_DIRS: [number, number][] = [
+  [0, -1], [-0.5, -1], [0.5, -1], [-1, -0.5], [1, -0.5], [0, 1], [-1, 0.5], [1, 0.5],
+]
+
+// Measure the point at `frac` (0..1) along an SVG path's length. Used to anchor a
+// tag ON the real routed edge — the straight-line midpoint floats off a detouring
+// edge, leaving the leader connected to nothing. Uses a cached detached <path>;
+// getPointAtLength is pure geometry and works unattached. Null on the server (no
+// document) → the caller falls back to the straight midpoint.
+let _measurePath: SVGPathElement | null = null
+function pointOnPath(d: string, frac: number): { x: number; y: number } | null {
+  if (typeof document === 'undefined') return null
+  try {
+    if (!_measurePath) _measurePath = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+    _measurePath.setAttribute('d', d)
+    const len = _measurePath.getTotalLength()
+    if (!len || !Number.isFinite(len)) return null
+    const p = _measurePath.getPointAtLength(len * frac)
+    return { x: p.x, y: p.y }
+  } catch {
+    return null
+  }
+}
+
+// Group edges by node-pair, collecting each pair's transferred params (toPorts).
+function groupEdgeParams(edges: GraphEdge[]): Map<string, { from: string; to: string; params: string[] }> {
+  const groups = new Map<string, { from: string; to: string; params: string[] }>()
+  for (const e of edges) {
+    const key = `${e.from}->${e.to}`
+    let g = groups.get(key)
+    if (!g) { g = { from: e.from, to: e.to, params: [] }; groups.set(key, g) }
+    if (e.toPort && !g.params.includes(e.toPort)) g.params.push(e.toPort)
+  }
+  return groups
+}
+
+// The on-edge midpoint anchor for a pair — same endpoints + obstacles as the drawn
+// edge, so it lands exactly on the rendered (routed) path. Falls back to the
+// straight midpoint if the path can't be measured (server render).
+function pairAnchor(src: GraphNode, dst: GraphNode, all: GraphNode[], fromId: string, toId: string): { x: number; y: number } {
+  const from = portPos(src, '', 'out')
+  const to = portPos(dst, '', 'in')
+  const obstacles: Obstacle[] = all
+    .filter(n => n.id !== fromId && n.id !== toId)
+    .map(n => ({ x0: n.pos.x - 4, x1: n.pos.x + NODE_W + 4, y0: n.pos.y - 4, y1: n.pos.y + NODE_H + 4 }))
+  return pointOnPath(buildEdgePath(from, to, { obstacles }), 0.5)
+    ?? { x: (from.x + to.x) / 2, y: (from.y + to.y) / 2 }
+}
+
+// Adaptive placement — the expensive part. For each pair: anchor at its on-edge
+// midpoint, then search outward (preferring straight above) for a slot clear of
+// every node rect and already-placed tag, whose straight leader doesn't tunnel a
+// node. Returns per-pair offsets {dx,dy} from the anchor. Runs ONCE per graph (at
+// init) — node drags reuse the frozen offsets, so this never hits the hot path.
+function autoPlaceTags(nodeList: GraphNode[], edges: GraphEdge[]): Record<string, { dx: number; dy: number }> {
+  const byId: Record<string, GraphNode> = Object.fromEntries(nodeList.map(n => [n.id, n]))
+  const nodeRects: TagRect[] = nodeList.map(n => ({ x0: n.pos.x, y0: n.pos.y, x1: n.pos.x + NODE_W, y1: n.pos.y + NODE_H }))
+  const items: Array<{ key: string; anchorX: number; anchorY: number; w: number; h: number }> = []
+  for (const g of groupEdgeParams(edges).values()) {
+    const src = byId[g.from]; const dst = byId[g.to]
+    if (!src || !dst || g.params.length === 0) continue
+    const mid = pairAnchor(src, dst, nodeList, g.from, g.to)
+    const { w, h } = estTagSize(g.params)
+    items.push({ key: `${g.from}->${g.to}`, anchorX: mid.x, anchorY: mid.y, w, h })
+  }
+  // Deterministic placement order: top-to-bottom, then left-to-right.
+  items.sort((a, b) => a.anchorY - b.anchorY || a.anchorX - b.anchorX)
+
+  const placed: TagRect[] = []
+  const offs: Record<string, { dx: number; dy: number }> = {}
+  for (const it of items) {
+    const boxAt = (cx: number, cy: number, pad = 0): TagRect => ({
+      x0: cx - it.w / 2 - pad, y0: cy - it.h / 2 - pad,
+      x1: cx + it.w / 2 + pad, y1: cy + it.h / 2 + pad,
+    })
+    const base = it.h / 2 + TAG_MARGIN + 24
+    let cx = it.anchorX, cy = it.anchorY - base
+    let found = false
+    for (let ring = 0; ring < 12 && !found; ring++) {
+      const dist = base + ring * 22
+      for (const [ux, uy] of TAG_DIRS) {
+        const tx = it.anchorX + ux * dist
+        const ty = it.anchorY + uy * dist
+        const box = boxAt(tx, ty, TAG_MARGIN)
+        if (nodeRects.some(r => rectsOverlap(box, r))) continue
+        if (placed.some(r => rectsOverlap(box, r))) continue
+        if (nodeRects.some(r => segHitsRect(it.anchorX, it.anchorY, tx, ty, r))) continue
+        cx = tx; cy = ty; found = true; break
+      }
+    }
+    placed.push(boxAt(cx, cy))
+    offs[it.key] = { dx: cx - it.anchorX, dy: cy - it.anchorY }
+  }
+  return offs
+}
 
 export function PipelineGraph({
   graph, statusById, selectedNodeId, onSelectNode, showControls = true, className,
@@ -82,15 +213,23 @@ export function PipelineGraph({
 
   const [view, setView] = useState<View>({ x: 28, y: 20, k: 1 })
   const [posOverride, setPosOverride] = useState<Record<string, { x: number; y: number }>>({})
-  // Per-edge overrides: `bendX` pins where the vertical jog sits (absolute
-  // canvas x), `tagDy` lifts the connector tag off the line (canvas y offset).
-  const [edgeOverrides, setEdgeOverrides] = useState<Record<number, { bendX?: number; tagDy?: number }>>({})
-  useEffect(() => { setPosOverride({}); setEdgeOverrides({}) }, [graph.id])
+  // Per-pair tag offset from its edge-midpoint anchor (keyed `from->to`). Seeded
+  // ONCE per graph by the adaptive placement below, then frozen — node drags reuse
+  // these offsets (only the anchor moves), and a manual tag drag overwrites one.
+  const [tagOffset, setTagOffset] = useState<Record<string, { dx: number; dy: number }>>({})
+  // One-time adaptive placement: solve collision-free offsets from the initial
+  // layout and freeze them. Keyed on graph.id so it runs on load / version change,
+  // NOT on every node drag — keeping the O(pairs·rings·dirs) search off the hot path.
+  useEffect(() => {
+    setPosOverride({})
+    setTagOffset(autoPlaceTags(Object.values(graph.nodes), graph.edges))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [graph.id])
 
   const containerRef = useRef<HTMLDivElement>(null)
   const panRef = useRef<{ x: number; y: number; vx: number; vy: number } | null>(null)
   const nodeDrag = useRef<{ id: string; sx: number; sy: number; bx: number; by: number; moved: boolean } | null>(null)
-  const tagDrag = useRef<{ i: number; sx: number; sy: number; bendX: number; tagDy: number; minX: number; maxX: number } | null>(null)
+  const tagDrag = useRef<{ id: string; sx: number; sy: number; dx: number; dy: number } | null>(null)
 
   // Effective nodes: drag overrides + live status overlay merged in.
   const nodes = useMemo(() => {
@@ -107,6 +246,35 @@ export function PipelineGraph({
   }, [graph.nodes, posOverride, statusById])
 
   const byId = useMemo(() => Object.fromEntries(nodes.map(n => [n.id, n])), [nodes])
+
+  // Per-edge param tags — one per node-pair (A→B), listing the params it transfers
+  // (edge toPorts). Anchored at the pair's ON-EDGE midpoint (tracks both nodes as
+  // they move); positioned by a FROZEN offset from the one-time adaptive placement
+  // (the graph.id effect) or a manual drag. A straight dashed leader joins tag to
+  // anchor. This recomputes per render so anchors follow node drags, but does NO
+  // collision search — only the cheap per-pair anchor measurement.
+  const pairTags = useMemo(() => {
+    const out: Array<{
+      key: string; from: string; to: string; params: string[]
+      anchorX: number; anchorY: number; tagX: number; tagY: number
+      off: { dx: number; dy: number }; color: string
+    }> = []
+    for (const g of groupEdgeParams(graph.edges).values()) {
+      const src = byId[g.from]; const dst = byId[g.to]
+      if (!src || !dst || g.params.length === 0) continue
+      const mid = pairAnchor(src, dst, nodes, g.from, g.to)
+      const key = `${g.from}->${g.to}`
+      // Frozen offset from the adaptive pass or a drag; a straight-above fallback
+      // covers the first frame before the init effect populates tagOffset.
+      const off = tagOffset[key] ?? { dx: 0, dy: -(estTagSize(g.params).h / 2 + TAG_MARGIN + 24) }
+      out.push({
+        key, from: g.from, to: g.to, params: g.params,
+        anchorX: mid.x, anchorY: mid.y, tagX: mid.x + off.dx, tagY: mid.y + off.dy, off,
+        color: FLOW[edgeFlow(src.status, dst.status)].color,
+      })
+    }
+    return out
+  }, [nodes, graph.edges, byId, tagOffset])
 
   // Topological order of the nodes (Kahn's) — the linear sequence ↑/↓ step
   // through. Nodes left out by a cycle are appended in insertion order so every
@@ -200,33 +368,21 @@ export function PipelineGraph({
     if (d && !d.moved) select(n.id === selected ? null : n.id)
   }
 
-  // — connector-tag drag: sideways drag moves the edge's vertical bend, up/down
-  //   drag lifts the tag off the line (a dashed leader then bridges the gap).
-  //   stopPropagation keeps the canvas from panning / nodes from dragging. —
-  const onTagDown = (
-    e: ReactPointerEvent, i: number,
-    from: { x: number; y: number }, to: { x: number; y: number },
-    bendX: number, tagDy: number,
-  ) => {
+  // — tag drag: move a pair's param tag in both axes off its edge-midpoint anchor
+  //   (a straight dashed leader bridges the gap); this pins it, overriding the
+  //   auto-placement. stopPropagation keeps the canvas/nodes from also dragging. —
+  const onTagDown = (e: ReactPointerEvent, id: string, off: { dx: number; dy: number }) => {
     e.stopPropagation()
     ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
-    tagDrag.current = {
-      i, sx: e.clientX, sy: e.clientY, bendX, tagDy,
-      minX: Math.min(from.x, to.x) + 8, maxX: Math.max(from.x, to.x) - 8,
-    }
+    tagDrag.current = { id, sx: e.clientX, sy: e.clientY, dx: off.dx, dy: off.dy }
   }
   const onTagMove = (e: ReactPointerEvent) => {
     const d = tagDrag.current
     if (!d) return
     e.stopPropagation()
-    const dxCanvas = (e.clientX - d.sx) / view.k
-    const dyCanvas = (e.clientY - d.sy) / view.k
-    const bendX = Math.min(d.maxX, Math.max(d.minX, d.bendX + dxCanvas))
-    const raw = d.tagDy + dyCanvas
-    // Snap onto the line when close, so the tag settles flush and the dashed
-    // leader (drawn only when |tagDy| > 2) disappears.
-    const tagDy = Math.abs(raw) < TAG_SNAP ? 0 : raw
-    setEdgeOverrides(o => ({ ...o, [d.i]: { bendX, tagDy } }))
+    const dx = d.dx + (e.clientX - d.sx) / view.k
+    const dy = d.dy + (e.clientY - d.sy) / view.k
+    setTagOffset(o => ({ ...o, [d.id]: { dx, dy } }))
   }
   const onTagUp = (e: ReactPointerEvent) => {
     if (!tagDrag.current) return
@@ -325,12 +481,7 @@ export function PipelineGraph({
             const obstacles: Obstacle[] = nodes
               .filter(n => n.id !== e.from && n.id !== e.to)
               .map(n => ({ x0: n.pos.x - 4, x1: n.pos.x + NODE_W + 4, y0: n.pos.y - 4, y1: n.pos.y + NODE_H + 4 }))
-            // Pin the vertical bend where the (draggable) connector tag sits.
-            const bendX = edgeOverrides[i]?.bendX ?? (from.x + to.x) / 2
-            const anchorY = (from.y + to.y) / 2
-            const tagDy = edgeOverrides[i]?.tagDy ?? 0
-            const edgeOpts = { obstacles, bendX }
-            const d = buildEdgePath(from, to, edgeOpts)
+            const d = buildEdgePath(from, to, { obstacles })
             const flow = edgeFlow(a.status, b.status)
             const spec = FLOW[flow]
             const hot = !!selected && (e.from === selected || e.to === selected)
@@ -358,14 +509,25 @@ export function PipelineGraph({
                   fill="none" stroke={stroke} strokeWidth={width}
                   strokeLinecap="round" strokeLinejoin="round"
                 />
-                {/* Leader line: bridges the connector tag back to the edge when lifted. */}
-                {Math.abs(tagDy) > 2 && (
-                  <line
-                    x1={bendX} y1={anchorY} x2={bendX} y2={anchorY + tagDy}
-                    stroke="var(--color-uikit-muted)" strokeWidth={1} strokeDasharray="3 3"
-                  />
-                )}
               </g>
+            )
+          })}
+
+          {/* Param-tag leaders: a single straight dashed line from each tag's CENTRE
+              to its edge-midpoint anchor. Drawn under the (opaque) tag, so it
+              emerges from whichever side faces the anchor. Being one diagonal
+              segment it can't run collinear with the axis-aligned edges → it never
+              overlaps an inter-node edge. Tinted to match the edge. */}
+          {pairTags.map(t => {
+            if (Math.abs(t.off.dx) < 2 && Math.abs(t.off.dy) < 2) return null
+            const dim = !!selected && t.from !== selected && t.to !== selected
+            return (
+              <line
+                key={`lead-${t.key}`}
+                x1={t.tagX} y1={t.tagY} x2={t.anchorX} y2={t.anchorY}
+                stroke={t.color} strokeWidth={1} strokeDasharray="3 3"
+                opacity={dim ? 0.28 : 1}
+              />
             )
           })}
         </svg>
@@ -382,43 +544,41 @@ export function PipelineGraph({
           />
         ))}
 
-        {/* Connector tags — a draggable pill on each edge, showing what it
-            carries (`toPort`). Drag sideways to move the bend, up/down to lift
-            the tag off the line. Rendered as HTML so it's pointer-interactive
-            (the svg above is pointer-events:none). */}
-        {graph.edges.map((e, i) => {
-          const a = byId[e.from]
-          const b = byId[e.to]
-          if (!a || !b) return null
-          const from = portPos(a, e.fromPort, 'out')
-          const to = portPos(b, e.toPort, 'in')
-          const bendX = edgeOverrides[i]?.bendX ?? (from.x + to.x) / 2
-          const anchorY = (from.y + to.y) / 2
-          const tagDy = edgeOverrides[i]?.tagDy ?? 0
-          const hot = !!selected && (e.from === selected || e.to === selected)
-          const dim = !!selected && !hot
+        {/* Param tags — one per node-pair, listing the params it transfers (each
+            with a leading dot, stacked). Border, leader, dots and text all take
+            the edge's flow colour. Auto-placed clear of nodes/other tags; drag to
+            pin. Rendered AFTER the nodes so a tag is never occluded by a node. HTML
+            so it's pointer-interactive (the svg is pointer-events:none). */}
+        {pairTags.map(t => {
+          const dim = !!selected && t.from !== selected && t.to !== selected
           return (
             <div
-              key={`tag-${i}`}
-              onPointerDown={ev => onTagDown(ev, i, from, to, bendX, tagDy)}
+              key={`tag-${t.key}`}
+              onPointerDown={ev => onTagDown(ev, t.key, t.off)}
               onPointerMove={onTagMove}
               onPointerUp={onTagUp}
               onPointerCancel={onTagUp}
               style={{
                 position: 'absolute',
-                left: bendX, top: anchorY + tagDy,
+                left: t.tagX, top: t.tagY,
                 transform: 'translate(-50%, -50%)',
                 opacity: dim ? 0.28 : 1,
                 transition: 'opacity 160ms ease',
+                display: 'flex', flexDirection: 'column', gap: 3,
                 fontFamily: 'var(--font-uikit-mono)', fontSize: 9, lineHeight: 1,
-                padding: '2px 6px', borderRadius: 5,
+                padding: '3px 7px', borderRadius: 5,
                 background: 'var(--color-uikit-canvas-bg, var(--color-uikit-panel))',
-                border: '2px solid var(--color-uikit-muted)',
-                color: 'var(--color-uikit-muted)',
-                whiteSpace: 'nowrap', cursor: 'grab', userSelect: 'none',
+                border: `2px solid ${t.color}`,
+                color: t.color,
+                cursor: 'grab', userSelect: 'none',
               }}
             >
-              {e.toPort}
+              {t.params.map((p, i) => (
+                <span key={`${p}-${i}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap' }}>
+                  <span style={{ width: 4, height: 4, borderRadius: 2, background: t.color, flexShrink: 0 }} />
+                  {p}
+                </span>
+              ))}
             </div>
           )
         })}
@@ -494,41 +654,25 @@ function PipeNode({ node, selected, dimmed, onPointerDown, onPointerMove, onPoin
         {node.kind} · {node.inputs.length}→{node.outputs.length}
       </div>
 
-      {/* Input ports: one per parameter. */}
-      {node.inputs.map((p, i) => (
-        <Port key={`in-${p}-${i}`} dir="in" along={portAlong(node.inputs.length, i)} label={p} />
-      ))}
-      {/* Output ports (the tracer emits one — the result table). */}
-      {node.outputs.map((p, i) => (
-        <Port key={`out-${p}-${i}`} dir="out" along={portAlong(node.outputs.length, i)} label={p} />
-      ))}
+      {/* One input dot (left-centre) + one output dot (right-centre). The input
+          param names are surfaced in the floating input tag, not beside the dot. */}
+      {node.inputs.length > 0 && <PortDot dir="in" />}
+      {node.outputs.length > 0 && <PortDot dir="out" />}
     </div>
   )
 }
 
-function Port({ dir, along, label }: { dir: 'in' | 'out'; along: number; label: string }) {
-  // Dot center sits at `along + 2` (top-left `along - 1` + 3px half-height).
-  const labelStyle: React.CSSProperties = {
-    position: 'absolute',
-    top: along + 2,
-    ...(dir === 'in'
-      ? { left: -6, transform: 'translate(-100%, -50%)' }
-      : { right: -6, transform: 'translate(100%, -50%)' }),
-    fontFamily: 'var(--font-uikit-mono)', fontSize: 9, lineHeight: 1,
-    color: 'var(--color-uikit-muted)', whiteSpace: 'nowrap', pointerEvents: 'none',
-  }
+// The single 6px port dot, centred on the node's left (in) or right (out) edge.
+function PortDot({ dir }: { dir: 'in' | 'out' }) {
   return (
-    <>
-      <span style={{
-        position: 'absolute',
-        top: along - 1,
-        ...(dir === 'in' ? { left: -3 } : { right: -3 }),
-        width: 6, height: 6, borderRadius: 3,
-        background: 'var(--color-uikit-panel)',
-        border: '1px solid var(--color-uikit-muted)',
-      }} />
-      <span style={labelStyle}>{label}</span>
-    </>
+    <span style={{
+      position: 'absolute',
+      top: NODE_H / 2 - 3,
+      ...(dir === 'in' ? { left: -3 } : { right: -3 }),
+      width: 6, height: 6, borderRadius: 3,
+      background: 'var(--color-uikit-panel)',
+      border: '1px solid var(--color-uikit-muted)',
+    }} />
   )
 }
 

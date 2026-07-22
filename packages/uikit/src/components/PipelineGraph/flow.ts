@@ -91,22 +91,22 @@ export function portAlong(count: number, idx: number, vertical = false): number 
   return start + idx * gap - 3
 }
 
-/** Absolute canvas position of a named port. Pure: each port in `inputs` /
- *  `outputs` gets a dot, positioned by its index in that list. The tracer emits
- *  a single output port (`['out']`) — one dot — so nothing special-cases here. */
+/** Absolute canvas position of a node's single input / output dot. Every param
+ *  now shares ONE dot per side (the parameter list is surfaced in the per-node
+ *  input tag instead), so this is the edge-centre — all edges into a node
+ *  converge on the left-centre dot, all edges out share the right-centre dot.
+ *  `port` is accepted for call-site compatibility but no longer affects position. */
 export function portPos(
-  node: { pos: { x: number; y: number }; inputs: string[]; outputs: string[] },
-  port: string,
+  node: { pos: { x: number; y: number } },
+  _port: string,
   dir: 'in' | 'out',
   vertical = false,
 ): { x: number; y: number } {
-  const list = dir === 'in' ? node.inputs : node.outputs
-  const along = portAlong(list.length, Math.max(list.indexOf(port), 0), vertical) + 3
   if (vertical) {
-    return { x: node.pos.x + along, y: dir === 'in' ? node.pos.y : node.pos.y + NODE_H }
+    return { x: node.pos.x + NODE_W / 2, y: dir === 'in' ? node.pos.y : node.pos.y + NODE_H }
   }
   return {
     x: dir === 'in' ? node.pos.x : node.pos.x + NODE_W,
-    y: node.pos.y + along,
+    y: node.pos.y + NODE_H / 2,
   }
 }
