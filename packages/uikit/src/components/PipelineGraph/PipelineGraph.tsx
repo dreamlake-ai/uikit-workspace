@@ -742,7 +742,7 @@ function Legend() {
       className="hidden sm:flex"
       style={{
         ...GLASS,
-        left: 14, top: 12,
+        right: 14, top: 12,
         flexDirection: 'column', alignItems: 'flex-start', gap: 4,
         padding: '8px 10px', fontSize: 10, fontWeight: 500,
         letterSpacing: '.04em', whiteSpace: 'nowrap',
