@@ -765,7 +765,7 @@ const CSS = `
 /* Neutral outline + glyph at rest; both turn accent-blue on hover. */
 .va-transport .va-icon:hover{background:transparent;border-color:var(--va-accent);color:var(--va-accent)}
 .va-icon svg{flex:none}
-.va-root svg{stroke-linejoin:miter;stroke-linecap:square}
+.va-root svg{stroke-linejoin:round;stroke-linecap:round}
 
 /* Hover tooltip — matches the component's own floating surfaces (speed menu,
    toast): panel fill, 1px hairline border, ink text, soft popover shadow.
