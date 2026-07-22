@@ -71,14 +71,16 @@ type View = { x: number; y: number; k: number }
 // leader joins it back to the anchor; being one diagonal segment it can't run
 // collinear with the axis-aligned edges, so it never *overlaps* an edge.
 
-// Estimated tag box (mono 9px), used to test candidate placements for collisions.
-const TAG_CHARW = 5.4      // ~advance width of one mono char at 9px
+// Estimated tag box (mono 9px / 600 / .04em, matching the design's edge label),
+// used to test candidate placements for collisions. Slightly OVER-estimated so a
+// reserved slot always fully clears the rendered tag (no residual overlap).
+const TAG_CHARW = 6.0      // ~advance of one mono char at 9px + letter-spacing, rounded up
 const TAG_PADX = 7
-const TAG_PADY = 3
-const TAG_ROW = 9          // one param row's height (font-size, line-height 1)
+const TAG_PADY = 3         // → single-row box ≈ 15px tall (design pill is 14)
+const TAG_ROW = 10         // one param row's height
 const TAG_ROWGAP = 3       // vertical gap between rows
-const TAG_LEADCOL = 9      // leading dot (4px) + its 5px gap before the text
-const TAG_MARGIN = 10      // clearance kept around a placed tag
+const TAG_LEADCOL = 8      // leading dot (3px) + its 5px gap before the text
+const TAG_MARGIN = 14      // clearance kept around a placed tag (fixes slight overlap)
 
 type TagRect = { x0: number; y0: number; x1: number; y1: number }
 const rectsOverlap = (a: TagRect, b: TagRect) =>
@@ -217,6 +219,9 @@ export function PipelineGraph({
   // ONCE per graph by the adaptive placement below, then frozen — node drags reuse
   // these offsets (only the anchor moves), and a manual tag drag overwrites one.
   const [tagOffset, setTagOffset] = useState<Record<string, { dx: number; dy: number }>>({})
+  // The pair key of the tag currently pressed/held — highlights that tag, its
+  // leader, and the edge its anchor sits on. Cleared on pointer up / cancel.
+  const [activeTag, setActiveTag] = useState<string | null>(null)
   // One-time adaptive placement: solve collision-free offsets from the initial
   // layout and freeze them. Keyed on graph.id so it runs on load / version change,
   // NOT on every node drag — keeping the O(pairs·rings·dirs) search off the hot path.
@@ -375,6 +380,7 @@ export function PipelineGraph({
     e.stopPropagation()
     ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
     tagDrag.current = { id, sx: e.clientX, sy: e.clientY, dx: off.dx, dy: off.dy }
+    setActiveTag(id)   // highlight this tag + its leader + its edge while held
   }
   const onTagMove = (e: ReactPointerEvent) => {
     const d = tagDrag.current
@@ -385,6 +391,7 @@ export function PipelineGraph({
     setTagOffset(o => ({ ...o, [d.id]: { dx, dy } }))
   }
   const onTagUp = (e: ReactPointerEvent) => {
+    setActiveTag(null)
     if (!tagDrag.current) return
     e.stopPropagation()
     tagDrag.current = null
@@ -445,6 +452,12 @@ export function PipelineGraph({
     }
   }, [topoOrder, selected, graph.edges, select, ensureVisible])
 
+  // Selection highlight colour = the selected node's STATUS colour (not a fixed
+  // accent), so a highlighted node border + its edges read as that node's state.
+  const selColor = selected
+    ? (STATUS[byId[selected]?.status ?? 'idle'] ?? STATUS.idle).color
+    : 'var(--color-uikit-accent)'
+
   return (
     <div
       ref={containerRef}
@@ -484,10 +497,15 @@ export function PipelineGraph({
             const d = buildEdgePath(from, to, { obstacles })
             const flow = edgeFlow(a.status, b.status)
             const spec = FLOW[flow]
-            const hot = !!selected && (e.from === selected || e.to === selected)
-            // Highlighted edges use one accent colour (matches the design), not
-            // the source node's kind colour — so a selection reads consistently.
-            const stroke = hot ? 'var(--color-uikit-accent)' : spec.color
+            // Hot when the selected node is an endpoint, OR the held tag's pair is
+            // this edge (press-and-hold a tag to trace its edge).
+            const selHot = !!selected && (e.from === selected || e.to === selected)
+            const tagHot = activeTag === `${e.from}->${e.to}`
+            const hot = selHot || tagHot
+            // Highlight in the RELEVANT colour, not a fixed accent: a selection
+            // uses the selected node's status colour; a held tag uses its edge's
+            // own flow colour (== spec.color, so no change needed there).
+            const stroke = selHot ? selColor : spec.color
             const width = hot ? Math.max(spec.width, 2) : spec.width
             const dim = !!selected && !hot
             // A `mask` edge is a gate/filter, not data flow. In the settled
@@ -521,36 +539,29 @@ export function PipelineGraph({
           {pairTags.map(t => {
             if (Math.abs(t.off.dx) < 2 && Math.abs(t.off.dy) < 2) return null
             const dim = !!selected && t.from !== selected && t.to !== selected
+            const active = activeTag === t.key
             return (
               <line
                 key={`lead-${t.key}`}
                 x1={t.tagX} y1={t.tagY} x2={t.anchorX} y2={t.anchorY}
-                stroke={t.color} strokeWidth={1} strokeDasharray="3 3"
-                opacity={dim ? 0.28 : 1}
+                stroke={t.color}
+                strokeWidth={active ? 1.4 : 0.8} strokeDasharray="2 2"
+                opacity={active ? 1 : dim ? 0.2 : 0.55}
               />
             )
           })}
         </svg>
 
-        {nodes.map(n => (
-          <PipeNode
-            key={n.id}
-            node={n}
-            selected={n.id === selected}
-            dimmed={!!selected && n.id !== selected}
-            onPointerDown={e => onNodeDown(e, n)}
-            onPointerMove={onNodeMove}
-            onPointerUp={e => onNodeUp(e, n)}
-          />
-        ))}
-
         {/* Param tags — one per node-pair, listing the params it transfers (each
-            with a leading dot, stacked). Border, leader, dots and text all take
-            the edge's flow colour. Auto-placed clear of nodes/other tags; drag to
-            pin. Rendered AFTER the nodes so a tag is never occluded by a node. HTML
-            so it's pointer-interactive (the svg is pointer-events:none). */}
+            with a small leading dot, stacked). Styled to match the design's edge
+            label: panel fill, 1px flow-colour border, rx3, a faint drop shadow,
+            mono 9/600/.04em text in the flow colour. Auto-placed clear of nodes /
+            other tags; drag to pin. Rendered BEFORE the nodes so a tag sits BELOW
+            them in z-order (never covers a node). HTML so it's pointer-interactive
+            (the svg is pointer-events:none). */}
         {pairTags.map(t => {
           const dim = !!selected && t.from !== selected && t.to !== selected
+          const active = activeTag === t.key
           return (
             <div
               key={`tag-${t.key}`}
@@ -563,25 +574,45 @@ export function PipelineGraph({
                 left: t.tagX, top: t.tagY,
                 transform: 'translate(-50%, -50%)',
                 opacity: dim ? 0.28 : 1,
-                transition: 'opacity 160ms ease',
-                display: 'flex', flexDirection: 'column', gap: 3,
-                fontFamily: 'var(--font-uikit-mono)', fontSize: 9, lineHeight: 1,
-                padding: '3px 7px', borderRadius: 5,
-                background: 'var(--color-uikit-canvas-bg, var(--color-uikit-panel))',
-                border: `2px solid ${t.color}`,
+                transition: 'opacity 160ms ease, box-shadow 120ms ease, border-color 120ms ease',
+                display: 'flex', flexDirection: 'column', gap: TAG_ROWGAP,
+                fontFamily: 'var(--font-uikit-mono)', fontSize: 9, fontWeight: 600,
+                letterSpacing: '.04em', lineHeight: 1,
+                padding: '2px 7px', borderRadius: 3,
+                background: 'var(--color-uikit-panel, #fcfbf7)',
+                // Held → emphasise in the edge's OWN flow colour (matching its
+                // node-edge), with a colour ring — not the fixed accent.
+                border: `${active ? 1.4 : 1}px solid ${t.color}`,
+                boxShadow: active
+                  ? `0 0 0 2px color-mix(in oklab, ${t.color} 30%, transparent), 0 1px 2px rgba(0,0,0,.10)`
+                  : '0 1px 1px rgba(0,0,0,.06)',
                 color: t.color,
                 cursor: 'grab', userSelect: 'none',
               }}
             >
               {t.params.map((p, i) => (
                 <span key={`${p}-${i}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap' }}>
-                  <span style={{ width: 4, height: 4, borderRadius: 2, background: t.color, flexShrink: 0 }} />
+                  <span style={{ width: 3, height: 3, borderRadius: 2, background: t.color, flexShrink: 0 }} />
                   {p}
                 </span>
               ))}
             </div>
           )
         })}
+
+        {nodes.map(n => (
+          <PipeNode
+            key={n.id}
+            node={n}
+            selected={n.id === selected}
+            // Never fade non-selected nodes — selection reads via the status
+            // border + shadow, not by dimming the rest of the graph.
+            dimmed={false}
+            onPointerDown={e => onNodeDown(e, n)}
+            onPointerMove={onNodeMove}
+            onPointerUp={e => onNodeUp(e, n)}
+          />
+        ))}
       </div>
 
       {showControls && <Legend />}
@@ -610,8 +641,12 @@ function PipeNode({ node, selected, dimmed, onPointerDown, onPointerMove, onPoin
   const bg = idle
     ? panel
     : `color-mix(in srgb, ${panel} ${selected ? '84%' : '90%'}, ${st.color})`
+  // Border always reflects STATUS (design's statusBorders): a faint+status mix at
+  // rest; the full status colour when selected (an idle node's status colour is
+  // the neutral muted, so its selection border reads neutral — matching the
+  // design). Never the fixed blue accent.
   const border = selected
-    ? 'var(--color-uikit-accent)'
+    ? st.color
     : idle
       ? 'var(--color-uikit-faint)'
       : `color-mix(in srgb, var(--color-uikit-faint) 55%, ${st.color})`
@@ -707,7 +742,7 @@ function Legend() {
       className="hidden sm:flex"
       style={{
         ...GLASS,
-        left: 14, top: 12,
+        right: 14, top: 12,
         flexDirection: 'column', alignItems: 'flex-start', gap: 4,
         padding: '8px 10px', fontSize: 10, fontWeight: 500,
         letterSpacing: '.04em', whiteSpace: 'nowrap',
