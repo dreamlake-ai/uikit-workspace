@@ -46,3 +46,4 @@ export * from "./VideoAnnotator";
 export * from "./VirtualList";
 export * from "./VirtualListFlow";
 export * from "./Waterfall";
+export * from "./WorkflowGraph";
