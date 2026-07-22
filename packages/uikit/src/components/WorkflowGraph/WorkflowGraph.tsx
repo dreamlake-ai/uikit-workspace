@@ -1,17 +1,24 @@
 /**
  * WorkflowGraph — a vertical "metro map" of a workflow run trace. Pure and
  * presentational: phase bands stack top-down (header row + a wrapping grid of
- * agent node cards), joined by a central spine with orthogonal fan-out /
- * fan-in stubs (SVG underlay, rounded elbows — the vertical cousin of
- * PipelineGraph's edge routing). Re-render with each trace snapshot and the
- * graph grows in place while a run is live.
+ * agent node cards), joined by a central spine with smooth bezier fan-out /
+ * fan-in edges (SVG underlay). Re-render with each trace snapshot and the graph
+ * grows in place while a run is live.
+ *
+ * Visual language mirrors the app's workflow-editor canvas so the two surfaces
+ * read as one product: a full-bleed dot-grid plane, editor-style rounded node
+ * cards (12px radius, kind/state left accent, floating shadow), and bezier
+ * edges — phases are delimited by band-header typography, spacing, and the
+ * spine, not by boxed bands.
  *
  * Skeleton mode (`skeleton`, or no agents at all) renders one dashed ghost
  * node per declared phase — the ordering is real, the run hasn't happened.
  *
- * The container scrolls vertically like a document — no pan/zoom (v1). The
- * page owns agent detail (promptPreview / resultPreview): this component only
- * reports clicks via `onSelectAgent` and draws the `selectedAgentId` ring.
+ * The container scrolls vertically like a document — no pan/zoom (v1). With
+ * `fillHeight` the dot-grid plane fills the viewport and short graphs (skeleton,
+ * small runs) center vertically so a full-height column shows no whitespace.
+ * The page owns agent detail (promptPreview / resultPreview): this component
+ * only reports clicks via `onSelectAgent` and draws the `selectedAgentId` ring.
  */
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { cn } from '../../lib/utils'
@@ -32,10 +39,15 @@ export interface WorkflowGraphProps {
    *  `String(index)` for agents the trace gave no id. */
   selectedAgentId?: string | null
   onSelectAgent?: (agent: WorkflowAgentNode) => void
+  /** Fill the host's full height: the dot-grid plane grows to the viewport and
+   *  a graph shorter than the viewport is centred vertically (no bottom
+   *  whitespace in skeleton / small-run / empty states). Additive — the default
+   *  keeps the classic document-flow behaviour. */
+  fillHeight?: boolean
   className?: string
 }
 
-// Injected once — progress pulse (HTML dot) + marching-dash flow (SVG stubs).
+// Injected once — progress pulse (HTML dot) + marching-dash flow (SVG edges).
 const CSS = `
 @keyframes dlWfPulse{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--color-uikit-tone-blue) 45%,transparent)}50%{box-shadow:0 0 0 5px transparent}}
 .dl-wf-pulse{animation:dlWfPulse 1.6s ease-in-out infinite}
@@ -53,17 +65,20 @@ function useInjectedStyles() {
   }, [])
 }
 
-// Node card size (spec: ~200 × 64) and metro geometry.
+// Node card size (editor-matched ~200 × 70, 12px radius) and metro geometry.
 const CARD_W = 200
-const CARD_H = 64
-const GAP_X = 12
-const STUB = 14      // vertical run between a bus line and a card edge
-const ROW_GAP = 10   // spine length between a row's fan-in and the next fan-out
+const CARD_H = 70
+const GAP_X = 14
+const FAN = 40       // vertical run between a spine junction and a card edge —
+                     // the bezier fan curves live in this band; generous so the
+                     // curves read as curves (and help fill height).
+const ROW_GAP = 14   // spine length between a row's fan-in and the next fan-out
 const HEADER_H = 40
-const BAND_GAP = 18  // spine length between a band's fan-in and the next header
+const BAND_GAP = 22  // spine length between a band's fan-in and the next header
 const PAD_X = 16
-const PAD_Y = 12
-const ELBOW_R = 8    // rounded-corner radius where a bus turns into a stub
+const PAD_Y = 14
+const RADIUS = 12    // card corner radius (matches the editor's node cards)
+const ACCENT_W = 4   // kind/state left-accent bar width (editor treatment)
 
 const SPINE_C = 'var(--color-uikit-ink-50)'
 
@@ -157,8 +172,8 @@ interface CardLayout {
   cx: number
 }
 interface RowLayout {
-  busTop: number
-  busBottom: number
+  fanOutY: number // spine junction the row's cards fan OUT from (top)
+  fanInY: number  // spine junction the row's cards fan IN to (bottom)
   cards: CardLayout[]
 }
 interface BandLayout {
@@ -201,12 +216,12 @@ function layoutGraph(
     for (let r = 0; r * cols < items.length; r++) {
       const slice = items.slice(r * cols, (r + 1) * cols)
       if (r > 0) y += ROW_GAP
-      const busTop = y
-      const cardTop = busTop + STUB
+      const fanOutY = y
+      const cardTop = fanOutY + FAN
       const x0 = (w - (slice.length * cardW + (slice.length - 1) * GAP_X)) / 2
       rows.push({
-        busTop,
-        busBottom: cardTop + CARD_H + STUB,
+        fanOutY,
+        fanInY: cardTop + CARD_H + FAN,
         cards: slice.map((a, ci) => ({
           agent: a,
           detail: a ? null : spec.detail,
@@ -216,7 +231,7 @@ function layoutGraph(
           cx: x0 + ci * (cardW + GAP_X) + cardW / 2,
         })),
       })
-      y = cardTop + CARD_H + STUB
+      y = cardTop + CARD_H + FAN
     }
     const done = spec.agents.filter(a => a.state === 'done').length
     const hasProgress = !allGhost && spec.agents.some(a => a.state === 'progress')
@@ -247,17 +262,17 @@ function layoutGraph(
   const capBottom = y + 18
   const height = capBottom + 4 + PAD_Y
 
-  // Spine segments: cap → station → bus → (rows…) → next station → … → cap.
-  // A segment feeding a band with an in-progress agent animates (marching
-  // dashes) — the run is flowing into that phase right now.
+  // Spine segments: cap → station → (rows…) → next station → … → cap. A segment
+  // feeding a band with an in-progress agent animates (marching dashes) — the
+  // run is flowing into that phase right now.
   const segments: SpineSeg[] = []
   let cursor = capTop + 3.5
   for (const b of bands) {
     segments.push({ y1: cursor, y2: b.stationY - 5.5, active: b.hasProgress })
     cursor = b.stationY + 5.5
     for (const row of b.rows) {
-      segments.push({ y1: cursor, y2: row.busTop, active: b.hasProgress })
-      cursor = row.busBottom
+      segments.push({ y1: cursor, y2: row.fanOutY, active: b.hasProgress })
+      cursor = row.fanInY
     }
   }
   if (bands.length > 0) segments.push({ y1: cursor, y2: capBottom - 4.5, active: false })
@@ -265,16 +280,12 @@ function layoutGraph(
   return { bands, segments, centerX, cardW, height, capTop, capBottom }
 }
 
-/** Horizontal bus with quarter-turn ends toward the cards (dir +1 = cards
- *  below the bus, -1 = above). Stubs T-off the straight middle. */
-function busPath(minX: number, maxX: number, busY: number, dir: 1 | -1): string {
-  const r = Math.min(ELBOW_R, (maxX - minX) / 2)
-  return (
-    `M ${minX} ${busY + dir * r}` +
-    ` Q ${minX} ${busY} ${minX + r} ${busY}` +
-    ` L ${maxX - r} ${busY}` +
-    ` Q ${maxX} ${busY} ${maxX} ${busY + dir * r}`
-  )
+/** Vertical cubic bezier — control points pushed along y so the curve leaves
+ *  and enters its endpoints vertically (the vertical cousin of the editor's
+ *  horizontal edge routing). A centred card (x1 === x2) draws a straight line. */
+function fanPath(x1: number, y1: number, x2: number, y2: number): string {
+  const dy = Math.max(14, (y2 - y1) * 0.5)
+  return `M ${x1} ${y1} C ${x1} ${y1 + dy} ${x2} ${y2 - dy} ${x2} ${y2}`
 }
 
 // ---------------------------------------------------------------------------
@@ -282,25 +293,26 @@ function busPath(minX: number, maxX: number, busY: number, dir: 1 | -1): string 
 // ---------------------------------------------------------------------------
 
 export function WorkflowGraph({
-  phases, agents, status, defaultModel, skeleton, selectedAgentId, onSelectAgent, className,
+  phases, agents, status, defaultModel, skeleton, selectedAgentId, onSelectAgent, fillHeight, className,
 }: WorkflowGraphProps) {
   useInjectedStyles()
 
   // Cards wrap to the container's live width (the panel hosting this can be
-  // narrow); 640 covers the pre-measure first paint.
+  // narrow); 640 covers the pre-measure first paint. Height is measured too so
+  // `fillHeight` can centre a short graph in the viewport.
   const containerRef = useRef<HTMLDivElement>(null)
-  const [width, setWidth] = useState(0)
+  const [size, setSize] = useState({ w: 0, h: 0 })
   useEffect(() => {
     const el = containerRef.current
     if (!el) return
-    setWidth(el.clientWidth)
+    setSize({ w: el.clientWidth, h: el.clientHeight })
     const ro = new ResizeObserver(entries => {
-      for (const e of entries) setWidth(e.contentRect.width)
+      for (const e of entries) setSize({ w: e.contentRect.width, h: e.contentRect.height })
     })
     ro.observe(el)
     return () => ro.disconnect()
   }, [])
-  const w = width || 640
+  const w = size.w || 640
 
   const allGhost = !!skeleton || agents.length === 0
   const layout = useMemo(
@@ -308,6 +320,15 @@ export function WorkflowGraph({
     [phases, agents, w, allGhost],
   )
   const { bands, segments, centerX, cardW, height, capTop, capBottom } = layout
+
+  // Full-bleed dotted canvas plane — the editor's visual language (app bg + a
+  // faint 22px dot grid), not a boxed/tinted band.
+  const planeBg = {
+    backgroundColor: 'var(--color-uikit-bg)',
+    backgroundImage:
+      'radial-gradient(circle, var(--color-uikit-faint) 1.2px, transparent 1.2px)',
+    backgroundSize: '22px 22px',
+  } as const
 
   if (bands.length === 0) {
     return (
@@ -317,7 +338,7 @@ export function WorkflowGraph({
         style={{
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontFamily: 'var(--font-uikit-mono)', fontSize: 11, color: 'var(--color-uikit-muted)',
-          backgroundColor: 'var(--color-uikit-canvas-bg, var(--color-uikit-panel))',
+          ...planeBg,
         }}
       >
         no phases declared
@@ -327,6 +348,11 @@ export function WorkflowGraph({
 
   const capColor = allGhost ? SPINE_C : (status && RUN_STATUS[status]) || SPINE_C
 
+  // Plane fills the viewport when asked; a graph shorter than the viewport is
+  // centred (offsetY) so skeleton / small-run states leave no bottom whitespace.
+  const planeH = fillHeight ? Math.max(size.h, height) : height
+  const offsetY = fillHeight && size.h > height ? Math.round((size.h - height) / 2) : 0
+
   return (
     <div
       ref={containerRef}
@@ -334,167 +360,137 @@ export function WorkflowGraph({
       aria-label={`workflow run graph${status ? ` (${status})` : ''}`}
       className={cn('relative w-full h-full overflow-y-auto overflow-x-hidden', className)}
     >
-      <div
-        style={{
-          position: 'relative', width: '100%', height,
-          // Same dotted canvas plane as PipelineGraph (static — no pan/zoom).
-          backgroundColor: 'var(--color-uikit-canvas-bg, var(--color-uikit-panel))',
-          backgroundImage: 'radial-gradient(circle, var(--color-uikit-canvas-dot, var(--color-uikit-faint)) 1.2px, transparent 1.5px)',
-          backgroundSize: '20px 20px',
-        }}
-      >
-        <svg width={w} height={height} className="absolute top-0 left-0 pointer-events-none overflow-visible">
-          {/* Central spine (+ terminus caps). Skeleton runs render it dashed. */}
-          {segments.map((s, i) => (
-            <line
-              key={`seg-${i}`}
-              x1={centerX} y1={s.y1} x2={centerX} y2={s.y2}
-              stroke={s.active ? 'var(--color-uikit-tone-blue)' : SPINE_C}
-              strokeWidth={2}
-              strokeDasharray={s.active ? '6 5' : allGhost ? '4 5' : undefined}
-              strokeLinecap="round"
-              className={s.active ? 'dl-wf-flow' : undefined}
+      <div style={{ position: 'relative', width: '100%', height: planeH, ...planeBg }}>
+        <div style={{ position: 'absolute', left: 0, right: 0, top: offsetY, height }}>
+          <svg width={w} height={height} className="absolute top-0 left-0 pointer-events-none overflow-visible">
+            {/* Central spine (+ terminus caps). Skeleton runs render it dashed. */}
+            {segments.map((s, i) => (
+              <line
+                key={`seg-${i}`}
+                x1={centerX} y1={s.y1} x2={centerX} y2={s.y2}
+                stroke={s.active ? 'var(--color-uikit-tone-blue)' : SPINE_C}
+                strokeWidth={2}
+                strokeDasharray={s.active ? '6 5' : allGhost ? '4 5' : undefined}
+                strokeLinecap="round"
+                className={s.active ? 'dl-wf-flow' : undefined}
+                opacity={allGhost ? 0.7 : 1}
+              />
+            ))}
+            <circle cx={centerX} cy={capTop} r={3.5} fill={SPINE_C} opacity={allGhost ? 0.7 : 1} />
+            <circle
+              cx={centerX} cy={capBottom} r={4.5}
+              fill={capColor}
+              className={!allGhost && status === 'running' ? 'dl-wf-pulse' : undefined}
               opacity={allGhost ? 0.7 : 1}
             />
-          ))}
-          <circle cx={centerX} cy={capTop} r={3.5} fill={SPINE_C} opacity={allGhost ? 0.7 : 1} />
-          <circle
-            cx={centerX} cy={capBottom} r={4.5}
-            fill={capColor}
-            className={!allGhost && status === 'running' ? 'dl-wf-pulse' : undefined}
-            opacity={allGhost ? 0.7 : 1}
-          />
 
-          {/* Fan-out / fan-in buses + per-card stubs, band by band. */}
-          {bands.map((b, bi) => (
-            <g key={`band-${bi}`}>
-              {b.rows.map((row, ri) => {
-                const minCx = row.cards[0].cx
-                const maxCx = row.cards[row.cards.length - 1].cx
-                const multi = row.cards.length > 1
-                const elbow = Math.min(ELBOW_R, (maxCx - minCx) / 2)
-                return (
+            {/* Bezier fan-out / fan-in edges, band by band. */}
+            {bands.map((b, bi) => (
+              <g key={`band-${bi}`}>
+                {b.rows.map((row, ri) => (
                   <g key={`row-${ri}`}>
-                    {multi && (
-                      <path
-                        d={busPath(minCx, maxCx, row.busTop, 1)}
-                        fill="none" stroke={SPINE_C} strokeWidth={1.4}
-                        strokeDasharray={b.ghost ? '4 5' : undefined}
-                        opacity={b.ghost ? 0.7 : 1}
-                      />
-                    )}
-                    {multi && (
-                      <path
-                        d={busPath(minCx, maxCx, row.busBottom, -1)}
-                        fill="none" stroke={SPINE_C} strokeWidth={1.4}
-                        strokeDasharray={b.ghost ? '4 5' : undefined}
-                        opacity={b.ghost ? 0.7 : 1}
-                      />
-                    )}
                     {row.cards.map(card => {
                       const st = card.agent ? AGENT_STATE[card.agent.state] ?? AGENT_STATE.queued : null
                       const progress = card.agent?.state === 'progress'
                       const stroke = st ? st.color : SPINE_C
-                      // Outermost stubs start past the bus's rounded elbow.
-                      const outer = multi && (card.cx === minCx || card.cx === maxCx)
                       const dash = progress ? '5 4' : card.agent == null ? '3 4' : card.agent.state === 'queued' ? '3 5' : undefined
                       const anim = progress ? 'dl-wf-flow' : undefined
                       return (
                         <g key={card.key} opacity={card.agent ? 1 : 0.7}>
-                          <line
-                            x1={card.cx} y1={row.busTop + (outer ? elbow : 0)}
-                            x2={card.cx} y2={card.y}
-                            stroke={stroke} strokeWidth={1.6} strokeDasharray={dash}
-                            strokeLinecap="round" className={anim}
+                          <path
+                            d={fanPath(centerX, row.fanOutY, card.cx, card.y)}
+                            fill="none" stroke={stroke} strokeWidth={1.6}
+                            strokeDasharray={dash} strokeLinecap="round" className={anim}
                           />
-                          <line
-                            x1={card.cx} y1={card.y + CARD_H}
-                            x2={card.cx} y2={row.busBottom - (outer ? elbow : 0)}
-                            stroke={stroke} strokeWidth={1.6} strokeDasharray={dash}
-                            strokeLinecap="round" className={anim}
+                          <path
+                            d={fanPath(card.cx, card.y + CARD_H, centerX, row.fanInY)}
+                            fill="none" stroke={stroke} strokeWidth={1.6}
+                            strokeDasharray={dash} strokeLinecap="round" className={anim}
                           />
                         </g>
                       )
                     })}
                   </g>
-                )
-              })}
-              {/* Phase station — the metro stop on the spine, inside the header. */}
-              <circle
-                cx={centerX} cy={b.stationY} r={5.5}
-                fill="var(--color-uikit-panel)"
-                stroke={b.color} strokeWidth={2}
-                opacity={b.ghost ? 0.8 : 1}
-              />
-            </g>
-          ))}
-        </svg>
-
-        {/* Band headers — title · done/total on the left, band duration right;
-            the centre stays clear for the spine station. */}
-        {bands.map((b, bi) => (
-          <div
-            key={`hdr-${bi}`}
-            style={{
-              position: 'absolute', left: PAD_X, top: b.headerTop,
-              width: w - PAD_X * 2, height: HEADER_H,
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              fontFamily: 'var(--font-uikit-mono)', pointerEvents: 'none',
-            }}
-          >
-            <span style={{ display: 'inline-flex', alignItems: 'baseline', gap: 8, maxWidth: '44%', minWidth: 0 }}>
-              <span
-                title={b.title}
-                style={{
-                  fontSize: 11, fontWeight: 600, letterSpacing: '.08em', textTransform: 'uppercase',
-                  color: b.ghost ? 'var(--color-uikit-muted)' : 'var(--color-uikit-ink)',
-                  whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                }}
-              >
-                {b.title}
-              </span>
-              {!b.ghost && (
-                <span style={{ fontSize: 10, color: 'var(--color-uikit-muted)', flexShrink: 0 }}>
-                  {b.done}/{b.total}
-                </span>
-              )}
-            </span>
-            <span style={{ fontSize: 10, color: 'var(--color-uikit-muted)', maxWidth: '28%', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {b.ghost ? 'pending' : fmtDuration(b.durationMs) ?? ''}
-            </span>
-          </div>
-        ))}
-
-        {/* Agent node cards (+ skeleton ghosts). */}
-        {bands.map(b =>
-          b.rows.map(row =>
-            row.cards.map(card =>
-              card.agent ? (
-                <AgentCard
-                  key={card.key}
-                  agent={card.agent}
-                  x={card.x} y={card.y} w={cardW}
-                  selected={
-                    selectedAgentId != null &&
-                    selectedAgentId === (card.agent.agentId ?? String(card.agent.index))
-                  }
-                  defaultModel={defaultModel}
-                  onSelect={onSelectAgent}
+                ))}
+                {/* Phase station — the metro stop on the spine, inside the header. */}
+                <circle
+                  cx={centerX} cy={b.stationY} r={5.5}
+                  fill="var(--color-uikit-bg)"
+                  stroke={b.color} strokeWidth={2}
+                  opacity={b.ghost ? 0.8 : 1}
                 />
-              ) : (
-                <GhostCard key={card.key} x={card.x} y={card.y} w={cardW} detail={card.detail} />
+              </g>
+            ))}
+          </svg>
+
+          {/* Band headers — title · done/total on the left, band duration right;
+              the centre stays clear for the spine station. Phases are delimited
+              by this typography + spacing + the spine, not a boxed band. */}
+          {bands.map((b, bi) => (
+            <div
+              key={`hdr-${bi}`}
+              style={{
+                position: 'absolute', left: PAD_X, top: b.headerTop,
+                width: w - PAD_X * 2, height: HEADER_H,
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                fontFamily: 'var(--font-uikit-mono)', pointerEvents: 'none',
+              }}
+            >
+              <span style={{ display: 'inline-flex', alignItems: 'baseline', gap: 8, maxWidth: '44%', minWidth: 0 }}>
+                <span
+                  title={b.title}
+                  style={{
+                    fontSize: 11, fontWeight: 600, letterSpacing: '.08em', textTransform: 'uppercase',
+                    color: b.ghost ? 'var(--color-uikit-muted)' : 'var(--color-uikit-ink)',
+                    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                  }}
+                >
+                  {b.title}
+                </span>
+                {!b.ghost && (
+                  <span style={{ fontSize: 10, color: 'var(--color-uikit-muted)', flexShrink: 0 }}>
+                    {b.done}/{b.total}
+                  </span>
+                )}
+              </span>
+              <span style={{ fontSize: 10, color: 'var(--color-uikit-muted)', maxWidth: '28%', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {b.ghost ? 'pending' : fmtDuration(b.durationMs) ?? ''}
+              </span>
+            </div>
+          ))}
+
+          {/* Agent node cards (+ skeleton ghosts). */}
+          {bands.map(b =>
+            b.rows.map(row =>
+              row.cards.map(card =>
+                card.agent ? (
+                  <AgentCard
+                    key={card.key}
+                    agent={card.agent}
+                    x={card.x} y={card.y} w={cardW}
+                    selected={
+                      selectedAgentId != null &&
+                      selectedAgentId === (card.agent.agentId ?? String(card.agent.index))
+                    }
+                    defaultModel={defaultModel}
+                    onSelect={onSelectAgent}
+                  />
+                ) : (
+                  <GhostCard key={card.key} x={card.x} y={card.y} w={cardW} detail={card.detail} />
+                ),
               ),
             ),
-          ),
-        )}
+          )}
+        </div>
       </div>
     </div>
   )
 }
 
 // ---------------------------------------------------------------------------
-// Node card — ~200×64, state accent (3px left border + status dot), second
-// line tokens · duration · retry badge. Mirrors PipeNode's tinting.
+// Node card — editor-matched: 12px radius, a kind/state left-accent bar, a
+// floating shadow on the dot-grid plane. Line 1: state dot · label · model
+// chip; line 2: tokens · duration · retry badge.
 // ---------------------------------------------------------------------------
 
 function AgentCard({ agent, x, y, w, selected, defaultModel, onSelect }: {
@@ -508,7 +504,7 @@ function AgentCard({ agent, x, y, w, selected, defaultModel, onSelect }: {
 }) {
   const st = AGENT_STATE[agent.state] ?? AGENT_STATE.queued
   const quiet = agent.state === 'queued'
-  const panel = 'var(--color-uikit-panel)'
+  const bg = 'var(--color-uikit-bg)'
   const label = agent.label || `agent #${agent.index}`
   const attempt = agent.attempt ?? 1
   const tokens = fmtTokens(agent.tokens)
@@ -531,7 +527,9 @@ function AgentCard({ agent, x, y, w, selected, defaultModel, onSelect }: {
       } : undefined}
       style={{
         position: 'absolute', left: x, top: y, width: w, height: CARD_H,
-        background: quiet ? panel : `color-mix(in srgb, ${panel} 92%, ${st.color})`,
+        // Cards sit on the dot-grid plane and read via border + shadow (like the
+        // editor); a whisper of the state tint keeps state legible at a glance.
+        background: quiet ? bg : `color-mix(in srgb, ${bg} 93%, ${st.color})`,
         border: `1px solid ${
           selected
             ? 'var(--color-uikit-accent)'
@@ -539,26 +537,33 @@ function AgentCard({ agent, x, y, w, selected, defaultModel, onSelect }: {
               ? 'var(--color-uikit-faint)'
               : `color-mix(in srgb, var(--color-uikit-faint) 55%, ${st.color})`
         }`,
-        borderLeft: `3px solid ${st.color}`,
-        borderRadius: 7,
-        padding: '9px 10px 8px',
+        borderRadius: RADIUS,
+        padding: '10px 12px 9px 14px',
         display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
         cursor: onSelect ? 'pointer' : 'default',
         boxShadow: selected
-          ? '0 0 0 2px color-mix(in srgb, var(--color-uikit-accent) 40%, transparent), 0 6px 18px rgba(0,0,0,.10)'
-          : '0 1px 0 rgba(0,0,0,.04)',
+          ? '0 0 0 3px color-mix(in srgb, var(--color-uikit-accent) 28%, transparent), 0 6px 18px rgba(0,0,0,.10)'
+          : '0 2px 8px rgba(0,0,0,.06)',
         transition: 'border-color 120ms ease, box-shadow 120ms ease, background 120ms ease',
         fontFamily: 'var(--font-uikit-mono)',
         outline: 'none',
+        // No overflow:hidden — the accent bar hugs the rounded left edge and the
+        // title clips its own overflow for the ellipsis.
       }}
     >
+      {/* Kind/state left-accent bar (editor treatment). */}
+      <span style={{
+        position: 'absolute', left: 0, top: 0, bottom: 0, width: ACCENT_W,
+        background: st.color, borderRadius: `${RADIUS}px 0 0 ${RADIUS}px`,
+      }} />
+
       <div style={{ display: 'flex', alignItems: 'center', gap: 7, minWidth: 0 }}>
         <span
           className={agent.state === 'progress' ? 'dl-wf-pulse' : undefined}
           style={{ width: 7, height: 7, borderRadius: 999, background: st.color, flexShrink: 0 }}
         />
         <span style={{
-          fontSize: 12, fontWeight: 600, color: 'var(--color-uikit-ink)', letterSpacing: '-.005em',
+          fontSize: 13, fontWeight: 600, color: 'var(--color-uikit-ink)', letterSpacing: '-.01em',
           whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0, flex: 1,
         }}>{label}</span>
         {agent.model && agent.model !== defaultModel && (
@@ -577,7 +582,7 @@ function AgentCard({ agent, x, y, w, selected, defaultModel, onSelect }: {
         )}
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, fontSize: 9.5, color: 'var(--color-uikit-muted)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, fontSize: 10, color: 'var(--color-uikit-muted)' }}>
         <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
           {stats || st.label}
         </span>
@@ -596,17 +601,19 @@ function AgentCard({ agent, x, y, w, selected, defaultModel, onSelect }: {
   )
 }
 
-// Skeleton ghost — one per declared-but-unrun phase: dashed, muted, showing
-// the phase's meta detail (if any) so the skeleton still explains itself.
+// Skeleton ghost — one per declared-but-unrun phase: dashed, muted, showing the
+// phase's meta detail (if any) so the skeleton still explains itself. Matches
+// the agent card's geometry (12px radius) so the skeleton reads as the same
+// surface, just un-run.
 function GhostCard({ x, y, w, detail }: { x: number; y: number; w: number; detail: string | null }) {
   return (
     <div
       style={{
         position: 'absolute', left: x, top: y, width: w, height: CARD_H,
         border: '1px dashed var(--color-uikit-faint-dashed, var(--color-uikit-muted))',
-        borderRadius: 7,
+        borderRadius: RADIUS,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: '8px 12px', textAlign: 'center',
+        padding: '8px 14px', textAlign: 'center',
         fontFamily: 'var(--font-uikit-mono)', fontSize: 10, color: 'var(--color-uikit-muted)',
         opacity: 0.8,
       }}
