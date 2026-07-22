@@ -713,12 +713,13 @@ const CSS = `
 /* Transport controls read as real buttons: resting panel fill + hairline,
    not bare icons. Scoped under .va-transport so they beat the base
    .va-root button transparent-background rule. */
-.va-transport .va-icon{width:28px;height:28px;padding:0;justify-content:center;
+.va-transport .va-icon{width:28px;height:28px;padding:0;justify-content:center;border-radius:999px;
   background:transparent;border:1px solid var(--va-line);
   color:color-mix(in srgb, var(--va-text) 75%, var(--va-muted))}
 /* Neutral outline + glyph at rest; both turn accent-blue on hover. */
 .va-transport .va-icon:hover{background:transparent;border-color:var(--va-accent);color:var(--va-accent)}
 .va-icon svg{flex:none}
+.va-root svg{stroke-linejoin:miter;stroke-linecap:square}
 
 /* Hover tooltip — matches the component's own floating surfaces (speed menu,
    toast): panel fill, 1px hairline border, ink text, soft popover shadow.
@@ -790,8 +791,8 @@ html[data-theme="dark"] .va-seg.sel .va-seglabel{color:var(--va-text)}
 @keyframes va-merge-in{from{opacity:0;transform:translateX(-50%) translateY(4px) scale(.92)}
   to{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}
 .va-timeline .va-merge{position:absolute;bottom:100%;transform:translateX(-50%);z-index:8;
-  width:30px;height:24px;display:inline-flex;align-items:center;justify-content:center;padding:0;
-  background:var(--va-accent);color:#fff;border:0;border-radius:var(--va-radius);cursor:pointer;
+  width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;padding:0;
+  background:var(--va-accent);color:#fff;border:0;border-radius:999px;cursor:pointer;
   box-shadow:0 4px 12px var(--va-shadow);animation:va-merge-in .18s ease-out}
 .va-timeline .va-merge::after{content:"";position:absolute;top:100%;left:50%;transform:translateX(-50%);
   width:0;height:0;border:5px solid transparent;border-top-color:var(--va-accent)}
