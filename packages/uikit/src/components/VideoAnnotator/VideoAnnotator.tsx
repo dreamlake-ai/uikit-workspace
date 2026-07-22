@@ -6,6 +6,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type ReactNode,
 } from "react";
 import {
   Check,
@@ -20,7 +21,9 @@ import {
   ArrowLeftToLine,
   X,
 } from "lucide-react";
+import { createPortal } from "react-dom";
 import { cn } from "../../lib/utils";
+import { Tooltip, TooltipTrigger, TooltipContent } from "../Tooltip";
 import type { Segment, VideoAnnotatorHandle, VideoAnnotatorProps } from "./types";
 import {
   boundaryTimes,
@@ -35,6 +38,34 @@ import {
 
 const DEFAULT_SPEEDS = [0.25, 0.5, 1, 1.5, 2];
 const STYLE_ID = "uikit-video-annotator-styles";
+
+/** Transport icon button with a portaled tooltip (uikit Tooltip → escapes any
+ *  container overflow, unlike the old CSS `::after` tip which got clipped by a
+ *  scrolling/split layout). The label doubles as the a11y name. */
+function TipButton({
+  label,
+  onClick,
+  className,
+  disabled,
+  children,
+}: {
+  label: string;
+  onClick: () => void;
+  className?: string;
+  disabled?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button className={className} aria-label={label} onClick={onClick} disabled={disabled}>
+          {children}
+        </button>
+      </TooltipTrigger>
+      <TooltipContent className="!bg-uikit-panel !text-uikit-ink border border-uikit-faint">{label}</TooltipContent>
+    </Tooltip>
+  );
+}
 
 /**
  * VideoAnnotator — a video player with an editable, contiguous segment
@@ -77,6 +108,9 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
     const [speedOpen, setSpeedOpen] = useState(false);
     const [metaDuration, setMetaDuration] = useState(0);
     const [hoverFrac, setHoverFrac] = useState<number | null>(null);
+    // Viewport position of the hover-time bubble, so it can be portaled to <body>
+    // and never clipped by a scrolling/split parent's overflow.
+    const [hoverPos, setHoverPos] = useState<{ x: number; y: number } | null>(null);
     // Merge affordance: the X button appears over an internal boundary (a cut
     // between two phases) after the cursor lingers ~0.5s near that boundary.
     // `mergeReady` gates the reveal; `mergeIdx` is the segment index whose start
@@ -442,35 +476,35 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
           </div>
 
           <div className="va-tp-center">
-            <button className="va-icon" aria-label="Prev boundary (,)" onClick={() => gotoBoundary(-1)}>
+            <TipButton className="va-icon" label="Prev boundary (,)" onClick={() => gotoBoundary(-1)}>
               <SkipBack size={14} />
-            </button>
-            <button className="va-icon" aria-label="Prev frame (←)" onClick={() => stepFrame(-1, false)}>
+            </TipButton>
+            <TipButton className="va-icon" label="Prev frame (←)" onClick={() => stepFrame(-1, false)}>
               <ChevronLeft size={14} />
-            </button>
-            <button className="va-icon va-play" aria-label="Play/Pause (Space)" onClick={togglePlay}>
+            </TipButton>
+            <TipButton className="va-icon va-play" label="Play/Pause (Space)" onClick={togglePlay}>
               {playing ? <Pause size={14} /> : <Play size={14} />}
-            </button>
-            <button className="va-icon" aria-label="Next frame (→)" onClick={() => stepFrame(1, false)}>
+            </TipButton>
+            <TipButton className="va-icon" label="Next frame (→)" onClick={() => stepFrame(1, false)}>
               <ChevronRight size={14} />
-            </button>
-            <button className="va-icon" aria-label="Next boundary (.)" onClick={() => gotoBoundary(1)}>
+            </TipButton>
+            <TipButton className="va-icon" label="Next boundary (.)" onClick={() => gotoBoundary(1)}>
               <SkipForward size={14} />
-            </button>
+            </TipButton>
           </div>
 
           <div className="va-tp-right">
-            <button className="va-icon" aria-label="Split at playhead (S)" onClick={doSplit}>
+            <TipButton className="va-icon" label="Split at playhead (S)" onClick={doSplit}>
               <Scissors size={14} />
-            </button>
-            <button
+            </TipButton>
+            <TipButton
               className="va-icon"
-              aria-label="Merge into previous (Backspace)"
+              label="Merge into previous (Backspace)"
               onClick={() => doMerge(sel)}
               disabled={sel <= 0}
             >
               <ArrowLeftToLine size={14} />
-            </button>
+            </TipButton>
           </div>
         </div>
 
@@ -483,7 +517,9 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
             if (!tl) return;
             const rect = tl.getBoundingClientRect();
             const px = e.clientX - rect.left;
-            setHoverFrac(clamp(px / rect.width, 0, 1));
+            const frac = clamp(px / rect.width, 0, 1);
+            setHoverFrac(frac);
+            setHoverPos({ x: rect.left + frac * rect.width, y: rect.top });
             // Keep the button while the cursor is actually over it (or its tail),
             // so moving up to click never recomputes/hides it. Otherwise it must
             // disappear as soon as the cursor leaves a boundary's vicinity.
@@ -506,6 +542,7 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
           }}
           onMouseLeave={() => {
             setHoverFrac(null);
+            setHoverPos(null);
             clearTimeout(delTimer.current);
             mergeIdxRef.current = null;
             setMergeIdx(null);
@@ -557,9 +594,19 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
           {hoverFrac != null && (
             <>
               <div className="va-hoverline" style={{ left: `${hoverFrac * 100}%` }} />
-              <div className="va-hovertime" style={{ left: `${hoverFrac * 100}%` }}>
-                {fmt(hoverFrac * D)}
-              </div>
+              {/* the time bubble is portaled to <body> (fixed-positioned) so it never gets
+                  clipped by a scrolling/split parent's overflow */}
+              {hoverPos != null &&
+                typeof document !== "undefined" &&
+                createPortal(
+                  <div
+                    className="va-hovertime va-hovertime--fixed"
+                    style={{ position: "fixed", left: hoverPos.x, top: hoverPos.y + 12 }}
+                  >
+                    {fmt(hoverFrac * D)}
+                  </div>,
+                  document.body,
+                )}
               {mergeReady && mergeIdx != null && (
                 <button
                   className="va-merge"
@@ -677,16 +724,9 @@ const CSS = `
    toast): panel fill, 1px hairline border, ink text, soft popover shadow.
    Reads the button's aria-label so the a11y name and the visible tip stay in
    sync. */
-.va-transport button[aria-label]{position:relative}
-.va-transport button[aria-label]:hover::after{
-  content:attr(aria-label);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);
-  background:var(--va-panel);color:var(--va-text);border:1px solid var(--va-line);padding:5px 9px;border-radius:8px;
-  font:11px/1.3 var(--f-ui, "Inter Tight", ui-sans-serif, system-ui, -apple-system, sans-serif);
-  white-space:nowrap;pointer-events:none;z-index:60;
-  box-shadow:0 8px 24px var(--va-shadow)}
-/* While the speed menu is open, suppress the button's hover tooltip — it would
-   otherwise collide with the open menu (both float above the button). */
-.va-speedsel.open .va-speedbtn:hover::after{content:none}
+/* Transport button tooltips are now the portaled uikit <Tooltip> (see TipButton),
+   which escapes any container overflow — the old CSS ::after tip was clipped by a
+   scrolling/split parent. */
 .va-readout{font:11px var(--f-mono, ui-monospace, Menlo, monospace);color:var(--va-muted);
   padding:6px 0;text-align:left;flex:none;width:162px;white-space:nowrap}
 .va-speedsel{position:relative;display:inline-flex}
@@ -737,6 +777,11 @@ html[data-theme="dark"] .va-seg.sel .va-seglabel{color:var(--va-text)}
   padding:2px 6px;border-radius:4px;white-space:nowrap;pointer-events:none;z-index:7;
   font-family:var(--f-mono, ui-monospace, Menlo, monospace);font-size:11px;line-height:1.3;
   box-shadow:0 8px 24px var(--va-shadow)}
+/* Portaled variant (rendered on <body>, outside .va-root) — the va-scoped vars
+   don't resolve there, so use the global uikit tokens with hard fallbacks. */
+.va-hovertime--fixed{
+  background:var(--uikit-accent, #23aaff);color:#fff;z-index:1000;
+  box-shadow:0 8px 24px rgba(0,0,0,.18)}
 /* Timeline hover: a blue speech bubble sitting over an internal boundary (a cut
    between two phases) holding an X that merges those two phases. It's a child of
    the timeline and its tail bridges down into the boundary, so moving the cursor
