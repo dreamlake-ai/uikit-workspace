@@ -80,6 +80,7 @@ export function cardStyle(opts: CardChromeOpts): CSSProperties {
     flexDirection: 'column',
     gap: 4,
     boxSizing: 'border-box',
+    overflow: 'hidden',
     boxShadow: selected
       ? '0 1px 0 rgba(0,0,0,.05), 0 6px 18px rgba(0,0,0,.10)'
       : '0 1px 0 rgba(0,0,0,.04)',
@@ -115,8 +116,12 @@ export const titleStyle: CSSProperties = {
   flex: 1,
 }
 
-/** 9px uppercase meta line (PipeNode's second row). */
+/** 9px uppercase meta line (PipeNode's second row). Block-level so
+ *  text-overflow ellipsis actually applies (spans are inline by default). */
 export const metaStyle: CSSProperties = {
+  display: 'block',
+  minWidth: 0,
+  maxWidth: '100%',
   fontSize: 9,
   fontWeight: 500,
   color: 'var(--color-uikit-muted)',
@@ -126,6 +131,16 @@ export const metaStyle: CSSProperties = {
   whiteSpace: 'nowrap',
   overflow: 'hidden',
   textOverflow: 'ellipsis',
+}
+
+/** Chip row inside a card: clips its children, lets flexible chips shrink. */
+export const chipRowStyle: CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 4,
+  minWidth: 0,
+  width: '100%',
+  overflow: 'hidden',
 }
 
 /** Tiny inline chip (launcher badge, model chip, queue chip). */
@@ -141,10 +156,23 @@ export const chipStyle: CSSProperties = {
   padding: '1px 5px',
   whiteSpace: 'nowrap',
   lineHeight: 1.4,
+  flexShrink: 0,
 }
 
-/** Prompt / free-text preview line (uda cards). */
+/** A chip allowed to truncate when the row runs out of room. */
+export const chipFlexStyle: CSSProperties = {
+  ...chipStyle,
+  flexShrink: 1,
+  minWidth: 0,
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+}
+
+/** Prompt / free-text preview line (uda cards). Block-level for ellipsis. */
 export const previewStyle: CSSProperties = {
+  display: 'block',
+  minWidth: 0,
+  maxWidth: '100%',
   fontSize: 9.5,
   color: 'var(--color-uikit-muted)',
   whiteSpace: 'nowrap',

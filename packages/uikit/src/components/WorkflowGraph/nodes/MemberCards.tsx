@@ -11,7 +11,8 @@ import type {
 import { providerSummary, samplerSummary } from '../spec'
 import {
   WF_AGENT_H, WF_AGENT_W, WF_KIND_LABEL, WF_KIND_TOKEN, WF_STATE_COLOR,
-  cardStyle, chipStyle, kindDotStyle, metaStyle, previewStyle, titleRowStyle, titleStyle,
+  cardStyle, chipFlexStyle, chipRowStyle, chipStyle, kindDotStyle, metaStyle,
+  previewStyle, titleRowStyle, titleStyle,
 } from './chrome'
 
 interface MemberCardCommon {
@@ -53,8 +54,8 @@ export function ComputeNodeCard({ node, ...p }: ComputeNodeCardProps) {
         <span style={titleStyle}>{node.title}</span>
       </div>
       <span style={metaStyle}>{WF_KIND_LABEL.compute} · {node.compute.udf}</span>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 4, minWidth: 0 }}>
-        {prov && <span style={chipStyle}>{prov}</span>}
+      <div style={chipRowStyle}>
+        {prov && <span style={chipFlexStyle}>{prov}</span>}
         {dispatch && (
           <span style={{ ...chipStyle, display: 'inline-flex', alignItems: 'center', gap: 3 }}>
             <span style={{
@@ -91,10 +92,11 @@ export function UdaNodeCard({ node, ...p }: UdaNodeCardProps) {
         <span style={titleStyle}>{node.title}</span>
       </div>
       <span style={previewStyle}>“{node.uda.prompt}”</span>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 4, minWidth: 0 }}>
-        {node.uda.model && <span style={chipStyle}>{node.uda.model}</span>}
+      <div style={chipRowStyle}>
+        {/* perms count is short and always visible; model + target truncate */}
         <span style={chipStyle}>{perms} perm{perms === 1 ? '' : 's'}</span>
-        {target && <span style={{ ...chipStyle, overflow: 'hidden', textOverflow: 'ellipsis' }}>{target}</span>}
+        {node.uda.model && <span style={chipFlexStyle}>{node.uda.model}</span>}
+        {target && <span style={chipFlexStyle}>{target}</span>}
       </div>
     </div>
   )
