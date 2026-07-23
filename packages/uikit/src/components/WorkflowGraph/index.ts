@@ -1,5 +1,7 @@
 export { WorkflowCanvas } from './WorkflowCanvas'
 export type { WorkflowCanvasProps } from './WorkflowCanvas'
+export { WorkflowThumb } from './WorkflowThumb'
+export type { WorkflowThumbProps } from './WorkflowThumb'
 export { layoutWorkflow, portAnchor } from './layout'
 export type { WfOrientation, WfRect, WorkflowLayoutResult } from './layout'
 export { StageNode } from './nodes/StageNode'
