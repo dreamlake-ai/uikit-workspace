@@ -16,3 +16,38 @@
 @source "../components";
 @source "../renderer";
 @source "../../uikit/src";
+
+/* Sticky-heading fix for fullscreen doc pages.
+
+   dockit pins h2 headings with `position: sticky; top: 40px` — the 40px
+   is the topbar height, correct for the normal layout where the window
+   is the scroll root and the topbar shares it. Fullscreen pages
+   (`fullscreen: true`) instead make `main.doc-content` its own scroll
+   container (`h-full overflow-auto p-4`) inside a grid sized
+   `calc(100vh - 40px)` that already begins *below* the topbar. Two
+   offsets get double-counted there and let scrolled content bleed through
+   the band above a pinned heading:
+
+   1. The inherited `top: 40px` — the topbar is no longer inside this
+      scroll root, so the heading pins 40px too low. Re-pin to `0`.
+   2. The container's own 16px top padding (`p-4`) — sticky `top: 0` is
+      measured from the padding box, so the heading still pins 16px below
+      the topbar. Zero the *top* padding (keep the sides/bottom); the H1's
+      own top margin, held by this overflow BFC, keeps the resting breather.
+
+   Only `.doc-content.overflow-auto` (the fullscreen main) is matched, so
+   normal window-scroll pages keep the 40px offset and their padding. */
+.doc-content.overflow-auto {
+  padding-top: 0 !important;
+}
+.doc-content.overflow-auto h2 {
+  top: 0 !important;
+}
+
+/* Same double-counted-topbar reasoning for anchor jumps: the invisible
+   TOC-anchor spans carry `scroll-margin-top: 56px` for the window-scroll
+   layout, which lands hash targets too low inside the fullscreen scroll
+   container. Pin them to the container top instead. */
+.doc-content.overflow-auto [data-toc-anchor] {
+  scroll-margin-top: 0 !important;
+}
