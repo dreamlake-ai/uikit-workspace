@@ -41,5 +41,6 @@ export type {
   WorkflowSpec, WorkflowStage, WorkflowNodeSpec, WorkflowNodeKind,
   ComputeNode, UdaNode, SamplerNode, ControlNode, ControlConfig,
   WorkflowSpecEdge, WorkflowDataType, PortSpec, ProviderRef, OutputBinding,
+  ExecutionPolicy,
   WorkflowNodeRunState, WorkflowNodeRunStateValue, AgentInstance,
 } from './spec'

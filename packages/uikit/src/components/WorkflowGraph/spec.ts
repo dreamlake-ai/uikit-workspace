@@ -58,6 +58,31 @@ export function portTypesCompatible(from: WorkflowDataType, to: WorkflowDataType
 export interface PortSpec {
   name: string
   type: WorkflowDataType
+  /**
+   * Input ports only. Default false = exactly ONE inbound edge (the typed-
+   * system rule; KFP/Flyte/Argo). `collect: true` accepts ≥1 edges of the
+   * port's type, delivered as an ordered collection (edge declaration order).
+   * Exception needing no flag: edges from different branches of the SAME
+   * condition/switch may share a port (XOR-merge — at most one fires).
+   */
+  collect?: boolean
+}
+
+/**
+ * Execution policy for compute/uda nodes (Argo/KFP/Flyte/Temporal synthesis).
+ * `max_attempts` uses Temporal semantics: TOTAL attempts, 1 = no retry.
+ * `timeout` is per attempt. `cache` is content-based (inputs + config) with a
+ * user-bumpable version key (Flyte cache_version) — FORBIDDEN on uda nodes
+ * (agent runs are non-deterministic; caching one replays a stale answer).
+ */
+export interface ExecutionPolicy {
+  retry?: {
+    max_attempts: number                 // 1–10, default 1
+    retry_on?: 'all' | 'transient'       // default 'transient'
+    backoff?: { initial?: string; factor?: number; max?: string } // "10s", 2.0, "5m"
+  }
+  timeout?: string                       // duration, e.g. "1h" — per attempt
+  cache?: { enabled: boolean; version?: string } // compute only
 }
 
 /** Spine node — one stage of the workflow (Azure DevOps-style grouping). */
@@ -110,9 +135,13 @@ export interface ComputeNode extends WorkflowNodeBase {
   compute: {
     /** UDF reference, e.g. "pipelines.bimanual_filter" */
     udf: string
+    /** Static UDF arguments — the PARAMETER side of the parameter/artifact
+     *  split (KFP/Snakemake): small inline values, never port data. */
+    params?: Record<string, string | number | boolean | unknown>
     provider?: ProviderRef
     dispatch?: 'direct' | 'daemon'
   }
+  execution?: ExecutionPolicy
 }
 
 /**
@@ -145,6 +174,8 @@ export interface UdaNode extends WorkflowNodeBase {
     provider?: ProviderRef
     queue?: string
   }
+  /** retry + timeout only — `cache` on a uda node is a validation error. */
+  execution?: ExecutionPolicy
 }
 
 /**
@@ -198,13 +229,23 @@ export type ControlConfig =
   | { type: 'switch'; cases: { name: string; expression: string }[] }
   | {
       type: 'loop'
-      mode: 'while' | 'foreach'
-      until?: string        // while: exit condition
-      over?: string         // foreach: collection expression
-      max_iterations?: number
-      max_concurrency?: number // foreach
+      mode: 'while'
+      until: string           // exit condition (required)
+      max_iterations: number  // required — no unbounded loops
     }
-  | { type: 'approval'; approvers?: string[]; message?: string; timeout_s?: number }
+  | {
+      type: 'loop'
+      mode: 'foreach'
+      over: string            // collection expression (required)
+      max_concurrency?: number // default 8
+    }
+  | {
+      type: 'approval'
+      approvers?: string[]
+      message?: string
+      /** No decision by timeout ⇒ node state `error` — never auto-approve. */
+      timeout_s?: number
+    }
 
 export interface ControlNode extends WorkflowNodeBase {
   kind: 'control'
@@ -270,21 +311,27 @@ export function nodeInputs(n: WorkflowNodeSpec): PortSpec[] {
   return n.inputs && n.inputs.length ? n.inputs : [DEFAULT_IN_PORT]
 }
 
-/** Output ports — condition/switch control nodes derive theirs from config. */
+/**
+ * Output ports. Sampler and control nodes are TYPE-PRESERVING pass-throughs:
+ * their outputs are DERIVED, carrying the input port's type T (a sample of a
+ * clip collection is a clip collection; a switch routes its input unchanged).
+ * User-declared `outputs` on these families are ignored.
+ */
 export function nodeOutputs(n: WorkflowNodeSpec): PortSpec[] {
-  if (n.kind === 'control') {
-    if (n.control.type === 'condition') {
-      return [
-        { name: 'true', type: 'artifact' },
-        { name: 'false', type: 'artifact' },
-      ]
+  if (n.kind === 'sampler' || n.kind === 'control') {
+    const t = nodeInputs(n)[0]?.type ?? 'artifact'
+    if (n.kind === 'control') {
+      if (n.control.type === 'condition') {
+        return [{ name: 'true', type: t }, { name: 'false', type: t }]
+      }
+      if (n.control.type === 'switch') {
+        return [
+          ...n.control.cases.map((c) => ({ name: c.name, type: t })),
+          { name: 'default', type: t },
+        ]
+      }
     }
-    if (n.control.type === 'switch') {
-      return [
-        ...n.control.cases.map((c) => ({ name: c.name, type: 'artifact' as const })),
-        { name: 'default', type: 'artifact' as const },
-      ]
-    }
+    return [{ name: 'out', type: t }]
   }
   return n.outputs && n.outputs.length ? n.outputs : [DEFAULT_OUT_PORT]
 }
