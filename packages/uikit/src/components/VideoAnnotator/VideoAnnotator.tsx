@@ -571,7 +571,13 @@ const CSS = `
   --va-idle: var(--tone-warm-gray, #9c907a);
   --va-selected: var(--selected-bg, #f5f3ee);
   --va-radius: var(--radius, 10px);
+  /* Popover/tooltip drop shadow. Aliases the kit's theme-aware shadow token
+     so it stays dark in dark mode — not a white glow off the light ink. */
+  --va-shadow: var(--shadow-tint-2, rgba(0,0,0,.1));
   --va-hover: color-mix(in srgb, var(--va-text) 5%, var(--va-panel));
+  /* Own stacking context so the timeline/tooltip/menu z-indexes (up to 60) stay
+     contained and can't paint over a host's sticky header when scrolled. */
+  isolation:isolate;
   display:flex; flex-direction:column; gap:12px; min-width:0; min-height:0; height:100%;
   color:var(--va-text);
   font:14px/1.45 var(--f-ui, "Inter Tight", ui-sans-serif, system-ui, -apple-system, sans-serif);
@@ -592,16 +598,24 @@ const CSS = `
 .va-video{max-width:100%;max-height:100%;background:#000}
 .va-stage-msg{position:absolute;color:var(--va-muted);font-size:13px;text-align:center;padding:20px}
 
-.va-transport{display:flex;align-items:center;gap:8px;flex:none;margin-top:-6px}
-.va-tp-left,.va-tp-right{flex:1 1 0;display:flex;align-items:center;gap:6px}
+/* 3-column grid with equal side tracks keeps the playback cluster on the true
+   horizontal center — aligned with the centered video above — regardless of
+   how wide the readout/speed (left) vs split/extract (right) groups are. */
+.va-transport{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);
+  align-items:center;gap:20px;flex:none;margin-top:-2px}
+.va-tp-left,.va-tp-right{display:flex;align-items:center;gap:6px;min-width:0}
 .va-tp-right{justify-content:flex-end}
-.va-tp-center{display:flex;align-items:center;gap:2px;flex:none}
+.va-tp-center{display:flex;align-items:center;gap:6px;flex:none}
 .va-transport button{height:28px}
-.va-icon{width:28px;height:28px;padding:0;border:0;justify-content:center;
+/* Transport controls read as real buttons: resting panel fill + hairline,
+   not bare icons. Scoped under .va-transport so they beat the base
+   .va-root button transparent-background rule. */
+.va-transport .va-icon{width:28px;height:28px;padding:0;justify-content:center;
+  background:transparent;border:1px solid var(--va-line);
   color:color-mix(in srgb, var(--va-text) 75%, var(--va-muted))}
+/* Neutral outline + glyph at rest; both turn accent-blue on hover. */
+.va-transport .va-icon:hover{background:transparent;border-color:var(--va-accent);color:var(--va-accent)}
 .va-icon svg{flex:none}
-.va-play{width:28px;height:28px;background:var(--va-panel2)}
-.va-play:hover{background:color-mix(in srgb, var(--va-accent) 16%, var(--va-panel2))}
 
 /* Hover tooltip — matches the component's own floating surfaces (speed menu,
    toast): panel fill, 1px hairline border, ink text, soft popover shadow.
@@ -613,19 +627,25 @@ const CSS = `
   background:var(--va-panel);color:var(--va-text);border:1px solid var(--va-line);padding:5px 9px;border-radius:8px;
   font:11px/1.3 var(--f-ui, "Inter Tight", ui-sans-serif, system-ui, -apple-system, sans-serif);
   white-space:nowrap;pointer-events:none;z-index:60;
-  box-shadow:0 8px 24px color-mix(in srgb, var(--va-text) 18%, transparent)}
+  box-shadow:0 8px 24px var(--va-shadow)}
+/* While the speed menu is open, suppress the button's hover tooltip — it would
+   otherwise collide with the open menu (both float above the button). */
+.va-speedsel.open .va-speedbtn:hover::after{content:none}
 .va-readout{font:11px var(--f-mono, ui-monospace, Menlo, monospace);color:var(--va-muted);
-  padding:6px 0;text-align:left;flex:none;width:170px}
+  padding:6px 0;text-align:left;flex:none;width:150px;white-space:nowrap;overflow:hidden}
 .va-speedsel{position:relative;display:inline-flex}
 .va-speedsel .va-speedbtn{display:inline-flex;align-items:center;gap:3px;height:28px;padding:0 6px 0 9px;
   background:var(--va-panel);color:var(--va-text);border:1px solid transparent;border-radius:8px;cursor:pointer;
   font:11px var(--f-mono, ui-monospace, Menlo, monospace)}
 .va-speedbtn .va-caret{color:var(--va-muted)}
 .va-speedbtn:hover{background:var(--va-panel2)}
+/* No press-shift on the speed button — the base button:active translate reads
+   as jitter here next to the readout. */
+.va-speedsel .va-speedbtn:active{transform:none}
 .va-speedsel.open .va-speedbtn{border-color:var(--va-accent)}
 .va-speedmenu{position:absolute;bottom:calc(100% + 6px);left:0;z-index:40;min-width:calc(100% + 8px);
   background:var(--va-panel);border:1px solid var(--va-line);border-radius:10px;
-  box-shadow:0 8px 24px color-mix(in srgb,var(--va-text) 22%,transparent);padding:4px}
+  box-shadow:0 8px 24px var(--va-shadow);padding:4px}
 .va-speedmenu button{width:100%;display:flex;align-items:center;gap:6px;white-space:nowrap;height:auto;
   background:transparent;border:none;border-radius:6px;padding:5px 12px 5px 22px;
   font:11px var(--f-mono, ui-monospace, Menlo, monospace);color:var(--va-text);text-align:left;position:relative}
@@ -633,7 +653,7 @@ const CSS = `
 .va-speedmenu button[aria-selected="true"]{color:var(--va-accent)}
 .va-speedcheck{position:absolute;left:6px}
 
-.va-timeline{position:relative;height:62px;background:transparent;cursor:pointer;user-select:none;flex:none;margin-top:-6px}
+.va-timeline{position:relative;height:62px;background:transparent;cursor:pointer;user-select:none;flex:none;margin-top:-2px}
 .va-timeline:not(:has(.va-seg))::before{content:"";position:absolute;top:30px;bottom:0;left:0;right:0;
   border-radius:6px;background:color-mix(in srgb, var(--va-text) 4%, transparent);box-shadow:inset 0 0 0 1px var(--va-line)}
 .va-seg{position:absolute;top:30px;bottom:0;border-radius:6px;display:flex;align-items:center;
@@ -641,6 +661,13 @@ const CSS = `
 .va-seg:hover{background:#edf6fc;box-shadow:inset 0 0 0 1px var(--va-line)}
 .va-seg.sel{background:#edf6fc;box-shadow:inset 0 0 0 1.5px #23a9ff;z-index:3}
 .va-seg.sel .va-seglabel{color:#1a1a1a}
+/* Dark mode swaps the blue selection/hover accent for yellow. The fill is a
+   translucent amber tint so the dark surface reads through it; the label
+   flips to light ink to stay legible over that dark-tinted fill. */
+html[data-theme="dark"] .va-seg:hover{background:rgba(243,230,204,.14)}
+html[data-theme="dark"] .va-seg.sel{background:rgba(243,230,204,.2);box-shadow:inset 0 0 0 1.5px var(--va-warn)}
+html[data-theme="dark"] .va-seg:hover .va-seglabel,
+html[data-theme="dark"] .va-seg.sel .va-seglabel{color:var(--va-text)}
 .va-seglabel{font-size:11px;color:var(--va-muted);font-weight:400;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
 .va-seg:hover .va-seglabel{color:#1a1a1a}
 .va-handle{position:absolute;top:30px;bottom:0;width:9px;margin-left:-5px;cursor:ew-resize;z-index:5}
@@ -653,7 +680,7 @@ const CSS = `
   background:var(--va-accent);color:#fff;
   padding:2px 6px;border-radius:4px;white-space:nowrap;pointer-events:none;z-index:7;
   font-family:var(--f-mono, ui-monospace, Menlo, monospace);font-size:11px;line-height:1.3;
-  box-shadow:0 8px 24px color-mix(in srgb, var(--va-text) 18%, transparent)}
+  box-shadow:0 8px 24px var(--va-shadow)}
 .va-ticks{position:absolute;left:0;right:0;top:0;height:24px;pointer-events:none;z-index:4}
 .va-ticks::before{content:"";position:absolute;left:0;right:0;top:22px;height:1px;background:var(--va-line)}
 .va-tick{position:absolute;top:0;height:24px;pointer-events:none}
@@ -665,15 +692,20 @@ const CSS = `
 .va-tick.start .va-ticklabel{transform:translateX(0)}
 .va-tick.end .va-ticklabel{left:auto;right:0;transform:translateX(0)}
 
-.va-desc{display:flex;flex-direction:column;gap:4px;flex:none}
-.va-desc-box{width:100%;min-height:60px;resize:vertical;background:var(--va-field);color:var(--va-text);
-  border:1px solid var(--va-line);border-radius:8px;padding:9px;font:13px/1.45 inherit}
-.va-desc-box:focus{outline:none;border-color:var(--va-accent)}
+/* Description + meta framed as one card; the textarea is borderless inside it
+   so there's a single frame, and the meta row sits in the same box (separated
+   by whitespace, no divider). Focus lifts the whole frame's border. */
+.va-desc{display:flex;flex-direction:column;gap:8px;flex:none;
+  background:var(--va-field);border:1px solid var(--va-line);border-radius:8px;padding:9px}
+.va-desc:focus-within{border-color:var(--va-accent)}
+.va-desc-box{width:100%;min-height:60px;resize:vertical;background:transparent;color:var(--va-text);
+  border:0;padding:0;font:13px/1.45 inherit}
+.va-desc-box:focus{outline:none}
 .va-desc-meta{display:flex;gap:12px;color:var(--va-muted);
   font:11px var(--f-mono, ui-monospace, Menlo, monospace)}
 .va-desc-meta > span:first-child{width:72px;flex:none}
 
 .va-toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--va-panel);
   border:1px solid var(--va-line);border-radius:8px;padding:8px 14px;color:var(--va-text);
-  box-shadow:0 8px 24px color-mix(in srgb, var(--va-text) 18%, transparent);z-index:50}
+  box-shadow:0 8px 24px var(--va-shadow);z-index:50}
 `;
