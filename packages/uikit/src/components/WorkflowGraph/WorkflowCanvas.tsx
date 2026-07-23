@@ -32,7 +32,7 @@ import { cn } from '../../lib/utils'
 import { buildEdgePath, type Obstacle, type Pt } from '../PipelineGraph/edge-path'
 import { FLOW, type EdgeFlow } from '../PipelineGraph/flow'
 import {
-  labelAnchor, layoutWorkflow, portAnchor,
+  labelAnchor, layoutWorkflow, portAnchor, roundedPath,
   type WfOrientation, type WfRect,
 } from './layout'
 import {
@@ -115,6 +115,10 @@ interface Seg {
   label: string | null
   labelPos: Pt | null
   spine?: boolean
+  /** Path was built in axis-swapped space (render under the reflection). */
+  swapped: boolean
+  /** Arrowhead direction: along the flow axis, or ±side axis (hub side faces). */
+  arrow: 'flow' | 's+' | 's-'
 }
 
 export function WorkflowCanvas({
@@ -330,16 +334,6 @@ export function WorkflowCanvas({
     }
     for (const arr of outbound.values()) arr.sort((a, b) => sideCoord(a.targetId) - sideCoord(b.targetId))
 
-    const hubIn = (stageId: string, e: (typeof spec.edges)[number]): Pt => {
-      const arr = inbound.get(stageId) ?? []
-      const i = Math.max(0, arr.indexOf(e))
-      return portAnchor(stageRects[stageId], 'in', i, Math.max(1, arr.length), orientation)
-    }
-    const hubOut = (stageId: string, targetId: string, edge?: (typeof spec.edges)[number]): Pt => {
-      const arr = outbound.get(stageId) ?? []
-      const i = Math.max(0, arr.findIndex((o) => o.targetId === targetId && o.edge === edge))
-      return portAnchor(stageRects[stageId], 'out', i, Math.max(1, arr.length), orientation)
-    }
     const memberIn = (id: string, port?: string): Pt => {
       const n = nodeById[id]
       const ins = nodeInputs(n)
@@ -363,7 +357,17 @@ export function WorkflowCanvas({
 
     const segs: Seg[] = []
 
-    // Intra-stage data edges: direct member → member.
+    // Flow-coordinate helpers: f = flow axis (y vertical / x horizontal),
+    // s = side axis. Face-aware hub routing is written once in flow space.
+    interface FlowPt { s: number; f: number }
+    const toF = (p: Pt): FlowPt => (verticalPrimary ? { s: p.x, f: p.y } : { s: p.y, f: p.x })
+    const toR = (q: FlowPt): Pt => (verticalPrimary ? { x: q.s, y: q.f } : { x: q.f, y: q.s })
+    const frect = (r: WfRect) => (verticalPrimary
+      ? { sMin: r.x, sMax: r.x + r.w, fMin: r.y, fMax: r.y + r.h }
+      : { sMin: r.y, sMax: r.y + r.h, fMin: r.x, fMax: r.x + r.w })
+    const rp = (pts: FlowPt[]) => roundedPath(pts.map(toR))
+
+    // Intra-stage data edges: direct member → member (flow-face ports).
     for (const e of intra) {
       const from = memberOut(e.from, e.fromPort)
       const to = memberIn(e.to, e.toPort)
@@ -373,42 +377,123 @@ export function WorkflowCanvas({
         flow: edgeFlowFromStates(statusByNodeId?.[e.from], statusByNodeId?.[e.to]),
         hotIds: [e.from, e.to],
         label: outLabel(e), labelPos: null,
+        swapped: verticalPrimary, arrow: 'flow',
       })
     }
 
-    // Cross-stage edges: source member → downstream hub → target member.
-    for (const e of cross) {
-      const t = stageOf(e.to)!
-      const flow = edgeFlowFromStates(statusByNodeId?.[e.from], statusByNodeId?.[e.to])
-      const upFrom = memberOut(e.from, e.fromPort)
-      const upTo = hubIn(t, e)
-      segs.push({
-        key: `${e.id}#up`, to: upTo,
-        d: route(upFrom, upTo, [nodeRects[e.from], stageRects[t]]),
-        flow, hotIds: [e.from, e.to, t],
-        label: outLabel(e), labelPos: null,
-      })
-      const dnFrom = hubOut(t, e.to, e)
-      const dnTo = memberIn(e.to, e.toPort)
-      segs.push({
-        key: `${e.id}#dn`, to: dnTo,
-        d: route(dnFrom, dnTo, [stageRects[t], nodeRects[e.to]]),
-        flow, hotIds: [e.from, e.to, t],
-        label: null, labelPos: null,
+    // ── hub segments with intelligent face selection ──
+    // Convergence (member → hub): ≤3 segments use the hub's flow face;
+    // beyond that, the outermost pairs peel onto the LEFT/RIGHT side faces
+    // (wrapping around the near corner when the source sits over the hub).
+    for (const [t, edges] of inbound) {
+      const H = frect(stageRects[t])
+      const items = edges
+        .map((e) => ({ e, P: memberOut(e.from, e.fromPort) }))
+        .sort((a, b) => toF(a.P).s - toF(b.P).s)
+      const faces: ('left' | 'right' | 'flow')[] = Array(items.length).fill('flow')
+      let lo = 0
+      let hi = items.length - 1
+      while (hi - lo + 1 > 3) { faces[lo++] = 'left'; faces[hi--] = 'right' }
+      const groups = { left: [] as number[], flow: [] as number[], right: [] as number[] }
+      items.forEach((_, i) => groups[faces[i]].push(i))
+      const fLen = H.fMax - H.fMin
+
+      items.forEach(({ e, P }, i) => {
+        const flow = edgeFlowFromStates(statusByNodeId?.[e.from], statusByNodeId?.[e.to])
+        const face = faces[i]
+        const base = {
+          key: `${e.id}#up`, flow,
+          hotIds: [e.from, e.to, t],
+          label: outLabel(e), labelPos: null,
+        }
+        if (face === 'flow') {
+          const gi = groups.flow.indexOf(i)
+          const to = portAnchor(stageRects[t], 'in', gi, Math.max(1, groups.flow.length), orientation)
+          segs.push({
+            ...base, to,
+            d: route(P, to, [nodeRects[e.from], stageRects[t]]),
+            swapped: verticalPrimary, arrow: 'flow',
+          })
+        } else {
+          const g = groups[face]
+          const gi = g.indexOf(i)
+          const fA = g.length === 1
+            ? H.fMin + fLen / 2
+            : H.fMin + 12 + gi * ((fLen - 24) / (g.length - 1))
+          const sEdge = face === 'left' ? H.sMin : H.sMax
+          const p0 = toF(P)
+          const onThatSide = face === 'left' ? p0.s < H.sMin - 8 : p0.s > H.sMax + 8
+          const lane = 22 + gi * 14
+          const outward = face === 'left' ? H.sMin - lane : H.sMax + lane
+          const pts: FlowPt[] = onThatSide
+            ? [p0, { s: p0.s, f: fA }, { s: sEdge, f: fA }]
+            : [
+                p0,
+                { s: p0.s, f: H.fMin - 18 - gi * 10 },
+                { s: outward, f: H.fMin - 18 - gi * 10 },
+                { s: outward, f: fA },
+                { s: sEdge, f: fA },
+              ]
+          segs.push({
+            ...base, to: toR({ s: sEdge, f: fA }),
+            d: rp(pts),
+            swapped: false, arrow: face === 'left' ? 's+' : 's-',
+          })
+        }
       })
     }
 
-    // Dispatch fans: stage → its source members.
-    for (const n of spec.nodes) {
-      if (hasIncoming.has(n.id) || !nodeRects[n.id]) continue
-      const from = hubOut(n.stageId, n.id, undefined)
-      const to = memberIn(n.id)
-      segs.push({
-        key: `fan-${n.stageId}-${n.id}`, to,
-        d: route(from, to, [stageRects[n.stageId], nodeRects[n.id]]),
-        flow: fanFlow(statusByNodeId?.[n.id]),
-        hotIds: [n.stageId, n.id],
-        label: null, labelPos: null,
+    // Fan-out (hub → member): deliveries of cross-stage edges + dispatch
+    // fans for source members. Targets clearly to the side leave from the
+    // hub's side face with a clean L; aligned targets use the flow face.
+    for (const [t, outs] of outbound) {
+      const H = frect(stageRects[t])
+      const items = outs
+        .map((o) => ({ ...o, T: memberIn(o.targetId, o.edge?.toPort) }))
+        .sort((a, b) => toF(a.T).s - toF(b.T).s)
+      const faceOf = (T: Pt): 'left' | 'right' | 'flow' => {
+        const s = toF(T).s
+        if (s < H.sMin - 8) return 'left'
+        if (s > H.sMax + 8) return 'right'
+        return 'flow'
+      }
+      const groups = { left: [] as number[], flow: [] as number[], right: [] as number[] }
+      items.forEach(({ T }, i) => groups[faceOf(T)].push(i))
+      const fLen = H.fMax - H.fMin
+
+      items.forEach(({ targetId, edge, T }, i) => {
+        const flow = edge
+          ? edgeFlowFromStates(statusByNodeId?.[edge.from], statusByNodeId?.[targetId])
+          : fanFlow(statusByNodeId?.[targetId])
+        const face = faceOf(T)
+        const base = {
+          key: edge ? `${edge.id}#dn` : `fan-${t}-${targetId}`,
+          flow, to: T,
+          hotIds: edge ? [edge.from, targetId, t] : [t, targetId],
+          label: null, labelPos: null,
+        }
+        if (face === 'flow') {
+          const gi = groups.flow.indexOf(i)
+          const from = portAnchor(stageRects[t], 'out', gi, Math.max(1, groups.flow.length), orientation)
+          segs.push({
+            ...base,
+            d: route(from, T, [stageRects[t], nodeRects[targetId]]),
+            swapped: verticalPrimary, arrow: 'flow',
+          })
+        } else {
+          const g = groups[face]
+          const gi = g.indexOf(i)
+          const fA = g.length === 1
+            ? H.fMin + fLen / 2
+            : H.fMin + 12 + gi * ((fLen - 24) / (g.length - 1))
+          const sEdge = face === 'left' ? H.sMin : H.sMax
+          const t0 = toF(T)
+          segs.push({
+            ...base,
+            d: rp([{ s: sEdge, f: fA }, { s: t0.s, f: fA }, t0]),
+            swapped: false, arrow: 'flow',
+          })
+        }
       })
     }
 
@@ -433,6 +518,7 @@ export function WorkflowCanvas({
         d: route(from, to, [ra, rb]),
         flow: 'idle', hotIds: [a.id, b.id],
         label: null, labelPos: null, spine: true,
+        swapped: verticalPrimary, arrow: 'flow',
       })
     }
 
@@ -450,7 +536,7 @@ export function WorkflowCanvas({
     return segments.map((s) => {
       if (!s.label) return s
       const { pt, box } = labelAnchor(s.d, avoid, {
-        swapped: verticalPrimary,
+        swapped: s.swapped,
         boxW: s.label.length * 5.6 + 14,
         boxH: 16,
         taken,
@@ -496,20 +582,28 @@ export function WorkflowCanvas({
               : hot ? 'var(--color-uikit-accent)' : flowSpec.color
             const width = s.spine ? 1.6 : hot ? Math.max(flowSpec.width, 2) : flowSpec.width
             const anim = s.flow === 'running' ? 'wf-edge-flow' : s.flow === 'queued' ? 'wf-edge-queued' : undefined
+            // Arrowhead by seg direction: along the flow axis, or ±side axis
+            // (hub side-face arrivals). Resolved per orientation.
+            const dir = s.arrow === 'flow'
+              ? (verticalPrimary ? 'down' : 'right')
+              : verticalPrimary
+                ? (s.arrow === 's+' ? 'right' : 'left')
+                : (s.arrow === 's+' ? 'down' : 'up')
+            const head =
+              dir === 'down' ? `M ${s.to.x - 4} ${s.to.y - 6} L ${s.to.x} ${s.to.y} L ${s.to.x + 4} ${s.to.y - 6}`
+              : dir === 'up' ? `M ${s.to.x - 4} ${s.to.y + 6} L ${s.to.x} ${s.to.y} L ${s.to.x + 4} ${s.to.y + 6}`
+              : dir === 'right' ? `M ${s.to.x - 6} ${s.to.y - 4} L ${s.to.x} ${s.to.y} L ${s.to.x - 6} ${s.to.y + 4}`
+              : `M ${s.to.x + 6} ${s.to.y - 4} L ${s.to.x} ${s.to.y} L ${s.to.x + 6} ${s.to.y + 4}`
             return (
               <g key={s.key} opacity={dim ? 0.25 : 1} style={{ transition: 'opacity 160ms ease' }}>
-                <g transform={verticalPrimary ? 'matrix(0,1,1,0,0,0)' : undefined}>
+                <g transform={s.swapped ? 'matrix(0,1,1,0,0,0)' : undefined}>
                   <path
                     d={s.d} fill="none" stroke={stroke} strokeWidth={width}
                     strokeLinecap="round" strokeDasharray={s.spine ? undefined : flowSpec.dash}
                     className={hot || s.spine ? undefined : anim}
                   />
                 </g>
-                {verticalPrimary ? (
-                  <path d={`M ${s.to.x - 4} ${s.to.y - 6} L ${s.to.x} ${s.to.y} L ${s.to.x + 4} ${s.to.y - 6}`} fill="none" stroke={stroke} strokeWidth={width} strokeLinecap="round" strokeLinejoin="round" />
-                ) : (
-                  <path d={`M ${s.to.x - 6} ${s.to.y - 4} L ${s.to.x} ${s.to.y} L ${s.to.x - 6} ${s.to.y + 4}`} fill="none" stroke={stroke} strokeWidth={width} strokeLinecap="round" strokeLinejoin="round" />
-                )}
+                <path d={head} fill="none" stroke={stroke} strokeWidth={width} strokeLinecap="round" strokeLinejoin="round" />
               </g>
             )
           })}
