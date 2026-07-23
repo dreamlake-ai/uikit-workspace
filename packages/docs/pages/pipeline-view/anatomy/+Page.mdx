@@ -42,14 +42,16 @@ straight from the node JSON; nothing is styled by hand.
 | Kind dot (top-left square) | `kind` | Tints by category — `source` green, `transform` blue, `model`/`review` purple, `filter` amber, `merge` grey, `sink` red. |
 | Title | `title` | The UDF name. `id` is the stable key (may differ on fan-out: `semantic_match_2`). |
 | Meta line `transform · 1→1` | `kind` · `inputs.length`→`outputs.length` | The `→` is port **counts**, not columns. |
-| Left dots | `inputs` | One input port per UDF parameter. |
-| Right dot | `outputs` | A UDF returns **one** table → a single `["out"]` port. A sink has none (`[]`). |
+| Left dot | `inputs` | A **single** input dot at the left-centre — every parameter shares it. The per-parameter names surface in the floating [param tag](/pipeline-view/pipeline-graph#ports--param-tags), not beside the dot. Absent when `inputs` is empty (a `source`). |
+| Right dot | `outputs` | A UDF returns **one** table → a single output dot at the right-centre. A sink has none (`[]`). |
 | Status dot + label (footer) | `status` | `idle` here; drives tint + the pulse when `running`. |
 | _(not drawn on the card)_ | `columns` | The result **schema** — `boxes`, `classes`, `confidence`. Surfaced in the source inspector, not as ports. |
 
-**Ports vs columns** is the one thing to internalise: `inputs` are ports (one
-per parameter), `outputs` is a single port (the whole result table), and the
-return column names live in `columns` — a schema, not more ports.
+**Ports vs columns** is the one thing to internalise: `inputs` is the parameter
+list (all sharing one input dot), `outputs` is a single port (the whole result
+table), and the return column names live in `columns` — a schema, not more ports.
+The card's `N→1` meta still counts the parameters even though they converge on
+one dot.
 
 ## Connector tags
 

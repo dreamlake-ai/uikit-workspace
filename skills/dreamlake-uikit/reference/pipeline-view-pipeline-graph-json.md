@@ -82,7 +82,9 @@ are **no synthetic nodes** — the `source` and `sink` nodes are real udfs the
 pipeline calls (a `kind="source"` loader and `kind="sink"` writers), so they
 have real `code`. A sink udf just has no output port (nothing to return).
 
-**Ports vs columns.** `inputs` are ports — one per parameter. `outputs` is a
+**Ports vs columns.** `inputs` lists the parameters — one entry each, though the
+card draws them as a single shared input dot (the names show in the floating
+[param tag](reference/pipeline-view-pipeline-graph.md#ports--param-tags)). `outputs` is a
 single port (`["out"]`) because a UDF returns **one** table; passing it
 downstream passes the whole table. The return column names live in `columns`
 (the result's schema), not as separate ports. The card subline shows
@@ -90,25 +92,28 @@ downstream passes the whole table. The return column names live in `columns`
 
 ### The output artifact
 
-`output` is a runtime field: a **discriminated union** on `kind` describing what
-the stage produced last run, for a preview pane. The tracer never emits it; a
-runner fills it, and the (planned) node inspector renders it — see
-[Architecture & Roadmap](reference/pipeline-view-architecture.md#roadmap).
+The `NODE` tab's **output** panel renders a sampled table of the node's result.
+That sample rides on the **status overlay**, not the static graph — the tracer
+never has it, a runner supplies it — as a `NodePreview`:
 
 ```ts
-type NodeOutput =
-  | { kind: 'idle' }                                        // never run
-  | { kind: 'pending'; browsable?: 'frame' }               // running now
-  | { kind: 'stale'; upstream: string }                    // an upstream changed
-  | { kind: 'table'; schema: string[]; preview: unknown[][] }   // tabular preview
-  | { kind: 'image-grid'; count: number; sampleSize: number }   // frame thumbnails
-  | { kind: 'text-grid'; count: number; browsable?: 'clip' | 'episode';
-      preview: { ts?: number; ep?: number; text: string }[] }   // label previews
+interface NodePreview {
+  columns: string[]              // the result schema (header row)
+  rows: (string | number)[][]    // row-major sample cells, aligned to `columns`
+  total?: number | null          // total rows the sample was drawn from ("N of M rows")
+}
 ```
 
-The three "empty" kinds (`idle` / `pending` / `stale`) drive placeholder
-messaging; `table` / `image-grid` / `text-grid` carry an actual preview payload.
-This union mirrors the design prototype's `PipeOutputTab`.
+Pass it as `statusById[nodeId].preview`. The panel only draws once the node is
+`ok`; before that it shows a status-keyed one-liner (`producing rows…`, `waiting
+for human review`, `stale — re-run to refresh`, `not run yet`) or, on `error`,
+the overlay's `error` string. The table shows the first ten rows with a **show
+all** toggle for the rest.
+
+The `GraphNode.output` field is reserved for a richer per-modality artifact (the
+design prototype's `PipeOutputTab` also previews frame-thumbnail and label grids);
+today the shipped inspector renders the tabular `NodePreview` above. See
+[Architecture & Roadmap](reference/pipeline-view-architecture.md#roadmap) for what's next.
 
 ## An edge
 
@@ -158,9 +163,21 @@ overlay**, keyed by node id:
 ```ts
 type StatusOverlay = Record<
   string,
-  { status?: NodeStatus; progress?: number | null; duration?: number | null; rows?: number | null }
+  {
+    status?: NodeStatus
+    progress?: number | null
+    duration?: number | null
+    rows?: number | null
+    error?: string | null       // shown in the node inspector when status is `error`
+    preview?: NodePreview | null // a sampled result table, rendered in the NODE tab
+  }
 >
 ```
+
+`PipelineGraph` reads only `status` / `progress` / `duration` (to tint cards and
+animate edges); `PipelineSource`'s node inspector additionally renders `rows`,
+the `error` message, and the `preview` table — see [the output preview
+below](#the-output-artifact).
 
 Pass it as `statusById`; the component merges it onto the nodes and re-derives
 every edge's flow. A remote runner streams these (over SSE / WebSocket) as jobs
