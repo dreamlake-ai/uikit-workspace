@@ -7,8 +7,10 @@ description: Video player with an editable, contiguous segment timeline — spli
 
 import { BasicSpec } from '../../../components/specimens/components/video-annotator/BasicSpec'
 import { RefControlSpec } from '../../../components/specimens/components/video-annotator/RefControlSpec'
+import { MultiTrackSpec } from '../../../components/specimens/components/video-annotator/MultiTrackSpec'
 import basicSrc from '../../../components/specimens/components/video-annotator/BasicSpec.tsx?raw'
 import refControlSrc from '../../../components/specimens/components/video-annotator/RefControlSpec.tsx?raw'
+import multiTrackSrc from '../../../components/specimens/components/video-annotator/MultiTrackSpec.tsx?raw'
 
 # VideoAnnotator
 
@@ -35,6 +37,20 @@ boundary, `s` split, `Backspace` merge, `j`/`k` prev/next phase, `a` approve.
   <BasicSpec />
 </Preview>
 
+## Multiple tracks
+
+Pass `tracks` instead of `segments` to label several parallel lanes over the
+same clip (e.g. phase / gripper / events). Each track is a full editor — its own
+split / merge / boundary-drag / select — but only the **active** track (bright
+lane, highlighted header) takes edits at a time. Click any lane's segment or its
+header to make it active; the left `×` removes a track and `+ Track` appends a
+new full-length lane. The ruler, playhead and hover readout span every lane.
+Single-track callers (`segments`) are unaffected.
+
+<Preview source={multiTrackSrc} filename="MultiTrackSpec.tsx">
+  <MultiTrackSpec />
+</Preview>
+
 ## Driving it from a ref
 
 Set `enableKeyboard={false}` and drive the widget through its imperative handle
@@ -55,11 +71,18 @@ when the host owns its own transport chrome or a global shortcut scheme.
 | `headerLeading` | `ReactNode` | — | Element at the start of the header row (e.g. a "show list" button). |
 | `showDescription` | `boolean` | `false` | Render the boxed description editor for the selected segment below the timeline. |
 | `onDescriptionChange` | `(index: number, value: string) => void` | — | Fired when the description editor changes. Required for it to be interactive. |
-| `segments` | `Segment[]` | — | Controlled segment list. The component enforces the contiguous invariant. |
-| `selectedIndex` | `number` | — | Controlled index of the active segment. |
-| `onSegmentsChange` | `(next: Segment[]) => void` | — | Fired after any structural edit (split / merge / boundary drag). |
+| `segments` | `Segment[]` | — | Controlled segment list (single-track mode). Provide `segments` **or** `tracks`. |
+| `selectedIndex` | `number` | — | Controlled index of the active segment (within the active track). |
+| `onSegmentsChange` | `(next: Segment[]) => void` | — | Fired after a structural edit in single-track mode. |
 | `onSelectedChange` | `(index: number) => void` | — | Fired when the active segment changes. |
 | `onApproveToggle` | `(index: number, verified: boolean) => void` | — | Fired when the user toggles verification (`a`). |
+| `tracks` | `Track[]` | — | Controlled track list (multi-track mode). Stacks one editable lane per track; takes precedence over `segments`. |
+| `activeTrackIndex` | `number` | `0` | Controlled index of the active (editable) track. |
+| `onTracksChange` | `(next: Track[]) => void` | — | Fired after a structural edit in multi-track mode (full track list). |
+| `onActiveTrackChange` | `(index: number) => void` | — | Fired when the active track changes (click a lane/header, add/remove). |
+| `allowAddTracks` | `boolean` | `true` | Show the `+ Track` control in multi-track mode. |
+| `onAddTrack` | `() => void` | — | Custom add-track handler. If omitted, appends a default full-length track via `onTracksChange`. |
+| `onRemoveTrack` | `(index: number) => void` | — | Custom remove-track handler. If omitted, drops the track by index via `onTracksChange`. |
 | `duration` | `number` | — | Authoritative clip duration (s). Falls back to the video's `loadedmetadata` duration, then the largest segment end. |
 | `extractFps` | `number \| null` | `30` | Frames-per-second for frame-stepping granularity (`←`/`→`). |
 | `srcFps` | `number \| null` | `30` | Source fps for the "· fN" frame readout. |
@@ -76,3 +99,11 @@ when the host owns its own transport chrome or a global shortcut scheme.
 | `end` | `number` | Segment end time in seconds (`= next.start` after normalization). |
 | `description` | `string` | Free-text caption for the phase. |
 | `verified` | `boolean` | Human-confirmed flag; reset by structural edits. |
+
+### Track
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `id` | `string` | Stable identity for the lane (used as the React key). |
+| `name` | `string` | Label shown in the track header gutter. |
+| `segments` | `Segment[]` | The lane's contiguous segments. |

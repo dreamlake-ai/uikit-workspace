@@ -16,11 +16,12 @@ import {
   Scissors,
   ArrowLeftToLine,
   X,
+  Plus,
 } from "lucide-react";
 import { createPortal } from "react-dom";
 import { cn } from "../../lib/utils";
 import { Tooltip, TooltipTrigger, TooltipContent } from "../Tooltip";
-import type { Segment, VideoAnnotatorHandle, VideoAnnotatorProps } from "./types";
+import type { Segment, Track, VideoAnnotatorHandle, VideoAnnotatorProps } from "./types";
 import {
   boundaryTimes,
   clamp,
@@ -138,6 +139,14 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
       onSegmentsChange,
       onSelectedChange,
       onApproveToggle,
+      tracks,
+      activeTrackIndex,
+      onTracksChange,
+      onActiveTrackChange,
+      allowAddTracks = true,
+      onAddTrack,
+      onRemoveTrack,
+      onRenameTrack,
       loop = true,
       speeds = DEFAULT_SPEEDS,
       enableKeyboard = true,
@@ -157,6 +166,7 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
     // Viewport position of the hover-time bubble, so it can be portaled to <body>
     // and never clipped by a scrolling/split parent's overflow.
     const [hoverPos, setHoverPos] = useState<{ x: number; y: number } | null>(null);
+    const [renaming, setRenaming] = useState<number | null>(null);
     // Merge affordance: the X button appears over an internal boundary (a cut
     // between two phases) after the cursor lingers ~0.5s near that boundary.
     // `mergeReady` gates the reveal; `mergeIdx` is the segment index whose start
@@ -181,13 +191,75 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
       document.head.appendChild(el);
     }, []);
 
-    const D = duration || metaDuration || segments.reduce((m, s) => Math.max(m, s.end || 0), 0) || 0;
+    // Multi-track (tracks) or single-track (segments): normalize both to one
+    // track-list + active-index model so the rest of the component is uniform.
+    const multi = tracks != null;
+    const trackList: Track[] = multi
+      ? tracks
+      : [{ id: "__single", name: "", segments: segments ?? [] }];
+    const active = clamp(activeTrackIndex ?? 0, 0, Math.max(0, trackList.length - 1));
 
-    // Normalized view of the controlled segments — the contiguous invariant is
-    // enforced here so rendering and edits share one source of truth.
-    const segs = useMemo(() => normalizeSegments(segments, D), [segments, D]);
+    const D =
+      duration ||
+      metaDuration ||
+      trackList.reduce(
+        (m, t) => Math.max(m, t.segments.reduce((mm, s) => Math.max(mm, s.end || 0), 0)),
+        0
+      ) ||
+      0;
+
+    // Normalized view of the ACTIVE track's segments — the contiguous invariant
+    // is enforced here so rendering and edits share one source of truth.
+    const activeSegments = trackList[active]?.segments ?? [];
+    const segs = useMemo(() => normalizeSegments(activeSegments, D), [activeSegments, D]);
     const sel = clamp(selectedIndex, 0, Math.max(0, segs.length - 1));
     const curSeg: Segment | null = segs[sel] || null;
+
+    // Route a structural edit of the active track back to the host in the shape
+    // the current mode expects.
+    const commitSegs = useCallback(
+      (next: Segment[]) => {
+        if (multi) onTracksChange?.(trackList.map((t, i) => (i === active ? { ...t, segments: next } : t)));
+        else onSegmentsChange?.(next);
+      },
+      [multi, onTracksChange, onSegmentsChange, trackList, active]
+    );
+
+    const setActiveTrack = useCallback(
+      (i: number) => onActiveTrackChange?.(clamp(i, 0, trackList.length - 1)),
+      [onActiveTrackChange, trackList.length]
+    );
+
+    const addTrack = useCallback(() => {
+      if (onAddTrack) return onAddTrack();
+      const uid =
+        typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `t${trackList.length}`;
+      const next: Track = {
+        id: uid,
+        name: `Track ${trackList.length + 1}`,
+        segments: [{ start: 0, end: D, description: "", verified: false }],
+      };
+      onTracksChange?.([...trackList, next]);
+      onActiveTrackChange?.(trackList.length);
+    }, [onAddTrack, onTracksChange, onActiveTrackChange, trackList, D]);
+
+    const removeTrack = useCallback(
+      (i: number) => {
+        if (onRemoveTrack) return onRemoveTrack(i);
+        if (trackList.length <= 1) return;
+        onTracksChange?.(trackList.filter((_, idx) => idx !== i));
+        if (active >= i) onActiveTrackChange?.(Math.max(0, active - (active === i ? 0 : 1)));
+      },
+      [onRemoveTrack, onTracksChange, onActiveTrackChange, trackList, active]
+    );
+
+    const renameTrack = useCallback(
+      (i: number, name: string) => {
+        if (onRenameTrack) return onRenameTrack(i, name);
+        onTracksChange?.(trackList.map((t, idx) => (idx === i ? { ...t, name } : t)));
+      },
+      [onRenameTrack, onTracksChange, trackList]
+    );
 
     const showToast = useCallback((msg: string) => {
       setToast(msg);
@@ -244,18 +316,18 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
     const doSplit = useCallback(() => {
       const res = splitAt(segs, videoRef.current?.currentTime ?? currentTime, D);
       if ("error" in res) { showToast(res.error); return; }
-      onSegmentsChange(res.segments);
+      commitSegs(res.segments);
       onSelectedChange(res.selected);
-    }, [segs, currentTime, D, onSegmentsChange, onSelectedChange, showToast]);
+    }, [segs, currentTime, D, commitSegs, onSelectedChange, showToast]);
 
     const doMerge = useCallback(
       (i: number) => {
         const res = mergeInto(segs, i);
         if (!res) return;
-        onSegmentsChange(res.segments);
+        commitSegs(res.segments);
         onSelectedChange(res.selected);
       },
-      [segs, onSegmentsChange, onSelectedChange]
+      [segs, commitSegs, onSelectedChange]
     );
 
     const approveToggle = useCallback(() => {
@@ -303,12 +375,12 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
       if (!v) return;
       const md = v.duration || 0;
       setMetaDuration(md);
-      // If duration was previously unknown, pin segment ends against it now.
+      // If duration was previously unknown, pin the active track's ends now.
       if (!duration && md) {
-        const norm = normalizeSegments(segments, md);
-        if (JSON.stringify(norm) !== JSON.stringify(segments)) onSegmentsChange(norm);
+        const norm = normalizeSegments(activeSegments, md);
+        if (JSON.stringify(norm) !== JSON.stringify(activeSegments)) commitSegs(norm);
       }
-    }, [duration, segments, onSegmentsChange]);
+    }, [duration, activeSegments, commitSegs]);
 
     const onTimeUpdate = useCallback(() => {
       const v = videoRef.current;
@@ -330,7 +402,7 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
         const onMove = (ev: MouseEvent) => {
           const frac = clamp((ev.clientX - rect.left) / rect.width, 0, 1);
           latest = moveBoundary(latest, i, frac * D);
-          onSegmentsChange(latest);
+          commitSegs(latest);
         };
         const onUp = () => {
           document.removeEventListener("mousemove", onMove);
@@ -339,7 +411,7 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
         document.addEventListener("mousemove", onMove);
         document.addEventListener("mouseup", onUp);
       },
-      [segs, D, onSegmentsChange]
+      [segs, D, commitSegs]
     );
 
     const startScrub = useCallback(
@@ -366,15 +438,22 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
         const onUp = () => {
           document.removeEventListener("mousemove", onMove);
           document.removeEventListener("mouseup", onUp);
-          if (!moved && segEl && tl) {
-            const i = [...tl.querySelectorAll(".va-seg")].indexOf(segEl);
-            if (i >= 0) onSelectedChange(i);
+          if (!moved && segEl) {
+            // Resolve the click to (track, segment) using the row it landed in,
+            // so the index is relative to that track's own segments.
+            const row = segEl.closest(".va-track") as HTMLElement | null;
+            const i = row ? [...row.querySelectorAll(".va-seg")].indexOf(segEl) : -1;
+            const ti = row ? Number(row.dataset.track) : active;
+            if (i >= 0) {
+              if (multi && !Number.isNaN(ti) && ti !== active) setActiveTrack(ti);
+              onSelectedChange(i);
+            }
           }
         };
         document.addEventListener("mousemove", onMove);
         document.addEventListener("mouseup", onUp);
       },
-      [D, onSelectedChange]
+      [D, onSelectedChange, multi, active, setActiveTrack]
     );
 
     // ---- keyboard ----------------------------------------------------------
@@ -554,6 +633,64 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
           </div>
         </div>
 
+        <div className={cn("va-tlwrap", multi && "multi")}>
+        {multi && (
+          <div className="va-track-heads">
+            <div className="va-th-spacer" />
+            {trackList.map((tr, ti) => (
+              <div
+                key={tr.id || ti}
+                className={cn("va-th", ti === active && "active")}
+                onMouseDown={() => setActiveTrack(ti)}
+              >
+                {renaming === ti ? (
+                  <input
+                    className="va-th-input"
+                    defaultValue={tr.name}
+                    autoFocus
+                    onFocus={(e) => e.currentTarget.select()}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") e.currentTarget.blur();
+                      else if (e.key === "Escape") {
+                        e.currentTarget.value = tr.name;
+                        e.currentTarget.blur();
+                      }
+                    }}
+                    onBlur={(e) => {
+                      renameTrack(ti, e.currentTarget.value.trim() || tr.name);
+                      setRenaming(null);
+                    }}
+                  />
+                ) : (
+                  <span
+                    className="va-th-name"
+                    title="Double-click to rename"
+                    onDoubleClick={(e) => {
+                      e.stopPropagation();
+                      setRenaming(ti);
+                    }}
+                  >
+                    {tr.name}
+                  </span>
+                )}
+                {trackList.length > 1 && (
+                  <button
+                    className="va-th-x"
+                    aria-label={`Remove ${tr.name}`}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeTrack(ti);
+                    }}
+                  >
+                    <X />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
         <div
           className="va-timeline"
           ref={timelineRef}
@@ -595,33 +732,61 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
             setMergeReady(false);
           }}
         >
-          {segs.map((p, i) => (
-            <div
-              key={i}
-              className={cn("va-seg", i === sel && "sel")}
-              style={{ left: `${(p.start / (D || 1)) * 100}%`, width: `${((p.end - p.start) / (D || 1)) * 100}%` }}
-            >
-              <span className="va-seglabel">
-                {i + 1}
-                {p.description ? " · " + p.description : ""}
-              </span>
-            </div>
-          ))}
-          {segs.map((p, i) =>
-            i > 0 ? (
+          <div className="va-tracks">
+            {trackList.map((tr, ti) => {
+              const isActive = ti === active;
+              const tsegs = isActive ? segs : normalizeSegments(tr.segments, D);
+              return (
+                <div key={tr.id || ti} className={cn("va-track", !isActive && "inactive")} data-track={ti}>
+                  {tsegs.map((p, i) => (
+                    <div
+                      key={i}
+                      className={cn("va-seg", isActive && i === sel && "sel")}
+                      style={{ left: `${(p.start / (D || 1)) * 100}%`, width: `${((p.end - p.start) / (D || 1)) * 100}%` }}
+                    >
+                      <span className="va-seglabel">
+                        {i + 1}
+                        {p.description ? " · " + p.description : ""}
+                      </span>
+                    </div>
+                  ))}
+                  {isActive &&
+                    tsegs.map((p, i) =>
+                      i > 0 ? (
+                        <div
+                          key={`h${i}`}
+                          className="va-handle"
+                          style={{ left: `${(p.start / (D || 1)) * 100}%` }}
+                          title="Drag to move · double-click to merge"
+                          onMouseDown={(e) => startBoundaryDrag(e, i)}
+                          onDoubleClick={(e) => {
+                            e.stopPropagation();
+                            doMerge(i);
+                          }}
+                        />
+                      ) : null
+                    )}
+                </div>
+              );
+            })}
+            {multi && allowAddTracks && (
               <div
-                key={`h${i}`}
-                className="va-handle"
-                style={{ left: `${(p.start / (D || 1)) * 100}%` }}
-                title="Drag to move · double-click to merge"
-                onMouseDown={(e) => startBoundaryDrag(e, i)}
-                onDoubleClick={(e) => {
+                className="va-addrow"
+                role="button"
+                aria-label="Add track"
+                onMouseDown={(e) => e.stopPropagation()}
+                onClick={(e) => {
                   e.stopPropagation();
-                  doMerge(i);
+                  addTrack();
                 }}
-              />
-            ) : null
-          )}
+              >
+                <span className="va-addrow-line" />
+                <span className="va-addrow-btn">
+                  <Plus />
+                </span>
+              </div>
+            )}
+          </div>
           <div className="va-ticks">
             {ticks.map((rt, i) => (
               <div
@@ -678,6 +843,7 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
           {segs.length > 0 && currentTime > 0.001 && (
             <div className="va-playhead" style={{ left: `${(clamp(currentTime, 0, D) / (D || 1)) * 100}%` }} />
           )}
+        </div>
         </div>
 
         {showDescription && (
@@ -796,10 +962,55 @@ const CSS = `
 .va-speedmenu button[aria-selected="true"]{color:var(--va-accent)}
 .va-speedcheck{position:absolute;left:6px}
 
-.va-timeline{position:relative;height:62px;background:transparent;cursor:pointer;user-select:none;flex:none;margin-top:-2px}
+.va-tlwrap{display:flex;flex:none;margin-top:-2px}
+.va-tlwrap.multi{gap:8px}
+.va-tlwrap .va-timeline{flex:1;min-width:0}
+.va-timeline{position:relative;min-height:62px;background:transparent;cursor:pointer;user-select:none}
 .va-timeline:not(:has(.va-seg))::before{content:"";position:absolute;top:30px;bottom:0;left:0;right:0;
   border-radius:6px;background:color-mix(in srgb, var(--va-text) 4%, transparent);box-shadow:inset 0 0 0 1px var(--va-line)}
-.va-seg{position:absolute;top:30px;bottom:0;border-radius:6px;display:flex;align-items:center;
+/* Stacked track lanes below the ruler. Each row hosts its segments (and, for
+   the active row, the drag handles); rows flow so the timeline grows with the
+   track count. */
+.va-tracks{margin-top:30px;display:flex;flex-direction:column;gap:6px}
+.va-track{position:relative;height:32px}
+.va-track.inactive{opacity:.55}
+.va-track.inactive .va-seg:hover{background:var(--va-panel2);box-shadow:inset 0 0 0 1px var(--va-line)}
+html[data-theme="dark"] .va-track.inactive .va-seg:hover{background:var(--va-panel2)}
+.va-track.inactive .va-seg:hover .va-seglabel{color:var(--va-muted)}
+/* Left gutter of track headers (multi-track only). A 30px spacer aligns the
+   first header with the first lane (below the ruler). */
+.va-track-heads{flex:none;width:104px;display:flex;flex-direction:column;gap:6px}
+.va-th-spacer{height:24px;flex:none}
+.va-th{height:32px;display:flex;align-items:center;gap:4px;padding:0 8px;border-radius:6px;cursor:pointer;
+  color:var(--va-muted);font:11px var(--f-ui, "Inter Tight", ui-sans-serif, system-ui, sans-serif);overflow:hidden}
+.va-th:hover{background:var(--va-panel2)}
+.va-th.active{color:var(--va-text);background:var(--va-panel2)}
+.va-th-name{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.va-root .va-th-input{flex:1;min-width:0;height:20px;padding:0 5px;border-radius:4px;
+  border:1px solid var(--va-accent);background:var(--va-bg);color:var(--va-text);
+  font:11px var(--f-ui, "Inter Tight", ui-sans-serif, system-ui, sans-serif);outline:none}
+.va-root .va-th-x{width:18px;height:18px;padding:0;border:0;background:transparent;color:var(--va-muted);
+  display:none;align-items:center;justify-content:center;border-radius:4px;cursor:pointer;flex:none}
+.va-th:hover .va-th-x{display:inline-flex}
+.va-root .va-th-x:hover{color:var(--va-text);background:transparent}
+.va-th-x svg{width:12px;height:12px}
+/* Add-track affordance: a thin hover zone below the last lane. On hover a
+   highlighted line fades in with a round "+" node at its left end, inviting a
+   new lane — no permanent full-width button. */
+.va-addrow{position:relative;height:12px;cursor:pointer}
+.va-addrow-line{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%) scaleX(0);transform-origin:left center;
+  height:2px;border-radius:1px;
+  background:linear-gradient(90deg, var(--va-accent), color-mix(in srgb, var(--va-accent) 10%, transparent));
+  opacity:0;transition:opacity .2s ease, transform .3s cubic-bezier(.22,.61,.36,1)}
+.va-addrow-btn{position:absolute;left:0;top:50%;transform:translate(-50%,-50%) scale(.85);width:18px;height:18px;border-radius:50%;
+  background:var(--va-panel2);color:var(--va-muted);border:1px solid var(--va-line);
+  display:inline-flex;align-items:center;justify-content:center;opacity:.5;
+  transition:opacity .18s ease, transform .22s cubic-bezier(.34,1.56,.64,1), background .15s ease, color .15s ease, border-color .15s ease, box-shadow .15s ease}
+.va-addrow:hover .va-addrow-line{opacity:1;transform:translateY(-50%) scaleX(1)}
+.va-addrow:hover .va-addrow-btn{opacity:1;transform:translate(-50%,-50%) scale(1);
+  background:var(--va-accent);color:#fff;border-color:transparent;box-shadow:0 1px 5px var(--va-shadow)}
+.va-addrow-btn svg{width:12px;height:12px}
+.va-seg{position:absolute;top:0;bottom:0;border-radius:6px;display:flex;align-items:center;
   padding:0 9px;overflow:hidden;background:var(--va-panel2);box-shadow:inset 0 0 0 1px var(--va-line)}
 .va-seg:hover{background:#edf6fc;box-shadow:inset 0 0 0 1px var(--va-line)}
 .va-seg.sel{background:#edf6fc;box-shadow:inset 0 0 0 1.5px #23a9ff;z-index:3}
@@ -813,7 +1024,7 @@ html[data-theme="dark"] .va-seg:hover .va-seglabel,
 html[data-theme="dark"] .va-seg.sel .va-seglabel{color:var(--va-text)}
 .va-seglabel{font-size:11px;color:var(--va-muted);font-weight:400;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
 .va-seg:hover .va-seglabel{color:#1a1a1a}
-.va-handle{position:absolute;top:30px;bottom:0;width:9px;margin-left:-5px;cursor:ew-resize;z-index:5}
+.va-handle{position:absolute;top:0;bottom:0;width:9px;margin-left:-5px;cursor:ew-resize;z-index:5}
 .va-handle::after{content:"";position:absolute;left:4px;top:0;bottom:0;width:1.5px;background:var(--va-accent);opacity:0}
 .va-handle:hover::after{opacity:1}
 .va-playhead{position:absolute;top:14px;bottom:0;width:1.5px;background:var(--va-accent);pointer-events:none;z-index:6}

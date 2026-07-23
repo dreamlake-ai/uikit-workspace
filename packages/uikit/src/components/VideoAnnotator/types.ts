@@ -12,6 +12,18 @@ export interface Segment {
   verified: boolean;
 }
 
+/**
+ * A labelling lane: a named row of contiguous {@link Segment}s over the shared
+ * time axis. Used in multi-track mode (the `tracks` prop). Each track is fully
+ * editable — split / merge / boundary-drag / select — but only the active track
+ * receives edits at a time.
+ */
+export interface Track {
+  id: string;
+  name: string;
+  segments: Segment[];
+}
+
 import type { ReactNode } from "react";
 
 export interface VideoAnnotatorProps {
@@ -44,14 +56,39 @@ export interface VideoAnnotatorProps {
   /** Source fps used only for the "· fN" frame readout. Falls back to 30. */
   srcFps?: number | null;
 
-  /** Controlled segment list. The component enforces the contiguous invariant. */
-  segments: Segment[];
-  /** Controlled index of the active segment. */
+  /**
+   * Controlled segment list (single-track mode). Provide EITHER `segments`
+   * (one track) OR `tracks` (multiple tracks) — not both. The component
+   * enforces the contiguous invariant.
+   */
+  segments?: Segment[];
+  /** Controlled index of the active segment within the active track. */
   selectedIndex: number;
-  /** Fired after any structural edit (split / merge / boundary drag). */
-  onSegmentsChange: (next: Segment[]) => void;
+  /** Fired after a structural edit in single-track mode (split / merge / boundary drag). */
+  onSegmentsChange?: (next: Segment[]) => void;
   /** Fired when the active segment changes (j/k, click, seek-to-phase). */
   onSelectedChange: (index: number) => void;
+
+  /**
+   * Controlled track list (multi-track mode). When present, the component
+   * renders one editable lane per track stacked under the shared ruler, with
+   * one active track at a time. Takes precedence over `segments`.
+   */
+  tracks?: Track[];
+  /** Controlled index of the active track. Default 0. */
+  activeTrackIndex?: number;
+  /** Fired after a structural edit in multi-track mode (returns the full track list). */
+  onTracksChange?: (next: Track[]) => void;
+  /** Fired when the active track changes (click a lane, add/remove). */
+  onActiveTrackChange?: (index: number) => void;
+  /** Show the "+ Track" control. Default true in multi-track mode. */
+  allowAddTracks?: boolean;
+  /** Add-track handler. If omitted, the component appends a default full-length track via `onTracksChange`. */
+  onAddTrack?: () => void;
+  /** Remove-track handler. If omitted, the component drops the track by index via `onTracksChange`. */
+  onRemoveTrack?: (index: number) => void;
+  /** Rename-track handler (double-click a track name). If omitted, the component updates the name via `onTracksChange`. */
+  onRenameTrack?: (index: number, name: string) => void;
   /** Fired when the user toggles verification on the active segment (A key / no-op if absent). */
   onApproveToggle?: (index: number, verified: boolean) => void;
 
