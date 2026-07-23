@@ -1,11 +1,12 @@
 /**
- * StageNode — a spine station card. Distinct from member cards: shorter
- * (156×48), 3px ink accent bar on the spine side, member/done counts.
+ * StageNode — a stage/phase rendered as a NODE in the flow, using the same
+ * card style as every other node (one style across the canvas). Only the
+ * kind dot (ink) and the meta line distinguish it.
  */
-import type { CSSProperties, PointerEvent as ReactPointerEvent } from 'react'
+import type { PointerEvent as ReactPointerEvent } from 'react'
 import type { WorkflowStage } from '../spec'
 import {
-  WF_KIND_TOKEN, WF_STAGE_H, WF_STAGE_W, cardStyle, metaStyle, titleStyle,
+  WF_KIND_TOKEN, cardStyle, kindDotStyle, metaStyle, titleRowStyle, titleStyle,
 } from './chrome'
 
 export interface StageNodeProps {
@@ -24,35 +25,24 @@ export function StageNode({
   stage, memberCount, doneCount, pos, selected, dimmed,
   onPointerDown, onPointerMove, onPointerUp,
 }: StageNodeProps) {
-  const base = cardStyle({ pos, width: WF_STAGE_W, height: WF_STAGE_H, selected, dimmed })
-  const style: CSSProperties = {
-    ...base,
-    // Slightly darker than member cards so the spine reads as structure.
-    background: selected
-      ? base.background
-      : 'color-mix(in oklab, var(--color-uikit-panel) 92%, var(--color-uikit-ink))',
-    borderLeft: `3px solid ${selected ? 'var(--color-uikit-accent)' : WF_KIND_TOKEN.stage}`,
-    padding: '7px 10px',
-    gap: 3,
-    justifyContent: 'center',
-  }
-  const meta =
-    memberCount != null
-      ? doneCount != null
-        ? `${memberCount} member${memberCount === 1 ? '' : 's'} · ${doneCount} done`
-        : `${memberCount} member${memberCount === 1 ? '' : 's'}`
-      : stage.detail
+  const bits: string[] = ['stage']
+  if (memberCount != null) bits.push(`${memberCount} member${memberCount === 1 ? '' : 's'}`)
+  if (doneCount != null) bits.push(`${doneCount} done`)
   return (
     <div
       data-node={stage.id}
       title={stage.detail ?? stage.title}
-      style={style}
+      style={cardStyle({ pos, selected, dimmed })}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
     >
-      <span style={{ ...titleStyle, fontSize: 12.5 }}>{stage.title}</span>
-      {meta && <span style={metaStyle}>{meta}</span>}
+      <div style={titleRowStyle}>
+        <span style={kindDotStyle(WF_KIND_TOKEN.stage)} />
+        <span style={titleStyle}>{stage.title}</span>
+      </div>
+      <span style={metaStyle}>{bits.join(' · ')}</span>
+      {stage.detail && <span style={{ ...metaStyle, textTransform: 'none', letterSpacing: 0, fontSize: 9.5 }}>{stage.detail}</span>}
     </div>
   )
 }

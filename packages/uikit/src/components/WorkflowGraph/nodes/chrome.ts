@@ -11,8 +11,9 @@ import type { WorkflowNodeKind, WorkflowNodeRunStateValue } from '../spec'
 
 export const WF_NODE_W = 156
 export const WF_NODE_H = 72
-export const WF_STAGE_W = 156
-export const WF_STAGE_H = 48
+// Stage nodes share the ONE card style/size — no special chrome.
+export const WF_STAGE_W = WF_NODE_W
+export const WF_STAGE_H = WF_NODE_H
 export const WF_AGENT_W = 140
 export const WF_AGENT_H = 40
 

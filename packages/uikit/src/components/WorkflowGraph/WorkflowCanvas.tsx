@@ -266,37 +266,56 @@ export function WorkflowCanvas({
     }[]
   }, [spec.edges, nodeById, nodeRects, obstacles, orientation, statusByNodeId, verticalPrimary])
 
-  const stubPaths = useMemo(() => layout.stubs.map((s) => {
-    const fromR = stageRects[s.stageId]
-    const toR = nodeRects[s.nodeId]
-    if (!fromR || !toR) return null
-    // Stubs run on the CROSS axis: horizontal-primary in vertical orientation
-    // (stage right → member left), vertical-primary in horizontal.
-    const from = orientation === 'vertical'
-      ? { x: fromR.x + fromR.w, y: fromR.y + fromR.h / 2 }
-      : { x: fromR.x + fromR.w / 2, y: fromR.y + fromR.h }
-    const to = orientation === 'vertical'
-      ? { x: toR.x, y: toR.y + toR.h / 2 }
-      : { x: toR.x + toR.w / 2, y: toR.y }
-    const d = orientation === 'vertical'
-      ? buildEdgePath(from, to, {})
-      : buildEdgePath(swap(from), swap(to), {})
-    return { key: `${s.stageId}->${s.nodeId}`, d, swapped: orientation !== 'vertical', nodeId: s.nodeId, stageId: s.stageId }
-  }).filter(Boolean) as { key: string; d: string; swapped: boolean; nodeId: string; stageId: string }[],
-  [layout.stubs, stageRects, nodeRects, orientation])
+  // Fan-out stubs — stage → each member, along the flow axis. The stage's
+  // out-face spreads one anchor per member so the fan reads at a glance.
+  const stubPaths = useMemo(() => {
+    const byStage = new Map<string, string[]>()
+    for (const s of layout.stubs) {
+      const arr = byStage.get(s.stageId) ?? []
+      arr.push(s.nodeId)
+      byStage.set(s.stageId, arr)
+    }
+    const out: { key: string; d: string; nodeId: string; stageId: string }[] = []
+    for (const [stageId, memberIds] of byStage) {
+      const fromR = stageRects[stageId]
+      if (!fromR) continue
+      memberIds.forEach((nodeId, i) => {
+        const toR = nodeRects[nodeId]
+        if (!toR) return
+        const from = portAnchor(fromR, 'out', i, memberIds.length, orientation)
+        const to = portAnchor(toR, 'in', 0, 1, orientation)
+        const d = verticalPrimary
+          ? buildEdgePath(swap(from), swap(to), {})
+          : buildEdgePath(from, to, {})
+        out.push({ key: `${stageId}->${nodeId}`, d, nodeId, stageId })
+      })
+    }
+    return out
+  }, [layout.stubs, stageRects, nodeRects, orientation, verticalPrimary])
 
-  const spineSegs = useMemo(() => {
-    const segs: { from: Pt; to: Pt }[] = []
+  // Spine — stage → next stage (order-implied), detouring around the member
+  // cluster between them via obstacle-aware routing.
+  const spinePaths = useMemo(() => {
+    const paths: { key: string; d: string; to: Pt }[] = []
     for (let i = 0; i + 1 < spec.stages.length; i++) {
       const a = stageRects[spec.stages[i].id]
       const b = stageRects[spec.stages[i + 1].id]
       if (!a || !b) continue
-      segs.push(orientation === 'vertical'
-        ? { from: { x: a.x + a.w / 2, y: a.y + a.h }, to: { x: b.x + b.w / 2, y: b.y } }
-        : { from: { x: a.x + a.w, y: a.y + a.h / 2 }, to: { x: b.x, y: b.y + b.h / 2 } })
+      const from = orientation === 'vertical'
+        ? { x: a.x + a.w / 2, y: a.y + a.h }
+        : { x: a.x + a.w, y: a.y + a.h / 2 }
+      const to = orientation === 'vertical'
+        ? { x: b.x + b.w / 2, y: b.y }
+        : { x: b.x, y: b.y + b.h / 2 }
+      const obs = Object.values(nodeRects).map((r) =>
+        verticalPrimary ? swapRect(r) : rectObstacle(r))
+      const d = verticalPrimary
+        ? buildEdgePath(swap(from), swap(to), { obstacles: obs })
+        : buildEdgePath(from, to, { obstacles: obs })
+      paths.push({ key: `spine-${i}`, d, to })
     }
-    return segs
-  }, [spec.stages, stageRects, orientation])
+    return paths
+  }, [spec.stages, stageRects, nodeRects, orientation, verticalPrimary])
 
   const isAdjacent = useCallback((edgeFrom: string, edgeTo: string) =>
     !!selected && (edgeFrom === selected || edgeTo === selected), [selected])
@@ -324,14 +343,13 @@ export function WorkflowCanvas({
         style={{ transform: `translate(${view.x}px, ${view.y}px) scale(${view.k})` }}
       >
         <svg width={bounds.w} height={bounds.h} className="absolute top-0 left-0 pointer-events-none overflow-visible">
-          {/* spine (order-implied stage→stage) */}
-          {spineSegs.map((s, i) => (
-            <g key={`spine-${i}`} opacity={selected ? 0.45 : 1} style={{ transition: 'opacity 160ms ease' }}>
-              <line
-                x1={s.from.x} y1={s.from.y} x2={s.to.x} y2={s.to.y}
-                stroke="var(--color-uikit-ink-50)" strokeWidth={1.6} strokeLinecap="round"
-              />
-              {orientation === 'vertical' ? (
+          {/* spine (order-implied stage→stage, detours around member clusters) */}
+          {spinePaths.map((s) => (
+            <g key={s.key} opacity={selected ? 0.45 : 1} style={{ transition: 'opacity 160ms ease' }}>
+              <g transform={verticalPrimary ? 'matrix(0,1,1,0,0,0)' : undefined}>
+                <path d={s.d} fill="none" stroke="var(--color-uikit-ink-50)" strokeWidth={1.6} strokeLinecap="round" />
+              </g>
+              {verticalPrimary ? (
                 <path d={`M ${s.to.x - 4} ${s.to.y - 6} L ${s.to.x} ${s.to.y} L ${s.to.x + 4} ${s.to.y - 6}`} fill="none" stroke="var(--color-uikit-ink-50)" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" />
               ) : (
                 <path d={`M ${s.to.x - 6} ${s.to.y - 4} L ${s.to.x} ${s.to.y} L ${s.to.x - 6} ${s.to.y + 4}`} fill="none" stroke="var(--color-uikit-ink-50)" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" />
@@ -339,11 +357,11 @@ export function WorkflowCanvas({
             </g>
           ))}
 
-          {/* membership stubs — light dashed, structural not data */}
+          {/* fan-out stubs — stage → member, light dashed, structural not data */}
           {stubPaths.map((s) => (
             <g
               key={s.key}
-              transform={s.swapped ? 'matrix(0,1,1,0,0,0)' : undefined}
+              transform={verticalPrimary ? 'matrix(0,1,1,0,0,0)' : undefined}
               opacity={selected && selected !== s.nodeId && selected !== s.stageId ? 0.25 : 0.85}
               style={{ transition: 'opacity 160ms ease' }}
             >
