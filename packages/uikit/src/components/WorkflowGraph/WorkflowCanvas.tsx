@@ -417,9 +417,14 @@ export function WorkflowCanvas({
         } else {
           const g = groups[face]
           const gi = g.indexOf(i)
+          // Side faces are PARTITIONED: inbound anchors on the upstream half,
+          // outbound on the downstream half — arriving arrows never sit on
+          // departing lines.
+          const fLo = H.fMin + 10
+          const fHi = H.fMin + fLen / 2 - 6
           const fA = g.length === 1
-            ? H.fMin + fLen / 2
-            : H.fMin + 12 + gi * ((fLen - 24) / (g.length - 1))
+            ? (fLo + fHi) / 2
+            : fLo + gi * ((fHi - fLo) / (g.length - 1))
           const sEdge = face === 'left' ? H.sMin : H.sMax
           const p0 = toF(P)
           const onThatSide = face === 'left' ? p0.s < H.sMin - 8 : p0.s > H.sMax + 8
@@ -483,9 +488,12 @@ export function WorkflowCanvas({
         } else {
           const g = groups[face]
           const gi = g.indexOf(i)
+          // Downstream half of the side face (inbound owns the upstream half).
+          const fLo = H.fMin + fLen / 2 + 6
+          const fHi = H.fMax - 10
           const fA = g.length === 1
-            ? H.fMin + fLen / 2
-            : H.fMin + 12 + gi * ((fLen - 24) / (g.length - 1))
+            ? (fLo + fHi) / 2
+            : fLo + gi * ((fHi - fLo) / (g.length - 1))
           const sEdge = face === 'left' ? H.sMin : H.sMax
           const t0 = toF(T)
           segs.push({
