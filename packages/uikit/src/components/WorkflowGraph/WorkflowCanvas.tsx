@@ -685,10 +685,11 @@ export function WorkflowCanvas({
           const dim = !!selected && selected !== n.id
           const ins = nodeInputs(n)
           const outs = nodeOutputs(n)
-          const marker = (p: { name: string }, i: number, count: number, dir: 'in' | 'out') => {
+          const marker = (p: { name: string; collect?: boolean }, i: number, count: number, dir: 'in' | 'out') => {
             const a = portAnchor(r, dir, i, count, orientation)
             const named = p.name !== (dir === 'in' ? 'in' : 'out')
             const labelOffset = dir === 'in' ? -11 : 11
+            const isCollect = dir === 'in' && p.collect === true
             return (
               <span key={`${n.id}-${dir}-${p.name}-${i}`} style={{ opacity: dim ? 0.3 : 1, transition: 'opacity 160ms ease' }}>
                 <span style={{
@@ -696,6 +697,8 @@ export function WorkflowCanvas({
                   width: 6, height: 6, borderRadius: 3,
                   background: 'var(--color-uikit-panel)',
                   border: '1px solid var(--color-uikit-muted)',
+                  // collect ports (fan-in) get a second ring
+                  boxShadow: isCollect ? '0 0 0 2.5px var(--color-uikit-panel), 0 0 0 3.5px var(--color-uikit-muted)' : undefined,
                   zIndex: 3, pointerEvents: 'none',
                 }} />
                 {named && (
