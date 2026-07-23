@@ -281,7 +281,7 @@ export function WorkflowCanvas({
       const flow = edgeFlowFromStates(statusByNodeId?.[e.from], statusByNodeId?.[e.to])
       const label = e.fromPort && e.fromPort !== 'out'
         ? e.fromPort
-        : outs[oi] && outs[oi].type !== 'any' ? outs[oi].type : null
+        : outs[oi] && outs[oi].type !== 'artifact' ? outs[oi].type : null
       return { id: e.id, d, flow, from, to, label, labelPos: null as Pt | null }
     }).filter(Boolean) as {
       id: string; d: string; flow: EdgeFlow; from: Pt; to: Pt
@@ -542,12 +542,31 @@ export function WorkflowCanvas({
 const LEGEND_KINDS = ['stage', 'compute', 'uda', 'sampler', 'control'] as const
 const LEGEND_FLOWS: EdgeFlow[] = ['running', 'ok', 'queued', 'idle']
 
+/** Glass legend card — draggable anywhere over the canvas (viewport coords). */
 function Legend() {
+  const [pos, setPos] = useState({ x: 14, y: 12 })
+  const drag = useRef<{ sx: number; sy: number; bx: number; by: number } | null>(null)
   return (
     <div
       className="hidden sm:flex"
+      onPointerDown={(e) => {
+        e.stopPropagation()
+        ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
+        drag.current = { sx: e.clientX, sy: e.clientY, bx: pos.x, by: pos.y }
+      }}
+      onPointerMove={(e) => {
+        const d = drag.current
+        if (!d) return
+        e.stopPropagation()
+        setPos({ x: Math.max(0, d.bx + e.clientX - d.sx), y: Math.max(0, d.by + e.clientY - d.sy) })
+      }}
+      onPointerUp={(e) => {
+        drag.current = null
+        try { (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId) } catch { /* noop */ }
+      }}
+      onDoubleClick={(e) => e.stopPropagation()}
       style={{
-        position: 'absolute', left: 14, top: 12, zIndex: 6,
+        position: 'absolute', left: pos.x, top: pos.y, zIndex: 6,
         background: 'color-mix(in oklab, var(--color-uikit-panel) 88%, transparent)',
         backdropFilter: 'blur(8px) saturate(1.05)',
         WebkitBackdropFilter: 'blur(8px) saturate(1.05)',
@@ -556,7 +575,7 @@ function Legend() {
         boxShadow: '0 1px 2px rgba(0,0,0,.06)',
         fontFamily: 'var(--font-uikit-mono)',
         color: 'var(--color-uikit-muted)',
-        pointerEvents: 'none',
+        cursor: 'grab', userSelect: 'none', touchAction: 'none',
         flexDirection: 'column', alignItems: 'flex-start', gap: 4,
         padding: '8px 10px', fontSize: 10.5, letterSpacing: '.04em', whiteSpace: 'nowrap',
       }}

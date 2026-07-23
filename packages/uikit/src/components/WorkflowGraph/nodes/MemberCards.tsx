@@ -83,7 +83,7 @@ export function UdaNodeCard({ node, ...p }: UdaNodeCardProps) {
   return (
     <div
       data-node={node.id}
-      title={node.uda.prompt}
+      title={node.uda.description ?? node.uda.instructions}
       style={{ ...cardStyle(p), ...pulseStyle(p.state) }}
       {...handlers(p)}
     >
@@ -91,7 +91,7 @@ export function UdaNodeCard({ node, ...p }: UdaNodeCardProps) {
         <span style={kindDotStyle(WF_KIND_TOKEN.uda)} />
         <span style={titleStyle}>{node.title}</span>
       </div>
-      <span style={previewStyle}>“{node.uda.prompt}”</span>
+      <span style={previewStyle}>“{node.uda.instructions}”</span>
       <div style={chipRowStyle}>
         {/* perms count is short and always visible; model + target truncate */}
         <span style={chipStyle}>{perms} perm{perms === 1 ? '' : 's'}</span>
@@ -127,7 +127,7 @@ export function SamplerNodeCard({ node, ...p }: SamplerNodeCardProps) {
 
 const CONTROL_GLYPH: Record<ControlNode['control']['type'], string> = {
   condition: '◇',
-  branch: '⑃',
+  switch: '⑃',
   loop: '⟲',
   approval: '⏸',
 }
@@ -138,8 +138,11 @@ export function ControlNodeCard({ node, ...p }: ControlNodeCardProps) {
   const c = node.control
   const detail =
     c.type === 'condition' ? c.expression
-    : c.type === 'branch' ? `${c.cases.length} cases`
-    : c.type === 'loop' ? (c.until ? `until ${c.until}` : `× ${c.maxIterations ?? '∞'}`)
+    : c.type === 'switch' ? `${c.cases.length} cases + default`
+    : c.type === 'loop'
+      ? c.mode === 'foreach'
+        ? `foreach ${c.over ?? '?'}`
+        : `while · until ${c.until ?? `× ${c.max_iterations ?? '∞'}`}`
     : (c.message ?? 'human approval')
   return (
     <div
