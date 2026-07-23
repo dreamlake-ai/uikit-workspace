@@ -107,6 +107,7 @@ export function WorkflowCanvas({
   useEffect(() => { setPosOverride({}) }, [spec, orientation])
 
   const containerRef = useRef<HTMLDivElement>(null)
+  const fitViewRef = useRef<() => void>(() => {})
   const panRef = useRef<{ x: number; y: number; vx: number; vy: number } | null>(null)
   const dragRef = useRef<{ id: string; sx: number; sy: number; bx: number; by: number; moved: boolean } | null>(null)
 
@@ -114,6 +115,28 @@ export function WorkflowCanvas({
     () => layoutWorkflow(spec, orientation, agentsByNodeId),
     [spec, orientation, agentsByNodeId],
   )
+
+  // -- auto-fit: center the graph in the container, shrinking to fit when
+  //    needed. Runs on mount and whenever the layout changes (orientation
+  //    toggle, spec edit, run overlay); double-click the plane to re-fit.
+  const fitView = useCallback(() => {
+    const el = containerRef.current
+    if (!el) return
+    const cw = el.clientWidth
+    const ch = el.clientHeight
+    if (!cw || !ch) return
+    const PAD = 28
+    const { w, h } = layout.size
+    const kFit = Math.min((cw - PAD * 2) / w, (ch - PAD * 2) / h)
+    const k = Math.min(1, Math.max(0.35, kFit))
+    // Center each axis when the scaled graph fits; otherwise align the flow
+    // start (top / left) so the root stage is visible.
+    const x = w * k <= cw - PAD ? (cw - w * k) / 2 : PAD
+    const y = h * k <= ch - PAD ? (ch - h * k) / 2 : PAD
+    setView({ x, y, k })
+  }, [layout.size])
+  fitViewRef.current = fitView
+  useEffect(() => { fitView() }, [fitView])
 
   // Apply drag overrides on top of the computed layout.
   const stageRects = useMemo(() => {
@@ -329,6 +352,10 @@ export function WorkflowCanvas({
       onPointerDown={onBgDown}
       onPointerMove={onBgMove}
       onPointerUp={onBgUp}
+      onDoubleClick={(e) => {
+        if ((e.target as HTMLElement).closest('[data-node]')) return
+        fitViewRef.current()
+      }}
       className={cn('relative w-full h-full overflow-hidden select-none cursor-grab active:cursor-grabbing outline-none', className)}
       style={{
         backgroundColor: 'var(--color-uikit-canvas-bg, var(--color-uikit-panel))',
