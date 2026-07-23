@@ -102,8 +102,10 @@ function fanFlow(dst?: WorkflowNodeRunStateValue): EdgeFlow {
 }
 
 const swap = (p: Pt): Pt => ({ x: p.y, y: p.x })
-const swapRect = (r: WfRect): Obstacle => ({ x0: r.y - 4, y0: r.x - 4, x1: r.y + r.h + 4, y1: r.x + r.w + 4 })
-const rectObstacle = (r: WfRect): Obstacle => ({ x0: r.x - 4, y0: r.y - 4, x1: r.x + r.w + 4, y1: r.y + r.h + 4 })
+// Generous obstacle padding: routed edges detour PAD px away from this
+// boundary, so lines keep clear daylight from card edges.
+const swapRect = (r: WfRect): Obstacle => ({ x0: r.y - 8, y0: r.x - 8, x1: r.y + r.h + 8, y1: r.x + r.w + 8 })
+const rectObstacle = (r: WfRect): Obstacle => ({ x0: r.x - 8, y0: r.y - 8, x1: r.x + r.w + 8, y1: r.y + r.h + 8 })
 
 interface Seg {
   key: string
@@ -398,13 +400,31 @@ export function WorkflowCanvas({
       items.forEach((_, i) => groups[faces[i]].push(i))
       const fLen = H.fMax - H.fMin
 
+      // Dedupe pills: a bundle of parallel segments from the same source
+      // carrying the same type gets ONE pill, on the bundle's middle segment.
+      const labelKeep = new Map<number, string>()
+      {
+        const byBundle = new Map<string, number[]>()
+        items.forEach(({ e }, i) => {
+          const label = outLabel(e)
+          if (!label) return
+          const k = `${e.from}|${label}`
+          const arr = byBundle.get(k) ?? []
+          arr.push(i)
+          byBundle.set(k, arr)
+        })
+        for (const [k, idxs] of byBundle) {
+          labelKeep.set(idxs[Math.floor(idxs.length / 2)], k.split('|')[1])
+        }
+      }
+
       items.forEach(({ e, P }, i) => {
         const flow = edgeFlowFromStates(statusByNodeId?.[e.from], statusByNodeId?.[e.to])
         const face = faces[i]
         const base = {
           key: `${e.id}#up`, flow,
           hotIds: [e.from, e.to, t],
-          label: outLabel(e), labelPos: null,
+          label: labelKeep.get(i) ?? null, labelPos: null,
         }
         if (face === 'flow') {
           const gi = groups.flow.indexOf(i)
@@ -428,14 +448,14 @@ export function WorkflowCanvas({
           const sEdge = face === 'left' ? H.sMin : H.sMax
           const p0 = toF(P)
           const onThatSide = face === 'left' ? p0.s < H.sMin - 8 : p0.s > H.sMax + 8
-          const lane = 22 + gi * 14
+          const lane = 28 + gi * 16
           const outward = face === 'left' ? H.sMin - lane : H.sMax + lane
           const pts: FlowPt[] = onThatSide
             ? [p0, { s: p0.s, f: fA }, { s: sEdge, f: fA }]
             : [
                 p0,
-                { s: p0.s, f: H.fMin - 18 - gi * 10 },
-                { s: outward, f: H.fMin - 18 - gi * 10 },
+                { s: p0.s, f: H.fMin - 24 - gi * 12 },
+                { s: outward, f: H.fMin - 24 - gi * 12 },
                 { s: outward, f: fA },
                 { s: sEdge, f: fA },
               ]
@@ -535,10 +555,12 @@ export function WorkflowCanvas({
 
   // Label placement pass: on the routed path, dodging cards + other labels.
   const labeledSegments = useMemo(() => {
+    // Inflate card rects so pills keep daylight from card edges.
+    const grow = (r: WfRect): WfRect => ({ x: r.x - 6, y: r.y - 6, w: r.w + 12, h: r.h + 12 })
     const avoid: WfRect[] = [
-      ...Object.values(stageRects),
-      ...Object.values(nodeRects),
-      ...layout.agentRects,
+      ...Object.values(stageRects).map(grow),
+      ...Object.values(nodeRects).map(grow),
+      ...layout.agentRects.map(grow),
     ]
     const taken: { x: number; y: number; w: number; h: number }[] = []
     return segments.map((s) => {

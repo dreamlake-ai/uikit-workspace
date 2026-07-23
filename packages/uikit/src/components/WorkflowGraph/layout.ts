@@ -36,11 +36,11 @@ export interface WorkflowLayoutResult {
   size: { w: number; h: number }
 }
 
-const MARGIN = 32
-const FAN_GAP = 64          // stage → its first member line, along the flow axis
-const STAGE_GAP = 88        // last member line → next stage
-const CELL_GAP_FLOW = 44    // between member lines, along the flow axis
-const CELL_GAP_SIDE = 48    // between members within a line, across the flow
+const MARGIN = 40
+const FAN_GAP = 84          // stage → its first member line, along the flow axis
+const STAGE_GAP = 116       // last member line → next stage
+const CELL_GAP_FLOW = 60    // between member lines, along the flow axis
+const CELL_GAP_SIDE = 68    // between members within a line, across the flow
 const AGENT_GAP = 6
 const AGENT_INDENT = 10
 const MAX_PER_LINE = 3      // members per fan line before wrapping
