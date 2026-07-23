@@ -215,9 +215,12 @@ export function portAnchor(
   count: number,
   orientation: WfOrientation,
 ): WfPt {
-  const GAP = 15
+  // Wide spread so parallel edges (and port-name labels) stay separated —
+  // e.g. a switch's high/mid/low/default ports, or a hub receiving many
+  // convergence segments.
+  const GAP = 38
   const span = orientation === 'vertical' ? rect.w : rect.h
-  const gap = count <= 1 ? 0 : Math.min(GAP, (span - 12) / (count - 1))
+  const gap = count <= 1 ? 0 : Math.min(GAP, (span - 16) / (count - 1))
   const start = span / 2 - (gap * (count - 1)) / 2
   const along = start + index * gap
   if (orientation === 'vertical') {
@@ -290,7 +293,7 @@ export function labelAnchor(
 
   for (const seg of ordered) {
     if (seg.len < 28) continue // corner stubs — too short to carry a pill
-    for (const t of [0.5, 0.35, 0.65, 0.22, 0.78]) {
+    for (const t of [0.5, 0.4, 0.6, 0.3, 0.7, 0.2, 0.8, 0.12, 0.88]) {
       const p = un({ x: seg.a.x + (seg.b.x - seg.a.x) * t, y: seg.a.y + (seg.b.y - seg.a.y) * t })
       const b = boxAt(p)
       if (clear(b)) return { pt: p, box: b }

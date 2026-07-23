@@ -352,8 +352,10 @@ export function WorkflowCanvas({
       const i = Math.max(0, outs.findIndex((p) => p.name === (port ?? 'out')))
       return portAnchor(nodeRects[id], 'out', i, outs.length, orientation)
     }
+    // Edge pills carry DATA TYPES only — port NAMES are labeled at the node
+    // face (see the port-marker layer), so parallel port fans don't fight
+    // over pill space.
     const outLabel = (e: (typeof spec.edges)[number]): string | null => {
-      if (e.fromPort && e.fromPort !== 'out') return e.fromPort
       const outs = nodeOutputs(nodeById[e.from])
       const p = outs.find((x) => x.name === (e.fromPort ?? 'out')) ?? outs[0]
       return p && p.type !== 'artifact' ? p.type : null
@@ -392,7 +394,7 @@ export function WorkflowCanvas({
         key: `${e.id}#dn`, to: dnTo,
         d: route(dnFrom, dnTo, [stageRects[t], nodeRects[e.to]]),
         flow, hotIds: [e.from, e.to, t],
-        label: e.toPort && e.toPort !== 'in' ? e.toPort : null, labelPos: null,
+        label: null, labelPos: null,
       })
     }
 
@@ -548,6 +550,56 @@ export function WorkflowCanvas({
             case 'sampler': return <SamplerNodeCard key={n.id} node={n} {...common} />
             case 'control': return <ControlNodeCard key={n.id} node={n} {...common} />
           }
+        })}
+
+        {/* port markers — dots on every member port, name micro-pills for
+            custom-named ports (PipelineGraph's port-label pattern; keeps
+            port names off the edges, where parallel fans would collide) */}
+        {spec.nodes.map((n) => {
+          const r = nodeRects[n.id]
+          if (!r) return null
+          const dim = !!selected && selected !== n.id
+          const ins = nodeInputs(n)
+          const outs = nodeOutputs(n)
+          const marker = (p: { name: string }, i: number, count: number, dir: 'in' | 'out') => {
+            const a = portAnchor(r, dir, i, count, orientation)
+            const named = p.name !== (dir === 'in' ? 'in' : 'out')
+            const labelOffset = dir === 'in' ? -11 : 11
+            return (
+              <span key={`${n.id}-${dir}-${p.name}-${i}`} style={{ opacity: dim ? 0.3 : 1, transition: 'opacity 160ms ease' }}>
+                <span style={{
+                  position: 'absolute', left: a.x - 3, top: a.y - 3,
+                  width: 6, height: 6, borderRadius: 3,
+                  background: 'var(--color-uikit-panel)',
+                  border: '1px solid var(--color-uikit-muted)',
+                  zIndex: 3, pointerEvents: 'none',
+                }} />
+                {named && (
+                  <span style={{
+                    position: 'absolute',
+                    left: orientation === 'vertical' ? a.x : a.x + labelOffset,
+                    top: orientation === 'vertical' ? a.y + labelOffset : a.y,
+                    transform: orientation === 'vertical'
+                      ? 'translate(-50%, -50%)'
+                      : `translate(${dir === 'in' ? '-100%' : '0'}, -50%)`,
+                    fontFamily: 'var(--font-uikit-mono)', fontSize: 8.5, lineHeight: 1,
+                    padding: '1px 4px', borderRadius: 4,
+                    background: 'var(--color-uikit-canvas-bg, var(--color-uikit-panel))',
+                    color: 'var(--color-uikit-muted)',
+                    whiteSpace: 'nowrap', pointerEvents: 'none', zIndex: 3,
+                  }}>
+                    {p.name}
+                  </span>
+                )}
+              </span>
+            )
+          }
+          return (
+            <span key={`ports-${n.id}`}>
+              {ins.map((p, i) => marker(p, i, ins.length, 'in'))}
+              {outs.map((p, i) => marker(p, i, outs.length, 'out'))}
+            </span>
+          )
         })}
 
         {/* agent instances (run overlay) */}
