@@ -6,21 +6,20 @@ import {
   useMemo,
   useRef,
   useState,
+  type ReactNode,
 } from "react";
 import {
   Check,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
-  Pause,
-  Play,
   Scissors,
-  SkipBack,
-  SkipForward,
   ArrowLeftToLine,
   X,
 } from "lucide-react";
+import { createPortal } from "react-dom";
 import { cn } from "../../lib/utils";
+import { Tooltip, TooltipTrigger, TooltipContent } from "../Tooltip";
 import type { Segment, VideoAnnotatorHandle, VideoAnnotatorProps } from "./types";
 import {
   boundaryTimes,
@@ -35,6 +34,84 @@ import {
 
 const DEFAULT_SPEEDS = [0.25, 0.5, 1, 1.5, 2];
 const STYLE_ID = "uikit-video-annotator-styles";
+
+/** Transport icon button with a portaled tooltip (uikit Tooltip → escapes any
+ *  container overflow, unlike the old CSS `::after` tip which got clipped by a
+ *  scrolling/split layout). The label doubles as the a11y name. */
+function TipButton({
+  label,
+  onClick,
+  className,
+  disabled,
+  children,
+}: {
+  label: string;
+  onClick: () => void;
+  className?: string;
+  disabled?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button className={className} aria-label={label} onClick={onClick} disabled={disabled}>
+          {children}
+        </button>
+      </TooltipTrigger>
+      <TooltipContent className="!bg-uikit-panel !text-uikit-ink border border-uikit-faint">{label}</TooltipContent>
+    </Tooltip>
+  );
+}
+
+/**
+ * Sharp-cornered transport glyphs. lucide v1.24 bakes rounded corners straight
+ * into its Play / Skip path geometry (arc commands), so stroke-linejoin can't
+ * undo them — these use flat polygon geometry instead. Same 24x24 / stroke-2
+ * box as lucide; they inherit the miter join + square caps from `.va-root svg`.
+ * (ChevronLeft/Right stay lucide — their paths are plain lines, so the CSS
+ * miter already sharpens them.)
+ */
+function glyphAttrs(size = 14) {
+  return {
+    width: size,
+    height: size,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 2,
+  } as const;
+}
+function PlaySharp({ size }: { size?: number }) {
+  return (
+    <svg {...glyphAttrs(size)}>
+      <path d="M6 4 20 12 6 20Z" />
+    </svg>
+  );
+}
+function PauseSharp({ size }: { size?: number }) {
+  return (
+    <svg {...glyphAttrs(size)}>
+      <rect x="6" y="4" width="4" height="16" />
+      <rect x="14" y="4" width="4" height="16" />
+    </svg>
+  );
+}
+function SkipBackSharp({ size }: { size?: number }) {
+  return (
+    <svg {...glyphAttrs(size)}>
+      <path d="M19 4 9 12 19 20Z" />
+      <path d="M5 5 5 19" />
+    </svg>
+  );
+}
+function SkipForwardSharp({ size }: { size?: number }) {
+  return (
+    <svg {...glyphAttrs(size)}>
+      <path d="M5 4 15 12 5 20Z" />
+      <path d="M19 5 19 19" />
+    </svg>
+  );
+}
 
 /**
  * VideoAnnotator — a video player with an editable, contiguous segment
@@ -77,6 +154,9 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
     const [speedOpen, setSpeedOpen] = useState(false);
     const [metaDuration, setMetaDuration] = useState(0);
     const [hoverFrac, setHoverFrac] = useState<number | null>(null);
+    // Viewport position of the hover-time bubble, so it can be portaled to <body>
+    // and never clipped by a scrolling/split parent's overflow.
+    const [hoverPos, setHoverPos] = useState<{ x: number; y: number } | null>(null);
     // Merge affordance: the X button appears over an internal boundary (a cut
     // between two phases) after the cursor lingers ~0.5s near that boundary.
     // `mergeReady` gates the reveal; `mergeIdx` is the segment index whose start
@@ -442,35 +522,35 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
           </div>
 
           <div className="va-tp-center">
-            <button className="va-icon" aria-label="Prev boundary (,)" onClick={() => gotoBoundary(-1)}>
-              <SkipBack size={14} />
-            </button>
-            <button className="va-icon" aria-label="Prev frame (←)" onClick={() => stepFrame(-1, false)}>
+            <TipButton className="va-icon" label="Prev boundary (,)" onClick={() => gotoBoundary(-1)}>
+              <SkipBackSharp size={14} />
+            </TipButton>
+            <TipButton className="va-icon" label="Prev frame (←)" onClick={() => stepFrame(-1, false)}>
               <ChevronLeft size={14} />
-            </button>
-            <button className="va-icon va-play" aria-label="Play/Pause (Space)" onClick={togglePlay}>
-              {playing ? <Pause size={14} /> : <Play size={14} />}
-            </button>
-            <button className="va-icon" aria-label="Next frame (→)" onClick={() => stepFrame(1, false)}>
+            </TipButton>
+            <TipButton className="va-icon va-play" label="Play/Pause (Space)" onClick={togglePlay}>
+              {playing ? <PauseSharp size={14} /> : <PlaySharp size={14} />}
+            </TipButton>
+            <TipButton className="va-icon" label="Next frame (→)" onClick={() => stepFrame(1, false)}>
               <ChevronRight size={14} />
-            </button>
-            <button className="va-icon" aria-label="Next boundary (.)" onClick={() => gotoBoundary(1)}>
-              <SkipForward size={14} />
-            </button>
+            </TipButton>
+            <TipButton className="va-icon" label="Next boundary (.)" onClick={() => gotoBoundary(1)}>
+              <SkipForwardSharp size={14} />
+            </TipButton>
           </div>
 
           <div className="va-tp-right">
-            <button className="va-icon" aria-label="Split at playhead (S)" onClick={doSplit}>
+            <TipButton className="va-icon" label="Split at playhead (S)" onClick={doSplit}>
               <Scissors size={14} />
-            </button>
-            <button
+            </TipButton>
+            <TipButton
               className="va-icon"
-              aria-label="Merge into previous (Backspace)"
+              label="Merge into previous (Backspace)"
               onClick={() => doMerge(sel)}
               disabled={sel <= 0}
             >
               <ArrowLeftToLine size={14} />
-            </button>
+            </TipButton>
           </div>
         </div>
 
@@ -483,7 +563,9 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
             if (!tl) return;
             const rect = tl.getBoundingClientRect();
             const px = e.clientX - rect.left;
-            setHoverFrac(clamp(px / rect.width, 0, 1));
+            const frac = clamp(px / rect.width, 0, 1);
+            setHoverFrac(frac);
+            setHoverPos({ x: rect.left + frac * rect.width, y: rect.top });
             // Keep the button while the cursor is actually over it (or its tail),
             // so moving up to click never recomputes/hides it. Otherwise it must
             // disappear as soon as the cursor leaves a boundary's vicinity.
@@ -506,6 +588,7 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
           }}
           onMouseLeave={() => {
             setHoverFrac(null);
+            setHoverPos(null);
             clearTimeout(delTimer.current);
             mergeIdxRef.current = null;
             setMergeIdx(null);
@@ -557,9 +640,19 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
           {hoverFrac != null && (
             <>
               <div className="va-hoverline" style={{ left: `${hoverFrac * 100}%` }} />
-              <div className="va-hovertime" style={{ left: `${hoverFrac * 100}%` }}>
-                {fmt(hoverFrac * D)}
-              </div>
+              {/* the time bubble is portaled to <body> (fixed-positioned) so it never gets
+                  clipped by a scrolling/split parent's overflow */}
+              {hoverPos != null &&
+                typeof document !== "undefined" &&
+                createPortal(
+                  <div
+                    className="va-hovertime va-hovertime--fixed"
+                    style={{ position: "fixed", left: hoverPos.x, top: hoverPos.y + 12 }}
+                  >
+                    {fmt(hoverFrac * D)}
+                  </div>,
+                  document.body,
+                )}
               {mergeReady && mergeIdx != null && (
                 <button
                   className="va-merge"
@@ -639,7 +732,7 @@ const CSS = `
   font:14px/1.45 var(--f-ui, "Inter Tight", ui-sans-serif, system-ui, -apple-system, sans-serif);
 }
 .va-root button{font:inherit;color:var(--va-text);background:transparent;border:1px solid transparent;
-  border-radius:8px;padding:6px 10px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+  border-radius:var(--va-radius);padding:6px 10px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
 .va-root button:hover{background:var(--va-panel2)}
 .va-root button:active{transform:translateY(1px)}
 .va-root button:disabled{opacity:.35;cursor:default}
@@ -666,32 +759,26 @@ const CSS = `
 /* Transport controls read as real buttons: resting panel fill + hairline,
    not bare icons. Scoped under .va-transport so they beat the base
    .va-root button transparent-background rule. */
-.va-transport .va-icon{width:28px;height:28px;padding:0;justify-content:center;
+.va-transport .va-icon{width:28px;height:28px;padding:0;justify-content:center;border-radius:999px;
   background:transparent;border:1px solid var(--va-line);
   color:color-mix(in srgb, var(--va-text) 75%, var(--va-muted))}
 /* Neutral outline + glyph at rest; both turn accent-blue on hover. */
 .va-transport .va-icon:hover{background:transparent;border-color:var(--va-accent);color:var(--va-accent)}
 .va-icon svg{flex:none}
+.va-root svg{stroke-linejoin:round;stroke-linecap:round}
 
 /* Hover tooltip — matches the component's own floating surfaces (speed menu,
    toast): panel fill, 1px hairline border, ink text, soft popover shadow.
    Reads the button's aria-label so the a11y name and the visible tip stay in
    sync. */
-.va-transport button[aria-label]{position:relative}
-.va-transport button[aria-label]:hover::after{
-  content:attr(aria-label);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);
-  background:var(--va-panel);color:var(--va-text);border:1px solid var(--va-line);padding:5px 9px;border-radius:8px;
-  font:11px/1.3 var(--f-ui, "Inter Tight", ui-sans-serif, system-ui, -apple-system, sans-serif);
-  white-space:nowrap;pointer-events:none;z-index:60;
-  box-shadow:0 8px 24px var(--va-shadow)}
-/* While the speed menu is open, suppress the button's hover tooltip — it would
-   otherwise collide with the open menu (both float above the button). */
-.va-speedsel.open .va-speedbtn:hover::after{content:none}
+/* Transport button tooltips are now the portaled uikit <Tooltip> (see TipButton),
+   which escapes any container overflow — the old CSS ::after tip was clipped by a
+   scrolling/split parent. */
 .va-readout{font:11px var(--f-mono, ui-monospace, Menlo, monospace);color:var(--va-muted);
   padding:6px 0;text-align:left;flex:none;width:162px;white-space:nowrap}
 .va-speedsel{position:relative;display:inline-flex}
 .va-speedsel .va-speedbtn{display:inline-flex;align-items:center;gap:3px;height:28px;padding:0 6px 0 9px;
-  background:var(--va-panel);color:var(--va-text);border:1px solid transparent;border-radius:8px;cursor:pointer;
+  background:var(--va-panel);color:var(--va-text);border:1px solid transparent;border-radius:var(--va-radius);cursor:pointer;
   font:11px var(--f-mono, ui-monospace, Menlo, monospace)}
 .va-speedbtn .va-caret{color:var(--va-muted)}
 .va-speedbtn:hover{background:var(--va-panel2)}
@@ -737,6 +824,11 @@ html[data-theme="dark"] .va-seg.sel .va-seglabel{color:var(--va-text)}
   padding:2px 6px;border-radius:4px;white-space:nowrap;pointer-events:none;z-index:7;
   font-family:var(--f-mono, ui-monospace, Menlo, monospace);font-size:11px;line-height:1.3;
   box-shadow:0 8px 24px var(--va-shadow)}
+/* Portaled variant (rendered on <body>, outside .va-root) — the va-scoped vars
+   don't resolve there, so use the global uikit tokens with hard fallbacks. */
+.va-hovertime--fixed{
+  background:var(--uikit-accent, #23aaff);color:#fff;z-index:1000;
+  box-shadow:0 8px 24px rgba(0,0,0,.18)}
 /* Timeline hover: a blue speech bubble sitting over an internal boundary (a cut
    between two phases) holding an X that merges those two phases. It's a child of
    the timeline and its tail bridges down into the boundary, so moving the cursor
@@ -745,8 +837,8 @@ html[data-theme="dark"] .va-seg.sel .va-seglabel{color:var(--va-text)}
 @keyframes va-merge-in{from{opacity:0;transform:translateX(-50%) translateY(4px) scale(.92)}
   to{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}
 .va-timeline .va-merge{position:absolute;bottom:100%;transform:translateX(-50%);z-index:8;
-  width:30px;height:24px;display:inline-flex;align-items:center;justify-content:center;padding:0;
-  background:var(--va-accent);color:#fff;border:0;border-radius:8px;cursor:pointer;
+  width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;padding:0;
+  background:var(--va-accent);color:#fff;border:0;border-radius:999px;cursor:pointer;
   box-shadow:0 4px 12px var(--va-shadow);animation:va-merge-in .18s ease-out}
 .va-timeline .va-merge::after{content:"";position:absolute;top:100%;left:50%;transform:translateX(-50%);
   width:0;height:0;border:5px solid transparent;border-top-color:var(--va-accent)}
@@ -771,7 +863,7 @@ html[data-theme="dark"] .va-seg.sel .va-seglabel{color:var(--va-text)}
    so there's a single frame, and the meta row sits in the same box (separated
    by whitespace, no divider). Focus lifts the whole frame's border. */
 .va-desc{display:flex;flex-direction:column;gap:8px;flex:none;
-  background:var(--va-field);border:1px solid var(--va-line);border-radius:8px;padding:9px}
+  background:var(--va-field);border:1px solid var(--va-line);border-radius:var(--va-radius);padding:9px}
 .va-desc:focus-within{border-color:var(--va-accent)}
 .va-desc-box{width:100%;min-height:60px;resize:vertical;background:transparent;color:var(--va-text);
   border:0;padding:0;font:13px/1.45 inherit}
@@ -781,6 +873,6 @@ html[data-theme="dark"] .va-seg.sel .va-seglabel{color:var(--va-text)}
 .va-desc-meta > span:first-child{width:72px;flex:none}
 
 .va-toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--va-panel);
-  border:1px solid var(--va-line);border-radius:8px;padding:8px 14px;color:var(--va-text);
+  border:1px solid var(--va-line);border-radius:var(--va-radius);padding:8px 14px;color:var(--va-text);
   box-shadow:0 8px 24px var(--va-shadow);z-index:50}
 `;
