@@ -10,10 +10,11 @@
  *  - Members within a stage are layered TOPOLOGICALLY by their intra-stage
  *    data edges (longest-path layering), so an edge between two members of
  *    the same stage always flows forward — never sideways or backward.
- *  - The stage→stage spine runs in a RESERVED side corridor (leaving from
- *    the stage's side face), so it never threads between member cards.
- *  - Generous gaps leave routing corridors for cross-stage data edges,
- *    which detour around cards via the canvas's obstacle-aware routing.
+ *  - Stages are HUBS: the canvas routes cross-stage data edges through the
+ *    downstream stage node, so members visibly fan out from (and converge
+ *    into) stage nodes.
+ *  - Generous gaps leave routing room for the hub fans and for intra-stage
+ *    edges' obstacle detours.
  *
  * All nodes share ONE card style/size (WF_NODE_W × WF_NODE_H). Run-time
  * agent instances stack below their uda card in both orientations.
@@ -32,16 +33,10 @@ export interface WorkflowLayoutResult {
   stageRects: Record<string, WfRect>
   nodeRects: Record<string, WfRect>
   agentRects: WfAgentRect[]
-  /** stage → member fan-out stubs (structural, not data). */
-  stubs: { stageId: string; nodeId: string }[]
-  /** Side-axis coordinate of the reserved spine corridor (x in vertical
-   *  orientation, y in horizontal). */
-  corridor: number
   size: { w: number; h: number }
 }
 
 const MARGIN = 32
-const CORRIDOR_W = 52       // reserved side lane for the stage→stage spine
 const FAN_GAP = 64          // stage → its first member line, along the flow axis
 const STAGE_GAP = 88        // last member line → next stage
 const CELL_GAP_FLOW = 44    // between member lines, along the flow axis
@@ -108,7 +103,6 @@ export function layoutWorkflow(
   const stageRects: Record<string, WfRect> = {}
   const nodeRects: Record<string, WfRect> = {}
   const agentRects: WfAgentRect[] = []
-  const stubs: WorkflowLayoutResult['stubs'] = []
 
   const membersByStage = new Map<string, SpecNode[]>()
   for (const s of spec.stages) membersByStage.set(s.id, [])
@@ -142,10 +136,8 @@ export function layoutWorkflow(
     linesByStage.set(s.id, lines)
   }
 
-  // Side geometry: [MARGIN | corridor | content(maxSide) | MARGIN]
-  const corridor = MARGIN + CORRIDOR_W / 2
-  const contentStart = MARGIN + CORRIDOR_W
-  const center = contentStart + maxSide / 2
+  // Side geometry: [MARGIN | content(maxSide) | MARGIN]
+  const center = MARGIN + maxSide / 2
   let flowCursor = MARGIN
 
   for (const stage of spec.stages) {
@@ -165,7 +157,6 @@ export function layoutWorkflow(
           for (const n of line.nodes) {
             const rect: WfRect = { x, y: flowCursor, w: WF_NODE_W, h: WF_NODE_H }
             nodeRects[n.id] = rect
-            stubs.push({ stageId: stage.id, nodeId: n.id })
             const agents = agentsByNodeId?.[n.id] ?? []
             agents.forEach((a, i) => {
               agentRects.push({
@@ -183,7 +174,6 @@ export function layoutWorkflow(
           for (const n of line.nodes) {
             const rect: WfRect = { x: flowCursor, y, w: WF_NODE_W, h: WF_NODE_H }
             nodeRects[n.id] = rect
-            stubs.push({ stageId: stage.id, nodeId: n.id })
             const agents = agentsByNodeId?.[n.id] ?? []
             agents.forEach((a, i) => {
               agentRects.push({
@@ -205,12 +195,12 @@ export function layoutWorkflow(
   }
 
   const flowEnd = flowCursor - STAGE_GAP + MARGIN + (orientation === 'vertical' ? WF_NODE_H : WF_NODE_W)
-  const sideTotal = MARGIN * 2 + CORRIDOR_W + maxSide
+  const sideTotal = MARGIN * 2 + maxSide
   const size = orientation === 'vertical'
     ? { w: sideTotal, h: flowEnd }
     : { w: flowEnd, h: sideTotal }
 
-  return { stageRects, nodeRects, agentRects, stubs, corridor, size }
+  return { stageRects, nodeRects, agentRects, size }
 }
 
 /**

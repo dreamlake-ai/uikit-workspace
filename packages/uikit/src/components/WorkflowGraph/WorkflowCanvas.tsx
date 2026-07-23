@@ -1,17 +1,23 @@
 /**
- * WorkflowCanvas — the Workflow v2 stage-spine canvas, in PipelineGraph's
+ * WorkflowCanvas — the Workflow v2 stage-hub canvas, in PipelineGraph's
  * visual language: beige dot-grid plane, 156×72 status-tinted node cards,
  * orthogonal rounded edges that detour around cards, connector tag pills,
- * pan / zoom, and a glass legend.
+ * pan / zoom, and a draggable glass legend.
  *
- * Structure: stage nodes ON the spine (order-implied stage→stage edges);
- * member nodes (compute / uda / sampler / control) fan out from their stage;
- * run-time agent instances stack under their uda card. Two orientations —
- * 'vertical' (spine top-down, members fan right) and 'horizontal' (spine
- * left-right, members fan down).
+ * STAGES ARE HUBS. Members fan out from their stage node and work converges
+ * into the next stage node:
+ *  - an intra-stage data edge draws directly member → member;
+ *  - a CROSS-stage data edge routes THROUGH the downstream stage node —
+ *    rendered as two segments: source member → stage (convergence) and
+ *    stage → target member (fan-out);
+ *  - source members (no incoming edges) get a dispatch fan from their own
+ *    stage node;
+ *  - a plain stage → stage spine edge appears only where no member path
+ *    connects consecutive stages (e.g. an empty stage).
  *
- * Draft mode = pass no statusByNodeId (static blueprint). Run mode = pass
- * statusByNodeId (+ agentsByNodeId) and the same canvas animates.
+ * Two orientations: 'vertical' (root stage at top, flow top→bottom) and
+ * 'horizontal' (root at left, flow left→right). One card style for all
+ * nodes. Run overlay via statusByNodeId / agentsByNodeId.
  *
  * Edge routing reuses PipelineGraph's buildEdgePath (horizontal-primary);
  * vertical-primary edges are routed in axis-swapped space and rendered under
@@ -26,7 +32,7 @@ import { cn } from '../../lib/utils'
 import { buildEdgePath, type Obstacle, type Pt } from '../PipelineGraph/edge-path'
 import { FLOW, type EdgeFlow } from '../PipelineGraph/flow'
 import {
-  labelAnchor, layoutWorkflow, portAnchor, roundedPath,
+  labelAnchor, layoutWorkflow, portAnchor,
   type WfOrientation, type WfRect,
 } from './layout'
 import {
@@ -42,13 +48,13 @@ import {
 export interface WorkflowCanvasProps {
   spec: WorkflowSpec
   orientation?: WfOrientation
-  /** Run overlay: per-node run states (absent = draft blueprint). */
+  /** Run overlay: per-node run states (absent = plain blueprint). */
   statusByNodeId?: Record<string, WorkflowNodeRunStateValue>
   /** Run overlay: agent instances fanned under their uda node. */
   agentsByNodeId?: Record<string, AgentInstance[]>
   selectedId?: string | null
   onSelect?: (id: string | null) => void
-  /** Edge-state + kind legend (top-left). Default true. */
+  /** Node-kind + edge-state legend (draggable). Default true. */
   showControls?: boolean
   className?: string
 }
@@ -73,7 +79,7 @@ function useInjectedStyles() {
 
 type View = { x: number; y: number; k: number }
 
-/** Edge flow from endpoint run states (draft: both undefined → idle). */
+/** Edge flow from endpoint run states (blueprint: both undefined → idle). */
 function edgeFlowFromStates(
   src?: WorkflowNodeRunStateValue,
   dst?: WorkflowNodeRunStateValue,
@@ -86,9 +92,30 @@ function edgeFlowFromStates(
   return 'idle'
 }
 
+/** Flow style for a dispatch fan, from the target member's state alone. */
+function fanFlow(dst?: WorkflowNodeRunStateValue): EdgeFlow {
+  if (dst === 'progress') return 'running'
+  if (dst === 'done') return 'ok'
+  if (dst === 'error') return 'error'
+  if (dst === 'queued') return 'queued'
+  return 'idle'
+}
+
 const swap = (p: Pt): Pt => ({ x: p.y, y: p.x })
-const swapRect = (r: WfRect): Obstacle => ({ x0: r.y, y0: r.x, x1: r.y + r.h, y1: r.x + r.w })
+const swapRect = (r: WfRect): Obstacle => ({ x0: r.y - 4, y0: r.x - 4, x1: r.y + r.h + 4, y1: r.x + r.w + 4 })
 const rectObstacle = (r: WfRect): Obstacle => ({ x0: r.x - 4, y0: r.y - 4, x1: r.x + r.w + 4, y1: r.y + r.h + 4 })
+
+interface Seg {
+  key: string
+  d: string
+  flow: EdgeFlow
+  to: Pt
+  /** Selection ids that keep this segment "hot" (undimmed + accented). */
+  hotIds: string[]
+  label: string | null
+  labelPos: Pt | null
+  spine?: boolean
+}
 
 export function WorkflowCanvas({
   spec, orientation = 'vertical', statusByNodeId, agentsByNodeId,
@@ -117,9 +144,7 @@ export function WorkflowCanvas({
     [spec, orientation, agentsByNodeId],
   )
 
-  // -- auto-fit: center the graph in the container, shrinking to fit when
-  //    needed. Runs on mount and whenever the layout changes (orientation
-  //    toggle, spec edit, run overlay); double-click the plane to re-fit.
+  // -- auto-fit --------------------------------------------------------------
   const fitView = useCallback(() => {
     const el = containerRef.current
     if (!el) return
@@ -130,8 +155,6 @@ export function WorkflowCanvas({
     const { w, h } = layout.size
     const kFit = Math.min((cw - PAD * 2) / w, (ch - PAD * 2) / h)
     const k = Math.min(1, Math.max(0.35, kFit))
-    // Center each axis when the scaled graph fits; otherwise align the flow
-    // start (top / left) so the root stage is visible.
     const x = w * k <= cw - PAD ? (cw - w * k) / 2 : PAD
     const y = h * k <= ch - PAD ? (ch - h * k) / 2 : PAD
     setView({ x, y, k })
@@ -139,7 +162,7 @@ export function WorkflowCanvas({
   fitViewRef.current = fitView
   useEffect(() => { fitView() }, [fitView])
 
-  // Apply drag overrides on top of the computed layout.
+  // Drag overrides on top of the computed layout.
   const stageRects = useMemo(() => {
     const out: Record<string, WfRect> = {}
     for (const [id, r] of Object.entries(layout.stageRects)) {
@@ -247,130 +270,193 @@ export function WorkflowCanvas({
     },
   })
 
-  // -- edges -----------------------------------------------------------------
-  // Data edges route on the main axis: vertical orientation is vertical-
-  // primary, so we build in axis-swapped space and render reflected.
+  // -- segments (hub routing) ------------------------------------------------
   const verticalPrimary = orientation === 'vertical'
 
-  const obstacles = useMemo<Obstacle[]>(() => {
-    const rects = [...Object.values(stageRects), ...Object.values(nodeRects)]
-    return verticalPrimary ? rects.map(swapRect) : rects.map(rectObstacle)
-  }, [stageRects, nodeRects, verticalPrimary])
-
-  const dataEdges = useMemo(() => {
-    return spec.edges.map((e) => {
-      const fromNode = nodeById[e.from]
-      const toNode = nodeById[e.to]
-      const fromRect = nodeRects[e.from]
-      const toRect = nodeRects[e.to]
-      if (!fromNode || !toNode || !fromRect || !toRect) return null
-      const outs = nodeOutputs(fromNode)
-      const ins = nodeInputs(toNode)
-      const oi = Math.max(0, outs.findIndex((p) => p.name === (e.fromPort ?? 'out')))
-      const ii = Math.max(0, ins.findIndex((p) => p.name === (e.toPort ?? 'in')))
-      const from = portAnchor(fromRect, 'out', oi, outs.length, orientation)
-      const to = portAnchor(toRect, 'in', ii, ins.length, orientation)
-      const obs = obstacles.filter((o) => {
-        const fr = verticalPrimary ? swapRect(fromRect) : rectObstacle(fromRect)
-        const tr = verticalPrimary ? swapRect(toRect) : rectObstacle(toRect)
-        return o !== null && !(o.x0 === fr.x0 && o.y0 === fr.y0) && !(o.x0 === tr.x0 && o.y0 === tr.y0)
-      })
-      const d = verticalPrimary
+  const segments = useMemo<Seg[]>(() => {
+    const allRects = [...Object.values(stageRects), ...Object.values(nodeRects)]
+    const obstacles = verticalPrimary ? allRects.map(swapRect) : allRects.map(rectObstacle)
+    const route = (from: Pt, to: Pt, exclude: WfRect[]): string => {
+      const ex = new Set(exclude.map((r) => (verticalPrimary ? swapRect(r) : rectObstacle(r))
+      ).map((o) => `${o.x0},${o.y0}`))
+      const obs = obstacles.filter((o) => !ex.has(`${o.x0},${o.y0}`))
+      return verticalPrimary
         ? buildEdgePath(swap(from), swap(to), { obstacles: obs })
         : buildEdgePath(from, to, { obstacles: obs })
-      const flow = edgeFlowFromStates(statusByNodeId?.[e.from], statusByNodeId?.[e.to])
-      const label = e.fromPort && e.fromPort !== 'out'
-        ? e.fromPort
-        : outs[oi] && outs[oi].type !== 'artifact' ? outs[oi].type : null
-      return { id: e.id, d, flow, from, to, label, labelPos: null as Pt | null }
-    }).filter(Boolean) as {
-      id: string; d: string; flow: EdgeFlow; from: Pt; to: Pt
-      label: string | null; labelPos: Pt | null
-    }[]
-  }, [spec.edges, nodeById, nodeRects, obstacles, orientation, statusByNodeId, verticalPrimary])
+    }
+    const sideCoord = (id: string) => {
+      const r = nodeRects[id]
+      if (!r) return 0
+      return verticalPrimary ? r.x : r.y
+    }
+    const stageOf = (nodeId: string) => nodeById[nodeId]?.stageId
 
-  // Second pass: place each connector tag ON its routed path, dodging cards,
-  // agent stacks, and labels already placed.
-  const labeledEdges = useMemo(() => {
+    // Classify edges + build hub anchor orderings.
+    const intra: typeof spec.edges = []
+    const cross: typeof spec.edges = []
+    for (const e of spec.edges) {
+      const sa = stageOf(e.from)
+      const sb = stageOf(e.to)
+      if (!sa || !sb || !nodeRects[e.from] || !nodeRects[e.to]) continue
+      if (sa === sb) intra.push(e)
+      else cross.push(e)
+    }
+    // hub inbound: cross edges grouped by TARGET stage, ordered by source side pos
+    const inbound = new Map<string, typeof spec.edges>()
+    for (const e of cross) {
+      const t = stageOf(e.to)!
+      const arr = inbound.get(t) ?? []
+      arr.push(e)
+      inbound.set(t, arr)
+    }
+    for (const arr of inbound.values()) arr.sort((a, b) => sideCoord(a.from) - sideCoord(b.from))
+    // hub outbound: cross deliveries + dispatch fans for source members,
+    // grouped by stage, ordered by target side pos
+    type Out = { targetId: string; edge?: (typeof spec.edges)[number] }
+    const outbound = new Map<string, Out[]>()
+    for (const e of cross) {
+      const t = stageOf(e.to)!
+      const arr = outbound.get(t) ?? []
+      arr.push({ targetId: e.to, edge: e })
+      outbound.set(t, arr)
+    }
+    const hasIncoming = new Set(spec.edges.map((e) => e.to))
+    for (const n of spec.nodes) {
+      if (!hasIncoming.has(n.id) && nodeRects[n.id]) {
+        const arr = outbound.get(n.stageId) ?? []
+        arr.push({ targetId: n.id })
+        outbound.set(n.stageId, arr)
+      }
+    }
+    for (const arr of outbound.values()) arr.sort((a, b) => sideCoord(a.targetId) - sideCoord(b.targetId))
+
+    const hubIn = (stageId: string, e: (typeof spec.edges)[number]): Pt => {
+      const arr = inbound.get(stageId) ?? []
+      const i = Math.max(0, arr.indexOf(e))
+      return portAnchor(stageRects[stageId], 'in', i, Math.max(1, arr.length), orientation)
+    }
+    const hubOut = (stageId: string, targetId: string, edge?: (typeof spec.edges)[number]): Pt => {
+      const arr = outbound.get(stageId) ?? []
+      const i = Math.max(0, arr.findIndex((o) => o.targetId === targetId && o.edge === edge))
+      return portAnchor(stageRects[stageId], 'out', i, Math.max(1, arr.length), orientation)
+    }
+    const memberIn = (id: string, port?: string): Pt => {
+      const n = nodeById[id]
+      const ins = nodeInputs(n)
+      const i = Math.max(0, ins.findIndex((p) => p.name === (port ?? 'in')))
+      return portAnchor(nodeRects[id], 'in', i, ins.length, orientation)
+    }
+    const memberOut = (id: string, port?: string): Pt => {
+      const n = nodeById[id]
+      const outs = nodeOutputs(n)
+      const i = Math.max(0, outs.findIndex((p) => p.name === (port ?? 'out')))
+      return portAnchor(nodeRects[id], 'out', i, outs.length, orientation)
+    }
+    const outLabel = (e: (typeof spec.edges)[number]): string | null => {
+      if (e.fromPort && e.fromPort !== 'out') return e.fromPort
+      const outs = nodeOutputs(nodeById[e.from])
+      const p = outs.find((x) => x.name === (e.fromPort ?? 'out')) ?? outs[0]
+      return p && p.type !== 'artifact' ? p.type : null
+    }
+
+    const segs: Seg[] = []
+
+    // Intra-stage data edges: direct member → member.
+    for (const e of intra) {
+      const from = memberOut(e.from, e.fromPort)
+      const to = memberIn(e.to, e.toPort)
+      segs.push({
+        key: e.id, to,
+        d: route(from, to, [nodeRects[e.from], nodeRects[e.to]]),
+        flow: edgeFlowFromStates(statusByNodeId?.[e.from], statusByNodeId?.[e.to]),
+        hotIds: [e.from, e.to],
+        label: outLabel(e), labelPos: null,
+      })
+    }
+
+    // Cross-stage edges: source member → downstream hub → target member.
+    for (const e of cross) {
+      const t = stageOf(e.to)!
+      const flow = edgeFlowFromStates(statusByNodeId?.[e.from], statusByNodeId?.[e.to])
+      const upFrom = memberOut(e.from, e.fromPort)
+      const upTo = hubIn(t, e)
+      segs.push({
+        key: `${e.id}#up`, to: upTo,
+        d: route(upFrom, upTo, [nodeRects[e.from], stageRects[t]]),
+        flow, hotIds: [e.from, e.to, t],
+        label: outLabel(e), labelPos: null,
+      })
+      const dnFrom = hubOut(t, e.to, e)
+      const dnTo = memberIn(e.to, e.toPort)
+      segs.push({
+        key: `${e.id}#dn`, to: dnTo,
+        d: route(dnFrom, dnTo, [stageRects[t], nodeRects[e.to]]),
+        flow, hotIds: [e.from, e.to, t],
+        label: e.toPort && e.toPort !== 'in' ? e.toPort : null, labelPos: null,
+      })
+    }
+
+    // Dispatch fans: stage → its source members.
+    for (const n of spec.nodes) {
+      if (hasIncoming.has(n.id) || !nodeRects[n.id]) continue
+      const from = hubOut(n.stageId, n.id, undefined)
+      const to = memberIn(n.id)
+      segs.push({
+        key: `fan-${n.stageId}-${n.id}`, to,
+        d: route(from, to, [stageRects[n.stageId], nodeRects[n.id]]),
+        flow: fanFlow(statusByNodeId?.[n.id]),
+        hotIds: [n.stageId, n.id],
+        label: null, labelPos: null,
+      })
+    }
+
+    // Spine stage → stage, only where no member path connects them.
+    for (let i = 0; i + 1 < spec.stages.length; i++) {
+      const a = spec.stages[i]
+      const b = spec.stages[i + 1]
+      const aEmpty = (membersByStage.get(a.id) ?? 0) === 0
+      const bHasInbound = (inbound.get(b.id) ?? []).length > 0
+      if (!aEmpty && bHasInbound) continue
+      const ra = stageRects[a.id]
+      const rb = stageRects[b.id]
+      if (!ra || !rb) continue
+      const from = orientation === 'vertical'
+        ? { x: ra.x + ra.w / 2, y: ra.y + ra.h }
+        : { x: ra.x + ra.w, y: ra.y + ra.h / 2 }
+      const to = orientation === 'vertical'
+        ? { x: rb.x + rb.w / 2, y: rb.y }
+        : { x: rb.x, y: rb.y + rb.h / 2 }
+      segs.push({
+        key: `spine-${a.id}`, to,
+        d: route(from, to, [ra, rb]),
+        flow: 'idle', hotIds: [a.id, b.id],
+        label: null, labelPos: null, spine: true,
+      })
+    }
+
+    return segs
+  }, [spec, stageRects, nodeRects, nodeById, membersByStage, statusByNodeId, orientation, verticalPrimary])
+
+  // Label placement pass: on the routed path, dodging cards + other labels.
+  const labeledSegments = useMemo(() => {
     const avoid: WfRect[] = [
       ...Object.values(stageRects),
       ...Object.values(nodeRects),
       ...layout.agentRects,
     ]
     const taken: { x: number; y: number; w: number; h: number }[] = []
-    return dataEdges.map((e) => {
-      if (!e.label) return e
-      const { pt, box } = labelAnchor(e.d, avoid, {
+    return segments.map((s) => {
+      if (!s.label) return s
+      const { pt, box } = labelAnchor(s.d, avoid, {
         swapped: verticalPrimary,
-        boxW: e.label.length * 5.6 + 14,
+        boxW: s.label.length * 5.6 + 14,
         boxH: 16,
         taken,
       })
       taken.push(box)
-      return { ...e, labelPos: pt }
+      return { ...s, labelPos: pt }
     })
-  }, [dataEdges, stageRects, nodeRects, layout.agentRects, verticalPrimary])
-
-  // Fan-out stubs — stage → each member, along the flow axis. The stage's
-  // out-face spreads one anchor per member so the fan reads at a glance.
-  const stubPaths = useMemo(() => {
-    const byStage = new Map<string, string[]>()
-    for (const s of layout.stubs) {
-      const arr = byStage.get(s.stageId) ?? []
-      arr.push(s.nodeId)
-      byStage.set(s.stageId, arr)
-    }
-    const out: { key: string; d: string; nodeId: string; stageId: string }[] = []
-    for (const [stageId, memberIds] of byStage) {
-      const fromR = stageRects[stageId]
-      if (!fromR) continue
-      memberIds.forEach((nodeId, i) => {
-        const toR = nodeRects[nodeId]
-        if (!toR) return
-        const from = portAnchor(fromR, 'out', i, memberIds.length, orientation)
-        const to = portAnchor(toR, 'in', 0, 1, orientation)
-        const d = verticalPrimary
-          ? buildEdgePath(swap(from), swap(to), {})
-          : buildEdgePath(from, to, {})
-        out.push({ key: `${stageId}->${nodeId}`, d, nodeId, stageId })
-      })
-    }
-    return out
-  }, [layout.stubs, stageRects, nodeRects, orientation, verticalPrimary])
-
-  // Spine — stage → next stage (order-implied) through the RESERVED side
-  // corridor: out of the stage's side face, along the corridor lane, into
-  // the next stage's side face. Never threads between member cards.
-  const spinePaths = useMemo(() => {
-    const paths: { key: string; d: string; to: Pt }[] = []
-    const lane = layout.corridor
-    for (let i = 0; i + 1 < spec.stages.length; i++) {
-      const a = stageRects[spec.stages[i].id]
-      const b = stageRects[spec.stages[i + 1].id]
-      if (!a || !b) continue
-      if (orientation === 'vertical') {
-        // Leave the LEFT face, run down the corridor, enter the next LEFT face.
-        const from = { x: a.x, y: a.y + a.h / 2 }
-        const to = { x: b.x, y: b.y + b.h / 2 }
-        paths.push({
-          key: `spine-${i}`, to,
-          d: roundedPath([from, { x: lane, y: from.y }, { x: lane, y: to.y }, to]),
-        })
-      } else {
-        // Leave the TOP face, run along the corridor, enter the next TOP face.
-        const from = { x: a.x + a.w / 2, y: a.y }
-        const to = { x: b.x + b.w / 2, y: b.y }
-        paths.push({
-          key: `spine-${i}`, to,
-          d: roundedPath([from, { x: from.x, y: lane }, { x: to.x, y: lane }, to]),
-        })
-      }
-    }
-    return paths
-  }, [spec.stages, stageRects, layout.corridor, orientation])
-
-  const isAdjacent = useCallback((edgeFrom: string, edgeTo: string) =>
-    !!selected && (edgeFrom === selected || edgeTo === selected), [selected])
+  }, [segments, stageRects, nodeRects, layout.agentRects, verticalPrimary])
 
   // -- render ----------------------------------------------------------------
   return (
@@ -399,61 +485,35 @@ export function WorkflowCanvas({
         style={{ transform: `translate(${view.x}px, ${view.y}px) scale(${view.k})` }}
       >
         <svg width={bounds.w} height={bounds.h} className="absolute top-0 left-0 pointer-events-none overflow-visible">
-          {/* spine (order-implied stage→stage, via the reserved side corridor) */}
-          {spinePaths.map((s) => (
-            <g key={s.key} opacity={selected ? 0.45 : 1} style={{ transition: 'opacity 160ms ease' }}>
-              <path d={s.d} fill="none" stroke="var(--color-uikit-ink-50)" strokeWidth={1.6} strokeLinecap="round" />
-              {verticalPrimary ? (
-                // enters the next stage's LEFT face → arrow points right
-                <path d={`M ${s.to.x - 6} ${s.to.y - 4} L ${s.to.x} ${s.to.y} L ${s.to.x - 6} ${s.to.y + 4}`} fill="none" stroke="var(--color-uikit-ink-50)" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" />
-              ) : (
-                // enters the next stage's TOP face → arrow points down
-                <path d={`M ${s.to.x - 4} ${s.to.y - 6} L ${s.to.x} ${s.to.y} L ${s.to.x + 4} ${s.to.y - 6}`} fill="none" stroke="var(--color-uikit-ink-50)" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" />
-              )}
-            </g>
-          ))}
-
-          {/* fan-out stubs — stage → member, light dashed, structural not data */}
-          {stubPaths.map((s) => (
-            <g
-              key={s.key}
-              transform={verticalPrimary ? 'matrix(0,1,1,0,0,0)' : undefined}
-              opacity={selected && selected !== s.nodeId && selected !== s.stageId ? 0.25 : 0.85}
-              style={{ transition: 'opacity 160ms ease' }}
-            >
-              <path d={s.d} fill="none" stroke="var(--color-uikit-ink-12)" strokeWidth={1.3} strokeDasharray="3 4" strokeLinecap="round" />
-            </g>
-          ))}
-
-          {/* data edges */}
-          {dataEdges.map((e) => {
-            const flowSpec = FLOW[e.flow]
-            const edge = spec.edges.find((x) => x.id === e.id)
-            const hot = edge ? isAdjacent(edge.from, edge.to) : false
-            const stroke = hot ? 'var(--color-uikit-accent)' : flowSpec.color
-            const width = hot ? Math.max(flowSpec.width, 2) : flowSpec.width
+          {labeledSegments.map((s) => {
+            const flowSpec = FLOW[s.flow]
+            const hot = !!selected && s.hotIds.includes(selected)
             const dim = !!selected && !hot
-            const anim = e.flow === 'running' ? 'wf-edge-flow' : e.flow === 'queued' ? 'wf-edge-queued' : undefined
+            const stroke = s.spine
+              ? 'var(--color-uikit-ink-50)'
+              : hot ? 'var(--color-uikit-accent)' : flowSpec.color
+            const width = s.spine ? 1.6 : hot ? Math.max(flowSpec.width, 2) : flowSpec.width
+            const anim = s.flow === 'running' ? 'wf-edge-flow' : s.flow === 'queued' ? 'wf-edge-queued' : undefined
             return (
-              <g key={e.id} opacity={dim ? 0.28 : 1} style={{ transition: 'opacity 160ms ease' }}>
+              <g key={s.key} opacity={dim ? 0.25 : 1} style={{ transition: 'opacity 160ms ease' }}>
                 <g transform={verticalPrimary ? 'matrix(0,1,1,0,0,0)' : undefined}>
                   <path
-                    d={e.d} fill="none" stroke={stroke} strokeWidth={width}
-                    strokeLinecap="round" strokeDasharray={flowSpec.dash}
-                    className={hot ? undefined : anim}
+                    d={s.d} fill="none" stroke={stroke} strokeWidth={width}
+                    strokeLinecap="round" strokeDasharray={s.spine ? undefined : flowSpec.dash}
+                    className={hot || s.spine ? undefined : anim}
                   />
                 </g>
                 {verticalPrimary ? (
-                  <path d={`M ${e.to.x - 4} ${e.to.y - 6} L ${e.to.x} ${e.to.y} L ${e.to.x + 4} ${e.to.y - 6}`} fill="none" stroke={stroke} strokeWidth={width} strokeLinecap="round" strokeLinejoin="round" />
+                  <path d={`M ${s.to.x - 4} ${s.to.y - 6} L ${s.to.x} ${s.to.y} L ${s.to.x + 4} ${s.to.y - 6}`} fill="none" stroke={stroke} strokeWidth={width} strokeLinecap="round" strokeLinejoin="round" />
                 ) : (
-                  <path d={`M ${e.to.x - 6} ${e.to.y - 4} L ${e.to.x} ${e.to.y} L ${e.to.x - 6} ${e.to.y + 4}`} fill="none" stroke={stroke} strokeWidth={width} strokeLinecap="round" strokeLinejoin="round" />
+                  <path d={`M ${s.to.x - 6} ${s.to.y - 4} L ${s.to.x} ${s.to.y} L ${s.to.x - 6} ${s.to.y + 4}`} fill="none" stroke={stroke} strokeWidth={width} strokeLinecap="round" strokeLinejoin="round" />
                 )}
               </g>
             )
           })}
         </svg>
 
-        {/* stage nodes */}
+        {/* stage nodes (hubs) */}
         {spec.stages.map((s) => {
           const r = stageRects[s.id]
           if (!r) return null
@@ -510,11 +570,11 @@ export function WorkflowCanvas({
         })}
 
         {/* connector tag pills — placed ON the routed path, dodging cards */}
-        {labeledEdges.map((e) => e.label && e.labelPos && (
+        {labeledSegments.map((s) => s.label && s.labelPos && (
           <span
-            key={`tag-${e.id}`}
+            key={`tag-${s.key}`}
             style={{
-              position: 'absolute', left: e.labelPos.x, top: e.labelPos.y,
+              position: 'absolute', left: s.labelPos.x, top: s.labelPos.y,
               transform: 'translate(-50%, -50%)',
               fontFamily: 'var(--font-uikit-mono)', fontSize: 9, lineHeight: 1,
               padding: '2px 6px', borderRadius: 5,
@@ -525,7 +585,7 @@ export function WorkflowCanvas({
               opacity: selected ? 0.4 : 1, transition: 'opacity 160ms ease',
             }}
           >
-            {e.label}
+            {s.label}
           </span>
         ))}
       </div>
@@ -536,13 +596,12 @@ export function WorkflowCanvas({
 }
 
 // ---------------------------------------------------------------------------
-// Legend — glass card: node kinds + edge states.
+// Legend — draggable glass card: node kinds + edge states.
 // ---------------------------------------------------------------------------
 
 const LEGEND_KINDS = ['stage', 'compute', 'uda', 'sampler', 'control'] as const
 const LEGEND_FLOWS: EdgeFlow[] = ['running', 'ok', 'queued', 'idle']
 
-/** Glass legend card — draggable anywhere over the canvas (viewport coords). */
 function Legend() {
   const [pos, setPos] = useState({ x: 14, y: 12 })
   const drag = useRef<{ sx: number; sy: number; bx: number; by: number } | null>(null)
