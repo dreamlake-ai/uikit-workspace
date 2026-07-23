@@ -786,7 +786,6 @@ function Legend() {
   const drag = useRef<{ sx: number; sy: number; bx: number; by: number } | null>(null)
   return (
     <div
-      className="hidden sm:flex"
       onPointerDown={(e) => {
         e.stopPropagation()
         ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
@@ -804,6 +803,10 @@ function Legend() {
       }}
       onDoubleClick={(e) => e.stopPropagation()}
       style={{
+        // Inline display (not Tailwind's `hidden sm:flex`): host apps can load
+        // other scoped Tailwind bundles whose `.hidden` rule would win the
+        // cascade and permanently suppress the legend.
+        display: 'flex',
         position: 'absolute', left: pos.x, top: pos.y, zIndex: 6,
         background: 'color-mix(in oklab, var(--color-uikit-panel) 88%, transparent)',
         backdropFilter: 'blur(8px) saturate(1.05)',
