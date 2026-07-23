@@ -12,7 +12,7 @@
  * `onRun`. The tab bar matches the design's DLTabBar (UI-font text tabs over a
  * hairline with a sliding underline).
  */
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { cn } from '../../lib/utils'
 import { STATUS } from './flow'
 import type { GraphNode, NodePreview, NodeStatus, PipelineGraphData, StatusOverlay } from './types'
@@ -528,12 +528,26 @@ function KVList({ title, items }: { title?: string; items: [string, string][] })
           {title}
         </div>
       )}
-      <div className="flex flex-col gap-1">
+      {/* Two-column key/value grid. The key column has a floor (so short keys
+          stay aligned into a column) but grows to fit longer keys — a port name
+          like `caption_ann` overruns a fixed width and used to collide with the
+          value; `max-content` sizes it to the widest key. The value column takes
+          the rest and wraps. */}
+      <div
+        className="text-[11px]"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'minmax(56px, max-content) minmax(0, 1fr)',
+          alignItems: 'baseline',
+          columnGap: 12,
+          rowGap: 4,
+        }}
+      >
         {items.map(([k, v], i) => (
-          <div key={i} className="flex items-baseline gap-2 text-[11px]">
-            <span style={{ color: 'var(--color-uikit-muted)', width: 56, flexShrink: 0 }}>{k}</span>
+          <Fragment key={i}>
+            <span style={{ color: 'var(--color-uikit-muted)' }}>{k}</span>
             <span style={{ color: 'var(--color-uikit-ink)', wordBreak: 'break-word' }}>{v}</span>
-          </div>
+          </Fragment>
         ))}
       </div>
     </div>
