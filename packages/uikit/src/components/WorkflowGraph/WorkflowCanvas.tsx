@@ -26,7 +26,8 @@ import { cn } from '../../lib/utils'
 import { buildEdgePath, type Obstacle, type Pt } from '../PipelineGraph/edge-path'
 import { FLOW, type EdgeFlow } from '../PipelineGraph/flow'
 import {
-  layoutWorkflow, portAnchor, roundedPath, type WfOrientation, type WfRect,
+  labelAnchor, layoutWorkflow, portAnchor, roundedPath,
+  type WfOrientation, type WfRect,
 } from './layout'
 import {
   nodeInputs, nodeOutputs,
@@ -281,13 +282,34 @@ export function WorkflowCanvas({
       const label = e.fromPort && e.fromPort !== 'out'
         ? e.fromPort
         : outs[oi] && outs[oi].type !== 'any' ? outs[oi].type : null
-      const mid = { x: (from.x + to.x) / 2, y: (from.y + to.y) / 2 }
-      return { id: e.id, d, flow, from, to, label, mid }
+      return { id: e.id, d, flow, from, to, label, labelPos: null as Pt | null }
     }).filter(Boolean) as {
       id: string; d: string; flow: EdgeFlow; from: Pt; to: Pt
-      label: string | null; mid: Pt
+      label: string | null; labelPos: Pt | null
     }[]
   }, [spec.edges, nodeById, nodeRects, obstacles, orientation, statusByNodeId, verticalPrimary])
+
+  // Second pass: place each connector tag ON its routed path, dodging cards,
+  // agent stacks, and labels already placed.
+  const labeledEdges = useMemo(() => {
+    const avoid: WfRect[] = [
+      ...Object.values(stageRects),
+      ...Object.values(nodeRects),
+      ...layout.agentRects,
+    ]
+    const taken: { x: number; y: number; w: number; h: number }[] = []
+    return dataEdges.map((e) => {
+      if (!e.label) return e
+      const { pt, box } = labelAnchor(e.d, avoid, {
+        swapped: verticalPrimary,
+        boxW: e.label.length * 5.6 + 14,
+        boxH: 16,
+        taken,
+      })
+      taken.push(box)
+      return { ...e, labelPos: pt }
+    })
+  }, [dataEdges, stageRects, nodeRects, layout.agentRects, verticalPrimary])
 
   // Fan-out stubs — stage → each member, along the flow axis. The stage's
   // out-face spreads one anchor per member so the fan reads at a glance.
@@ -487,12 +509,12 @@ export function WorkflowCanvas({
           )
         })}
 
-        {/* connector tag pills on data edges */}
-        {dataEdges.map((e) => e.label && (
+        {/* connector tag pills — placed ON the routed path, dodging cards */}
+        {labeledEdges.map((e) => e.label && e.labelPos && (
           <span
             key={`tag-${e.id}`}
             style={{
-              position: 'absolute', left: e.mid.x, top: e.mid.y,
+              position: 'absolute', left: e.labelPos.x, top: e.labelPos.y,
               transform: 'translate(-50%, -50%)',
               fontFamily: 'var(--font-uikit-mono)', fontSize: 9, lineHeight: 1,
               padding: '2px 6px', borderRadius: 5,

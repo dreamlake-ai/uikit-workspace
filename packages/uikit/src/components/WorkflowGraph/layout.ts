@@ -236,6 +236,82 @@ export function portAnchor(
   return { x: dir === 'in' ? rect.x : rect.x + rect.w, y: rect.y + along }
 }
 
+/**
+ * Extract the vertex polyline from a path built by buildEdgePath /
+ * roundedPath (M/L vertices; Q/C corner curves collapse to their endpoint —
+ * corners are short, so segment geometry stays accurate enough for label
+ * placement). Pure string parsing: SSR-safe.
+ */
+export function pathPolyline(d: string): WfPt[] {
+  const pts: WfPt[] = []
+  const cmds = d.match(/[A-Za-z][^A-Za-z]*/g) ?? []
+  for (const c of cmds) {
+    const nums = (c.slice(1).match(/-?\d+(?:\.\d+)?/g) ?? []).map(Number)
+    if (nums.length < 2) continue
+    const cmd = c[0]
+    if (cmd === 'M' || cmd === 'L') {
+      for (let i = 0; i + 1 < nums.length; i += 2) pts.push({ x: nums[i], y: nums[i + 1] })
+    } else if (cmd === 'Q' || cmd === 'C') {
+      pts.push({ x: nums[nums.length - 2], y: nums[nums.length - 1] })
+    }
+  }
+  return pts
+}
+
+interface Box { x: number; y: number; w: number; h: number }
+
+function boxesIntersect(a: Box, b: Box): boolean {
+  return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y
+}
+
+/**
+ * Pick a point ON the routed edge path for its connector tag, avoiding node
+ * cards and previously-placed labels. Tries positions along the longest
+ * segments first (midpoint, then offsets); falls back to the longest
+ * segment's midpoint when nothing is clear.
+ *
+ * `swapped` — the path was built in axis-swapped space (vertical-primary
+ * routing); candidate points are un-swapped before overlap checks and in
+ * the returned coordinate.
+ */
+export function labelAnchor(
+  d: string,
+  avoid: WfRect[],
+  opts: { swapped?: boolean; boxW?: number; boxH?: number; taken?: Box[] } = {},
+): { pt: WfPt; box: Box } {
+  const boxW = opts.boxW ?? 44
+  const boxH = opts.boxH ?? 16
+  const taken = opts.taken ?? []
+  const un = (p: WfPt): WfPt => (opts.swapped ? { x: p.y, y: p.x } : p)
+
+  const pts = pathPolyline(d)
+  const segs: { a: WfPt; b: WfPt; len: number }[] = []
+  for (let i = 0; i + 1 < pts.length; i++) {
+    const a = pts[i]
+    const b = pts[i + 1]
+    segs.push({ a, b, len: Math.hypot(b.x - a.x, b.y - a.y) })
+  }
+  if (!segs.length) return { pt: { x: 0, y: 0 }, box: { x: 0, y: 0, w: boxW, h: boxH } }
+
+  const ordered = [...segs].sort((s, t) => t.len - s.len)
+  const boxAt = (p: WfPt): Box => ({ x: p.x - boxW / 2 - 2, y: p.y - boxH / 2 - 2, w: boxW + 4, h: boxH + 4 })
+  const clear = (b: Box) =>
+    !avoid.some((r) => boxesIntersect(b, r)) && !taken.some((t) => boxesIntersect(b, t))
+
+  for (const seg of ordered) {
+    if (seg.len < 28) continue // corner stubs — too short to carry a pill
+    for (const t of [0.5, 0.35, 0.65, 0.22, 0.78]) {
+      const p = un({ x: seg.a.x + (seg.b.x - seg.a.x) * t, y: seg.a.y + (seg.b.y - seg.a.y) * t })
+      const b = boxAt(p)
+      if (clear(b)) return { pt: p, box: b }
+    }
+  }
+  // Fallback: longest segment's midpoint, overlap or not.
+  const s = ordered[0]
+  const p = un({ x: (s.a.x + s.b.x) / 2, y: (s.a.y + s.b.y) / 2 })
+  return { pt: p, box: boxAt(p) }
+}
+
 /** Orthogonal polyline with rounded corners → SVG path. */
 export function roundedPath(pts: WfPt[], r = 10): string {
   if (pts.length < 2) return ''
