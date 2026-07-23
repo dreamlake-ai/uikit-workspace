@@ -26,7 +26,7 @@ import { cn } from '../../lib/utils'
 import { buildEdgePath, type Obstacle, type Pt } from '../PipelineGraph/edge-path'
 import { FLOW, type EdgeFlow } from '../PipelineGraph/flow'
 import {
-  layoutWorkflow, portAnchor, type WfOrientation, type WfRect,
+  layoutWorkflow, portAnchor, roundedPath, type WfOrientation, type WfRect,
 } from './layout'
 import {
   nodeInputs, nodeOutputs,
@@ -316,29 +316,36 @@ export function WorkflowCanvas({
     return out
   }, [layout.stubs, stageRects, nodeRects, orientation, verticalPrimary])
 
-  // Spine — stage → next stage (order-implied), detouring around the member
-  // cluster between them via obstacle-aware routing.
+  // Spine — stage → next stage (order-implied) through the RESERVED side
+  // corridor: out of the stage's side face, along the corridor lane, into
+  // the next stage's side face. Never threads between member cards.
   const spinePaths = useMemo(() => {
     const paths: { key: string; d: string; to: Pt }[] = []
+    const lane = layout.corridor
     for (let i = 0; i + 1 < spec.stages.length; i++) {
       const a = stageRects[spec.stages[i].id]
       const b = stageRects[spec.stages[i + 1].id]
       if (!a || !b) continue
-      const from = orientation === 'vertical'
-        ? { x: a.x + a.w / 2, y: a.y + a.h }
-        : { x: a.x + a.w, y: a.y + a.h / 2 }
-      const to = orientation === 'vertical'
-        ? { x: b.x + b.w / 2, y: b.y }
-        : { x: b.x, y: b.y + b.h / 2 }
-      const obs = Object.values(nodeRects).map((r) =>
-        verticalPrimary ? swapRect(r) : rectObstacle(r))
-      const d = verticalPrimary
-        ? buildEdgePath(swap(from), swap(to), { obstacles: obs })
-        : buildEdgePath(from, to, { obstacles: obs })
-      paths.push({ key: `spine-${i}`, d, to })
+      if (orientation === 'vertical') {
+        // Leave the LEFT face, run down the corridor, enter the next LEFT face.
+        const from = { x: a.x, y: a.y + a.h / 2 }
+        const to = { x: b.x, y: b.y + b.h / 2 }
+        paths.push({
+          key: `spine-${i}`, to,
+          d: roundedPath([from, { x: lane, y: from.y }, { x: lane, y: to.y }, to]),
+        })
+      } else {
+        // Leave the TOP face, run along the corridor, enter the next TOP face.
+        const from = { x: a.x + a.w / 2, y: a.y }
+        const to = { x: b.x + b.w / 2, y: b.y }
+        paths.push({
+          key: `spine-${i}`, to,
+          d: roundedPath([from, { x: from.x, y: lane }, { x: to.x, y: lane }, to]),
+        })
+      }
     }
     return paths
-  }, [spec.stages, stageRects, nodeRects, orientation, verticalPrimary])
+  }, [spec.stages, stageRects, layout.corridor, orientation])
 
   const isAdjacent = useCallback((edgeFrom: string, edgeTo: string) =>
     !!selected && (edgeFrom === selected || edgeTo === selected), [selected])
@@ -370,16 +377,16 @@ export function WorkflowCanvas({
         style={{ transform: `translate(${view.x}px, ${view.y}px) scale(${view.k})` }}
       >
         <svg width={bounds.w} height={bounds.h} className="absolute top-0 left-0 pointer-events-none overflow-visible">
-          {/* spine (order-implied stage→stage, detours around member clusters) */}
+          {/* spine (order-implied stage→stage, via the reserved side corridor) */}
           {spinePaths.map((s) => (
             <g key={s.key} opacity={selected ? 0.45 : 1} style={{ transition: 'opacity 160ms ease' }}>
-              <g transform={verticalPrimary ? 'matrix(0,1,1,0,0,0)' : undefined}>
-                <path d={s.d} fill="none" stroke="var(--color-uikit-ink-50)" strokeWidth={1.6} strokeLinecap="round" />
-              </g>
+              <path d={s.d} fill="none" stroke="var(--color-uikit-ink-50)" strokeWidth={1.6} strokeLinecap="round" />
               {verticalPrimary ? (
-                <path d={`M ${s.to.x - 4} ${s.to.y - 6} L ${s.to.x} ${s.to.y} L ${s.to.x + 4} ${s.to.y - 6}`} fill="none" stroke="var(--color-uikit-ink-50)" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" />
-              ) : (
+                // enters the next stage's LEFT face → arrow points right
                 <path d={`M ${s.to.x - 6} ${s.to.y - 4} L ${s.to.x} ${s.to.y} L ${s.to.x - 6} ${s.to.y + 4}`} fill="none" stroke="var(--color-uikit-ink-50)" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" />
+              ) : (
+                // enters the next stage's TOP face → arrow points down
+                <path d={`M ${s.to.x - 4} ${s.to.y - 6} L ${s.to.x} ${s.to.y} L ${s.to.x + 4} ${s.to.y - 6}`} fill="none" stroke="var(--color-uikit-ink-50)" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" />
               )}
             </g>
           ))}
