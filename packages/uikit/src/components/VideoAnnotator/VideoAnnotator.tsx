@@ -18,6 +18,7 @@ import {
   SkipBack,
   SkipForward,
   ArrowLeftToLine,
+  X,
 } from "lucide-react";
 import { cn } from "../../lib/utils";
 import type { Segment, VideoAnnotatorHandle, VideoAnnotatorProps } from "./types";
@@ -76,6 +77,15 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
     const [speedOpen, setSpeedOpen] = useState(false);
     const [metaDuration, setMetaDuration] = useState(0);
     const [hoverFrac, setHoverFrac] = useState<number | null>(null);
+    // Merge affordance: the X button appears over an internal boundary (a cut
+    // between two phases) after the cursor lingers ~0.5s near that boundary.
+    // `mergeReady` gates the reveal; `mergeIdx` is the segment index whose start
+    // is the boundary (doMerge(i) merges phases i-1 and i). A ref mirrors the
+    // near-boundary so the mousemove handler only resets the timer on change.
+    const [mergeReady, setMergeReady] = useState(false);
+    const [mergeIdx, setMergeIdx] = useState<number | null>(null);
+    const mergeIdxRef = useRef<number | null>(null);
+    const delTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
     const [toast, setToast] = useState("");
     const toastTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
@@ -472,9 +482,35 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
             const tl = timelineRef.current;
             if (!tl) return;
             const rect = tl.getBoundingClientRect();
-            setHoverFrac(clamp((e.clientX - rect.left) / rect.width, 0, 1));
+            const px = e.clientX - rect.left;
+            setHoverFrac(clamp(px / rect.width, 0, 1));
+            // Keep the button while the cursor is actually over it (or its tail),
+            // so moving up to click never recomputes/hides it. Otherwise it must
+            // disappear as soon as the cursor leaves a boundary's vicinity.
+            if ((e.target as HTMLElement).closest(".va-merge")) return;
+            // Nearest internal boundary within 14px of the cursor (so the button,
+            // centred on the boundary, stays reachable straight up from here).
+            let near: number | null = null;
+            let best = 14;
+            for (let i = 1; i < segs.length; i++) {
+              const d = Math.abs(px - (segs[i].start / (D || 1)) * rect.width);
+              if (d < best) { best = d; near = i; }
+            }
+            if (near !== mergeIdxRef.current) {
+              mergeIdxRef.current = near;
+              setMergeIdx(near);
+              setMergeReady(false);
+              clearTimeout(delTimer.current);
+              if (near != null) delTimer.current = setTimeout(() => setMergeReady(true), 500);
+            }
           }}
-          onMouseLeave={() => setHoverFrac(null)}
+          onMouseLeave={() => {
+            setHoverFrac(null);
+            clearTimeout(delTimer.current);
+            mergeIdxRef.current = null;
+            setMergeIdx(null);
+            setMergeReady(false);
+          }}
         >
           {segs.map((p, i) => (
             <div
@@ -524,6 +560,26 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
               <div className="va-hovertime" style={{ left: `${hoverFrac * 100}%` }}>
                 {fmt(hoverFrac * D)}
               </div>
+              {mergeReady && mergeIdx != null && (
+                <button
+                  className="va-merge"
+                  style={{ left: `${(segs[mergeIdx].start / (D || 1)) * 100}%` }}
+                  aria-label="Merge these two phases"
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    // Hide the button before merging so it can never render
+                    // against the post-merge (shorter) array and jump right.
+                    const idx = mergeIdx;
+                    mergeIdxRef.current = null;
+                    setMergeIdx(null);
+                    setMergeReady(false);
+                    doMerge(idx);
+                  }}
+                >
+                  <X />
+                </button>
+              )}
             </>
           )}
           {segs.length > 0 && currentTime > 0.001 && (
@@ -632,7 +688,7 @@ const CSS = `
    otherwise collide with the open menu (both float above the button). */
 .va-speedsel.open .va-speedbtn:hover::after{content:none}
 .va-readout{font:11px var(--f-mono, ui-monospace, Menlo, monospace);color:var(--va-muted);
-  padding:6px 0;text-align:left;flex:none;width:150px;white-space:nowrap;overflow:hidden}
+  padding:6px 0;text-align:left;flex:none;width:162px;white-space:nowrap}
 .va-speedsel{position:relative;display:inline-flex}
 .va-speedsel .va-speedbtn{display:inline-flex;align-items:center;gap:3px;height:28px;padding:0 6px 0 9px;
   background:var(--va-panel);color:var(--va-text);border:1px solid transparent;border-radius:8px;cursor:pointer;
@@ -681,6 +737,25 @@ html[data-theme="dark"] .va-seg.sel .va-seglabel{color:var(--va-text)}
   padding:2px 6px;border-radius:4px;white-space:nowrap;pointer-events:none;z-index:7;
   font-family:var(--f-mono, ui-monospace, Menlo, monospace);font-size:11px;line-height:1.3;
   box-shadow:0 8px 24px var(--va-shadow)}
+/* Timeline hover: a blue speech bubble sitting over an internal boundary (a cut
+   between two phases) holding an X that merges those two phases. It's a child of
+   the timeline and its tail bridges down into the boundary, so moving the cursor
+   up to click never trips the timeline's mouseleave. Scoped under .va-timeline
+   to beat the base .va-root button reset. */
+@keyframes va-merge-in{from{opacity:0;transform:translateX(-50%) translateY(4px) scale(.92)}
+  to{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}
+.va-timeline .va-merge{position:absolute;bottom:100%;transform:translateX(-50%);z-index:8;
+  width:30px;height:24px;display:inline-flex;align-items:center;justify-content:center;padding:0;
+  background:var(--va-accent);color:#fff;border:0;border-radius:8px;cursor:pointer;
+  box-shadow:0 4px 12px var(--va-shadow);animation:va-merge-in .18s ease-out}
+.va-timeline .va-merge::after{content:"";position:absolute;top:100%;left:50%;transform:translateX(-50%);
+  width:0;height:0;border:5px solid transparent;border-top-color:var(--va-accent)}
+/* Keep the centring transform on press — the base button:active rule would
+   otherwise replace it with translateY() alone and shove the button right. */
+.va-timeline .va-merge:active{transform:translateX(-50%) translateY(1px)}
+.va-timeline .va-merge:hover{background:color-mix(in srgb,#000 14%,var(--va-accent))}
+.va-timeline .va-merge:hover::after{border-top-color:color-mix(in srgb,#000 14%,var(--va-accent))}
+.va-timeline .va-merge svg{width:14px;height:14px}
 .va-ticks{position:absolute;left:0;right:0;top:0;height:24px;pointer-events:none;z-index:4}
 .va-ticks::before{content:"";position:absolute;left:0;right:0;top:22px;height:1px;background:var(--va-line)}
 .va-tick{position:absolute;top:0;height:24px;pointer-events:none}
