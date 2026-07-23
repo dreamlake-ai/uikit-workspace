@@ -68,14 +68,52 @@ A freshly-traced graph is entirely `idle`. **Drag** nodes to rearrange, **scroll
 to select it. Once the canvas is focused, **arrow keys** walk the selection —
 **↑ / ↓** step through the pipeline in topological order, **← / →** jump to the
 upstream / downstream neighbour, **Esc** clears — and the selected node pans into
-view. Edges come in two kinds — `data` (solid) and `mask` (dashed gate); the
-[Anatomy](reference/pipeline-view-anatomy.md) page shows both.
+view. Selecting a node tints its card border and the edges touching it in that
+node's **status** colour — a running selection reads blue, an errored one red, an
+untouched `idle` one stays neutral — while the unrelated edges fade back; the
+other node cards are never dimmed. Edges come in two kinds — `data` (solid) and
+`mask` (dashed gate); the [Anatomy](reference/pipeline-view-anatomy.md) page shows both.
 
 ## Graph + source, linked
 
 The design layout is a canvas with a source **right rail**. The two share one
-selection: click a node and its source shows on the right; click the background
-to clear. Both components are controlled — you own the `selectedNodeId` state.
+selection: click a node and the rail jumps to it; click the background to clear.
+Both components are controlled — you own the `selectedNodeId` state.
+
+`PipelineSource` is more than a code viewer — its tabs are **contextual**:
+
+- **Nothing selected** → a single `PIPELINE` tab: the pipeline's status (its
+  title, a status-count grid over all six node states, and a `nodes · edges`
+  line) above the whole `pipeline.py` in a read-only, line-numbered, Python-
+  highlighted editor.
+- **A node selected** → `NODE` (its live execution status, the default) and
+  `CODE` (just that stage's source), plus `PIPELINE` to step back out (which
+  clears the selection). The `NODE` tab is the inspector: a status pill (colour +
+  label, and — once a run supplies them — `progress`, `duration`, `rows`), the
+  node's resolved **i/o** (each input port traced to its upstream node, each
+  output to its downstream consumers), the result **schema** (the `columns`), the
+  decorator **config**, and an **output** preview — a sampled result table once
+  the node is `ok`, or a status-keyed one-liner before then.
+
+### Running from the rail
+
+The rail is also where a run is driven and gated — all UI-only, so the actual
+execution is the caller's. Wire `onRun` and a `▶ RUN` button appears on the
+`PIPELINE` tab (targeting the whole pipeline) and on a `review` node's `NODE` tab
+(targeting that node, disabled until every upstream is `ok`). The other props
+switch what that button shows, so the rail mirrors the run's lifecycle:
+
+- `running` → the button becomes a disabled **`running…`** with a spinner.
+- `reviewNodeId` → it becomes a purple **`⏸ REVIEW`** button that selects the
+  paused node so a human can inspect it (takes precedence over `running`).
+- `done` → a green **`✓ DONE`** marker in its place (click to run again).
+- `onContinue` → on a `review` node that is `waiting`, a green **`▶ CONTINUE`**
+  button releases the pipeline to run downstream (also gated on upstreams).
+
+None of these props run anything themselves — the host owns the run driver and
+feeds progress back through `statusById`. The
+[live-status demo](#live-status--a-runnable-pipeline) below is one such driver (a
+tiny in-browser simulation) animating the graph through `statusById`.
 
 ## Live status — a runnable pipeline
 
@@ -94,15 +132,22 @@ idle), exactly like a real pipeline. Nothing real executes — it only drives
 edges go green, a `stale` node's edges turn amber, an `error` node's edges turn
 red, and nodes blocked by an upstream failure stay idle.
 
-## Ports & labels
+## Ports & param tags
 
-Each stage's parameters become **input ports** and its result becomes the single
-**output port**, so a node's port count reads straight off its signature — from a
-`source` with zero inputs to a `merge` gathering four. Every port is labeled with
-its name, and each edge carries a **connector tag** naming the data it passes.
-The tags are draggable: drag one sideways to move the bend along the edge, or
-drag it up/down to lift the tag onto a leader line so a crowded corner stays
-legible.
+A stage's signature still sets its **port counts** — the card's `N→1` meta reads
+straight off the UDF, from a `source` with zero inputs to a `merge` gathering
+four. But every parameter shares **one** input dot on the left edge (and the
+result shares one output dot on the right); the card never fans a dot out per
+parameter. The parameter *names* live in a floating **param tag** instead: one
+tag per node-pair, listing every param that pair transfers (each with a small
+leading dot, stacked), tinted to match the edge's flow.
+
+The tags place themselves. On first render each is dropped into open canvas —
+clear of every node and of the other tags — with a dashed **leader** back to the
+point on the edge it annotates; that placement is then frozen, so dragging a node
+only slides its tags along, never reshuffles them. Drag a tag to pin it somewhere
+else (press-and-hold highlights the tag, its leader, and its edge in the edge's
+flow colour, so you can trace a crowded corner).
 
 The same graph paired with its source rail — click a node to read the UDF whose
 parameters and return columns produced those ports:
@@ -117,6 +162,7 @@ parameters and return columns produced those ports:
 | `statusById` | `StatusOverlay` | — | Live per-node `{ status, progress, ... }`, merged onto the graph. |
 | `selectedNodeId` | `string \| null` | — | Controlled selection. Omit for uncontrolled. |
 | `onSelectNode` | `(id: string \| null) => void` | — | Selection change (also fires on background click). |
+| `showControls` | `boolean` | `true` | Show the overlay chrome — the edge-flow legend (top-right) and the keyboard-hint strip (bottom). Pass `false` for tiny embeds. |
 | `className` | `string` | — | Extra classes on the canvas. |
 
 ### `PipelineSource`
@@ -124,12 +170,19 @@ parameters and return columns produced those ports:
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `graph` | `PipelineGraphData` | — | The traced graph JSON. |
-| `selectedNodeId` | `string \| null` | — | Which node's source to show (else the whole `.py`). |
-| `onSelectNode` | `(id: string \| null) => void` | — | Fired by the `pipeline.py` tab to clear the selection. |
+| `selectedNodeId` | `string \| null` | — | Which node to inspect (else the `PIPELINE` tab: status + the whole `.py`). |
+| `onSelectNode` | `(id: string \| null) => void` | — | Fired by the `PIPELINE` tab (to clear) and the `REVIEW` button (to select the paused node). |
+| `statusById` | `StatusOverlay` | — | Live per-node status, merged over each node's static `status`; drives the status panels, i/o, and the output preview. |
+| `onRun` | `(target: RunTarget) => void` | — | Enables the `▶ RUN` button. `RunTarget` is `{ kind: 'pipeline' }` (PIPELINE tab) or `{ kind: 'node'; id }` (a `review` node's NODE tab). |
+| `onContinue` | `(nodeId: string) => void` | — | Enables `▶ CONTINUE` on a `waiting` `review` node, releasing the pipeline downstream. |
+| `running` | `boolean` | — | A run is executing → the RUN button goes to a disabled `running…` state. |
+| `reviewNodeId` | `string \| null` | — | A run paused on this review node → RUN becomes a `⏸ REVIEW` button that selects it (takes precedence over `running`). |
+| `done` | `boolean` | — | The run finished → a `✓ DONE` marker shows in place of RUN (click to run again). |
 | `className` | `string` | — | Extra classes. |
 
 Both are theme-aware (uikit tone tokens) and load `@dreamlake/uikit/styles.css`
-for their colours.
+for their colours. `RunTarget` and `StatusOverlay` are exported from
+`@dreamlake/uikit`.
 
 ---
 
