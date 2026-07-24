@@ -57,8 +57,11 @@ export interface WorkflowCanvasProps {
   agentsByNodeId?: Record<string, AgentInstance[]>
   selectedId?: string | null
   onSelect?: (id: string | null) => void
-  /** Node-kind + edge-state legend (draggable). Default true. */
+  /** Canvas controls (legend + orientation switcher). Default true. */
   showControls?: boolean
+  /** The node-kind/edge-state legend specifically — small embeds (docs
+   *  figures, thumbnails) turn it off while keeping the switcher. Default true. */
+  showLegend?: boolean
   className?: string
 }
 
@@ -129,7 +132,7 @@ interface Seg {
 export function WorkflowCanvas({
   spec, orientation: orientationProp = 'vertical', onOrientationChange,
   statusByNodeId, agentsByNodeId,
-  selectedId, onSelect, showControls = true, className,
+  selectedId, onSelect, showControls = true, showLegend = true, className,
 }: WorkflowCanvasProps) {
   useInjectedStyles()
 
@@ -784,7 +787,7 @@ export function WorkflowCanvas({
         ))}
       </div>
 
-      {showControls && <Legend />}
+      {showControls && showLegend && <Legend />}
       {showControls && <OrientationSwitch value={orientation} onChange={changeOrientation} />}
     </div>
   )
@@ -821,7 +824,11 @@ function OrientationSwitch({ value, onChange }: {
       onPointerDown={(e) => e.stopPropagation()}
       onDoubleClick={(e) => e.stopPropagation()}
       style={{
-        position: 'absolute', top: 12, right: 12, zIndex: 6,
+        // left/bottom pinned to auto INLINE: host scopes (docs figures) carry
+        // a broad `[role=application] > div { left:0 }` rule that would
+        // otherwise stretch this bar across the canvas.
+        position: 'absolute', top: 12, right: 12, left: 'auto', bottom: 'auto', zIndex: 6,
+        width: 'max-content',
         display: 'inline-flex', overflow: 'hidden',
         border: '1px solid color-mix(in oklab, var(--color-uikit-faint) 70%, transparent)',
         borderRadius: 7,
