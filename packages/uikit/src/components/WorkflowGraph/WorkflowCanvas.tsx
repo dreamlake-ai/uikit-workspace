@@ -47,7 +47,10 @@ import {
 
 export interface WorkflowCanvasProps {
   spec: WorkflowSpec
+  /** Initial (or host-persisted) orientation; the built-in switcher updates it. */
   orientation?: WfOrientation
+  /** Notified when the built-in orientation switcher is used. */
+  onOrientationChange?: (o: WfOrientation) => void
   /** Run overlay: per-node run states (absent = plain blueprint). */
   statusByNodeId?: Record<string, WorkflowNodeRunStateValue>
   /** Run overlay: agent instances fanned under their uda node. */
@@ -124,10 +127,22 @@ interface Seg {
 }
 
 export function WorkflowCanvas({
-  spec, orientation = 'vertical', statusByNodeId, agentsByNodeId,
+  spec, orientation: orientationProp = 'vertical', onOrientationChange,
+  statusByNodeId, agentsByNodeId,
   selectedId, onSelect, showControls = true, className,
 }: WorkflowCanvasProps) {
   useInjectedStyles()
+
+  // Orientation lives in the canvas (the switcher is part of the component's
+  // controls) but follows the prop whenever the host changes it — hosts that
+  // persist a preference pass `orientation` + `onOrientationChange`; embeds
+  // (docs figures) pass nothing and still get a working switcher.
+  const [orientation, setOrientation] = useState<WfOrientation>(orientationProp)
+  useEffect(() => { setOrientation(orientationProp) }, [orientationProp])
+  const changeOrientation = useCallback((o: WfOrientation) => {
+    setOrientation(o)
+    onOrientationChange?.(o)
+  }, [onOrientationChange])
 
   const [internalSel, setInternalSel] = useState<string | null>(null)
   const selected = selectedId !== undefined ? selectedId : internalSel
@@ -770,6 +785,75 @@ export function WorkflowCanvas({
       </div>
 
       {showControls && <Legend />}
+      {showControls && <OrientationSwitch value={orientation} onChange={changeOrientation} />}
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Orientation switcher — part of the canvas controls: two icon buttons whose
+// glyph shows the flow direction from the root (top→down / left→right).
+// Inline SVG (not lucide) so embeds don't need the peer dep.
+// ---------------------------------------------------------------------------
+
+function OrientIcon({ o }: { o: WfOrientation }) {
+  return o === 'vertical' ? (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M5 3h14" />
+      <path d="M12 7v13" />
+      <path d="m7 16 5 4 5-4" />
+    </svg>
+  ) : (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M3 5v14" />
+      <path d="M7 12h13" />
+      <path d="m16 7 4 5-4 5" />
+    </svg>
+  )
+}
+
+function OrientationSwitch({ value, onChange }: {
+  value: WfOrientation
+  onChange: (o: WfOrientation) => void
+}) {
+  return (
+    <div
+      onPointerDown={(e) => e.stopPropagation()}
+      onDoubleClick={(e) => e.stopPropagation()}
+      style={{
+        position: 'absolute', top: 12, right: 12, zIndex: 6,
+        display: 'inline-flex', overflow: 'hidden',
+        border: '1px solid color-mix(in oklab, var(--color-uikit-faint) 70%, transparent)',
+        borderRadius: 7,
+        background: 'color-mix(in oklab, var(--color-uikit-panel) 88%, transparent)',
+        backdropFilter: 'blur(8px) saturate(1.05)',
+        WebkitBackdropFilter: 'blur(8px) saturate(1.05)',
+        boxShadow: '0 1px 2px rgba(0,0,0,.06)',
+      }}
+    >
+      {(['vertical', 'horizontal'] as const).map((o) => {
+        const active = o === value
+        const label = o === 'vertical' ? 'Vertical layout (top → bottom)' : 'Horizontal layout (left → right)'
+        return (
+          <button
+            key={o}
+            type="button"
+            onClick={() => onChange(o)}
+            title={label}
+            aria-label={label}
+            aria-pressed={active}
+            style={{
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              width: 30, height: 26, border: 'none', cursor: 'pointer', padding: 0,
+              color: active ? 'var(--color-uikit-ink)' : 'var(--color-uikit-muted)',
+              background: active ? 'color-mix(in oklab, var(--color-uikit-ink) 8%, transparent)' : 'transparent',
+              transition: 'background 120ms ease, color 120ms ease',
+            }}
+          >
+            <OrientIcon o={o} />
+          </button>
+        )
+      })}
     </div>
   )
 }
