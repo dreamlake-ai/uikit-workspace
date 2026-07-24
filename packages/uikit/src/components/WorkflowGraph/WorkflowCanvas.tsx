@@ -799,18 +799,19 @@ export function WorkflowCanvas({
 // Inline SVG (not lucide) so embeds don't need the peer dep.
 // ---------------------------------------------------------------------------
 
+// A miniature of what the layout actually does: a root node fanning to two
+// children — downward for vertical, rightward for horizontal (the lucide
+// `network` glyph, inlined + rotated so embeds don't need the peer dep).
 function OrientIcon({ o }: { o: WfOrientation }) {
-  return o === 'vertical' ? (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <path d="M5 3h14" />
-      <path d="M12 7v13" />
-      <path d="m7 16 5 4 5-4" />
-    </svg>
-  ) : (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <path d="M3 5v14" />
-      <path d="M7 12h13" />
-      <path d="m16 7 4 5-4 5" />
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <g transform={o === 'horizontal' ? 'rotate(-90 12 12)' : undefined}>
+        <rect x="9" y="2" width="6" height="6" rx="1.5" />
+        <rect x="2" y="16" width="6" height="6" rx="1.5" />
+        <rect x="16" y="16" width="6" height="6" rx="1.5" />
+        <path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3" />
+        <path d="M12 12V8" />
+      </g>
     </svg>
   )
 }
