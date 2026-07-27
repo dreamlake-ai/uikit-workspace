@@ -49,7 +49,10 @@ export function ProfileCard({
         'group relative rounded-xl border border-uikit-faint',
         'px-4 py-3.5 min-w-0',
         'font-uikit-ui text-uikit-ink',
-        onClick && 'cursor-pointer',
+        // Clickable cards get a pointer + a subtle hover fill, so every consumer
+        // (Overview / Projects / Datasets / Artifacts / …) reads the same on hover
+        // without each having to re-declare it.
+        onClick && 'cursor-pointer transition-colors duration-[120ms] hover:bg-[color-mix(in_srgb,var(--color-uikit-ink)_3%,transparent)]',
         className,
       )}
     >
