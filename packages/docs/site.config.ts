@@ -58,12 +58,13 @@ initDocs({
   rawPages,
   // First-appearance order of the pre-migration sidebar (sections are
   // scoped per tab; this list preserves the previous rendering exactly).
-  sectionOrder: ['Get started', 'Developer notes', 'Components', 'Pipeline'],
+  sectionOrder: ['Get started', 'Developer notes', 'Components', 'Pipeline', 'Workflow'],
   // Moved verbatim from the old lib/tabs.ts. Overview is the catch-all
   // fallback, so its prefix intentionally matches nothing.
   tabs: [
     { id: 'overview', label: 'Overview', numeral: 'I', landing: '/', urlPrefix: '/overview' },
     { id: 'components', label: 'Components', numeral: 'II', landing: '/components/button', urlPrefix: '/components' },
     { id: 'pipeline', label: 'Pipeline View', numeral: 'III', landing: '/pipeline-view/pipeline-graph', urlPrefix: '/pipeline-view' },
+    { id: 'workflow', label: 'Workflow View', numeral: 'IV', landing: '/workflow-view/workflow-canvas', urlPrefix: '/workflow-view' },
   ],
 })
