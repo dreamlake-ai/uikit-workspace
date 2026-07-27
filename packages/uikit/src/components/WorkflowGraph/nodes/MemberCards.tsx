@@ -111,7 +111,7 @@ export function SamplerNodeCard({ node, ...p }: SamplerNodeCardProps) {
     <div
       data-node={node.id}
       title={node.detail ?? node.title}
-      style={{ ...cardStyle(p), ...pulseStyle(p.state), justifyContent: 'center' }}
+      style={{ ...cardStyle(p), ...pulseStyle(p.state) }}
       {...handlers(p)}
     >
       <div style={titleRowStyle}>
@@ -148,7 +148,7 @@ export function ControlNodeCard({ node, ...p }: ControlNodeCardProps) {
     <div
       data-node={node.id}
       title={node.detail ?? detail}
-      style={{ ...cardStyle(p), ...pulseStyle(p.state), justifyContent: 'center' }}
+      style={{ ...cardStyle(p), ...pulseStyle(p.state) }}
       {...handlers(p)}
     >
       <div style={titleRowStyle}>

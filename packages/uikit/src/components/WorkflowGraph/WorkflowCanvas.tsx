@@ -39,7 +39,7 @@ import {
   nodeInputs, nodeOutputs,
   type AgentInstance, type WorkflowNodeRunStateValue, type WorkflowSpec,
 } from './spec'
-import { WF_KIND_TOKEN } from './nodes/chrome'
+import { WF_KIND_TOKEN, WF_STATE_COLOR } from './nodes/chrome'
 import { StageNode } from './nodes/StageNode'
 import {
   AgentInstanceCard, ComputeNodeCard, ControlNodeCard, SamplerNodeCard, UdaNodeCard,
@@ -594,6 +594,14 @@ export function WorkflowCanvas({
     })
   }, [segments, stageRects, nodeRects, layout.agentRects, verticalPrimary])
 
+  // Selection highlight colour = the selected node's own run-state colour (a
+  // stage, or an idle / not-yet-run node, reads as neutral muted), so a
+  // highlighted node's border + its edges match its state — never a fixed
+  // accent. Mirrors PipelineGraph's status-driven selection.
+  const selColor = selected
+    ? (WF_STATE_COLOR[statusByNodeId?.[selected] ?? 'idle'] ?? 'var(--color-uikit-muted)')
+    : 'var(--color-uikit-accent)'
+
   // -- render ----------------------------------------------------------------
   return (
     <div
@@ -627,7 +635,7 @@ export function WorkflowCanvas({
             const dim = !!selected && !hot
             const stroke = s.spine
               ? 'var(--color-uikit-ink-50)'
-              : hot ? 'var(--color-uikit-accent)' : flowSpec.color
+              : hot ? selColor : flowSpec.color
             const width = s.spine ? 1.6 : hot ? Math.max(flowSpec.width, 2) : flowSpec.width
             const anim = s.flow === 'running' ? 'wf-edge-flow' : s.flow === 'queued' ? 'wf-edge-queued' : undefined
             // Arrowhead by seg direction: along the flow axis, or ±side axis
@@ -669,7 +677,9 @@ export function WorkflowCanvas({
               doneCount={statusByNodeId ? (doneByStage.get(s.id) ?? 0) : undefined}
               pos={{ x: r.x, y: r.y }}
               selected={selected === s.id}
-              dimmed={!!selected && selected !== s.id}
+              // Never dim non-selected nodes — selection reads via the status
+              // border + shadow (PipelineGraph parity); only edges/tags fade.
+              dimmed={false}
               {...cardHandlers(s.id, r)}
             />
           )
@@ -683,7 +693,8 @@ export function WorkflowCanvas({
             pos: { x: r.x, y: r.y },
             state: statusByNodeId?.[n.id],
             selected: selected === n.id,
-            dimmed: !!selected && selected !== n.id,
+            // Non-selected nodes are never dimmed (PipelineGraph parity).
+            dimmed: false,
             ...cardHandlers(n.id, r),
           }
           switch (n.kind) {
@@ -700,7 +711,9 @@ export function WorkflowCanvas({
         {spec.nodes.map((n) => {
           const r = nodeRects[n.id]
           if (!r) return null
-          const dim = !!selected && selected !== n.id
+          // Port dots belong to their node card, which is never dimmed — so
+          // they stay crisp too; only edges/tags fade on selection.
+          const dim = false
           const ins = nodeInputs(n)
           const outs = nodeOutputs(n)
           const marker = (p: { name: string; collect?: boolean }, i: number, count: number, dir: 'in' | 'out') => {
@@ -761,7 +774,8 @@ export function WorkflowCanvas({
               key={`${a.nodeId}:${a.agentId}`}
               agent={agent}
               pos={{ x: a.x + dx, y: a.y + dy }}
-              dimmed={!!selected && selected !== a.nodeId}
+              // Agent cards are node-like sub-cards — never dimmed on selection.
+              dimmed={false}
             />
           )
         })}
@@ -779,7 +793,10 @@ export function WorkflowCanvas({
               border: '2px solid var(--color-uikit-muted)',
               color: 'var(--color-uikit-muted)',
               whiteSpace: 'nowrap', pointerEvents: 'none',
-              opacity: selected ? 0.4 : 1, transition: 'opacity 160ms ease',
+              // Fade only tags whose edge doesn't touch the selected node; a
+              // tag on a selected edge stays legible.
+              opacity: !!selected && !s.hotIds.includes(selected) ? 0.4 : 1,
+              transition: 'opacity 160ms ease',
             }}
           >
             {s.label}
