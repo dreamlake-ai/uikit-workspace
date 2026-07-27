@@ -133,6 +133,10 @@ interface Seg {
    *  the bend smoothly. Absent on hand-routed hub side segments (their tags only
    *  lift, never bend). */
   bend?: { key: string; span: number; anchor: Pt }
+  /** True when this segment arrives at a MEMBER port dot (pull the arrowhead
+   *  back off it); false/absent for stage/spine arrivals, where the arrow hugs
+   *  the card edge (no dot to clear). */
+  toDot?: boolean
 }
 
 export function WorkflowCanvas({
@@ -476,6 +480,7 @@ export function WorkflowCanvas({
         label: outLabel(e), labelPos: null,
         swapped: verticalPrimary, arrow: 'flow',
         bend: bendMeta(from, to, e.id),
+        toDot: true,
       })
     }
 
@@ -593,6 +598,7 @@ export function WorkflowCanvas({
           flow, to: T,
           hotIds: edge ? [edge.from, targetId, t] : [t, targetId],
           label: null, labelPos: null,
+          toDot: true,
         }
         if (face === 'flow') {
           const gi = groups.flow.indexOf(i)
@@ -735,8 +741,9 @@ export function WorkflowCanvas({
                 ? (s.arrow === 's+' ? 'right' : 'left')
                 : (s.arrow === 's+' ? 'down' : 'up')
             // Pull the arrowhead back off the 6px port dot so its tip never
-            // overlaps the dot — it stops just short, pointing at it.
-            const GAP = 5
+            // overlaps it. Stage/spine arrivals have no dot, so the arrow hugs
+            // the card edge (GAP 0) instead of floating above it.
+            const GAP = s.toDot ? 5 : 0
             const tx = s.to.x + (dir === 'right' ? -GAP : dir === 'left' ? GAP : 0)
             const ty = s.to.y + (dir === 'down' ? -GAP : dir === 'up' ? GAP : 0)
             const head =
