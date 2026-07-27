@@ -76,7 +76,9 @@ export function cardStyle(opts: CardChromeOpts): CSSProperties {
     width,
     height,
     background: bg,
-    border: `1px solid ${border}`,
+    // Border is intentionally a touch heavier than the edge lines (~1.4px) so
+    // card outline and connectors read at one consistent weight.
+    border: `1.5px solid ${border}`,
     borderRadius: 7,
     padding: '8px 10px',
     display: 'flex',

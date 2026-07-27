@@ -712,10 +712,20 @@ export function WorkflowCanvas({
             const flowSpec = FLOW[s.flow]
             const hot = !!selected && s.hotIds.includes(selected)
             const dim = !!selected && !hot
-            const stroke = s.spine
-              ? 'var(--color-uikit-ink-50)'
-              : hot ? selColor : flowSpec.color
-            const width = s.spine ? 1.6 : hot ? Math.max(flowSpec.width, 2) : flowSpec.width
+            // SOLID colours only — never opacity — so overlapping lines can't
+            // stack up and darken. idle/spine edges use a solid pale grey; a
+            // dimmed edge is a solid pale tint of its own colour (mixed toward
+            // the canvas, not made translucent).
+            const paleGrey = 'color-mix(in srgb, var(--color-uikit-ink) 22%, var(--color-uikit-panel))'
+            const baseColor = s.spine || s.flow === 'idle' ? paleGrey : flowSpec.color
+            const stroke = hot
+              ? selColor
+              : dim
+                ? `color-mix(in srgb, ${baseColor} 45%, var(--color-uikit-panel))`
+                : baseColor
+            // One thin weight across states, kept below the 1.5px card border so
+            // border and connectors read consistently (border slightly heavier).
+            const width = hot ? 1.5 : s.spine ? 1.3 : Math.min(flowSpec.width, 1.4)
             const anim = s.flow === 'running' ? 'wf-edge-flow' : s.flow === 'queued' ? 'wf-edge-queued' : undefined
             // Arrowhead by seg direction: along the flow axis, or ±side axis
             // (hub side-face arrivals). Resolved per orientation.
@@ -724,13 +734,18 @@ export function WorkflowCanvas({
               : verticalPrimary
                 ? (s.arrow === 's+' ? 'right' : 'left')
                 : (s.arrow === 's+' ? 'down' : 'up')
+            // Pull the arrowhead back off the 6px port dot so its tip never
+            // overlaps the dot — it stops just short, pointing at it.
+            const GAP = 5
+            const tx = s.to.x + (dir === 'right' ? -GAP : dir === 'left' ? GAP : 0)
+            const ty = s.to.y + (dir === 'down' ? -GAP : dir === 'up' ? GAP : 0)
             const head =
-              dir === 'down' ? `M ${s.to.x - 4} ${s.to.y - 6} L ${s.to.x} ${s.to.y} L ${s.to.x + 4} ${s.to.y - 6}`
-              : dir === 'up' ? `M ${s.to.x - 4} ${s.to.y + 6} L ${s.to.x} ${s.to.y} L ${s.to.x + 4} ${s.to.y + 6}`
-              : dir === 'right' ? `M ${s.to.x - 6} ${s.to.y - 4} L ${s.to.x} ${s.to.y} L ${s.to.x - 6} ${s.to.y + 4}`
-              : `M ${s.to.x + 6} ${s.to.y - 4} L ${s.to.x} ${s.to.y} L ${s.to.x + 6} ${s.to.y + 4}`
+              dir === 'down' ? `M ${tx - 4} ${ty - 6} L ${tx} ${ty} L ${tx + 4} ${ty - 6}`
+              : dir === 'up' ? `M ${tx - 4} ${ty + 6} L ${tx} ${ty} L ${tx + 4} ${ty + 6}`
+              : dir === 'right' ? `M ${tx - 6} ${ty - 4} L ${tx} ${ty} L ${tx - 6} ${ty + 4}`
+              : `M ${tx + 6} ${ty - 4} L ${tx} ${ty} L ${tx + 6} ${ty + 4}`
             return (
-              <g key={s.key} opacity={dim ? 0.25 : 1} style={{ transition: 'opacity 160ms ease' }}>
+              <g key={s.key}>
                 <g transform={s.swapped ? 'matrix(0,1,1,0,0,0)' : undefined}>
                   <path
                     d={s.d} fill="none" stroke={stroke} strokeWidth={width}
