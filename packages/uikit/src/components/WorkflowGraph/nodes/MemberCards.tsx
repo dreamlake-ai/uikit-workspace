@@ -152,8 +152,12 @@ export function ControlNodeCard({ node, ...p }: ControlNodeCardProps) {
       {...handlers(p)}
     >
       <div style={titleRowStyle}>
+        {/* Same 7×7 footprint as the kind dot (centered glyph), so the
+            icon→title gap matches every other node kind. */}
         <span style={{
-          fontSize: 11, lineHeight: 1, color: WF_KIND_TOKEN.control, flexShrink: 0, width: 11, textAlign: 'center',
+          width: 7, height: 7, flexShrink: 0,
+          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 10, lineHeight: 1, color: WF_KIND_TOKEN.control,
         }}>{CONTROL_GLYPH[c.type]}</span>
         <span style={titleStyle}>{node.title}</span>
       </div>
