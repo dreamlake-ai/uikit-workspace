@@ -183,7 +183,7 @@ export function Tag({
       className={cn(
         'group inline-flex items-center gap-1.5 whitespace-nowrap leading-none',
         'font-uikit-ui tracking-uikit-snug',
-        'px-2.5 py-[5px] rounded-[calc(var(--radius)*1.2)]',
+        'px-3 py-[6px] rounded-[calc(var(--radius)*1.2)]',
         compact ? 'text-uikit-11' : 'text-[11.5px]',
         light ? 'font-normal' : 'font-medium',
         (onClick || removable) ? 'cursor-pointer' : 'cursor-default',
