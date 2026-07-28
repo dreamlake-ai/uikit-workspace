@@ -799,10 +799,12 @@ export function WorkflowCanvas({
             )
           })}
 
-          {/* uda → agent connectors — a quiet comb linking a uda card to its
-              fanned agent instances: a spine down the agent column with a tick
-              to each, joined to the card (below it in horizontal layout, off
-              its right side in vertical). Drawn under the HTML agent cards. */}
+          {/* uda → agent connectors — a quiet dendrite linking a uda card to
+              its fanned agent instances: a shared spine that branches into each
+              agent with the SAME rounded corners as the main edges (roundedPath),
+              so it reads as part of the graph, not a sharp bracket. Joined to
+              the card from below (horizontal) or off its right side (vertical);
+              drawn under the HTML agent cards. */}
           {spec.nodes.map((n) => {
             const raw = layout.agentRects.filter((a) => a.nodeId === n.id)
             const node = nodeRects[n.id]
@@ -810,24 +812,24 @@ export function WorkflowCanvas({
             if (!raw.length || !node || !base) return null
             const dx = node.x - base.x
             const dy = node.y - base.y
-            const colLeft = Math.min(...raw.map((r) => r.x)) + dx
-            const centers = raw.map((r) => r.y + r.h / 2 + dy)
-            const top = Math.min(...centers)
-            const bottom = Math.max(...centers)
-            const BRACKET_GAP = 10
-            const spineX = colLeft - BRACKET_GAP
-            const ticks = centers.map((cy) => `M ${spineX} ${cy} L ${colLeft} ${cy}`).join(' ')
-            const d = verticalPrimary
-              ? (() => {
-                  const ny = node.y + node.h / 2
-                  const nx = node.x + node.w
-                  return `M ${nx} ${ny} L ${spineX} ${ny} M ${spineX} ${Math.min(top, ny)} L ${spineX} ${Math.max(bottom, ny)} ${ticks}`
-                })()
-              : `M ${spineX} ${node.y + node.h} L ${spineX} ${bottom} ${ticks}`
+            const agentsPos = raw.map((r) => ({ x: r.x + dx, y: r.y + dy, w: r.w, h: r.h }))
+            const colLeft = Math.min(...agentsPos.map((a) => a.x))
+            const spineX = colLeft - 12
+            // One rounded branch per agent; the shared spine segments overlay
+            // (same solid colour) into a single trunk.
+            const branches = agentsPos.map((a) => {
+              const ay = a.y + a.h / 2
+              if (verticalPrimary) {
+                const nx = node.x + node.w
+                const ny = node.y + node.h / 2
+                return roundedPath([{ x: nx, y: ny }, { x: spineX, y: ny }, { x: spineX, y: ay }, { x: a.x, y: ay }], 9)
+              }
+              return roundedPath([{ x: spineX, y: node.y + node.h }, { x: spineX, y: ay }, { x: a.x, y: ay }], 9)
+            })
             return (
               <path
                 key={`agentlink-${n.id}`}
-                d={d} fill="none"
+                d={branches.join(' ')} fill="none"
                 stroke="color-mix(in srgb, var(--color-uikit-ink) 22%, var(--color-uikit-panel))"
                 strokeWidth={1.2} strokeLinecap="round" strokeLinejoin="round"
               />
