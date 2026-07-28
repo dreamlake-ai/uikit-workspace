@@ -43,11 +43,18 @@ const CELL_GAP_FLOW = 60    // between member lines, along the flow axis
 const CELL_GAP_SIDE = 68    // between members within a line, across the flow
 const AGENT_GAP = 6
 const AGENT_INDENT = 10
+const AGENT_SIDE_GAP = 24   // uda card → its agent column (vertical layout)
 const MAX_PER_LINE = 3      // members per fan line before wrapping
 
-/** Extra flow-axis space a member cell needs for stacked agent instances. */
+/** Flow-axis space a member cell needs for agents stacked BELOW it (horizontal
+ *  layout — the agents consume side space there, which is the flow-cross axis). */
 function agentExtent(count: number): number {
   return count > 0 ? count * (WF_AGENT_H + AGENT_GAP) + 8 : 0
+}
+
+/** Height of a vertical agent column (vertical layout stacks agents to the SIDE). */
+function agentStackH(count: number): number {
+  return count > 0 ? count * WF_AGENT_H + (count - 1) * AGENT_GAP : 0
 }
 
 type SpecNode = WorkflowSpec['nodes'][number]
@@ -118,11 +125,21 @@ export function layoutWorkflow(
     const raw = buildLines(membersByStage.get(s.id) ?? [], spec)
     const lines: Line[] = raw.map((nodes) => {
       if (orientation === 'vertical') {
+        // Agents sit to the RIGHT of their node (a vertical column): they widen
+        // the cell (side axis) and only extend the flow axis if the column is
+        // taller than the card.
         const flowExtent = Math.max(
-          ...nodes.map((n) => WF_NODE_H + agentExtent(agentsByNodeId?.[n.id]?.length ?? 0)),
           WF_NODE_H,
+          ...nodes.map((n) => {
+            const c = agentsByNodeId?.[n.id]?.length ?? 0
+            return c > 0 ? Math.max(WF_NODE_H, agentStackH(c)) : WF_NODE_H
+          }),
         )
-        const sideExtent = nodes.length * WF_NODE_W + (nodes.length - 1) * CELL_GAP_SIDE
+        const sideExtent = nodes.reduce((acc, n, i) => {
+          const c = agentsByNodeId?.[n.id]?.length ?? 0
+          const cell = WF_NODE_W + (c > 0 ? AGENT_SIDE_GAP + WF_AGENT_W : 0)
+          return acc + cell + (i > 0 ? CELL_GAP_SIDE : 0)
+        }, 0)
         return { nodes, flowExtent, sideExtent }
       }
       // horizontal: agents stack BELOW the card → consume SIDE space.
@@ -158,15 +175,17 @@ export function layoutWorkflow(
             const rect: WfRect = { x, y: flowCursor, w: WF_NODE_W, h: WF_NODE_H }
             nodeRects[n.id] = rect
             const agents = agentsByNodeId?.[n.id] ?? []
+            // Stack agents to the RIGHT of the card (aligned with its top), so
+            // they never sit on the downstream edge dropping from its bottom.
             agents.forEach((a, i) => {
               agentRects.push({
                 nodeId: n.id, agentId: a.agentId,
-                x: rect.x + AGENT_INDENT,
-                y: rect.y + WF_NODE_H + 8 + i * (WF_AGENT_H + AGENT_GAP),
+                x: rect.x + WF_NODE_W + AGENT_SIDE_GAP,
+                y: rect.y + i * (WF_AGENT_H + AGENT_GAP),
                 w: WF_AGENT_W, h: WF_AGENT_H,
               })
             })
-            x += WF_NODE_W + CELL_GAP_SIDE
+            x += WF_NODE_W + (agents.length > 0 ? AGENT_SIDE_GAP + WF_AGENT_W : 0) + CELL_GAP_SIDE
           }
           flowCursor += line.flowExtent + CELL_GAP_FLOW
         } else {

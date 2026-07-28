@@ -798,6 +798,41 @@ export function WorkflowCanvas({
               />
             )
           })}
+
+          {/* uda → agent connectors — a quiet comb linking a uda card to its
+              fanned agent instances: a spine down the agent column with a tick
+              to each, joined to the card (below it in horizontal layout, off
+              its right side in vertical). Drawn under the HTML agent cards. */}
+          {spec.nodes.map((n) => {
+            const raw = layout.agentRects.filter((a) => a.nodeId === n.id)
+            const node = nodeRects[n.id]
+            const base = layout.nodeRects[n.id]
+            if (!raw.length || !node || !base) return null
+            const dx = node.x - base.x
+            const dy = node.y - base.y
+            const colLeft = Math.min(...raw.map((r) => r.x)) + dx
+            const centers = raw.map((r) => r.y + r.h / 2 + dy)
+            const top = Math.min(...centers)
+            const bottom = Math.max(...centers)
+            const BRACKET_GAP = 10
+            const spineX = colLeft - BRACKET_GAP
+            const ticks = centers.map((cy) => `M ${spineX} ${cy} L ${colLeft} ${cy}`).join(' ')
+            const d = verticalPrimary
+              ? (() => {
+                  const ny = node.y + node.h / 2
+                  const nx = node.x + node.w
+                  return `M ${nx} ${ny} L ${spineX} ${ny} M ${spineX} ${Math.min(top, ny)} L ${spineX} ${Math.max(bottom, ny)} ${ticks}`
+                })()
+              : `M ${spineX} ${node.y + node.h} L ${spineX} ${bottom} ${ticks}`
+            return (
+              <path
+                key={`agentlink-${n.id}`}
+                d={d} fill="none"
+                stroke="color-mix(in srgb, var(--color-uikit-ink) 22%, var(--color-uikit-panel))"
+                strokeWidth={1.2} strokeLinecap="round" strokeLinejoin="round"
+              />
+            )
+          })}
         </svg>
 
         {/* stage nodes (hubs) */}
