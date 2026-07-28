@@ -1,0 +1,130 @@
+# Keep the component docs honest when a component's visual style changes.
+#
+# Two halves, deliberately split:
+#   1. `structure`    — blocking. Did the matching docs page change at all?
+#   2. `drift-report` — advisory. Which specific sentences and Props rows are
+#                        now wrong? Posts a PR comment; never fails the build.
+#
+# The structural gate is what makes the rule enforceable; the drift report is
+# what makes it actionable. Neither is useful alone.
+#
+# Note the asymmetry in when each runs. `structure` must run on every push —
+# a gate that only ran at open time could be walked past by pushing the
+# violating commit afterwards. `drift-report` costs a model call, so it runs
+# once per PR (at open / ready-for-review) and on demand via the
+# `docs-recheck` label, rather than on every push.
+
+name: docs-sync
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, labeled]
+    paths:
+      - 'packages/uikit/**'
+      - 'packages/docs/**'
+      - 'scripts/check-docs-sync.mjs'
+      - '.github/workflows/docs-sync.yml'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: docs-sync-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  structure:
+    name: docs changed alongside component
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # the check diffs against the merge-base
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      # No dependencies — the checker is plain Node against `git diff`.
+      - name: Check docs accompany visual-style changes
+        env:
+          DOCS_SYNC_PR_BODY: ${{ github.event.pull_request.body }}
+        run: node scripts/check-docs-sync.mjs --base origin/${{ github.base_ref }}
+
+  drift-report:
+    name: stale-docs drift report
+    runs-on: ubuntu-latest
+    needs: structure
+    # Runs whether or not the gate passed: on a failure it says what to write,
+    # on a pass it says whether what you wrote is actually right. But only
+    # once per PR — see the note at the top of this file.
+    if: >-
+      always() && needs.structure.result != 'skipped' &&
+      (github.event.action == 'opened' ||
+       github.event.action == 'ready_for_review' ||
+       (github.event.action == 'labeled' && github.event.label.name == 'docs-recheck'))
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for API key
+        id: key
+        run: echo "present=${{ secrets.ANTHROPIC_API_KEY != '' }}" >> "$GITHUB_OUTPUT"
+
+      - name: Skip notice
+        if: steps.key.outputs.present != 'true'
+        run: |
+          echo "ANTHROPIC_API_KEY is not set — skipping the drift report." >> "$GITHUB_STEP_SUMMARY"
+          echo "Add the secret in Settings → Secrets → Actions to enable it." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Review docs for drift
+        if: steps.key.outputs.present == 'true'
+        uses: anthropics/claude-code-action@v1
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_args: |
+            --model claude-sonnet-5
+            --allowedTools "Bash(git diff:*),Bash(git log:*),Bash(gh pr comment:*),Read,Grep,Glob"
+          prompt: |
+            You are reviewing a pull request against the @dreamlake/uikit
+            component library for **documentation drift** — places where a
+            component's visual style changed but the hand-written docs still
+            describe the old appearance.
+
+            Context you need:
+            - Components live in `packages/uikit/src/components/<Name>/`.
+              Styling is Tailwind utility classes carrying `uikit-` design
+              tokens, usually in `VARIANTS` / `SIZES` maps and a `cn(...)` call.
+            - Each component's page is
+              `packages/docs/pages/components/<kebab-name>/+Page.mdx`.
+            - The `<Preview>` blocks on those pages render the *live* component,
+              so the demos are never stale. Do not report them.
+            - What DOES go stale: the prose describing appearance (e.g. "an
+              inverted ink-on-background fill", "a bordered neutral button"),
+              the Props table (default values and variant enums), and the token
+              pages under `packages/docs/pages/style-guide/sections/`.
+
+            Steps:
+            1. `git diff $BASE_SHA...HEAD -- packages/uikit/src/components` to
+               see what changed.
+            2. For each component touched, read its docs page and compare every
+               factual claim against the post-change source.
+            3. Report ONLY claims that are now factually wrong or missing —
+               a changed default, a renamed or added variant, a described
+               appearance that no longer matches, a new prop absent from the
+               table. Ignore style, tone, and wording preferences.
+
+            Then post a single PR comment with:
+              gh pr comment "$PR_NUMBER" --body "<your findings>"
+
+            Format the comment as a short markdown list. Each item: the docs
+            file and line, the claim that is now wrong, and the correct value.
+            If you find nothing stale, comment exactly:
+            "docs-sync: no stale documentation claims found in this diff."
+            Keep it under 30 lines. Do not edit any files.
