@@ -608,6 +608,20 @@ export function WorkflowCanvas({
           label: null, labelPos: null,
           toDot: arriveDot(targetId, edge?.toPort) as 'normal' | 'collect',
         }
+        // Target's INPUT face isn't forward of the stage's out edge (dragged
+        // beside/behind it): the forward-only side/flow branches below would run
+        // the line INTO the card body instead of onto the input dot. Route port
+        // → port straight through buildEdgePath, which reaches the dot from the
+        // correct side and loops with an inverted-S when it sits behind.
+        if (toF(T).f < H.fMax) {
+          const from = portAnchor(stageRects[t], 'out', 0, 1, orientation)
+          segs.push({
+            ...base,
+            d: route(from, T, [stageRects[t], nodeRects[targetId]], base.key),
+            swapped: verticalPrimary, arrow: 'flow',
+          })
+          return
+        }
         if (face === 'flow') {
           const gi = groups.flow.indexOf(i)
           const from = portAnchor(stageRects[t], 'out', gi, Math.max(1, groups.flow.length), orientation)

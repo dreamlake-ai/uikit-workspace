@@ -32,20 +32,61 @@ export function buildEdgePath(
 ): string {
   const obstacles = opts.obstacles ?? []
   const bendFrac = opts.bendFrac ?? 0.5
+  // "Backward": the target sits at or behind the source along the primary axis.
+  // Such an edge MUST loop around with the inverted-S below — a soft curve or a
+  // straight line would run straight back through both cards (only the
+  // arrowhead would show). So the shallow-edge short-circuits are forward-only.
+  const backwards = to.x - from.x <= 8
 
-  // Soft curve for shallow edges. (opts.bendX is intentionally ignored here —
-  // a shallow soft-curve has no vertical jog to pin.)
-  if (Math.abs(to.y - from.y) < CURVE_THRESHOLD) {
+  // Soft curve for shallow FORWARD edges. (opts.bendX is intentionally ignored
+  // here — a shallow soft-curve has no vertical jog to pin.)
+  if (!backwards && Math.abs(to.y - from.y) < CURVE_THRESHOLD) {
     const dx = Math.abs(to.x - from.x)
     return `M ${from.x} ${from.y} C ${from.x + dx * 0.5} ${from.y}, ${to.x - dx * 0.5} ${to.y}, ${to.x} ${to.y}`
   }
 
-  // Orthogonal rounded routing, horizontal primary axis.
-  // The vertical jog normally sits at bendFrac between the endpoints; an
-  // explicit finite opts.bendX pins it to an absolute x instead. It's clamped
-  // strictly inside [from.x, to.x] with a margin so the corner radii still fit,
-  // and falls back to the computed value if that clamp would collapse the
-  // usable range (endpoints too close to leave room).
+  const sgnY = Math.sign(to.y - from.y) || 1
+  const dy = Math.abs(to.y - from.y)
+
+  if (backwards) {
+    // Loop back to a target behind the source: two turn columns just past each
+    // end (ax/bx) joined by a crossing run. The run normally sits at the
+    // cross-axis midpoint (a symmetric inverted-S), BUT if the endpoints are too
+    // close in the cross axis the S self-overlaps into a flat line — so bulge
+    // the run out to one side to keep the loop readable. This makes the loop
+    // visible for a member dragged directly before its stage, where the swapped
+    // cross-axis delta is ~0. (opts.bendX is ignored — no single jog to pin.)
+    const STUB = 28
+    const midX = (from.x + to.x) / 2
+    const reach = Math.abs(from.x - to.x) / 2 + STUB
+    const ax = midX + reach // right turn column, out past the source edge
+    const bx = midX - reach // left turn column, out past the target edge
+    const MIN = 30
+    const my = Math.abs(to.y - from.y) >= 2 * MIN
+      ? (from.y + to.y) / 2
+      : Math.max(from.y, to.y) + MIN
+    const d1 = Math.sign(my - from.y) || 1 // source-leg direction
+    const d2 = Math.sign(to.y - my) || 1 // target-leg direction
+    const r2 = Math.min(R, STUB / 2, Math.abs(my - from.y) / 2, Math.abs(to.y - my) / 2, Math.abs(ax - bx) / 2)
+    return (
+      `M ${from.x} ${from.y}` +
+      ` L ${ax - r2} ${from.y}` +
+      ` Q ${ax} ${from.y} ${ax} ${from.y + d1 * r2}` +
+      ` L ${ax} ${my - d1 * r2}` +
+      ` Q ${ax} ${my} ${ax - r2} ${my}` +
+      ` L ${bx + r2} ${my}` +
+      ` Q ${bx} ${my} ${bx} ${my + d2 * r2}` +
+      ` L ${bx} ${to.y - d2 * r2}` +
+      ` Q ${bx} ${to.y} ${bx + r2} ${to.y}` +
+      ` L ${to.x} ${to.y}`
+    )
+  }
+
+  // Forward orthogonal rounded routing. The vertical jog normally sits at
+  // bendFrac between the endpoints; an explicit finite opts.bendX pins it to an
+  // absolute x instead, clamped strictly inside [from.x, to.x] with a margin so
+  // the corner radii still fit (falling back to the computed value if that
+  // clamp would collapse the usable range).
   let bendX = from.x + (to.x - from.x) * bendFrac
   const bendXOverride = opts.bendX
   if (bendXOverride !== undefined && Number.isFinite(bendXOverride)) {
@@ -54,43 +95,8 @@ export function buildEdgePath(
     const hi = Math.max(from.x, to.x) - margin
     bendX = lo <= hi ? Math.max(lo, Math.min(hi, bendXOverride)) : bendX
   }
-  if (Math.abs(to.y - from.y) < 0.5) return `M ${from.x} ${from.y} L ${to.x} ${to.y}`
-
-  const sgnY = Math.sign(to.y - from.y) || 1
-  const dy = Math.abs(to.y - from.y)
+  if (dy < 0.5) return `M ${from.x} ${from.y} L ${to.x} ${to.y}`
   const r = Math.min(R, Math.abs(bendX - from.x), Math.abs(to.x - bendX), dy / 2)
-  const backwards = to.x - from.x <= 8
-
-  if (backwards) {
-    // Inverted-S when the target sits behind the source. Center the middle
-    // horizontal run in the channel between the two nodes' facing edges
-    // (source right edge = from.x, target left edge = to.x) so the loop reads
-    // as symmetric regardless of which input port (upper/lower) the target
-    // uses — both turn columns are placed equidistant from the channel mid-x
-    // rather than a fixed STUB from their own (asymmetric) endpoints, which
-    // otherwise biases the run toward the single-output source's side.
-    // (opts.bendX is intentionally ignored here — a backward loop has no single
-    //  forward vertical jog to pin.)
-    const STUB = 28
-    const midX = (from.x + to.x) / 2
-    const reach = Math.abs(from.x - to.x) / 2 + STUB
-    const ax = midX + reach // right turn column, out past the source edge
-    const bx = midX - reach // left turn column, out past the target edge
-    const my = (from.y + to.y) / 2
-    const r2 = Math.min(R, STUB / 2, dy / 4, Math.abs(ax - bx) / 2)
-    return (
-      `M ${from.x} ${from.y}` +
-      ` L ${ax - r2} ${from.y}` +
-      ` Q ${ax} ${from.y} ${ax} ${from.y + sgnY * r2}` +
-      ` L ${ax} ${my - sgnY * r2}` +
-      ` Q ${ax} ${my} ${ax - r2} ${my}` +
-      ` L ${bx + r2} ${my}` +
-      ` Q ${bx} ${my} ${bx} ${my + sgnY * r2}` +
-      ` L ${bx} ${to.y - sgnY * r2}` +
-      ` Q ${bx} ${to.y} ${bx + r2} ${to.y}` +
-      ` L ${to.x} ${to.y}`
-    )
-  }
 
   // A pinned bendX also drives where we probe for obstacles: the jog is tested
   // (and, on a hit, detoured) around the pinned column rather than the default.
