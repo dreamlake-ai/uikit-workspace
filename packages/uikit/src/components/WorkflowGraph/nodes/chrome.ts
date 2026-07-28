@@ -63,8 +63,11 @@ export function cardStyle(opts: CardChromeOpts): CSSProperties {
   const bg = active
     ? `color-mix(in srgb, ${panel} ${selected ? '84%' : '90%'}, ${stateColor})`
     : panel
+  // Selection border = the node's own STATE colour (an idle / not-yet-run node,
+  // or a stage with no run state, reads as neutral muted) — matching
+  // PipelineGraph, never the fixed blue accent.
   const border = selected
-    ? 'var(--color-uikit-accent)'
+    ? (stateColor ?? 'var(--color-uikit-muted)')
     : active
       ? `color-mix(in srgb, var(--color-uikit-faint) 55%, ${stateColor})`
       : 'var(--color-uikit-faint)'
@@ -73,7 +76,9 @@ export function cardStyle(opts: CardChromeOpts): CSSProperties {
     width,
     height,
     background: bg,
-    border: `1px solid ${border}`,
+    // Border is intentionally a touch heavier than the edge lines (~1.4px) so
+    // card outline and connectors read at one consistent weight.
+    border: `1.5px solid ${border}`,
     borderRadius: 7,
     padding: '8px 10px',
     display: 'flex',

@@ -111,7 +111,7 @@ export function SamplerNodeCard({ node, ...p }: SamplerNodeCardProps) {
     <div
       data-node={node.id}
       title={node.detail ?? node.title}
-      style={{ ...cardStyle(p), ...pulseStyle(p.state), justifyContent: 'center' }}
+      style={{ ...cardStyle(p), ...pulseStyle(p.state) }}
       {...handlers(p)}
     >
       <div style={titleRowStyle}>
@@ -148,12 +148,16 @@ export function ControlNodeCard({ node, ...p }: ControlNodeCardProps) {
     <div
       data-node={node.id}
       title={node.detail ?? detail}
-      style={{ ...cardStyle(p), ...pulseStyle(p.state), justifyContent: 'center' }}
+      style={{ ...cardStyle(p), ...pulseStyle(p.state) }}
       {...handlers(p)}
     >
       <div style={titleRowStyle}>
+        {/* Same 7×7 footprint as the kind dot (centered glyph), so the
+            icon→title gap matches every other node kind. */}
         <span style={{
-          fontSize: 11, lineHeight: 1, color: WF_KIND_TOKEN.control, flexShrink: 0, width: 11, textAlign: 'center',
+          width: 7, height: 7, flexShrink: 0,
+          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 10, lineHeight: 1, color: WF_KIND_TOKEN.control,
         }}>{CONTROL_GLYPH[c.type]}</span>
         <span style={titleStyle}>{node.title}</span>
       </div>

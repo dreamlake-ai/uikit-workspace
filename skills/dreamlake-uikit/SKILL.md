@@ -1,6 +1,6 @@
 ---
 name: dreamlake-uikit
-description: DreamLake uikit is the React component library and design contract — surfaces, ink, semantic color, type, geometry, and the zebra-list patterns shared by every DreamLake page. Use when answering questions about DreamLake (Overview, Avatar, Style guide, BreadcrumbTree, LLM-Readable Docs, Button, Dialog, Field, FilterBar, Menu, ProfileCard, ProfileLayout, ResizableLayout, Select, SideNav, Tabs, Tag, TextField, VirtualList, VirtualListFlow, VideoAnnotator, Spinner, Skeleton, Switch, Badge, Collapsible, Card, Alert Dialog, Drawer, Toast, UIKit Badge, Pipeline Graph, Anatomy, Pipeline Graph JSON, Architecture & Roadmap, useIsMobile, Subtask Annotation, Label, Toggle, Toolbar, Modal, Form Layout, Input, Mouse Cursor Icons, Tooltip, Popover, Dropdown Menu, Theme, Tree View, Context Menu, Dial, Waterfall, Slider, Number Inputs, Layout, Sync Scroll).
+description: DreamLake uikit is the React component library and design contract — surfaces, ink, semantic color, type, geometry, and the zebra-list patterns shared by every DreamLake page. Use when answering questions about DreamLake (Overview, Avatar, Style guide, BreadcrumbTree, LLM-Readable Docs, Button, Dialog, Field, FilterBar, Menu, ProfileCard, ProfileLayout, ResizableLayout, Select, SideNav, Tabs, Tag, TextField, VirtualList, VirtualListFlow, VideoAnnotator, Spinner, Skeleton, Switch, Badge, Collapsible, Card, Alert Dialog, Drawer, Toast, UIKit Badge, Pipeline Graph, Anatomy, Pipeline Graph JSON, Architecture & Roadmap, useIsMobile, Subtask Annotation, Label, Toggle, Workflow Canvas, Node Types, Toolbar, Modal, Form Layout, Input, Mouse Cursor Icons, Tooltip, Popover, Dropdown Menu, Theme, Tree View, Context Menu, Dial, Waterfall, Slider, Number Inputs, Layout, Sync Scroll).
 ---
 # DreamLake
 
@@ -75,6 +75,11 @@ file that matches the question; each is a self-contained markdown page.
 - `reference/pipeline-view-pipeline-graph-json.md` — Pipeline Graph JSON: The data format PipelineGraph renders — pipeline, node, and edge shapes, static vs runtime fields, the output artifact, and how status drives edge flow.
 - `reference/pipeline-view-architecture.md` — Architecture & Roadmap: How PipelineGraph is built — the file split, the design principles, the render pipeline, and what it deliberately leaves out — plus the current stage and what's planned next.
 - `reference/pipeline-view-subtask-annotation.md` — Subtask Annotation: A worked example — the Macrodata Labs robot-video subtask annotation pipeline (contact-sheet segmentation → windowed labeling with Gemini) rendered as a PipelineGraph.
+
+**Workflow**
+
+- `reference/workflow-view-workflow-canvas.md` — Workflow Canvas: The presentational component that renders a typed Workflow v2 spec — stages as hubs, four node families, a live run overlay with fanned-out agents, and two orientations, in PipelineGraph's visual language.
+- `reference/workflow-view-node-types.md` — Node Types: The typed node vocabulary of a Workflow v2 spec — stage, compute (UDF), uda (agent), sampler, control flow, the artifact type lattice on every edge, and the run states — each rendered with the real card components.
 
 ## Canonical source
 

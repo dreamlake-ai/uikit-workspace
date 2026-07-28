@@ -39,7 +39,7 @@ import {
   nodeInputs, nodeOutputs,
   type AgentInstance, type WorkflowNodeRunStateValue, type WorkflowSpec,
 } from './spec'
-import { WF_KIND_TOKEN } from './nodes/chrome'
+import { WF_KIND_TOKEN, WF_STATE_COLOR } from './nodes/chrome'
 import { StageNode } from './nodes/StageNode'
 import {
   AgentInstanceCard, ComputeNodeCard, ControlNodeCard, SamplerNodeCard, UdaNodeCard,
@@ -127,6 +127,17 @@ interface Seg {
   swapped: boolean
   /** Arrowhead direction: along the flow axis, or ±side axis (hub side faces). */
   arrow: 'flow' | 's+' | 's-'
+  /** Present on bend-capable (buildEdgePath-routed) segments that carry a tag:
+   *  the bendFrac key, the flow-axis span (so a tag drag maps to a bendFrac), and
+   *  the current jog anchor — the on-line point a *touched* tag rides, tracking
+   *  the bend smoothly. Absent on hand-routed hub side segments (their tags only
+   *  lift, never bend). */
+  bend?: { key: string; span: number; anchor: Pt }
+  /** The kind of port dot this segment arrives at, so the arrowhead can be
+   *  pulled back exactly enough to clear it: `normal` (a plain 6px dot — hug
+   *  it), `collect` (a fan-in dot with a second ring — clear the wider ring).
+   *  Absent for stage/spine arrivals, which have no dot (arrow hugs the card). */
+  toDot?: 'normal' | 'collect'
 }
 
 export function WorkflowCanvas({
@@ -162,6 +173,18 @@ export function WorkflowCanvas({
   const fitViewRef = useRef<() => void>(() => {})
   const panRef = useRef<{ x: number; y: number; vx: number; vy: number } | null>(null)
   const dragRef = useRef<{ id: string; sx: number; sy: number; bx: number; by: number; moved: boolean } | null>(null)
+
+  // Per-edge connector-tag interaction (design prototype's PipeEdge label drag):
+  // dragging a tag along the FLOW axis rebends its edge (bendFracs, fed to
+  // buildEdgePath); dragging ACROSS the axis lifts the tag off the line onto a
+  // dashed leader (labelOffsets, in world px). Reset when the graph re-lays-out.
+  const [bendFracs, setBendFracs] = useState<Record<string, number>>({})
+  const [labelOffsets, setLabelOffsets] = useState<Record<string, number>>({})
+  const [activeTag, setActiveTag] = useState<string | null>(null)
+  useEffect(() => { setBendFracs({}); setLabelOffsets({}); setActiveTag(null) }, [spec, orientation])
+  const tagDragRef = useRef<
+    { key: string; sx: number; sy: number; span: number; startFrac: number; startOff: number; bendable: boolean } | null
+  >(null)
 
   const layout = useMemo(
     () => layoutWorkflow(spec, orientation, agentsByNodeId),
@@ -294,19 +317,78 @@ export function WorkflowCanvas({
     },
   })
 
+  // Connector-tag drag (design's PipeEdge label drag): along the flow axis it
+  // rebends the edge (bendFrac); across it, it lifts the tag onto a leader
+  // (labelOffset). stopPropagation keeps the canvas from panning underneath.
+  const tagHandlers = (seg: Seg) => ({
+    onPointerDown: (e: ReactPointerEvent) => {
+      e.stopPropagation()
+      ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
+      tagDragRef.current = {
+        key: seg.key, sx: e.clientX, sy: e.clientY,
+        span: seg.bend?.span ?? 0,
+        startFrac: bendFracs[seg.key] ?? 0.5,
+        startOff: labelOffsets[seg.key] ?? 0,
+        bendable: !!seg.bend && Math.abs(seg.bend.span) > 1,
+      }
+      setActiveTag(seg.key)
+    },
+    onPointerMove: (e: ReactPointerEvent) => {
+      const d = tagDragRef.current
+      if (!d || d.key !== seg.key) return
+      const dx = (e.clientX - d.sx) / view.k
+      const dy = (e.clientY - d.sy) / view.k
+      const primary = verticalPrimary ? dy : dx   // flow axis → bend
+      const perp = verticalPrimary ? dx : dy       // side axis → lift
+      if (d.bendable) {
+        const next = Math.max(0.1, Math.min(0.9, d.startFrac + primary / d.span))
+        setBendFracs((p) => ({ ...p, [seg.key]: next }))
+      }
+      let off = Math.max(-400, Math.min(400, d.startOff + perp))
+      if (Math.abs(off) <= 3) off = 0   // snap back onto the line
+      setLabelOffsets((p) => ({ ...p, [seg.key]: off }))
+    },
+    onPointerUp: (e: ReactPointerEvent) => {
+      tagDragRef.current = null
+      setActiveTag(null)
+      try { (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId) } catch { /* noop */ }
+    },
+    onPointerCancel: (e: ReactPointerEvent) => {
+      tagDragRef.current = null
+      setActiveTag(null)
+      try { (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId) } catch { /* noop */ }
+    },
+  })
+
   // -- segments (hub routing) ------------------------------------------------
   const verticalPrimary = orientation === 'vertical'
 
   const segments = useMemo<Seg[]>(() => {
     const allRects = [...Object.values(stageRects), ...Object.values(nodeRects)]
     const obstacles = verticalPrimary ? allRects.map(swapRect) : allRects.map(rectObstacle)
-    const route = (from: Pt, to: Pt, exclude: WfRect[]): string => {
+    const route = (from: Pt, to: Pt, exclude: WfRect[], bendKey?: string): string => {
       const ex = new Set(exclude.map((r) => (verticalPrimary ? swapRect(r) : rectObstacle(r))
       ).map((o) => `${o.x0},${o.y0}`))
       const obs = obstacles.filter((o) => !ex.has(`${o.x0},${o.y0}`))
+      // A dragged tag pins its edge's elbow via bendFrac (buildEdgePath routes
+      // in swapped space for the vertical layout, so the same frac drives the
+      // flow-axis jog either way).
+      const bendFrac = bendKey ? bendFracs[bendKey] : undefined
       return verticalPrimary
-        ? buildEdgePath(swap(from), swap(to), { obstacles: obs })
-        : buildEdgePath(from, to, { obstacles: obs })
+        ? buildEdgePath(swap(from), swap(to), { obstacles: obs, bendFrac })
+        : buildEdgePath(from, to, { obstacles: obs, bendFrac })
+    }
+    // Flow-axis span of a segment (the axis a bend-drag moves along).
+    const flowSpan = (from: Pt, to: Pt) => (verticalPrimary ? to.y - from.y : to.x - from.x)
+    // Bend metadata for a labelled, bend-capable segment: its key, span, and the
+    // current jog anchor (the on-line point a dragged tag rides — the vertical/
+    // horizontal jog's midpoint at the live bendFrac, so it tracks the bend).
+    const bendMeta = (from: Pt, to: Pt, key: string) => {
+      const frac = bendFracs[key] ?? 0.5
+      const anchor: Pt = verticalPrimary
+        ? { x: (from.x + to.x) / 2, y: from.y + (to.y - from.y) * frac }
+        : { x: from.x + (to.x - from.x) * frac, y: (from.y + to.y) / 2 }
+      return { key, span: flowSpan(from, to), anchor }
     }
     const sideCoord = (id: string) => {
       const r = nodeRects[id]
@@ -374,6 +456,13 @@ export function WorkflowCanvas({
       const p = outs.find((x) => x.name === (e.fromPort ?? 'out')) ?? outs[0]
       return p && p.type !== 'artifact' ? p.type : null
     }
+    // Which port-dot kind a member arrival lands on — a `collect` input dot
+    // wears a second ring, so its arrow must pull back further.
+    const arriveDot = (id: string, port?: string): 'normal' | 'collect' => {
+      const ins = nodeInputs(nodeById[id])
+      const p = ins.find((x) => x.name === (port ?? 'in')) ?? ins[0]
+      return p?.collect === true ? 'collect' : 'normal'
+    }
 
     const segs: Seg[] = []
 
@@ -393,11 +482,13 @@ export function WorkflowCanvas({
       const to = memberIn(e.to, e.toPort)
       segs.push({
         key: e.id, to,
-        d: route(from, to, [nodeRects[e.from], nodeRects[e.to]]),
+        d: route(from, to, [nodeRects[e.from], nodeRects[e.to]], e.id),
         flow: edgeFlowFromStates(statusByNodeId?.[e.from], statusByNodeId?.[e.to]),
         hotIds: [e.from, e.to],
         label: outLabel(e), labelPos: null,
         swapped: verticalPrimary, arrow: 'flow',
+        bend: bendMeta(from, to, e.id),
+        toDot: arriveDot(e.to, e.toPort),
       })
     }
 
@@ -449,8 +540,9 @@ export function WorkflowCanvas({
           const to = portAnchor(stageRects[t], 'in', gi, Math.max(1, groups.flow.length), orientation)
           segs.push({
             ...base, to,
-            d: route(P, to, [nodeRects[e.from], stageRects[t]]),
+            d: route(P, to, [nodeRects[e.from], stageRects[t]], base.key),
             swapped: verticalPrimary, arrow: 'flow',
+            bend: bendMeta(P, to, base.key),
           })
         } else {
           const g = groups[face]
@@ -514,6 +606,21 @@ export function WorkflowCanvas({
           flow, to: T,
           hotIds: edge ? [edge.from, targetId, t] : [t, targetId],
           label: null, labelPos: null,
+          toDot: arriveDot(targetId, edge?.toPort) as 'normal' | 'collect',
+        }
+        // Target's INPUT face isn't forward of the stage's out edge (dragged
+        // beside/behind it): the forward-only side/flow branches below would run
+        // the line INTO the card body instead of onto the input dot. Route port
+        // → port straight through buildEdgePath, which reaches the dot from the
+        // correct side and loops with an inverted-S when it sits behind.
+        if (toF(T).f < H.fMax) {
+          const from = portAnchor(stageRects[t], 'out', 0, 1, orientation)
+          segs.push({
+            ...base,
+            d: route(from, T, [stageRects[t], nodeRects[targetId]], base.key),
+            swapped: verticalPrimary, arrow: 'flow',
+          })
+          return
         }
         if (face === 'flow') {
           const gi = groups.flow.indexOf(i)
@@ -569,7 +676,7 @@ export function WorkflowCanvas({
     }
 
     return segs
-  }, [spec, stageRects, nodeRects, nodeById, membersByStage, statusByNodeId, orientation, verticalPrimary])
+  }, [spec, stageRects, nodeRects, nodeById, membersByStage, statusByNodeId, orientation, verticalPrimary, bendFracs])
 
   // Label placement pass: on the routed path, dodging cards + other labels.
   const labeledSegments = useMemo(() => {
@@ -593,6 +700,14 @@ export function WorkflowCanvas({
       return { ...s, labelPos: pt }
     })
   }, [segments, stageRects, nodeRects, layout.agentRects, verticalPrimary])
+
+  // Selection highlight colour = the selected node's own run-state colour (a
+  // stage, or an idle / not-yet-run node, reads as neutral muted), so a
+  // highlighted node's border + its edges match its state — never a fixed
+  // accent. Mirrors PipelineGraph's status-driven selection.
+  const selColor = selected
+    ? (WF_STATE_COLOR[statusByNodeId?.[selected] ?? 'idle'] ?? 'var(--color-uikit-muted)')
+    : 'var(--color-uikit-accent)'
 
   // -- render ----------------------------------------------------------------
   return (
@@ -625,10 +740,20 @@ export function WorkflowCanvas({
             const flowSpec = FLOW[s.flow]
             const hot = !!selected && s.hotIds.includes(selected)
             const dim = !!selected && !hot
-            const stroke = s.spine
-              ? 'var(--color-uikit-ink-50)'
-              : hot ? 'var(--color-uikit-accent)' : flowSpec.color
-            const width = s.spine ? 1.6 : hot ? Math.max(flowSpec.width, 2) : flowSpec.width
+            // SOLID colours only — never opacity — so overlapping lines can't
+            // stack up and darken. idle/spine edges use a solid pale grey; a
+            // dimmed edge is a solid pale tint of its own colour (mixed toward
+            // the canvas, not made translucent).
+            const paleGrey = 'color-mix(in srgb, var(--color-uikit-ink) 22%, var(--color-uikit-panel))'
+            const baseColor = s.spine || s.flow === 'idle' ? paleGrey : flowSpec.color
+            const stroke = hot
+              ? selColor
+              : dim
+                ? `color-mix(in srgb, ${baseColor} 45%, var(--color-uikit-panel))`
+                : baseColor
+            // One thin weight across states, kept below the 1.5px card border so
+            // border and connectors read consistently (border slightly heavier).
+            const width = hot ? 1.5 : s.spine ? 1.3 : Math.min(flowSpec.width, 1.4)
             const anim = s.flow === 'running' ? 'wf-edge-flow' : s.flow === 'queued' ? 'wf-edge-queued' : undefined
             // Arrowhead by seg direction: along the flow axis, or ±side axis
             // (hub side-face arrivals). Resolved per orientation.
@@ -637,13 +762,20 @@ export function WorkflowCanvas({
               : verticalPrimary
                 ? (s.arrow === 's+' ? 'right' : 'left')
                 : (s.arrow === 's+' ? 'down' : 'up')
+            // Pull the arrowhead back just enough to clear the port dot it
+            // arrives at — hugging a plain dot (outer edge ~3px) and clearing a
+            // collect dot's wider second ring (~6.5px). Stage/spine arrivals
+            // have no dot, so the arrow hugs the card edge (GAP 0).
+            const GAP = s.toDot === 'collect' ? 7.5 : s.toDot === 'normal' ? 4 : 0
+            const tx = s.to.x + (dir === 'right' ? -GAP : dir === 'left' ? GAP : 0)
+            const ty = s.to.y + (dir === 'down' ? -GAP : dir === 'up' ? GAP : 0)
             const head =
-              dir === 'down' ? `M ${s.to.x - 4} ${s.to.y - 6} L ${s.to.x} ${s.to.y} L ${s.to.x + 4} ${s.to.y - 6}`
-              : dir === 'up' ? `M ${s.to.x - 4} ${s.to.y + 6} L ${s.to.x} ${s.to.y} L ${s.to.x + 4} ${s.to.y + 6}`
-              : dir === 'right' ? `M ${s.to.x - 6} ${s.to.y - 4} L ${s.to.x} ${s.to.y} L ${s.to.x - 6} ${s.to.y + 4}`
-              : `M ${s.to.x + 6} ${s.to.y - 4} L ${s.to.x} ${s.to.y} L ${s.to.x + 6} ${s.to.y + 4}`
+              dir === 'down' ? `M ${tx - 4} ${ty - 6} L ${tx} ${ty} L ${tx + 4} ${ty - 6}`
+              : dir === 'up' ? `M ${tx - 4} ${ty + 6} L ${tx} ${ty} L ${tx + 4} ${ty + 6}`
+              : dir === 'right' ? `M ${tx - 6} ${ty - 4} L ${tx} ${ty} L ${tx - 6} ${ty + 4}`
+              : `M ${tx + 6} ${ty - 4} L ${tx} ${ty} L ${tx + 6} ${ty + 4}`
             return (
-              <g key={s.key} opacity={dim ? 0.25 : 1} style={{ transition: 'opacity 160ms ease' }}>
+              <g key={s.key}>
                 <g transform={s.swapped ? 'matrix(0,1,1,0,0,0)' : undefined}>
                   <path
                     d={s.d} fill="none" stroke={stroke} strokeWidth={width}
@@ -655,7 +787,94 @@ export function WorkflowCanvas({
               </g>
             )
           })}
+
+          {/* Tag leaders — a straight dashed line from a lifted tag back to the
+              point on its edge it annotates (design's displaced-label leader).
+              World coords (labelPos is already un-swapped), tinted to the edge. */}
+          {labeledSegments.map((s) => {
+            const off = labelOffsets[s.key] ?? 0
+            if (!s.label || !s.labelPos || Math.abs(off) <= 0.5) return null
+            // A touched, bend-capable tag rides its jog anchor; others ride the
+            // auto-placed point. The leader bridges that on-line point to the tag.
+            const touched = s.key in bendFracs || s.key in labelOffsets
+            const anchor = touched && s.bend ? s.bend.anchor : s.labelPos
+            const lx = anchor.x + (verticalPrimary ? off : 0)
+            const ly = anchor.y + (verticalPrimary ? 0 : off)
+            const hot = !!selected && s.hotIds.includes(selected)
+            const active = activeTag === s.key
+            const color = hot ? selColor : FLOW[s.flow].color
+            return (
+              <line
+                key={`lead-${s.key}`}
+                x1={anchor.x} y1={anchor.y} x2={lx} y2={ly}
+                stroke={color} strokeWidth={active ? 1.2 : 0.8}
+                strokeDasharray="2 2" opacity={active ? 0.9 : 0.55}
+              />
+            )
+          })}
+
+          {/* uda → agent connectors — a quiet dendrite linking a uda card to
+              its fanned agent instances: a shared spine that branches into each
+              agent with the SAME rounded corners as the main edges (roundedPath),
+              so it reads as part of the graph, not a sharp bracket. Joined to
+              the card from below (horizontal) or off its right side (vertical);
+              drawn under the HTML agent cards. */}
+          {spec.nodes.map((n) => {
+            const raw = layout.agentRects.filter((a) => a.nodeId === n.id)
+            const node = nodeRects[n.id]
+            const base = layout.nodeRects[n.id]
+            if (!raw.length || !node || !base) return null
+            const dx = node.x - base.x
+            const dy = node.y - base.y
+            const agentsPos = raw.map((r) => ({ x: r.x + dx, y: r.y + dy, w: r.w, h: r.h }))
+            const colLeft = Math.min(...agentsPos.map((a) => a.x))
+            // One rounded branch per agent; the shared trunk segments overlay
+            // (same solid colour) into a single spine.
+            const branches = agentsPos.map((a) => {
+              const ay = a.y + a.h / 2
+              if (verticalPrimary) {
+                // Trunk in the gap off the card's right side.
+                const spineX = colLeft - 12
+                const nx = node.x + node.w
+                const ny = node.y + node.h / 2
+                return roundedPath([{ x: nx, y: ny }, { x: spineX, y: ny }, { x: spineX, y: ay }, { x: a.x, y: ay }], 9)
+              }
+              // Trunk ALIGNED with the card's left border, dropping from its
+              // bottom-left corner, then a rounded branch into each agent.
+              const spineX = node.x
+              return roundedPath([{ x: spineX, y: node.y + node.h }, { x: spineX, y: ay }, { x: a.x, y: ay }], 9)
+            })
+            return (
+              <path
+                key={`agentlink-${n.id}`}
+                d={branches.join(' ')} fill="none"
+                stroke="color-mix(in srgb, var(--color-uikit-ink) 22%, var(--color-uikit-panel))"
+                strokeWidth={1.2} strokeLinecap="round" strokeLinejoin="round"
+              />
+            )
+          })}
         </svg>
+
+        {/* agent instances (run overlay) — rendered BEFORE the node cards so a
+            uda card always stacks above its own agents. */}
+        {layout.agentRects.map((a) => {
+          const agents = agentsByNodeId?.[a.nodeId] ?? []
+          const agent = agents.find((x) => x.agentId === a.agentId)
+          if (!agent) return null
+          const parentOv = posOverride[a.nodeId]
+          const base = layout.nodeRects[a.nodeId]
+          const dx = parentOv && base ? parentOv.x - base.x : 0
+          const dy = parentOv && base ? parentOv.y - base.y : 0
+          return (
+            <AgentInstanceCard
+              key={`${a.nodeId}:${a.agentId}`}
+              agent={agent}
+              pos={{ x: a.x + dx, y: a.y + dy }}
+              // Agent cards are node-like sub-cards — never dimmed on selection.
+              dimmed={false}
+            />
+          )
+        })}
 
         {/* stage nodes (hubs) */}
         {spec.stages.map((s) => {
@@ -669,7 +888,9 @@ export function WorkflowCanvas({
               doneCount={statusByNodeId ? (doneByStage.get(s.id) ?? 0) : undefined}
               pos={{ x: r.x, y: r.y }}
               selected={selected === s.id}
-              dimmed={!!selected && selected !== s.id}
+              // Never dim non-selected nodes — selection reads via the status
+              // border + shadow (PipelineGraph parity); only edges/tags fade.
+              dimmed={false}
               {...cardHandlers(s.id, r)}
             />
           )
@@ -683,7 +904,8 @@ export function WorkflowCanvas({
             pos: { x: r.x, y: r.y },
             state: statusByNodeId?.[n.id],
             selected: selected === n.id,
-            dimmed: !!selected && selected !== n.id,
+            // Non-selected nodes are never dimmed (PipelineGraph parity).
+            dimmed: false,
             ...cardHandlers(n.id, r),
           }
           switch (n.kind) {
@@ -700,7 +922,9 @@ export function WorkflowCanvas({
         {spec.nodes.map((n) => {
           const r = nodeRects[n.id]
           if (!r) return null
-          const dim = !!selected && selected !== n.id
+          // Port dots belong to their node card, which is never dimmed — so
+          // they stay crisp too; only edges/tags fade on selection.
+          const dim = false
           const ins = nodeInputs(n)
           const outs = nodeOutputs(n)
           const marker = (p: { name: string; collect?: boolean }, i: number, count: number, dir: 'in' | 'out') => {
@@ -747,44 +971,52 @@ export function WorkflowCanvas({
           )
         })}
 
-        {/* agent instances (run overlay) */}
-        {layout.agentRects.map((a) => {
-          const agents = agentsByNodeId?.[a.nodeId] ?? []
-          const agent = agents.find((x) => x.agentId === a.agentId)
-          if (!agent) return null
-          const parentOv = posOverride[a.nodeId]
-          const base = layout.nodeRects[a.nodeId]
-          const dx = parentOv && base ? parentOv.x - base.x : 0
-          const dy = parentOv && base ? parentOv.y - base.y : 0
+        {/* Connector tag pills — auto-placed on the routed path, then draggable:
+            along the flow axis to rebend the edge, across it to lift onto a
+            leader. Styled to the design's edge label (panel fill, 1px flow-colour
+            border, rx3, faint drop shadow, mono 9/600/.04em text in the flow
+            colour). */}
+        {labeledSegments.map((s) => {
+          if (!s.label || !s.labelPos) return null
+          const off = labelOffsets[s.key] ?? 0
+          // Untouched tags stay at their auto-placed (node-dodging) spot; once
+          // dragged, a bend-capable tag rides its jog anchor so it tracks the
+          // bend smoothly.
+          const touched = s.key in bendFracs || s.key in labelOffsets
+          const base = touched && s.bend ? s.bend.anchor : s.labelPos
+          const left = base.x + (verticalPrimary ? off : 0)
+          const top = base.y + (verticalPrimary ? 0 : off)
+          const hot = !!selected && s.hotIds.includes(selected)
+          const active = activeTag === s.key
+          const color = hot ? selColor : FLOW[s.flow].color
           return (
-            <AgentInstanceCard
-              key={`${a.nodeId}:${a.agentId}`}
-              agent={agent}
-              pos={{ x: a.x + dx, y: a.y + dy }}
-              dimmed={!!selected && selected !== a.nodeId}
-            />
+            <span
+              key={`tag-${s.key}`}
+              {...tagHandlers(s)}
+              style={{
+                position: 'absolute', left, top,
+                transform: 'translate(-50%, -50%)',
+                fontFamily: 'var(--font-uikit-mono)', fontSize: 9, fontWeight: 600,
+                letterSpacing: '.04em', lineHeight: 1,
+                padding: '2px 6px', borderRadius: 3,
+                background: 'var(--color-uikit-panel, #fcfbf7)',
+                border: `${active ? 1.4 : 1}px solid ${color}`,
+                color,
+                boxShadow: active
+                  ? `0 0 0 2px color-mix(in oklab, ${color} 30%, transparent), 0 1px 1px rgba(0,0,0,.06)`
+                  : '0 1px 1px rgba(0,0,0,.06)',
+                whiteSpace: 'nowrap',
+                cursor: 'move', userSelect: 'none', pointerEvents: 'auto',
+                touchAction: 'none', zIndex: 4,
+                // Fade only tags whose edge doesn't touch the selected node.
+                opacity: !!selected && !hot ? 0.4 : 1,
+                transition: 'opacity 160ms ease, box-shadow 120ms ease, border-color 120ms ease',
+              }}
+            >
+              {s.label}
+            </span>
           )
         })}
-
-        {/* connector tag pills — placed ON the routed path, dodging cards */}
-        {labeledSegments.map((s) => s.label && s.labelPos && (
-          <span
-            key={`tag-${s.key}`}
-            style={{
-              position: 'absolute', left: s.labelPos.x, top: s.labelPos.y,
-              transform: 'translate(-50%, -50%)',
-              fontFamily: 'var(--font-uikit-mono)', fontSize: 9, lineHeight: 1,
-              padding: '2px 6px', borderRadius: 5,
-              background: 'var(--color-uikit-canvas-bg, var(--color-uikit-panel))',
-              border: '2px solid var(--color-uikit-muted)',
-              color: 'var(--color-uikit-muted)',
-              whiteSpace: 'nowrap', pointerEvents: 'none',
-              opacity: selected ? 0.4 : 1, transition: 'opacity 160ms ease',
-            }}
-          >
-            {s.label}
-          </span>
-        ))}
       </div>
 
       {showControls && showLegend && <Legend />}
