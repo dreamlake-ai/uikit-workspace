@@ -46,6 +46,38 @@ Scope: this rule applies to substantive doc changes (new patterns,
 removed advice, restructured sections). README copy edits and typo
 fixes don't need a changelog entry — judgment call.
 
+## Component docs follow component visuals (enforced in CI)
+
+**When you change a component's visual style, update its docs page in
+the same PR.** The `docs-sync` GitHub Action fails the PR otherwise.
+
+- Component `packages/uikit/src/components/<Name>/` maps to page
+  `packages/docs/pages/components/<kebab-name>/+Page.mdx`.
+- Changes to `packages/uikit/src/styles.css` (the design tokens) must
+  come with an edit under `packages/docs/pages/style-guide/sections/`.
+- The `<Preview>` blocks render the live component, so demos never go
+  stale. What goes stale is everything hand-written around them: the
+  prose describing appearance, and the Props table's defaults and
+  variant enums. Those are what you have to update.
+- Only components that already have a docs page are enforced. Ones that
+  don't (`Inputs`, `PipelineGraph`, `WorkflowGraph`) are listed as a
+  notice and pass; they start being enforced once someone writes the
+  page.
+- Run it locally before pushing: `pnpm check:docs-sync`.
+- A second, non-blocking job reads the diff and comments on the PR with
+  the specific claims that went stale. Treat it as a checklist, not a
+  verdict — it needs the `ANTHROPIC_API_KEY` repo secret to run. It runs
+  once when the PR opens (or leaves draft), not on every push; add the
+  `docs-recheck` label to re-run it after pushing fixes.
+- Genuine exception (a refactor with no visual change the heuristic
+  misreads): start a line of the PR body with `[skip docs-sync]`,
+  followed by the reason. It has to be at the start of a line —
+  mentioning the marker mid-sentence doesn't count, so a PR that merely
+  discusses it isn't accidentally exempted.
+
+The checker is `scripts/check-docs-sync.mjs`; it only asserts that the
+docs *changed*, not that they changed *correctly*.
+
 ## Format conventions
 
 - Engineering notes are `.mdx` by default — see
