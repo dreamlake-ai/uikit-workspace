@@ -28,10 +28,19 @@ function hitsV(obstacles: Obstacle[], ya: number, yb: number, xx: number): Obsta
 export function buildEdgePath(
   from: Pt,
   to: Pt,
-  opts: { obstacles?: Obstacle[]; bendFrac?: number; bendX?: number } = {},
+  opts: {
+    obstacles?: Obstacle[]
+    bendFrac?: number
+    bendX?: number
+    /** Optional out-param: receives the edge's LABEL ANCHOR — the jog elbow
+     *  (tracking any detour), or the chord midpoint for curve/level/backward
+     *  edges. Lets a connector tag ride the real line, detours included. */
+    out?: { anchor: Pt }
+  } = {},
 ): string {
   const obstacles = opts.obstacles ?? []
   const bendFrac = opts.bendFrac ?? 0.5
+  const setAnchor = (x: number, y: number) => { if (opts.out) opts.out.anchor = { x, y } }
   // "Backward": the target sits at or behind the source along the primary axis.
   // Such an edge MUST loop around with the inverted-S below — a soft curve or a
   // straight line would run straight back through both cards (only the
@@ -42,6 +51,7 @@ export function buildEdgePath(
   // here — a shallow soft-curve has no vertical jog to pin.)
   if (!backwards && Math.abs(to.y - from.y) < CURVE_THRESHOLD) {
     const dx = Math.abs(to.x - from.x)
+    setAnchor((from.x + to.x) / 2, (from.y + to.y) / 2)
     return `M ${from.x} ${from.y} C ${from.x + dx * 0.5} ${from.y}, ${to.x - dx * 0.5} ${to.y}, ${to.x} ${to.y}`
   }
 
@@ -68,6 +78,7 @@ export function buildEdgePath(
     const d1 = Math.sign(my - from.y) || 1 // source-leg direction
     const d2 = Math.sign(to.y - my) || 1 // target-leg direction
     const r2 = Math.min(R, STUB / 2, Math.abs(my - from.y) / 2, Math.abs(to.y - my) / 2, Math.abs(ax - bx) / 2)
+    setAnchor(midX, my)
     return (
       `M ${from.x} ${from.y}` +
       ` L ${ax - r2} ${from.y}` +
@@ -95,7 +106,7 @@ export function buildEdgePath(
     const hi = Math.max(from.x, to.x) - margin
     bendX = lo <= hi ? Math.max(lo, Math.min(hi, bendXOverride)) : bendX
   }
-  if (dy < 0.5) return `M ${from.x} ${from.y} L ${to.x} ${to.y}`
+  if (dy < 0.5) { setAnchor((from.x + to.x) / 2, (from.y + to.y) / 2); return `M ${from.x} ${from.y} L ${to.x} ${to.y}` }
   const r = Math.min(R, Math.abs(bendX - from.x), Math.abs(to.x - bendX), dy / 2)
 
   // A pinned bendX also drives where we probe for obstacles: the jog is tested
@@ -108,6 +119,7 @@ export function buildEdgePath(
     const detourX = Math.abs(bendX - leftX) < Math.abs(bendX - rightX) ? leftX : rightX
     const dxA = Math.min(R, Math.abs(detourX - from.x) / 2, Math.abs(detourX - to.x) / 2)
     const r2 = Math.min(dxA, dy / 2)
+    setAnchor(detourX, (from.y + to.y) / 2)
     return (
       `M ${from.x} ${from.y}` +
       ` L ${detourX - Math.sign(detourX - from.x) * r2} ${from.y}` +
@@ -119,6 +131,7 @@ export function buildEdgePath(
   }
 
   // Simple single-jog L with rounded corners.
+  setAnchor(bendX, (from.y + to.y) / 2)
   return (
     `M ${from.x} ${from.y}` +
     ` L ${bendX - r} ${from.y}` +

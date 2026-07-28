@@ -380,14 +380,18 @@ export function WorkflowCanvas({
     }
     // Flow-axis span of a segment (the axis a bend-drag moves along).
     const flowSpan = (from: Pt, to: Pt) => (verticalPrimary ? to.y - from.y : to.x - from.x)
-    // Bend metadata for a labelled, bend-capable segment: its key, span, and the
-    // current jog anchor (the on-line point a dragged tag rides — the vertical/
-    // horizontal jog's midpoint at the live bendFrac, so it tracks the bend).
-    const bendMeta = (from: Pt, to: Pt, key: string) => {
-      const frac = bendFracs[key] ?? 0.5
-      const anchor: Pt = verticalPrimary
-        ? { x: (from.x + to.x) / 2, y: from.y + (to.y - from.y) * frac }
-        : { x: from.x + (to.x - from.x) * frac, y: (from.y + to.y) / 2 }
+    // Bend metadata for a labelled, bend-capable segment: its key, span, and its
+    // ELBOW anchor — the real jog point buildEdgePath routes to (detours
+    // included), the same routing (obstacles minus the endpoint cards, live
+    // bendFrac) as the drawn edge. The tag RIDES this, so it's always on the line
+    // and there is no separate resting spot to jump from (design's PipeEdge model).
+    const bendMeta = (from: Pt, to: Pt, key: string, exclude: WfRect[]) => {
+      const ex = new Set(exclude.map((r) => (verticalPrimary ? swapRect(r) : rectObstacle(r))).map((o) => `${o.x0},${o.y0}`))
+      const obs = obstacles.filter((o) => !ex.has(`${o.x0},${o.y0}`))
+      const out: { anchor: Pt } = { anchor: { x: 0, y: 0 } }
+      if (verticalPrimary) buildEdgePath(swap(from), swap(to), { obstacles: obs, bendFrac: bendFracs[key], out })
+      else buildEdgePath(from, to, { obstacles: obs, bendFrac: bendFracs[key], out })
+      const anchor = verticalPrimary ? swap(out.anchor) : out.anchor // un-swap to world
       return { key, span: flowSpan(from, to), anchor }
     }
     const sideCoord = (id: string) => {
@@ -487,7 +491,7 @@ export function WorkflowCanvas({
         hotIds: [e.from, e.to],
         label: outLabel(e), labelPos: null,
         swapped: verticalPrimary, arrow: 'flow',
-        bend: bendMeta(from, to, e.id),
+        bend: bendMeta(from, to, e.id, [nodeRects[e.from], nodeRects[e.to]]),
         toDot: arriveDot(e.to, e.toPort),
       })
     }
@@ -542,7 +546,7 @@ export function WorkflowCanvas({
             ...base, to,
             d: route(P, to, [nodeRects[e.from], stageRects[t]], base.key),
             swapped: verticalPrimary, arrow: 'flow',
-            bend: bendMeta(P, to, base.key),
+            bend: bendMeta(P, to, base.key, [nodeRects[e.from], stageRects[t]]),
           })
         } else {
           const g = groups[face]
@@ -690,6 +694,11 @@ export function WorkflowCanvas({
     const taken: { x: number; y: number; w: number; h: number }[] = []
     return segments.map((s) => {
       if (!s.label) return s
+      // Bend-capable segments rest their tag ON the elbow (bend.anchor), which
+      // tracks the routed jog/detour live — so touching it never teleports the
+      // tag, and its leader is always on the line. Only the hand-routed hub side
+      // segments (no bend) still auto-place, dodging cards + other pills.
+      if (s.bend) return { ...s, labelPos: s.bend.anchor }
       const { pt, box } = labelAnchor(s.d, avoid, {
         swapped: s.swapped,
         boxW: s.label.length * 5.6 + 14,
@@ -794,10 +803,9 @@ export function WorkflowCanvas({
           {labeledSegments.map((s) => {
             const off = labelOffsets[s.key] ?? 0
             if (!s.label || !s.labelPos || Math.abs(off) <= 0.5) return null
-            // A touched, bend-capable tag rides its jog anchor; others ride the
-            // auto-placed point. The leader bridges that on-line point to the tag.
-            const touched = s.key in bendFracs || s.key in labelOffsets
-            const anchor = touched && s.bend ? s.bend.anchor : s.labelPos
+            // labelPos IS the on-line anchor (the elbow for bendable tags, the
+            // auto-placed point otherwise); the leader bridges it to the tag.
+            const anchor = s.labelPos
             const lx = anchor.x + (verticalPrimary ? off : 0)
             const ly = anchor.y + (verticalPrimary ? 0 : off)
             const hot = !!selected && s.hotIds.includes(selected)
@@ -979,11 +987,9 @@ export function WorkflowCanvas({
         {labeledSegments.map((s) => {
           if (!s.label || !s.labelPos) return null
           const off = labelOffsets[s.key] ?? 0
-          // Untouched tags stay at their auto-placed (node-dodging) spot; once
-          // dragged, a bend-capable tag rides its jog anchor so it tracks the
-          // bend smoothly.
-          const touched = s.key in bendFracs || s.key in labelOffsets
-          const base = touched && s.bend ? s.bend.anchor : s.labelPos
+          // The tag rides labelPos (the live elbow for bendable tags): the same
+          // point at rest and while dragged, so grabbing it never teleports.
+          const base = s.labelPos
           const left = base.x + (verticalPrimary ? off : 0)
           const top = base.y + (verticalPrimary ? 0 : off)
           const hot = !!selected && s.hotIds.includes(selected)
