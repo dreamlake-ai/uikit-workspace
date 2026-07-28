@@ -133,10 +133,11 @@ interface Seg {
    *  the bend smoothly. Absent on hand-routed hub side segments (their tags only
    *  lift, never bend). */
   bend?: { key: string; span: number; anchor: Pt }
-  /** True when this segment arrives at a MEMBER port dot (pull the arrowhead
-   *  back off it); false/absent for stage/spine arrivals, where the arrow hugs
-   *  the card edge (no dot to clear). */
-  toDot?: boolean
+  /** The kind of port dot this segment arrives at, so the arrowhead can be
+   *  pulled back exactly enough to clear it: `normal` (a plain 6px dot — hug
+   *  it), `collect` (a fan-in dot with a second ring — clear the wider ring).
+   *  Absent for stage/spine arrivals, which have no dot (arrow hugs the card). */
+  toDot?: 'normal' | 'collect'
 }
 
 export function WorkflowCanvas({
@@ -455,6 +456,13 @@ export function WorkflowCanvas({
       const p = outs.find((x) => x.name === (e.fromPort ?? 'out')) ?? outs[0]
       return p && p.type !== 'artifact' ? p.type : null
     }
+    // Which port-dot kind a member arrival lands on — a `collect` input dot
+    // wears a second ring, so its arrow must pull back further.
+    const arriveDot = (id: string, port?: string): 'normal' | 'collect' => {
+      const ins = nodeInputs(nodeById[id])
+      const p = ins.find((x) => x.name === (port ?? 'in')) ?? ins[0]
+      return p?.collect === true ? 'collect' : 'normal'
+    }
 
     const segs: Seg[] = []
 
@@ -480,7 +488,7 @@ export function WorkflowCanvas({
         label: outLabel(e), labelPos: null,
         swapped: verticalPrimary, arrow: 'flow',
         bend: bendMeta(from, to, e.id),
-        toDot: true,
+        toDot: arriveDot(e.to, e.toPort),
       })
     }
 
@@ -598,7 +606,7 @@ export function WorkflowCanvas({
           flow, to: T,
           hotIds: edge ? [edge.from, targetId, t] : [t, targetId],
           label: null, labelPos: null,
-          toDot: true,
+          toDot: arriveDot(targetId, edge?.toPort) as 'normal' | 'collect',
         }
         if (face === 'flow') {
           const gi = groups.flow.indexOf(i)
@@ -740,10 +748,11 @@ export function WorkflowCanvas({
               : verticalPrimary
                 ? (s.arrow === 's+' ? 'right' : 'left')
                 : (s.arrow === 's+' ? 'down' : 'up')
-            // Pull the arrowhead back off the 6px port dot so its tip never
-            // overlaps it. Stage/spine arrivals have no dot, so the arrow hugs
-            // the card edge (GAP 0) instead of floating above it.
-            const GAP = s.toDot ? 5 : 0
+            // Pull the arrowhead back just enough to clear the port dot it
+            // arrives at — hugging a plain dot (outer edge ~3px) and clearing a
+            // collect dot's wider second ring (~6.5px). Stage/spine arrivals
+            // have no dot, so the arrow hugs the card edge (GAP 0).
+            const GAP = s.toDot === 'collect' ? 7.5 : s.toDot === 'normal' ? 4 : 0
             const tx = s.to.x + (dir === 'right' ? -GAP : dir === 'left' ? GAP : 0)
             const ty = s.to.y + (dir === 'down' ? -GAP : dir === 'up' ? GAP : 0)
             const head =
