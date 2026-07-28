@@ -814,16 +814,20 @@ export function WorkflowCanvas({
             const dy = node.y - base.y
             const agentsPos = raw.map((r) => ({ x: r.x + dx, y: r.y + dy, w: r.w, h: r.h }))
             const colLeft = Math.min(...agentsPos.map((a) => a.x))
-            const spineX = colLeft - 12
-            // One rounded branch per agent; the shared spine segments overlay
-            // (same solid colour) into a single trunk.
+            // One rounded branch per agent; the shared trunk segments overlay
+            // (same solid colour) into a single spine.
             const branches = agentsPos.map((a) => {
               const ay = a.y + a.h / 2
               if (verticalPrimary) {
+                // Trunk in the gap off the card's right side.
+                const spineX = colLeft - 12
                 const nx = node.x + node.w
                 const ny = node.y + node.h / 2
                 return roundedPath([{ x: nx, y: ny }, { x: spineX, y: ny }, { x: spineX, y: ay }, { x: a.x, y: ay }], 9)
               }
+              // Trunk ALIGNED with the card's left border, dropping from its
+              // bottom-left corner, then a rounded branch into each agent.
+              const spineX = node.x
               return roundedPath([{ x: spineX, y: node.y + node.h }, { x: spineX, y: ay }, { x: a.x, y: ay }], 9)
             })
             return (
@@ -836,6 +840,27 @@ export function WorkflowCanvas({
             )
           })}
         </svg>
+
+        {/* agent instances (run overlay) — rendered BEFORE the node cards so a
+            uda card always stacks above its own agents. */}
+        {layout.agentRects.map((a) => {
+          const agents = agentsByNodeId?.[a.nodeId] ?? []
+          const agent = agents.find((x) => x.agentId === a.agentId)
+          if (!agent) return null
+          const parentOv = posOverride[a.nodeId]
+          const base = layout.nodeRects[a.nodeId]
+          const dx = parentOv && base ? parentOv.x - base.x : 0
+          const dy = parentOv && base ? parentOv.y - base.y : 0
+          return (
+            <AgentInstanceCard
+              key={`${a.nodeId}:${a.agentId}`}
+              agent={agent}
+              pos={{ x: a.x + dx, y: a.y + dy }}
+              // Agent cards are node-like sub-cards — never dimmed on selection.
+              dimmed={false}
+            />
+          )
+        })}
 
         {/* stage nodes (hubs) */}
         {spec.stages.map((s) => {
@@ -929,26 +954,6 @@ export function WorkflowCanvas({
               {ins.map((p, i) => marker(p, i, ins.length, 'in'))}
               {outs.map((p, i) => marker(p, i, outs.length, 'out'))}
             </span>
-          )
-        })}
-
-        {/* agent instances (run overlay) */}
-        {layout.agentRects.map((a) => {
-          const agents = agentsByNodeId?.[a.nodeId] ?? []
-          const agent = agents.find((x) => x.agentId === a.agentId)
-          if (!agent) return null
-          const parentOv = posOverride[a.nodeId]
-          const base = layout.nodeRects[a.nodeId]
-          const dx = parentOv && base ? parentOv.x - base.x : 0
-          const dy = parentOv && base ? parentOv.y - base.y : 0
-          return (
-            <AgentInstanceCard
-              key={`${a.nodeId}:${a.agentId}`}
-              agent={agent}
-              pos={{ x: a.x + dx, y: a.y + dy }}
-              // Agent cards are node-like sub-cards — never dimmed on selection.
-              dimmed={false}
-            />
           )
         })}
 
