@@ -115,10 +115,17 @@ export function Toaster({
   className,
 }: ToasterProps) {
   const [items, setItems] = useState<ToastItem[]>([]);
+  // Only render the portal AFTER mount. The server renders null; a bare
+  // `typeof document` check would make the FIRST client render (hydration)
+  // already emit the portal <div>, mismatching the server's null → a hydration
+  // error. Starting false and flipping true in an effect keeps the first client
+  // render == server (null), then the portal appears post-hydration.
+  const [mounted, setMounted] = useState(false);
   const timers = useRef(
     new Map<string | number, ReturnType<typeof setTimeout>>(),
   );
 
+  useEffect(() => setMounted(true), []);
   useEffect(() => toastStore.subscribe(setItems), []);
 
   useEffect(() => {
@@ -142,7 +149,7 @@ export function Toaster({
     }
   }, [items, duration]);
 
-  if (typeof document === "undefined") return null;
+  if (!mounted || typeof document === "undefined") return null;
 
   const fromTop = position.startsWith("top");
 
