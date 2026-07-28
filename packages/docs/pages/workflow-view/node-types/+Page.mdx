@@ -132,6 +132,42 @@ edge by default; fan-in is either a `collect: true` port (ordered collection of
 same-type producers) or the XOR-merge exception (branches of the same
 condition / switch may share a target port, since at most one fires).
 
+## Ports
+
+The input and output **dots** on a card aren't read verbatim from the raw
+`inputs` / `outputs` fields — they come from two derivations, `nodeInputs(n)`
+and `nodeOutputs(n)` (exported from `@dreamlake/uikit`). They apply defaults
+and, for the pass-through families, derive the ports from the node's role; the
+canvas then draws **one dot per derived port**.
+
+**Inputs.** `nodeInputs` returns the declared `inputs` when present, otherwise a
+single default `in` port (type `artifact`) — so every node has at least one
+input dot.
+
+**Outputs.** `nodeOutputs` depends on the family:
+
+| Family | Output ports |
+| --- | --- |
+| `compute` / `uda` | the declared `outputs`, or a single default `out` (`artifact`) |
+| `sampler` | a single derived `out`, **type-preserving** (carries the input's type) — any declared `outputs` are ignored |
+| `control · condition` | `true`, `false` (both type `T`) |
+| `control · switch` | one port per case **plus a required `default`** (all `T`) |
+| `control · loop` / `approval` | a single `out` (type `T`) |
+
+Two consequences worth calling out — both visible on the canvas:
+
+- **A `sampler` / `control` node shows an output dot even with no `outputs`
+  field**, because its output is *derived*, not declared. An `approval` gate
+  with only `inputs: [{ name: 'in', type: 'dataset' }]` still gets one
+  `out: dataset` dot. (Declaring `outputs` on these families has no effect.)
+- **A `switch` shows one output dot per case *plus* `default`** — a 3-case
+  router (`high` / `uncertain` / `rare`) has **four** output dots, the extra one
+  being `default`, which keeps the exclusive choice total.
+
+Port **names** other than `in` / `out` are labelled beside their dot (a switch's
+`high` / `uncertain` / `rare` / `default`, for example). A `collect: true` input
+port wears a **second ring** to mark fan-in.
+
 ## Edge data types
 
 Every port carries a type from a closed **artifact lattice**. `artifact` is the
