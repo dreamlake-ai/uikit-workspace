@@ -53,8 +53,8 @@ def detect_objects(images: Tensor["N", "H", "W", 3]) -> Tuple["boxes", "classes"
 **② The node you see, ③ the JSON in between** — flip between the rendered card
 (**Preview**), the render call (**Source**), and the tracer's node JSON
 (**Data**). The card *is* the JSON: the kind dot ← `kind`, the title ← `title`,
-the `1→1` meta ← `inputs`/`outputs` lengths, the edge dots ← the `inputs` /
-`outputs` ports.
+the `1→1` meta ← `inputs`/`outputs` lengths, and a single input / output dot on
+each edge (every parameter shares the one input dot).
 
 The return columns (`boxes`, `classes`, `confidence`) live in `columns` — the
 result's schema, **not** extra ports. A UDF returns one table; passing it
@@ -142,14 +142,12 @@ parameter. The parameter *names* live in a floating **param tag** instead: one
 tag per node-pair, listing every param that pair transfers (each with a small
 leading dot, stacked), tinted to match the edge's flow.
 
-The tags place themselves. On first render each is dropped into open canvas —
-clear of every node and of the other tags — with a dashed **leader** back to the
-point on the edge it annotates; that placement is then frozen, so dragging a node
-only slides its tags along, never reshuffles them. The tags are also
-**draggable**: drag one **along its edge** to rebend the edge (the orthogonal jog
-follows), or **across** it to lift the tag off the line onto a dashed leader
-(release near the line to snap it back). Press-and-hold highlights the tag, its
-leader, and its edge in the edge's flow colour, so you can trace a crowded corner.
+Each tag rests **on** its edge (at the bend), tracking it as nodes move. They're
+also **draggable**: drag one **along** its edge to rebend the edge (the
+orthogonal jog follows), or **across** it to lift the tag onto a dashed **leader**
+(release near the line to snap back). Press-and-hold highlights the tag and its
+edge — the same treatment a node selection gives, so you can trace a crowded
+corner.
 
 The same graph paired with its source rail — click a node to read the UDF whose
 parameters and return columns produced those ports:
