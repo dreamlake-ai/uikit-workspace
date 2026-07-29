@@ -724,16 +724,6 @@ export function WorkflowCanvas({
     ? (WF_STATE_COLOR[statusByNodeId?.[selected] ?? 'idle'] ?? 'var(--color-uikit-muted)')
     : 'var(--color-uikit-accent)'
 
-  // A held tag highlights its edge in the TARGET member's status colour —
-  // exactly as selecting that node would — so the tag-hold and node-selection
-  // edge highlights match (an idle edge reads `muted`, not the edge-flow grey).
-  const tagHotColor = (() => {
-    if (!activeTag) return 'var(--color-uikit-muted)'
-    const eid = activeTag.replace(/#(up|dn)$/, '')
-    const tgt = spec.edges.find((e) => e.id === eid)?.to
-    return WF_STATE_COLOR[(tgt && statusByNodeId?.[tgt]) || 'idle'] ?? 'var(--color-uikit-muted)'
-  })()
-
   // -- render ----------------------------------------------------------------
   return (
     <div
@@ -780,11 +770,14 @@ export function WorkflowCanvas({
             const paleGrey = 'color-mix(in srgb, var(--color-uikit-ink) 22%, var(--color-uikit-panel))'
             const baseColor = s.spine || s.flow === 'idle' ? paleGrey : flowSpec.color
             // A node selection highlights in the node's status colour (selColor);
-            // a tag hold highlights its edge in the edge's own flow colour.
+            // a tag hold highlights its edge in the edge's OWN colour, deepened —
+            // idle / spine greys go to muted (the faint paleGrey wouldn't read as
+            // highlighted), exactly the shade an idle-node selection uses.
+            const hotColor = s.spine || s.flow === 'idle' ? 'var(--color-uikit-muted)' : flowSpec.color
             const stroke = selHot
               ? selColor
               : tagHot
-                ? tagHotColor
+                ? hotColor
                 : dim
                   ? `color-mix(in srgb, ${baseColor} 45%, var(--color-uikit-panel))`
                   : baseColor

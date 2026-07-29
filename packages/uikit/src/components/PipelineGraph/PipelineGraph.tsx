@@ -433,13 +433,14 @@ export function PipelineGraph({
             // selected node's status colour.
             const paleGrey = 'color-mix(in srgb, var(--color-uikit-ink) 22%, var(--color-uikit-panel))'
             const baseColor = flow === 'idle' ? paleGrey : spec.color
-            // A tag hold highlights its edge in the TARGET node's status colour —
-            // exactly as selecting that node would — so the two highlights match
-            // (an idle edge reads `muted`, not the paler edge-flow grey).
+            // A held tag highlights its edge in the edge's OWN colour, deepened —
+            // an idle edge's faint grey goes to muted (matching the shade an
+            // idle-node selection uses), so it reads as highlighted.
+            const hotColor = flow === 'idle' ? 'var(--color-uikit-muted)' : spec.color
             const stroke = selHot
               ? selColor
               : tagHot
-                ? (STATUS[b.status] ?? STATUS.idle).color
+                ? hotColor
                 : dim
                   ? `color-mix(in srgb, ${baseColor} 42%, var(--color-uikit-panel))`
                   : maskGate && !hot
