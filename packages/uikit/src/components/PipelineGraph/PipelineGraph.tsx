@@ -25,9 +25,6 @@ import { cn } from '../../lib/utils'
 import type { GraphNode, GraphEdge, PipelineGraphData, StatusOverlay } from './types'
 import { FLOW, NODE_H, NODE_W, STATUS, edgeFlow, kindColor, portPos } from './flow'
 import { buildEdgePath, type Obstacle } from './edge-path'
-// Shared connector-tag placement — the SAME auto-anchor WorkflowCanvas uses, so
-// the two canvases' tags place and drag identically (single source of truth).
-import { labelAnchor } from '../WorkflowGraph/layout'
 
 export interface PipelineGraphProps {
   graph: PipelineGraphData
@@ -68,28 +65,11 @@ type View = { x: number; y: number; k: number }
 
 // —— Per-edge param tags ————————————————————————————————————————————————————
 // Each node-pair (A→B) gets one tag listing the params it transfers (the edge
-// toPorts). Placement + drag are IDENTICAL to WorkflowCanvas (shared labelAnchor):
-// an untouched tag auto-places on the routed edge clear of nodes / other tags;
-// dragging it ALONG the edge rebends the edge (bendFrac) and ACROSS it lifts the
-// tag onto a dashed leader (labelOffset). See the pairTags memo below.
-
-// Estimated tag box (mono 9px / 600 / .04em, matching the design's edge label),
-// used to test candidate placements for collisions. Slightly OVER-estimated so a
-// reserved slot always fully clears the rendered tag (no residual overlap).
-const TAG_CHARW = 6.0      // ~advance of one mono char at 9px + letter-spacing, rounded up
-const TAG_PADX = 7
-const TAG_PADY = 3         // → single-row box ≈ 15px tall (design pill is 14)
-const TAG_ROW = 10         // one param row's height
-const TAG_ROWGAP = 3       // vertical gap between rows
-const TAG_LEADCOL = 8      // leading dot (3px) + its 5px gap before the text
-
-function estTagSize(params: string[]): { w: number; h: number } {
-  const longest = params.reduce((m, p) => Math.max(m, p.length), 0)
-  return {
-    w: TAG_PADX * 2 + TAG_LEADCOL + Math.ceil(longest * TAG_CHARW),
-    h: TAG_PADY * 2 + params.length * TAG_ROW + Math.max(0, params.length - 1) * TAG_ROWGAP,
-  }
-}
+// toPorts). Placement + drag are IDENTICAL to WorkflowCanvas: the tag rests on
+// its edge's routed jog/detour point (buildEdgePath's `out` anchor, so it always
+// sits ON the drawn line), dragging it ALONG the edge rebends the edge (bendFrac)
+// and ACROSS it lifts the tag onto a dashed leader (labelOffset).
+const TAG_ROWGAP = 3       // vertical gap between stacked param rows
 
 // Group edges by node-pair, collecting each pair's transferred params (toPorts).
 function groupEdgeParams(edges: GraphEdge[]): Map<string, { from: string; to: string; params: string[] }> {
@@ -120,7 +100,7 @@ export function PipelineGraph({
   // Per-pair connector-tag interaction — identical to WorkflowCanvas: dragging a
   // tag along the edge axis rebends its edge (bendFracs, fed to buildEdgePath);
   // dragging across it lifts the tag onto a dashed leader (labelOffsets, world
-  // px). Untouched tags auto-place on the routed edge via the shared labelAnchor.
+  // px). A tag always rests on its edge's routed jog/detour anchor (see pairTags).
   const [bendFracs, setBendFracs] = useState<Record<string, number>>({})
   const [labelOffsets, setLabelOffsets] = useState<Record<string, number>>({})
   // The pair key of the tag currently pressed/held — highlights that tag, its
@@ -163,10 +143,6 @@ export function PipelineGraph({
   // anchor. This recomputes per render so anchors follow node drags, but does NO
   // collision search — only the cheap per-pair anchor measurement.
   const pairTags = useMemo(() => {
-    // Cards to keep untouched tags clear of (labelAnchor avoid set), + a running
-    // list of already-placed tag boxes so tags don't stack on each other.
-    const avoid = nodes.map(n => ({ x: n.pos.x - 6, y: n.pos.y - 6, w: NODE_W + 12, h: NODE_H + 12 }))
-    const taken: Array<{ x: number; y: number; w: number; h: number }> = []
     const out: Array<{
       key: string; from: string; to: string; params: string[]
       anchorX: number; anchorY: number; tagX: number; tagY: number
@@ -181,29 +157,22 @@ export function PipelineGraph({
       const span = toP.x - fromP.x
       const frac = bendFracs[key] ?? 0.5
       const off = labelOffsets[key] ?? 0
-      const touched = key in bendFracs || key in labelOffsets
       const color = FLOW[edgeFlow(src.status, dst.status)].color
-      let anchor: { x: number; y: number }
-      if (touched) {
-        // A dragged tag rides its edge's jog (x follows the bendFrac); the perp
-        // offset (y) lifts it onto a leader.
-        anchor = { x: fromP.x + span * frac, y: (fromP.y + toP.y) / 2 }
-      } else {
-        // Untouched: auto-place ON the routed edge, clear of nodes and other
-        // tags — the SAME labelAnchor pass WorkflowCanvas runs.
-        const obstacles: Obstacle[] = nodes
-          .filter(n => n.id !== g.from && n.id !== g.to)
-          .map(n => ({ x0: n.pos.x - 4, x1: n.pos.x + NODE_W + 4, y0: n.pos.y - 4, y1: n.pos.y + NODE_H + 4 }))
-        const d = buildEdgePath(fromP, toP, { obstacles })
-        const { w, h } = estTagSize(g.params)
-        const { pt, box } = labelAnchor(d, avoid, { boxW: w, boxH: h, taken })
-        taken.push(box)
-        anchor = pt
-      }
+      // Anchor the tag ON the actual routed edge — buildEdgePath reports its
+      // jog/detour point via `out` (the SAME obstacle-avoidance the drawn edge
+      // uses), so the tag and its leader always sit on the line, detours
+      // included. The anchor tracks the bendFrac live, so a touched tag rides
+      // the bend and an untouched one already sits on the jog (no teleport on
+      // grab). Identical to WorkflowCanvas's bend-capable tags.
+      const obstacles: Obstacle[] = nodes
+        .filter(n => n.id !== g.from && n.id !== g.to)
+        .map(n => ({ x0: n.pos.x - 4, x1: n.pos.x + NODE_W + 4, y0: n.pos.y - 4, y1: n.pos.y + NODE_H + 4 }))
+      const probe = { anchor: { x: fromP.x + span * frac, y: (fromP.y + toP.y) / 2 } }
+      buildEdgePath(fromP, toP, { obstacles, bendFrac: frac, out: probe })
       out.push({
         key, from: g.from, to: g.to, params: g.params,
-        anchorX: anchor.x, anchorY: anchor.y,
-        tagX: anchor.x, tagY: anchor.y + off, span,
+        anchorX: probe.anchor.x, anchorY: probe.anchor.y,
+        tagX: probe.anchor.x, tagY: probe.anchor.y + off, span,
         hasLeader: Math.abs(off) > 0.5, color,
       })
     }
