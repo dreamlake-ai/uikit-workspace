@@ -24,7 +24,7 @@ import {
 import { cn } from '../../lib/utils'
 import type { GraphNode, GraphEdge, PipelineGraphData, StatusOverlay } from './types'
 import { FLOW, NODE_H, NODE_W, STATUS, edgeFlow, kindColor, portPos } from './flow'
-import { buildEdgePath, type Obstacle } from './edge-path'
+import { buildEdgePath, type Obstacle, type Pt } from './edge-path'
 
 export interface PipelineGraphProps {
   graph: PipelineGraphData
@@ -167,17 +167,23 @@ export function PipelineGraph({
       const obstacles: Obstacle[] = nodes
         .filter(n => n.id !== g.from && n.id !== g.to)
         .map(n => ({ x0: n.pos.x - 4, x1: n.pos.x + NODE_W + 4, y0: n.pos.y - 4, y1: n.pos.y + NODE_H + 4 }))
-      const probe = { anchor: { x: fromP.x + span * frac, y: (fromP.y + toP.y) / 2 } }
+      const probe: { anchor: Pt; jog?: { y0: number; y1: number } } = {
+        anchor: { x: fromP.x + span * frac, y: (fromP.y + toP.y) / 2 },
+      }
       buildEdgePath(fromP, toP, { obstacles, bendFrac: frac, out: probe })
       const ax = probe.anchor.x
       const tagY = probe.anchor.y + off
-      // The leader is vertical at ax, collinear with the edge's vertical jog
-      // (which spans the endpoints' y). Draw it only from where it LEAVES the
-      // jog to the tag, so it never doubles the edge line; hidden entirely when
-      // the tag still sits within the jog span (the opaque tag box covers it).
-      const jogY0 = Math.min(fromP.y, toP.y)
-      const jogY1 = Math.max(fromP.y, toP.y)
-      const leaderY = tagY < jogY0 ? jogY0 : tagY > jogY1 ? jogY1 : tagY
+      // The leader is vertical at ax. When the routed edge has a vertical JOG at
+      // ax (orthogonal / detour — buildEdgePath reports its [y0,y1] span), draw
+      // the leader only from where it LEAVES the jog to the tag, so it never
+      // doubles the edge line (and is hidden while the tag sits within the jog).
+      // A CURVE / straight / backward edge has NO such vertical segment — its
+      // anchor is a lone point ON the line — so the leader runs straight to the
+      // anchor; clamping to the ports' y would stop it short and leave the tag
+      // floating off the curve (the bug the design doesn't have).
+      const leaderY = probe.jog
+        ? (tagY < probe.jog.y0 ? probe.jog.y0 : tagY > probe.jog.y1 ? probe.jog.y1 : tagY)
+        : probe.anchor.y
       out.push({
         key, from: g.from, to: g.to, params: g.params,
         tagX: ax, tagY, leaderY, span,
@@ -374,6 +380,18 @@ export function PipelineGraph({
     ? (STATUS[byId[selected]?.status ?? 'idle'] ?? STATUS.idle).color
     : 'var(--color-uikit-accent)'
 
+  // Paint order: a highlighted (hot) edge must sit ABOVE the dimmed ones, or an
+  // overlapping neighbour drawn later occludes it (SVG paints in document order).
+  // Stable-sort the hot edges to the end so they render last; carry the original
+  // index so keys stay stable. Only reorders while something is selected/held.
+  const isEdgeHot = (e: GraphEdge) =>
+    (!!selected && (e.from === selected || e.to === selected)) ||
+    activeTag === `${e.from}->${e.to}`
+  const orderedEdges = graph.edges.map((e, i) => ({ e, i }))
+  if (selected || activeTag) {
+    orderedEdges.sort((a, b) => (isEdgeHot(a.e) ? 1 : 0) - (isEdgeHot(b.e) ? 1 : 0))
+  }
+
   return (
     <div
       ref={containerRef}
@@ -401,7 +419,7 @@ export function PipelineGraph({
         style={{ transform: `translate(${view.x}px, ${view.y}px) scale(${view.k})` }}
       >
         <svg width={bounds.w} height={bounds.h} className="absolute top-0 left-0 pointer-events-none overflow-visible">
-          {graph.edges.map((e, i) => {
+          {orderedEdges.map(({ e, i }) => {
             const a = byId[e.from]
             const b = byId[e.to]
             if (!a || !b) return null
@@ -427,12 +445,11 @@ export function PipelineGraph({
             const maskGate = e.kind === 'mask' && (flow === 'idle' || flow === 'ok')
             const dash = maskGate ? '4 4' : spec.dash
             // SOLID colours only — never opacity — so overlapping lines can't
-            // stack up and darken. idle → solid pale grey; a dimmed edge → a
-            // solid pale tint of its colour; a mask gate → a slightly paler solid
-            // (its "fainter" cue without the alpha). A selection highlights in the
-            // selected node's status colour.
-            const paleGrey = 'color-mix(in srgb, var(--color-uikit-ink) 22%, var(--color-uikit-panel))'
-            const baseColor = flow === 'idle' ? paleGrey : spec.color
+            // stack up and darken. idle → the design's warm grey (--edge-idle,
+            // carried by spec.color); a dimmed edge → a solid pale tint of its
+            // colour; a mask gate → a slightly paler solid (its "fainter" cue
+            // without the alpha). A selection highlights in the node's status colour.
+            const baseColor = spec.color
             // A held tag highlights its edge in the edge's OWN colour, deepened —
             // an idle edge's faint grey goes to muted (matching the shade an
             // idle-node selection uses), so it reads as highlighted.

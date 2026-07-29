@@ -41,6 +41,9 @@
   /* ── Pipeline graph canvas (light) — beige plane + dot grid. ──── */
   --canvas-bg: #f4efe2;
   --canvas-dot: #d6cdb4;
+  /* Idle connector edges (solid + dashed) and tag→edge leaders — the
+     design's warm grey. Theme-aware (dark override below). */
+  --edge-idle: #9c907a;
 
   /* ── Semantic palette (Style Guide §Color) ────────────────────
      The six-color set every domain coloring pulls from. Names mirror
@@ -110,6 +113,7 @@ html[data-theme="dark"] {
   /* ── Pipeline graph canvas (dark). ──────────────────────────── */
   --canvas-bg: #131318;
   --canvas-dot: #2a2a32;
+  --edge-idle: #5a5560;
 
   /* Row bands — dark */
   --row-base: #2b2b31;
@@ -185,6 +189,7 @@ html[data-theme="dark"] {
   --color-uikit-rail: var(--rail-bg);
   --color-uikit-canvas-bg: var(--canvas-bg);
   --color-uikit-canvas-dot: var(--canvas-dot);
+  --color-uikit-edge-idle: var(--edge-idle);
   --color-uikit-accent: var(--uikit-accent);
   --color-uikit-accent-soft: var(--accent-soft);
   --color-uikit-faint: var(--faint);
