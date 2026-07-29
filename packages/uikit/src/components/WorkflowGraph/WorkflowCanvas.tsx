@@ -132,7 +132,7 @@ interface Seg {
    *  the current jog anchor — the on-line point a *touched* tag rides, tracking
    *  the bend smoothly. Absent on hand-routed hub side segments (their tags only
    *  lift, never bend). */
-  bend?: { key: string; span: number; anchor: Pt }
+  bend?: { key: string; span: number; anchor: Pt; cross: [number, number] }
   /** The kind of port dot this segment arrives at, so the arrowhead can be
    *  pulled back exactly enough to clear it: `normal` (a plain 6px dot — hug
    *  it), `collect` (a fan-in dot with a second ring — clear the wider ring).
@@ -392,7 +392,13 @@ export function WorkflowCanvas({
       if (verticalPrimary) buildEdgePath(swap(from), swap(to), { obstacles: obs, bendFrac: bendFracs[key], out })
       else buildEdgePath(from, to, { obstacles: obs, bendFrac: bendFracs[key], out })
       const anchor = verticalPrimary ? swap(out.anchor) : out.anchor // un-swap to world
-      return { key, span: flowSpan(from, to), anchor }
+      // Cross-axis span of the jog the anchor sits on (world coords: x for the
+      // vertical layout, y for horizontal) — so a lifted tag's leader can be
+      // clipped to where it LEAVES the collinear jog instead of doubling it.
+      const cross: [number, number] = verticalPrimary
+        ? [Math.min(from.x, to.x), Math.max(from.x, to.x)]
+        : [Math.min(from.y, to.y), Math.max(from.y, to.y)]
+      return { key, span: flowSpan(from, to), anchor, cross }
     }
     const sideCoord = (id: string) => {
       const r = nodeRects[id]
@@ -808,13 +814,25 @@ export function WorkflowCanvas({
             const anchor = s.labelPos
             const lx = anchor.x + (verticalPrimary ? off : 0)
             const ly = anchor.y + (verticalPrimary ? 0 : off)
+            // The lift is along the jog's own axis, so the leader would run
+            // collinear with (and double) the jog. Start it where it LEAVES the
+            // jog (bend.cross) instead; hidden entirely while the tag is still
+            // within the jog span (the opaque tag box covers it).
+            let sx = anchor.x
+            let sy = anchor.y
+            if (s.bend) {
+              const [c0, c1] = s.bend.cross
+              if (verticalPrimary) sx = lx < c0 ? c0 : lx > c1 ? c1 : lx
+              else sy = ly < c0 ? c0 : ly > c1 ? c1 : ly
+            }
+            if (Math.abs(lx - sx) <= 0.5 && Math.abs(ly - sy) <= 0.5) return null
             const hot = !!selected && s.hotIds.includes(selected)
             const active = activeTag === s.key
             const color = hot ? selColor : FLOW[s.flow].color
             return (
               <line
                 key={`lead-${s.key}`}
-                x1={anchor.x} y1={anchor.y} x2={lx} y2={ly}
+                x1={sx} y1={sy} x2={lx} y2={ly}
                 stroke={color} strokeWidth={active ? 1.2 : 0.8}
                 strokeDasharray="2 2" opacity={active ? 0.9 : 0.55}
               />

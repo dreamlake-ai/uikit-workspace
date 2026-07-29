@@ -145,7 +145,7 @@ export function PipelineGraph({
   const pairTags = useMemo(() => {
     const out: Array<{
       key: string; from: string; to: string; params: string[]
-      anchorX: number; anchorY: number; tagX: number; tagY: number
+      tagX: number; tagY: number; leaderY: number
       span: number; hasLeader: boolean; color: string
     }> = []
     for (const g of groupEdgeParams(graph.edges).values()) {
@@ -169,11 +169,19 @@ export function PipelineGraph({
         .map(n => ({ x0: n.pos.x - 4, x1: n.pos.x + NODE_W + 4, y0: n.pos.y - 4, y1: n.pos.y + NODE_H + 4 }))
       const probe = { anchor: { x: fromP.x + span * frac, y: (fromP.y + toP.y) / 2 } }
       buildEdgePath(fromP, toP, { obstacles, bendFrac: frac, out: probe })
+      const ax = probe.anchor.x
+      const tagY = probe.anchor.y + off
+      // The leader is vertical at ax, collinear with the edge's vertical jog
+      // (which spans the endpoints' y). Draw it only from where it LEAVES the
+      // jog to the tag, so it never doubles the edge line; hidden entirely when
+      // the tag still sits within the jog span (the opaque tag box covers it).
+      const jogY0 = Math.min(fromP.y, toP.y)
+      const jogY1 = Math.max(fromP.y, toP.y)
+      const leaderY = tagY < jogY0 ? jogY0 : tagY > jogY1 ? jogY1 : tagY
       out.push({
         key, from: g.from, to: g.to, params: g.params,
-        anchorX: probe.anchor.x, anchorY: probe.anchor.y,
-        tagX: probe.anchor.x, tagY: probe.anchor.y + off, span,
-        hasLeader: Math.abs(off) > 0.5, color,
+        tagX: ax, tagY, leaderY, span,
+        hasLeader: Math.abs(tagY - leaderY) > 0.5, color,
       })
     }
     return out
@@ -433,12 +441,11 @@ export function PipelineGraph({
             // One thin weight, kept below the 1.5px card border so border and
             // connectors read consistently (border slightly heavier).
             const width = hot ? 1.5 : Math.min(spec.width, 1.4)
-            // Pull the arrowhead back just off the input dot so its tip HUGS it
-            // without overlap. `to` is the card's left edge; the 6px dot (offset
-            // ~1.5px in by the border) has its left edge ≈ to.x - 1.5, so ~2.5px
-            // lands the tip right against it. The line still runs to the port,
-            // hidden by the card.
-            const GAP = 2.5
+            // Pull the arrowhead back off the 6px input dot so its tip hugs it
+            // without overlap. The dot is drawn in world coords centred exactly
+            // on `to`, so GAP = radius(3) + 1 lands the tip 1px off its edge.
+            // The line still runs to the port, hidden by the dot / card.
+            const GAP = 4
             const tx = to.x - GAP
             return (
               <g key={i}>
@@ -456,11 +463,9 @@ export function PipelineGraph({
             )
           })}
 
-          {/* Param-tag leaders: a single straight dashed line from each tag's CENTRE
-              to its edge-midpoint anchor. Drawn under the (opaque) tag, so it
-              emerges from whichever side faces the anchor. Being one diagonal
-              segment it can't run collinear with the axis-aligned edges → it never
-              overlaps an inter-node edge. Tinted to match the edge. */}
+          {/* Param-tag leaders: a straight dashed line from a lifted tag down to
+              the point where it LEAVES its edge's jog — clipped so it never
+              doubles (overlaps) the collinear vertical jog. Tinted to the edge. */}
           {pairTags.map(t => {
             if (!t.hasLeader) return null
             const dim = !!selected && t.from !== selected && t.to !== selected
@@ -468,7 +473,7 @@ export function PipelineGraph({
             return (
               <line
                 key={`lead-${t.key}`}
-                x1={t.tagX} y1={t.tagY} x2={t.anchorX} y2={t.anchorY}
+                x1={t.tagX} y1={t.tagY} x2={t.tagX} y2={t.leaderY}
                 stroke={t.color}
                 strokeWidth={active ? 1.4 : 0.8} strokeDasharray="2 2"
                 opacity={active ? 1 : dim ? 0.2 : 0.55}
@@ -538,6 +543,19 @@ export function PipelineGraph({
             onPointerUp={e => onNodeUp(e, n)}
           />
         ))}
+
+        {/* Port dots — world coords at the exact port anchor, so the edge lines
+            and arrowheads point at their centres (drawn above the cards). */}
+        {nodes.map(n => {
+          const inA = n.inputs.length > 0 ? portPos(n, '', 'in') : null
+          const outA = n.outputs.length > 0 ? portPos(n, '', 'out') : null
+          return (
+            <span key={`dots-${n.id}`}>
+              {inA && <PortDot x={inA.x} y={inA.y} />}
+              {outA && <PortDot x={outA.x} y={outA.y} />}
+            </span>
+          )
+        })}
       </div>
 
       {showControls && <Legend />}
@@ -615,25 +633,24 @@ function PipeNode({ node, selected, dimmed, onPointerDown, onPointerMove, onPoin
       }}>
         {node.kind} · {node.inputs.length}→{node.outputs.length}
       </div>
-
-      {/* One input dot (left-centre) + one output dot (right-centre). The input
-          param names are surfaced in the floating input tag, not beside the dot. */}
-      {node.inputs.length > 0 && <PortDot dir="in" />}
-      {node.outputs.length > 0 && <PortDot dir="out" />}
+      {/* Port dots are drawn separately, in world coords (see PortDot), so they
+          land on the exact edge endpoints — the card only holds the text. */}
     </div>
   )
 }
 
-// The single 6px port dot, centred on the node's left (in) or right (out) edge.
-function PortDot({ dir }: { dir: 'in' | 'out' }) {
+// The single 6px port dot, centred on the port anchor in WORLD coords (not a
+// child of the card) so the edge lines / arrowheads point at its centre —
+// matching WorkflowCanvas's port markers.
+function PortDot({ x, y }: { x: number; y: number }) {
   return (
     <span style={{
       position: 'absolute',
-      top: NODE_H / 2 - 3,
-      ...(dir === 'in' ? { left: -3 } : { right: -3 }),
+      left: x - 3, top: y - 3,
       width: 6, height: 6, borderRadius: 3,
       background: 'var(--color-uikit-panel)',
       border: '1px solid var(--color-uikit-muted)',
+      pointerEvents: 'none',
     }} />
   )
 }
