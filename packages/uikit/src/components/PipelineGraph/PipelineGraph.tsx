@@ -433,13 +433,18 @@ export function PipelineGraph({
             // selected node's status colour.
             const paleGrey = 'color-mix(in srgb, var(--color-uikit-ink) 22%, var(--color-uikit-panel))'
             const baseColor = flow === 'idle' ? paleGrey : spec.color
+            // A tag hold highlights its edge in the TARGET node's status colour —
+            // exactly as selecting that node would — so the two highlights match
+            // (an idle edge reads `muted`, not the paler edge-flow grey).
             const stroke = selHot
               ? selColor
-              : dim
-                ? `color-mix(in srgb, ${baseColor} 42%, var(--color-uikit-panel))`
-                : maskGate && !hot
-                  ? `color-mix(in srgb, ${baseColor} 62%, var(--color-uikit-panel))`
-                  : baseColor
+              : tagHot
+                ? (STATUS[b.status] ?? STATUS.idle).color
+                : dim
+                  ? `color-mix(in srgb, ${baseColor} 42%, var(--color-uikit-panel))`
+                  : maskGate && !hot
+                    ? `color-mix(in srgb, ${baseColor} 62%, var(--color-uikit-panel))`
+                    : baseColor
             // One thin weight, kept below the 1.5px card border so border and
             // connectors read consistently (border slightly heavier).
             const width = hot ? 1.5 : Math.min(spec.width, 1.4)

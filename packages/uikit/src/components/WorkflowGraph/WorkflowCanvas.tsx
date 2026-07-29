@@ -724,6 +724,16 @@ export function WorkflowCanvas({
     ? (WF_STATE_COLOR[statusByNodeId?.[selected] ?? 'idle'] ?? 'var(--color-uikit-muted)')
     : 'var(--color-uikit-accent)'
 
+  // A held tag highlights its edge in the TARGET member's status colour —
+  // exactly as selecting that node would — so the tag-hold and node-selection
+  // edge highlights match (an idle edge reads `muted`, not the edge-flow grey).
+  const tagHotColor = (() => {
+    if (!activeTag) return 'var(--color-uikit-muted)'
+    const eid = activeTag.replace(/#(up|dn)$/, '')
+    const tgt = spec.edges.find((e) => e.id === eid)?.to
+    return WF_STATE_COLOR[(tgt && statusByNodeId?.[tgt]) || 'idle'] ?? 'var(--color-uikit-muted)'
+  })()
+
   // -- render ----------------------------------------------------------------
   return (
     <div
@@ -773,9 +783,11 @@ export function WorkflowCanvas({
             // a tag hold highlights its edge in the edge's own flow colour.
             const stroke = selHot
               ? selColor
-              : dim
-                ? `color-mix(in srgb, ${baseColor} 45%, var(--color-uikit-panel))`
-                : baseColor
+              : tagHot
+                ? tagHotColor
+                : dim
+                  ? `color-mix(in srgb, ${baseColor} 45%, var(--color-uikit-panel))`
+                  : baseColor
             // One thin weight across states, kept below the 1.5px card border so
             // border and connectors read consistently (border slightly heavier).
             const width = hot ? 1.5 : s.spine ? 1.3 : Math.min(flowSpec.width, 1.4)
