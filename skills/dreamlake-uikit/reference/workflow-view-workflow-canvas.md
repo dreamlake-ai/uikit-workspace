@@ -18,8 +18,9 @@ run states — see [Node Types](reference/workflow-view-node-types.md).
 
 This is the same canvas language as `PipelineGraph`, reused rather than
 re-implemented: the beige dot-grid plane, the `156 × 72` status-tinted cards, the
-orthogonal rounded edges that detour around cards, the connector-tag pills, and
-pan / zoom / drag. `WorkflowCanvas` imports PipelineGraph's edge router
+orthogonal rounded edges that detour around cards, the connector-tag pills
+(drag one to rebend its edge), and pan / zoom / drag. `WorkflowCanvas` imports
+PipelineGraph's edge router
 (`buildEdgePath`) and its edge-flow vocabulary (`FLOW`), and the cards share the
 same chrome. What's new is the **data model** (a typed, authored spec instead of
 a traced pipeline) and one structural idea: **stages are hubs.**
@@ -62,9 +63,10 @@ spec node id — exactly the `PipelineGraph` pattern:
 - **`statusByNodeId`** — each node's run state (`idle` · `queued` · `progress` ·
   `done` · `error` · `skipped`). It tints the card and drives every edge's
   derived flow, so animating a run is just feeding new states in.
-- **`agentsByNodeId`** — the live **agent instances** fanned out under a `uda`
-  node during a run; each renders as a compact card stacked below its agent, in
-  both orientations.
+- **`agentsByNodeId`** — the live **agent instances** a `uda` node fans out
+  during a run; each is a compact card, joined to its node by a quiet connector —
+  stacked **below** the card in the horizontal layout, off its **right** side in
+  the vertical one, so they never sit on the flow edge.
 
 Here is a smaller two-stage blueprint with the same overlay (legend off; the
 orientation switcher stays). Toggle the layout to see one spec re-laid-out:

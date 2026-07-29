@@ -38,7 +38,7 @@ The component is five small modules, each with one job:
 | `types.ts` | The data model — `PipelineGraphData`, `GraphNode`, `GraphEdge`, `NodeStatus`, `StatusOverlay`. Mirrors the tracer's JSON 1:1. |
 | `flow.ts` | The **visual language** — `kindColor`, `STATUS`, `FLOW`, and the derivations `edgeFlow(src, dst)` + `portPos` / `portAlong`. Colours are uikit tone tokens, so light/dark is automatic. |
 | `edge-path.ts` | Pure geometry — `buildEdgePath` routes a rounded orthogonal (Manhattan) edge that **detours around** intervening node boxes, falling back to a curve when endpoints are near-colinear. |
-| `PipelineGraph.tsx` | The canvas — pan/zoom, node drag, selection, the SVG edge + card render, and the auto-placed per-pair param tags. |
+| `PipelineGraph.tsx` | The canvas — pan/zoom, node drag, selection, the SVG edge + card render, and the per-pair param tags (drag to rebend an edge). |
 | `PipelineSource.tsx` | The paired read-only inspector — pipeline status + `.py`, or a selected node's status/i-o/schema/config/output, plus the run/review/continue/done button lifecycle. |
 
 `flow.ts` is the shared vocabulary: `edgeFlow` and `FLOW` are **exported** from
@@ -62,10 +62,9 @@ One render of `PipelineGraph`, end to end:
    touching the selected node highlight in that **node's status colour** (not a
    fixed accent), while the rest fade back.
 4. **Place param tags.** One tag per node-pair lists the params it transfers,
-   anchored at its edge's midpoint. On the first render for a `graph.id` an
-   adaptive pass drops each into open canvas (clear of nodes and other tags) and
-   **freezes** the offset; later renders only re-measure the anchor, so node
-   drags slide tags without re-running the search. A drag pins a tag manually.
+   resting **on** the edge at its routed bend (`buildEdgePath` reports the
+   point, so the tag tracks the line through detours). Dragging a tag along the
+   edge rebends it (a per-pair `bendFrac`); across it lifts the tag onto a leader.
 5. **Draw nodes.** Absolutely-positioned cards, tinted by `status`, with a kind
    dot, the `inputs→outputs` meta, a status footer (pulsing when `running`), and
    a single input dot (left-centre) / output dot (right-centre) — every parameter
@@ -77,7 +76,7 @@ One render of `PipelineGraph`, end to end:
 **Interaction:** background drag pans; ⌘/ctrl-wheel or pinch zooms about the
 cursor; plain wheel / two-finger drag pans; a node drag writes to `posOverride`
 (cleared when `graph.id` changes); a click without a drag toggles selection; a
-tag drag pins that tag.
+tag drag rebends its edge or lifts the tag onto a leader.
 
 ## What it deliberately leaves out
 
@@ -86,10 +85,10 @@ full canvas — these are conscious omissions, not bugs:
 
 - **Param tags, not per-edge flow-label chips.** The prototype floats a draggable
   flow-state chip at each edge's midpoint; here a tag instead names the *params* a
-  node-pair transfers (auto-placed, draggable to pin), and the flow vocabulary
+  node-pair transfers (dragging it rebends the edge), and the flow vocabulary
   lives in the legend.
-- **No draggable edge bends, no auto-fit, no vertical layout mode.** Positions
-  come from the tracer's layout; the user pans/zooms/drags nodes.
+- **No auto-fit, no vertical layout mode.** Positions come from the tracer's
+  layout; the user pans/zooms/drags nodes.
 - **No vim marks** (the `a`–`z` jump labels). Arrow/`hjkl` selection navigation
   *is* supported — see Current stage.
 - **No edge inspector.** Clicking selects nodes, not edges — that's still a
@@ -106,8 +105,9 @@ Shipping today:
   clears; the selected node pans into view.
 - ✅ **Connector tags** (`data` / `mask`) and **connector states** (the six
   derived flows), catalogued in [Anatomy](/pipeline-view/anatomy).
-- ✅ **Per-pair param tags** — one draggable, auto-placed tag per node-pair
-  naming the params it transfers, tinted to its edge's flow.
+- ✅ **Per-pair param tags** — one tag per node-pair naming the params it
+  transfers, resting on its edge; drag it to rebend the edge or lift it onto a
+  leader.
 - ✅ **Status-driven highlights** — selecting a node tints its card and touching
   edges in the node's own status colour, not a fixed accent.
 - ✅ Live animation from a `statusById` overlay — structure stays static, status
@@ -134,8 +134,8 @@ next step, so a running vision or labeling node shows its real samples inline.
 
 - **Edge inspector** — click an edge for its flow, throughput (`rows` /
   `duration`), and, on `error`, the failing stage's traceback.
-- **Draggable edge bends** and label collision avoidance (fuller parity with the
-  prototype canvas — param-tag placement already avoids nodes and other tags).
+- **Tag collision avoidance** — tags rest on the edge today; auto-nudging
+  crowded ones clear of each other (prototype parity).
 - **Auto-fit** on mount/resize and a **vertical** layout direction.
 - **Job / fleet views** — the running-jobs and compute-fleet panels that pair
   with the graph in Studio.
