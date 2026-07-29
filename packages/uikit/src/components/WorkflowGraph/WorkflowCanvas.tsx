@@ -132,7 +132,7 @@ interface Seg {
    *  the current jog anchor — the on-line point a *touched* tag rides, tracking
    *  the bend smoothly. Absent on hand-routed hub side segments (their tags only
    *  lift, never bend). */
-  bend?: { key: string; span: number; anchor: Pt; cross: [number, number] }
+  bend?: { key: string; span: number; anchor: Pt; cross?: [number, number] }
   /** The kind of port dot this segment arrives at, so the arrowhead can be
    *  pulled back exactly enough to clear it: `normal` (a plain 6px dot — hug
    *  it), `collect` (a fan-in dot with a second ring — clear the wider ring).
@@ -388,16 +388,22 @@ export function WorkflowCanvas({
     const bendMeta = (from: Pt, to: Pt, key: string, exclude: WfRect[]) => {
       const ex = new Set(exclude.map((r) => (verticalPrimary ? swapRect(r) : rectObstacle(r))).map((o) => `${o.x0},${o.y0}`))
       const obs = obstacles.filter((o) => !ex.has(`${o.x0},${o.y0}`))
-      const out: { anchor: Pt } = { anchor: { x: 0, y: 0 } }
+      const out: { anchor: Pt; jog?: { y0: number; y1: number } } = { anchor: { x: 0, y: 0 } }
       if (verticalPrimary) buildEdgePath(swap(from), swap(to), { obstacles: obs, bendFrac: bendFracs[key], out })
       else buildEdgePath(from, to, { obstacles: obs, bendFrac: bendFracs[key], out })
       const anchor = verticalPrimary ? swap(out.anchor) : out.anchor // un-swap to world
-      // Cross-axis span of the jog the anchor sits on (world coords: x for the
-      // vertical layout, y for horizontal) — so a lifted tag's leader can be
-      // clipped to where it LEAVES the collinear jog instead of doubling it.
-      const cross: [number, number] = verticalPrimary
-        ? [Math.min(from.x, to.x), Math.max(from.x, to.x)]
-        : [Math.min(from.y, to.y), Math.max(from.y, to.y)]
+      // Cross-axis span of the vertical JOG the anchor sits on (world coords: x
+      // for the vertical layout, y for horizontal) — so a lifted tag's leader can
+      // be clipped to where it LEAVES the collinear jog instead of doubling it.
+      // Present ONLY when the routed edge is orthogonal (buildEdgePath reports
+      // out.jog). A CURVE / straight / backward edge has no such segment — the
+      // anchor is a lone on-line point — so cross is undefined and the leader runs
+      // straight to it, else it clamps short and the tag floats off the curve.
+      const cross: [number, number] | undefined = !out.jog
+        ? undefined
+        : verticalPrimary
+          ? [Math.min(from.x, to.x), Math.max(from.x, to.x)]
+          : [Math.min(from.y, to.y), Math.max(from.y, to.y)]
       return { key, span: flowSpan(from, to), anchor, cross }
     }
     const sideCoord = (id: string) => {
@@ -724,6 +730,19 @@ export function WorkflowCanvas({
     ? (WF_STATE_COLOR[statusByNodeId?.[selected] ?? 'idle'] ?? 'var(--color-uikit-muted)')
     : 'var(--color-uikit-accent)'
 
+  // Paint order: a highlighted (hot) segment must sit ABOVE the dimmed ones, or
+  // an overlapping neighbour drawn later occludes it (SVG paints in document
+  // order). Stable-sort hot segments to the end so they render last; only
+  // reorders while something is selected/held. Mirrors the same fix in the edge
+  // layer of PipelineGraph.
+  const isSegHot = (s: (typeof labeledSegments)[number]) =>
+    (!!selected && s.hotIds.includes(selected)) ||
+    (!!activeTag && s.key.replace(/#(up|dn)$/, '') === activeTag.replace(/#(up|dn)$/, ''))
+  const orderedSegments =
+    selected || activeTag
+      ? [...labeledSegments].sort((a, b) => (isSegHot(a) ? 1 : 0) - (isSegHot(b) ? 1 : 0))
+      : labeledSegments
+
   // -- render ----------------------------------------------------------------
   return (
     <div
@@ -751,7 +770,7 @@ export function WorkflowCanvas({
         style={{ transform: `translate(${view.x}px, ${view.y}px) scale(${view.k})` }}
       >
         <svg width={bounds.w} height={bounds.h} className="absolute top-0 left-0 pointer-events-none overflow-visible">
-          {labeledSegments.map((s) => {
+          {orderedSegments.map((s) => {
             const flowSpec = FLOW[s.flow]
             // Hot when a selected node is an endpoint, OR the held tag sits on
             // this segment (press-and-hold a tag to trace its edge) — the same
@@ -764,14 +783,14 @@ export function WorkflowCanvas({
             const hot = selHot || tagHot
             const dim = (!!selected || !!activeTag) && !hot
             // SOLID colours only — never opacity — so overlapping lines can't
-            // stack up and darken. idle/spine edges use a solid pale grey; a
-            // dimmed edge is a solid pale tint of its own colour (mixed toward
-            // the canvas, not made translucent).
-            const paleGrey = 'color-mix(in srgb, var(--color-uikit-ink) 22%, var(--color-uikit-panel))'
-            const baseColor = s.spine || s.flow === 'idle' ? paleGrey : flowSpec.color
+            // stack up and darken. idle/spine edges use the design's warm grey
+            // (--edge-idle); a dimmed edge is a solid pale tint of its own colour
+            // (mixed toward the canvas, not made translucent).
+            const idleGrey = 'var(--color-uikit-edge-idle)'
+            const baseColor = s.spine || s.flow === 'idle' ? idleGrey : flowSpec.color
             // A node selection highlights in the node's status colour (selColor);
             // a tag hold highlights its edge in the edge's OWN colour, deepened —
-            // idle / spine greys go to muted (the faint paleGrey wouldn't read as
+            // idle / spine greys go to muted (the faint idle grey wouldn't read as
             // highlighted), exactly the shade an idle-node selection uses.
             const hotColor = s.spine || s.flow === 'idle' ? 'var(--color-uikit-muted)' : flowSpec.color
             const stroke = selHot
@@ -835,7 +854,7 @@ export function WorkflowCanvas({
             // within the jog span (the opaque tag box covers it).
             let sx = anchor.x
             let sy = anchor.y
-            if (s.bend) {
+            if (s.bend?.cross) {
               const [c0, c1] = s.bend.cross
               if (verticalPrimary) sx = lx < c0 ? c0 : lx > c1 ? c1 : lx
               else sy = ly < c0 ? c0 : ly > c1 ? c1 : ly

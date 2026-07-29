@@ -34,13 +34,20 @@ export function buildEdgePath(
     bendX?: number
     /** Optional out-param: receives the edge's LABEL ANCHOR — the jog elbow
      *  (tracking any detour), or the chord midpoint for curve/level/backward
-     *  edges. Lets a connector tag ride the real line, detours included. */
-    out?: { anchor: Pt }
+     *  edges. Lets a connector tag ride the real line, detours included.
+     *  `jog` is set ONLY when the routed line has a vertical segment at the
+     *  anchor's x (the orthogonal / detour branches) — its [y0,y1] span. A
+     *  vertical leader dropped from the anchor would double that segment, so a
+     *  tag clamps its leader to the jog boundary. Curve / straight / backward
+     *  edges leave it undefined: the anchor is a lone on-line point, so a leader
+     *  runs straight to it. */
+    out?: { anchor: Pt; jog?: { y0: number; y1: number } }
   } = {},
 ): string {
   const obstacles = opts.obstacles ?? []
   const bendFrac = opts.bendFrac ?? 0.5
   const setAnchor = (x: number, y: number) => { if (opts.out) opts.out.anchor = { x, y } }
+  const setJog = (y0: number, y1: number) => { if (opts.out) opts.out.jog = { y0, y1 } }
   // "Backward": the target sits at or behind the source along the primary axis.
   // Such an edge MUST loop around with the inverted-S below — a soft curve or a
   // straight line would run straight back through both cards (only the
@@ -120,6 +127,7 @@ export function buildEdgePath(
     const dxA = Math.min(R, Math.abs(detourX - from.x) / 2, Math.abs(detourX - to.x) / 2)
     const r2 = Math.min(dxA, dy / 2)
     setAnchor(detourX, (from.y + to.y) / 2)
+    setJog(Math.min(from.y, to.y), Math.max(from.y, to.y))
     return (
       `M ${from.x} ${from.y}` +
       ` L ${detourX - Math.sign(detourX - from.x) * r2} ${from.y}` +
@@ -132,6 +140,7 @@ export function buildEdgePath(
 
   // Simple single-jog L with rounded corners.
   setAnchor(bendX, (from.y + to.y) / 2)
+  setJog(Math.min(from.y, to.y), Math.max(from.y, to.y))
   return (
     `M ${from.x} ${from.y}` +
     ` L ${bendX - r} ${from.y}` +

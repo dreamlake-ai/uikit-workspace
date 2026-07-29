@@ -52,8 +52,10 @@ export const FLOW: Record<EdgeFlow, {
   stalled: { label: 'stalled', color: 'var(--color-uikit-tone-amber)', width: 1.4, dash: '5 4', anim: 'dl-edge-stalled' },
   error: { label: 'error', color: 'var(--color-uikit-tone-red)', width: 1.6, dash: '2 4' },
   ok: { label: 'ok', color: 'var(--color-uikit-tone-green)', width: 1.4 },
-  // A visible-but-quiet foreground grey (NOT a surface token) so idle edges read.
-  idle: { label: 'idle', color: 'var(--color-uikit-ink-50)', width: 1.4 },
+  // The design's warm idle grey (#9c907a light / #5a5560 dark), theme-aware via
+  // the --edge-idle token — used for idle edges, their dashed variants, and the
+  // tag→edge leaders in both PipelineGraph and WorkflowCanvas.
+  idle: { label: 'idle', color: 'var(--color-uikit-edge-idle)', width: 1.4 },
 }
 
 /**
