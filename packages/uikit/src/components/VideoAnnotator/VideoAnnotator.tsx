@@ -17,15 +17,16 @@ import {
   ArrowLeftToLine,
   X,
   Plus,
+  Hand,
 } from "lucide-react";
 import { createPortal } from "react-dom";
 import { cn } from "../../lib/utils";
 import { Tooltip, TooltipTrigger, TooltipContent } from "../Tooltip";
 import type { Segment, Track, VideoAnnotatorHandle, VideoAnnotatorProps } from "./types";
+import { drawHandposeFrame, frameTolerance, nearestFrame } from "./handpose";
 import {
   boundaryTimes,
   clamp,
-  firstUnverified,
   fmt,
   mergeInto,
   moveBoundary,
@@ -150,12 +151,16 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
       loop = true,
       speeds = DEFAULT_SPEEDS,
       enableKeyboard = true,
+      handpose,
+      defaultShowHandpose = false,
       className,
     }: VideoAnnotatorProps,
     ref
   ) {
     const videoRef = useRef<HTMLVideoElement>(null);
     const timelineRef = useRef<HTMLDivElement>(null);
+    const stageRef = useRef<HTMLDivElement>(null);
+    const overlayRef = useRef<HTMLCanvasElement>(null);
 
     const [currentTime, setCurrentTime] = useState(0);
     const [playing, setPlaying] = useState(false);
@@ -174,6 +179,9 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
     // near-boundary so the mousemove handler only resets the timer on change.
     const [mergeReady, setMergeReady] = useState(false);
     const [mergeIdx, setMergeIdx] = useState<number | null>(null);
+    // Hand-pose overlay: OFF by default (a "Hands" toggle in the transport
+    // flips it). Only relevant when `handpose` data is supplied.
+    const [showHands, setShowHands] = useState(defaultShowHandpose);
     const mergeIdxRef = useRef<number | null>(null);
     const delTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
     const [toast, setToast] = useState("");
@@ -513,6 +521,66 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
       return () => document.removeEventListener("keydown", onKey);
     }, [enableKeyboard, togglePlay, stepFrame, gotoBoundary, doSplit, approveToggle, goSeg, doMerge, sel]);
 
+    // ---- hand-pose overlay -------------------------------------------------
+    // A canvas glued to the rendered video box, redrawn each animation frame so
+    // the skeleton stays aligned during play, pause, scrub and resize. Runs only
+    // while the toggle is on and data is present; otherwise the canvas is cleared.
+    const hasHandpose = Boolean(handpose && handpose.frames && handpose.frames.length);
+    useEffect(() => {
+      const clear = () => {
+        const cv = overlayRef.current;
+        if (!cv) return;
+        const c = cv.getContext("2d");
+        if (c) c.clearRect(0, 0, cv.width, cv.height);
+      };
+      if (!showHands || !hasHandpose || !handpose) {
+        clear();
+        return;
+      }
+      const tol = frameTolerance(handpose);
+      let raf = 0;
+      const tick = () => {
+        const v = videoRef.current;
+        const canvas = overlayRef.current;
+        const stage = stageRef.current;
+        if (v && canvas && stage) {
+          const vr = v.getBoundingClientRect();
+          const sr = stage.getBoundingClientRect();
+          const cssW = vr.width;
+          const cssH = vr.height;
+          if (cssW > 0 && cssH > 0) {
+            // Position the canvas exactly over the (letterboxed) video content.
+            canvas.style.left = `${vr.left - sr.left}px`;
+            canvas.style.top = `${vr.top - sr.top}px`;
+            canvas.style.width = `${cssW}px`;
+            canvas.style.height = `${cssH}px`;
+            const dpr = window.devicePixelRatio || 1;
+            const pw = Math.round(cssW * dpr);
+            const ph = Math.round(cssH * dpr);
+            if (canvas.width !== pw) canvas.width = pw;
+            if (canvas.height !== ph) canvas.height = ph;
+            const ctx = canvas.getContext("2d");
+            if (ctx) {
+              ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+              ctx.clearRect(0, 0, cssW, cssH);
+              // Map image-pixel coords → rendered-video px.
+              const imgW = handpose.image?.width || v.videoWidth || cssW;
+              const imgH = handpose.image?.height || v.videoHeight || cssH;
+              const frame = nearestFrame(handpose, v.currentTime, tol);
+              if (frame) {
+                drawHandposeFrame(ctx, frame, cssW / imgW, cssH / imgH, {
+                  dim: Math.min(cssW, cssH),
+                });
+              }
+            }
+          }
+        }
+        raf = requestAnimationFrame(tick);
+      };
+      raf = requestAnimationFrame(tick);
+      return () => cancelAnimationFrame(raf);
+    }, [showHands, hasHandpose, handpose]);
+
     // ---- derived readout ---------------------------------------------------
     const fps = srcFps || 30;
     const readout = `${fmt(currentTime)} / ${fmt(D)} · f${Math.round(currentTime * fps)}`;
@@ -547,7 +615,7 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
             {videoSubtitle && <span className="va-head-sub">{videoSubtitle}</span>}
           </div>
         )}
-        <div className="va-stage">
+        <div className="va-stage" ref={stageRef}>
           <video
             ref={videoRef}
             className="va-video"
@@ -560,6 +628,8 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
             onPlay={() => setPlaying(true)}
             onPause={() => setPlaying(false)}
           />
+          {/* Hand-pose overlay: positioned/sized over the video by the rAF loop. */}
+          <canvas ref={overlayRef} className="va-overlay" aria-hidden="true" />
           {!videoUrl && <div className="va-stage-msg">(no video url provided)</div>}
         </div>
 
@@ -630,6 +700,15 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
             >
               <ArrowLeftToLine size={14} />
             </TipButton>
+            {hasHandpose && (
+              <TipButton
+                className={cn("va-icon va-hands", showHands && "on")}
+                label={showHands ? "Hide hand pose" : "Show hand pose"}
+                onClick={() => setShowHands((s) => !s)}
+              >
+                <Hand size={14} />
+              </TipButton>
+            )}
           </div>
         </div>
 
@@ -912,6 +991,9 @@ const CSS = `
   overflow:hidden;display:flex;align-items:center;justify-content:center}
 .va-video{max-width:100%;max-height:100%;background:#000}
 .va-stage-msg{position:absolute;color:var(--va-muted);font-size:13px;text-align:center;padding:20px}
+/* Hand-pose overlay canvas: absolutely positioned by JS to sit exactly over the
+   letterboxed video content. Never intercepts pointer events. */
+.va-overlay{position:absolute;left:0;top:0;pointer-events:none;z-index:2}
 
 /* 3-column grid with equal side tracks keeps the playback cluster on the true
    horizontal center — aligned with the centered video above — regardless of
@@ -930,6 +1012,10 @@ const CSS = `
   color:color-mix(in srgb, var(--va-text) 75%, var(--va-muted))}
 /* Neutral outline + glyph at rest; both turn accent-blue on hover. */
 .va-transport .va-icon:hover{background:transparent;border-color:var(--va-accent);color:var(--va-accent)}
+/* Hand-pose toggle: reads as a checkbox — filled accent when ON, neutral OFF. */
+.va-transport .va-hands.on{border-color:var(--va-accent);color:var(--va-accent);
+  background:color-mix(in srgb, var(--va-accent) 14%, transparent)}
+.va-transport .va-hands.on:hover{background:color-mix(in srgb, var(--va-accent) 20%, transparent)}
 .va-icon svg{flex:none}
 .va-root svg{stroke-linejoin:round;stroke-linecap:round}
 
