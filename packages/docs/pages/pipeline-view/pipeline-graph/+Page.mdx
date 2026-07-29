@@ -182,9 +182,11 @@ leading dot, stacked), tinted to match the edge's flow.
 The tags place themselves. On first render each is dropped into open canvas —
 clear of every node and of the other tags — with a dashed **leader** back to the
 point on the edge it annotates; that placement is then frozen, so dragging a node
-only slides its tags along, never reshuffles them. Drag a tag to pin it somewhere
-else (press-and-hold highlights the tag, its leader, and its edge in the edge's
-flow colour, so you can trace a crowded corner).
+only slides its tags along, never reshuffles them. The tags are also
+**draggable**: drag one **along its edge** to rebend the edge (the orthogonal jog
+follows), or **across** it to lift the tag off the line onto a dashed leader
+(release near the line to snap it back). Press-and-hold highlights the tag, its
+leader, and its edge in the edge's flow colour, so you can trace a crowded corner.
 
 <Preview source={portCountsSrc} filename="PortCountsSpec.tsx">
   <PortCountsSpec />
