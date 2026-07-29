@@ -433,9 +433,12 @@ export function PipelineGraph({
             // One thin weight, kept below the 1.5px card border so border and
             // connectors read consistently (border slightly heavier).
             const width = hot ? 1.5 : Math.min(spec.width, 1.4)
-            // Pull the arrowhead back off the 6px input dot so its tip never
-            // overlaps it (the line still runs to the port, hidden by the card).
-            const GAP = 4
+            // Pull the arrowhead back just off the input dot so its tip HUGS it
+            // without overlap. `to` is the card's left edge; the 6px dot (offset
+            // ~1.5px in by the border) has its left edge ≈ to.x - 1.5, so ~2.5px
+            // lands the tip right against it. The line still runs to the port,
+            // hidden by the card.
+            const GAP = 2.5
             const tx = to.x - GAP
             return (
               <g key={i}>
