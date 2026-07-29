@@ -25,6 +25,9 @@ import { cn } from '../../lib/utils'
 import type { GraphNode, GraphEdge, PipelineGraphData, StatusOverlay } from './types'
 import { FLOW, NODE_H, NODE_W, STATUS, edgeFlow, kindColor, portPos } from './flow'
 import { buildEdgePath, type Obstacle } from './edge-path'
+// Shared connector-tag placement — the SAME auto-anchor WorkflowCanvas uses, so
+// the two canvases' tags place and drag identically (single source of truth).
+import { labelAnchor } from '../WorkflowGraph/layout'
 
 export interface PipelineGraphProps {
   graph: PipelineGraphData
@@ -65,11 +68,10 @@ type View = { x: number; y: number; k: number }
 
 // —— Per-edge param tags ————————————————————————————————————————————————————
 // Each node-pair (A→B) gets one tag listing the params it transfers (the edge
-// toPorts). It anchors at the straight-line midpoint between A's out dot and B's
-// in dot — so it tracks both nodes as they move — and is auto-placed into open
-// canvas so it never overlaps a node or another tag. A single straight dashed
-// leader joins it back to the anchor; being one diagonal segment it can't run
-// collinear with the axis-aligned edges, so it never *overlaps* an edge.
+// toPorts). Placement + drag are IDENTICAL to WorkflowCanvas (shared labelAnchor):
+// an untouched tag auto-places on the routed edge clear of nodes / other tags;
+// dragging it ALONG the edge rebends the edge (bendFrac) and ACROSS it lifts the
+// tag onto a dashed leader (labelOffset). See the pairTags memo below.
 
 // Estimated tag box (mono 9px / 600 / .04em, matching the design's edge label),
 // used to test candidate placements for collisions. Slightly OVER-estimated so a
@@ -80,52 +82,12 @@ const TAG_PADY = 3         // → single-row box ≈ 15px tall (design pill is 1
 const TAG_ROW = 10         // one param row's height
 const TAG_ROWGAP = 3       // vertical gap between rows
 const TAG_LEADCOL = 8      // leading dot (3px) + its 5px gap before the text
-const TAG_MARGIN = 14      // clearance kept around a placed tag (fixes slight overlap)
 
-type TagRect = { x0: number; y0: number; x1: number; y1: number }
-const rectsOverlap = (a: TagRect, b: TagRect) =>
-  a.x0 < b.x1 && a.x1 > b.x0 && a.y0 < b.y1 && a.y1 > b.y0
-// Coarse sampled segment∩rect test — keeps a leader from tunnelling under a node.
-function segHitsRect(ax: number, ay: number, bx: number, by: number, r: TagRect): boolean {
-  const N = 16
-  for (let i = 0; i <= N; i++) {
-    const t = i / N
-    const x = ax + (bx - ax) * t
-    const y = ay + (by - ay) * t
-    if (x >= r.x0 && x <= r.x1 && y >= r.y0 && y <= r.y1) return true
-  }
-  return false
-}
 function estTagSize(params: string[]): { w: number; h: number } {
   const longest = params.reduce((m, p) => Math.max(m, p.length), 0)
   return {
     w: TAG_PADX * 2 + TAG_LEADCOL + Math.ceil(longest * TAG_CHARW),
     h: TAG_PADY * 2 + params.length * TAG_ROW + Math.max(0, params.length - 1) * TAG_ROWGAP,
-  }
-}
-// Placement search directions, preferring straight ABOVE first (near-vertical
-// leader), then fanning up-sideways, then below.
-const TAG_DIRS: [number, number][] = [
-  [0, -1], [-0.5, -1], [0.5, -1], [-1, -0.5], [1, -0.5], [0, 1], [-1, 0.5], [1, 0.5],
-]
-
-// Measure the point at `frac` (0..1) along an SVG path's length. Used to anchor a
-// tag ON the real routed edge — the straight-line midpoint floats off a detouring
-// edge, leaving the leader connected to nothing. Uses a cached detached <path>;
-// getPointAtLength is pure geometry and works unattached. Null on the server (no
-// document) → the caller falls back to the straight midpoint.
-let _measurePath: SVGPathElement | null = null
-function pointOnPath(d: string, frac: number): { x: number; y: number } | null {
-  if (typeof document === 'undefined') return null
-  try {
-    if (!_measurePath) _measurePath = document.createElementNS('http://www.w3.org/2000/svg', 'path')
-    _measurePath.setAttribute('d', d)
-    const len = _measurePath.getTotalLength()
-    if (!len || !Number.isFinite(len)) return null
-    const p = _measurePath.getPointAtLength(len * frac)
-    return { x: p.x, y: p.y }
-  } catch {
-    return null
   }
 }
 
@@ -139,66 +101,6 @@ function groupEdgeParams(edges: GraphEdge[]): Map<string, { from: string; to: st
     if (e.toPort && !g.params.includes(e.toPort)) g.params.push(e.toPort)
   }
   return groups
-}
-
-// The on-edge midpoint anchor for a pair — same endpoints + obstacles as the drawn
-// edge, so it lands exactly on the rendered (routed) path. Falls back to the
-// straight midpoint if the path can't be measured (server render).
-function pairAnchor(src: GraphNode, dst: GraphNode, all: GraphNode[], fromId: string, toId: string): { x: number; y: number } {
-  const from = portPos(src, '', 'out')
-  const to = portPos(dst, '', 'in')
-  const obstacles: Obstacle[] = all
-    .filter(n => n.id !== fromId && n.id !== toId)
-    .map(n => ({ x0: n.pos.x - 4, x1: n.pos.x + NODE_W + 4, y0: n.pos.y - 4, y1: n.pos.y + NODE_H + 4 }))
-  return pointOnPath(buildEdgePath(from, to, { obstacles }), 0.5)
-    ?? { x: (from.x + to.x) / 2, y: (from.y + to.y) / 2 }
-}
-
-// Adaptive placement — the expensive part. For each pair: anchor at its on-edge
-// midpoint, then search outward (preferring straight above) for a slot clear of
-// every node rect and already-placed tag, whose straight leader doesn't tunnel a
-// node. Returns per-pair offsets {dx,dy} from the anchor. Runs ONCE per graph (at
-// init) — node drags reuse the frozen offsets, so this never hits the hot path.
-function autoPlaceTags(nodeList: GraphNode[], edges: GraphEdge[]): Record<string, { dx: number; dy: number }> {
-  const byId: Record<string, GraphNode> = Object.fromEntries(nodeList.map(n => [n.id, n]))
-  const nodeRects: TagRect[] = nodeList.map(n => ({ x0: n.pos.x, y0: n.pos.y, x1: n.pos.x + NODE_W, y1: n.pos.y + NODE_H }))
-  const items: Array<{ key: string; anchorX: number; anchorY: number; w: number; h: number }> = []
-  for (const g of groupEdgeParams(edges).values()) {
-    const src = byId[g.from]; const dst = byId[g.to]
-    if (!src || !dst || g.params.length === 0) continue
-    const mid = pairAnchor(src, dst, nodeList, g.from, g.to)
-    const { w, h } = estTagSize(g.params)
-    items.push({ key: `${g.from}->${g.to}`, anchorX: mid.x, anchorY: mid.y, w, h })
-  }
-  // Deterministic placement order: top-to-bottom, then left-to-right.
-  items.sort((a, b) => a.anchorY - b.anchorY || a.anchorX - b.anchorX)
-
-  const placed: TagRect[] = []
-  const offs: Record<string, { dx: number; dy: number }> = {}
-  for (const it of items) {
-    const boxAt = (cx: number, cy: number, pad = 0): TagRect => ({
-      x0: cx - it.w / 2 - pad, y0: cy - it.h / 2 - pad,
-      x1: cx + it.w / 2 + pad, y1: cy + it.h / 2 + pad,
-    })
-    const base = it.h / 2 + TAG_MARGIN + 24
-    let cx = it.anchorX, cy = it.anchorY - base
-    let found = false
-    for (let ring = 0; ring < 12 && !found; ring++) {
-      const dist = base + ring * 22
-      for (const [ux, uy] of TAG_DIRS) {
-        const tx = it.anchorX + ux * dist
-        const ty = it.anchorY + uy * dist
-        const box = boxAt(tx, ty, TAG_MARGIN)
-        if (nodeRects.some(r => rectsOverlap(box, r))) continue
-        if (placed.some(r => rectsOverlap(box, r))) continue
-        if (nodeRects.some(r => segHitsRect(it.anchorX, it.anchorY, tx, ty, r))) continue
-        cx = tx; cy = ty; found = true; break
-      }
-    }
-    placed.push(boxAt(cx, cy))
-    offs[it.key] = { dx: cx - it.anchorX, dy: cy - it.anchorY }
-  }
-  return offs
 }
 
 export function PipelineGraph({
@@ -215,24 +117,18 @@ export function PipelineGraph({
 
   const [view, setView] = useState<View>({ x: 28, y: 20, k: 1 })
   const [posOverride, setPosOverride] = useState<Record<string, { x: number; y: number }>>({})
-  // Per-pair connector-tag interaction (mirrors WorkflowCanvas): dragging a tag
-  // along the edge axis rebends its edge (bendFracs, fed to buildEdgePath);
+  // Per-pair connector-tag interaction — identical to WorkflowCanvas: dragging a
+  // tag along the edge axis rebends its edge (bendFracs, fed to buildEdgePath);
   // dragging across it lifts the tag onto a dashed leader (labelOffsets, world
-  // px). `autoOffsets` is the one-time collision-free placement for UNTOUCHED
-  // tags (frozen); once dragged, a tag switches to riding its edge's bend.
+  // px). Untouched tags auto-place on the routed edge via the shared labelAnchor.
   const [bendFracs, setBendFracs] = useState<Record<string, number>>({})
   const [labelOffsets, setLabelOffsets] = useState<Record<string, number>>({})
-  const [autoOffsets, setAutoOffsets] = useState<Record<string, { dx: number; dy: number }>>({})
   // The pair key of the tag currently pressed/held — highlights that tag, its
   // leader, and the edge its anchor sits on. Cleared on pointer up / cancel.
   const [activeTag, setActiveTag] = useState<string | null>(null)
-  // One-time adaptive placement: solve collision-free offsets from the initial
-  // layout and freeze them (and reset any drag state). Keyed on graph.id so it
-  // runs on load / version change, NOT on every node drag — keeping the
-  // O(pairs·rings·dirs) search off the hot path.
+  // Reset drag state on load / version change.
   useEffect(() => {
     setPosOverride({})
-    setAutoOffsets(autoPlaceTags(Object.values(graph.nodes), graph.edges))
     setBendFracs({})
     setLabelOffsets({})
     setActiveTag(null)
@@ -267,6 +163,10 @@ export function PipelineGraph({
   // anchor. This recomputes per render so anchors follow node drags, but does NO
   // collision search — only the cheap per-pair anchor measurement.
   const pairTags = useMemo(() => {
+    // Cards to keep untouched tags clear of (labelAnchor avoid set), + a running
+    // list of already-placed tag boxes so tags don't stack on each other.
+    const avoid = nodes.map(n => ({ x: n.pos.x - 6, y: n.pos.y - 6, w: NODE_W + 12, h: NODE_H + 12 }))
+    const taken: Array<{ x: number; y: number; w: number; h: number }> = []
     const out: Array<{
       key: string; from: string; to: string; params: string[]
       anchorX: number; anchorY: number; tagX: number; tagY: number
@@ -279,34 +179,36 @@ export function PipelineGraph({
       const fromP = portPos(src, '', 'out')
       const toP = portPos(dst, '', 'in')
       const span = toP.x - fromP.x
-      const color = FLOW[edgeFlow(src.status, dst.status)].color
+      const frac = bendFracs[key] ?? 0.5
+      const off = labelOffsets[key] ?? 0
       const touched = key in bendFracs || key in labelOffsets
+      const color = FLOW[edgeFlow(src.status, dst.status)].color
+      let anchor: { x: number; y: number }
       if (touched) {
-        // A dragged tag rides its edge's jog (x follows the bendFrac) and lifts
-        // off the line by the perp offset (y), a dashed leader bridging the gap.
-        const frac = bendFracs[key] ?? 0.5
-        const off = labelOffsets[key] ?? 0
-        const jx = fromP.x + span * frac
-        const jy = (fromP.y + toP.y) / 2
-        out.push({
-          key, from: g.from, to: g.to, params: g.params,
-          anchorX: jx, anchorY: jy, tagX: jx, tagY: jy + off, span,
-          hasLeader: Math.abs(off) > 0.5, color,
-        })
+        // A dragged tag rides its edge's jog (x follows the bendFrac); the perp
+        // offset (y) lifts it onto a leader.
+        anchor = { x: fromP.x + span * frac, y: (fromP.y + toP.y) / 2 }
       } else {
-        // Untouched: the frozen collision-free placement, anchored to the pair's
-        // on-edge midpoint; a straight-above fallback covers the first frame.
-        const mid = pairAnchor(src, dst, nodes, g.from, g.to)
-        const ao = autoOffsets[key] ?? { dx: 0, dy: -(estTagSize(g.params).h / 2 + TAG_MARGIN + 24) }
-        out.push({
-          key, from: g.from, to: g.to, params: g.params,
-          anchorX: mid.x, anchorY: mid.y, tagX: mid.x + ao.dx, tagY: mid.y + ao.dy, span,
-          hasLeader: Math.abs(ao.dx) > 2 || Math.abs(ao.dy) > 2, color,
-        })
+        // Untouched: auto-place ON the routed edge, clear of nodes and other
+        // tags — the SAME labelAnchor pass WorkflowCanvas runs.
+        const obstacles: Obstacle[] = nodes
+          .filter(n => n.id !== g.from && n.id !== g.to)
+          .map(n => ({ x0: n.pos.x - 4, x1: n.pos.x + NODE_W + 4, y0: n.pos.y - 4, y1: n.pos.y + NODE_H + 4 }))
+        const d = buildEdgePath(fromP, toP, { obstacles })
+        const { w, h } = estTagSize(g.params)
+        const { pt, box } = labelAnchor(d, avoid, { boxW: w, boxH: h, taken })
+        taken.push(box)
+        anchor = pt
       }
+      out.push({
+        key, from: g.from, to: g.to, params: g.params,
+        anchorX: anchor.x, anchorY: anchor.y,
+        tagX: anchor.x, tagY: anchor.y + off, span,
+        hasLeader: Math.abs(off) > 0.5, color,
+      })
     }
     return out
-  }, [nodes, graph.edges, byId, bendFracs, labelOffsets, autoOffsets])
+  }, [nodes, graph.edges, byId, bendFracs, labelOffsets])
 
   // Topological order of the nodes (Kahn's) — the linear sequence ↑/↓ step
   // through. Nodes left out by a cycle are appended in insertion order so every
