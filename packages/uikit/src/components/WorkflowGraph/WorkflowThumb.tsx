@@ -5,15 +5,22 @@ import { WF_KIND_TOKEN } from './nodes/chrome'
 
 // A static, non-interactive mini-render of a WorkflowSpec — the grid-card
 // thumbnail twin of PipelineThumb. Reuses the real layout engine so the thumb
-// is a faithful shrink of the canvas: stage hubs on the spine with members
-// fanned out, joined by quiet edges. No hub routing, no ports, no labels'
-// pills — just enough to recognise a workflow's shape at card size.
+// is a faithful shrink of the canvas: stage hubs and members are the SAME
+// PipeNode-identical card (panel fill + faint border + 7×7 kind dot + mono
+// 12/600 name, distinguished only by the kind-dot colour, exactly like
+// WorkflowCanvas), joined by the canvas's quiet idle-grey edges. Simplified
+// straight-flow beziers (no hub routing / ports / label pills) — just enough to
+// recognise a workflow's shape at card size.
 
-const FONT = 15          // world-space node title size (nodes are 156×72)
-const EDGE = 'var(--color-uikit-ink-50, var(--color-uikit-muted))'
+const FONT = 12          // world-space node title size — matches the card (156×72)
+const PANEL = 'var(--color-uikit-panel)'
+// SAME shared thumbnail greys as PipelineThumb (both SOLID, no alpha): a node
+// border a touch darker than the live faint, and a connector edge a hair darker.
+const BORDER = 'color-mix(in srgb, var(--color-uikit-ink) 24%, var(--color-uikit-panel))'
+const EDGE = 'color-mix(in srgb, var(--color-uikit-ink) 30%, var(--color-uikit-panel))'
+const INK = 'var(--color-uikit-ink)'
 
-// Rough char budget so a title fits the node width without overflow.
-const MAX_CHARS = 16
+const MAX_CHARS = 18
 const truncate = (s: string) => (s.length > MAX_CHARS ? `${s.slice(0, MAX_CHARS - 1)}…` : s)
 
 const center = (r: WfRect) => ({ x: r.x + r.w / 2, y: r.y + r.h / 2 })
@@ -31,6 +38,28 @@ function flowPath(from: WfRect, to: WfRect, vertical: boolean): string {
   const x2 = to.x, y2 = to.y + to.h / 2
   const dx = Math.max(18, (x2 - x1) / 2)
   return `M ${x1} ${y1} C ${x1 + dx} ${y1}, ${x2 - dx} ${y2}, ${x2} ${y2}`
+}
+
+// A PipeNode-identical card: panel fill, faint border, 7×7 kind dot, mono name.
+function NodeCard({ r, dot, title }: { r: WfRect; dot: string; title: string }) {
+  const cy = r.y + r.h / 2
+  return (
+    <g>
+      <rect
+        x={r.x} y={r.y} width={r.w} height={r.h} rx={7}
+        fill={PANEL} stroke={BORDER} strokeWidth={1} vectorEffect="non-scaling-stroke"
+      />
+      <rect x={r.x + 12} y={cy - 3.5} width={7} height={7} rx={2} fill={dot} />
+      <text
+        x={r.x + 26} y={cy}
+        dominantBaseline="central"
+        fontFamily="var(--font-uikit-mono)" fontSize={FONT} fontWeight={600}
+        letterSpacing="-.005em" fill={INK}
+      >
+        {truncate(title)}
+      </text>
+    </g>
+  )
 }
 
 export interface WorkflowThumbProps {
@@ -70,12 +99,12 @@ export function WorkflowThumb({ spec, orientation = 'horizontal' }: WorkflowThum
           <line
             key={`spine-${s.id}`}
             x1={ca.x} y1={ca.y} x2={cb.x} y2={cb.y}
-            stroke={EDGE} strokeWidth={1.1} vectorEffect="non-scaling-stroke" opacity={0.5}
+            stroke={EDGE} strokeWidth={0.6} vectorEffect="non-scaling-stroke"
           />
         )
       })}
 
-      {/* dispatch fans — stage → members nothing feeds */}
+      {/* dispatch fans — stage → members nothing feeds (dashed, like the canvas) */}
       {spec.nodes.filter((n) => !fedIds.has(n.id)).map((n) => {
         const s = layout.stageRects[n.stageId]
         const r = layout.nodeRects[n.id]
@@ -84,8 +113,8 @@ export function WorkflowThumb({ spec, orientation = 'horizontal' }: WorkflowThum
           <path
             key={`fan-${n.id}`}
             d={flowPath(s, r, vertical)}
-            fill="none" stroke={EDGE} strokeWidth={0.8} strokeDasharray="3 4"
-            vectorEffect="non-scaling-stroke" opacity={0.55}
+            fill="none" stroke={EDGE} strokeWidth={0.5} strokeDasharray="3 4"
+            vectorEffect="non-scaling-stroke"
           />
         )
       })}
@@ -99,60 +128,24 @@ export function WorkflowThumb({ spec, orientation = 'horizontal' }: WorkflowThum
           <path
             key={e.id}
             d={flowPath(from, to, vertical)}
-            fill="none" stroke={EDGE} strokeWidth={0.9}
+            fill="none" stroke={EDGE} strokeWidth={0.6}
             vectorEffect="non-scaling-stroke"
           />
         )
       })}
 
-      {/* stage hubs */}
+      {/* stage hubs — PipeNode-identical card, stage kind dot */}
       {spec.stages.map((s) => {
         const r = layout.stageRects[s.id]
         if (!r) return null
-        return (
-          <g key={s.id}>
-            <rect
-              x={r.x} y={r.y} width={r.w} height={r.h} rx={7}
-              fill="color-mix(in oklab, var(--color-uikit-ink) 6%, var(--color-uikit-panel))"
-              stroke="color-mix(in oklab, var(--color-uikit-ink) 40%, transparent)"
-              strokeWidth={1.2} vectorEffect="non-scaling-stroke"
-            />
-            <text
-              x={r.x + r.w / 2} y={r.y + r.h / 2}
-              textAnchor="middle" dominantBaseline="central"
-              fontFamily="var(--font-uikit-mono)" fontSize={FONT} fontWeight={600}
-              fill="var(--color-uikit-ink)"
-            >
-              {truncate(s.title)}
-            </text>
-          </g>
-        )
+        return <NodeCard key={s.id} r={r} dot={WF_KIND_TOKEN.stage} title={s.title} />
       })}
 
-      {/* member nodes — panel card + kind dot + title */}
+      {/* member nodes — same card, member kind dot */}
       {spec.nodes.map((n) => {
         const r = layout.nodeRects[n.id]
         if (!r) return null
-        const tone = WF_KIND_TOKEN[n.kind]
-        return (
-          <g key={n.id}>
-            <rect
-              x={r.x} y={r.y} width={r.w} height={r.h} rx={7}
-              fill="var(--color-uikit-panel)"
-              stroke="color-mix(in oklab, var(--color-uikit-faint) 90%, var(--color-uikit-ink))"
-              strokeWidth={1} vectorEffect="non-scaling-stroke"
-            />
-            <circle cx={r.x + 14} cy={r.y + r.h / 2} r={4} fill={tone} />
-            <text
-              x={r.x + 24} y={r.y + r.h / 2}
-              dominantBaseline="central"
-              fontFamily="var(--font-uikit-mono)" fontSize={FONT}
-              fill="var(--color-uikit-ink)"
-            >
-              {truncate(n.title)}
-            </text>
-          </g>
-        )
+        return <NodeCard key={n.id} r={r} dot={WF_KIND_TOKEN[n.kind]} title={n.title} />
       })}
     </svg>
   )
