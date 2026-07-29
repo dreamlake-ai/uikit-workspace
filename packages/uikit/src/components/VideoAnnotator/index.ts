@@ -1,5 +1,21 @@
 export { VideoAnnotator } from "./VideoAnnotator";
-export type { Segment, Track, VideoAnnotatorProps, VideoAnnotatorHandle } from "./types";
+export type {
+  Segment,
+  Track,
+  VideoAnnotatorProps,
+  VideoAnnotatorHandle,
+  HandposeEnvelope,
+  HandposeFrame,
+  HandposeHand,
+} from "./types";
+export {
+  HAND_BONES,
+  FINGER_COLORS,
+  fingerOfIndex,
+  colorForIndex,
+  nearestFrame,
+  drawHandposeFrame,
+} from "./handpose";
 export {
   normalizeSegments,
   splitAt,

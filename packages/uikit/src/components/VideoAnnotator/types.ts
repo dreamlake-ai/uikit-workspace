@@ -102,7 +102,66 @@ export interface VideoAnnotatorProps {
    * imperative ref, e.g. when the host owns a global shortcut scheme.
    */
   enableKeyboard?: boolean;
+
+  /**
+   * Optional hand-pose keypoint overlay (the `handpose_keypoints` standard
+   * envelope). When present, a "Hands" toggle appears in the transport and a
+   * canvas draws the 21-keypoint hand skeletons over the video, synced to the
+   * playhead. Self-contained — no viz dependency. The overlay is OFF by default.
+   */
+  handpose?: HandposeEnvelope | null;
+  /** Start with the hand-pose overlay visible. Default false (unchecked). */
+  defaultShowHandpose?: boolean;
+
   className?: string;
+}
+
+/** One detected hand in a {@link HandposeFrame}. `keypoints2d` are 21 `[x, y]`
+ *  points in the source image's pixel space (see {@link HandposeEnvelope.image});
+ *  everything else is optional and may be null depending on the model. */
+export interface HandposeHand {
+  handedness?: "left" | "right" | null;
+  score?: number | null;
+  boxXYXY?: [number, number, number, number] | null;
+  keypoints2d: [number, number][];
+  keypointScores?: number[] | null;
+  keypoints3d?: [number, number, number][] | null;
+}
+
+/** Hands detected at one sampled video frame. `timestampSec` is the alignment
+ *  key used to look the frame up against the playhead. */
+export interface HandposeFrame {
+  frameIndex: number;
+  timestampSec: number;
+  hands: HandposeHand[];
+}
+
+/** The `handpose_keypoints` standard envelope (one per video). Mirrors the
+ *  backend schema; only the fields the overlay needs are typed strictly. */
+export interface HandposeEnvelope {
+  schemaVersion?: string;
+  kind?: string;
+  method?: string;
+  poseModel?: "mano" | "native2d" | (string & {});
+  keypointNames?: string[];
+  /** Pixel space the `keypoints2d` live in (annotation-time frame size). */
+  image: { width: number; height: number };
+  has3d?: boolean;
+  coordinateSpaces?: Record<string, string>;
+  video?: {
+    width?: number;
+    height?: number;
+    fps?: number;
+    durationSec?: number;
+    sourceFrames?: number;
+  };
+  sampling?: {
+    fps?: number;
+    maxFrames?: number | null;
+    startSec?: number | null;
+    endSec?: number | null;
+  };
+  frames: HandposeFrame[];
 }
 
 /** Imperative handle exposed via ref for host-driven control. */
