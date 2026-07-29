@@ -215,26 +215,34 @@ export function PipelineGraph({
 
   const [view, setView] = useState<View>({ x: 28, y: 20, k: 1 })
   const [posOverride, setPosOverride] = useState<Record<string, { x: number; y: number }>>({})
-  // Per-pair tag offset from its edge-midpoint anchor (keyed `from->to`). Seeded
-  // ONCE per graph by the adaptive placement below, then frozen — node drags reuse
-  // these offsets (only the anchor moves), and a manual tag drag overwrites one.
-  const [tagOffset, setTagOffset] = useState<Record<string, { dx: number; dy: number }>>({})
+  // Per-pair connector-tag interaction (mirrors WorkflowCanvas): dragging a tag
+  // along the edge axis rebends its edge (bendFracs, fed to buildEdgePath);
+  // dragging across it lifts the tag onto a dashed leader (labelOffsets, world
+  // px). `autoOffsets` is the one-time collision-free placement for UNTOUCHED
+  // tags (frozen); once dragged, a tag switches to riding its edge's bend.
+  const [bendFracs, setBendFracs] = useState<Record<string, number>>({})
+  const [labelOffsets, setLabelOffsets] = useState<Record<string, number>>({})
+  const [autoOffsets, setAutoOffsets] = useState<Record<string, { dx: number; dy: number }>>({})
   // The pair key of the tag currently pressed/held — highlights that tag, its
   // leader, and the edge its anchor sits on. Cleared on pointer up / cancel.
   const [activeTag, setActiveTag] = useState<string | null>(null)
   // One-time adaptive placement: solve collision-free offsets from the initial
-  // layout and freeze them. Keyed on graph.id so it runs on load / version change,
-  // NOT on every node drag — keeping the O(pairs·rings·dirs) search off the hot path.
+  // layout and freeze them (and reset any drag state). Keyed on graph.id so it
+  // runs on load / version change, NOT on every node drag — keeping the
+  // O(pairs·rings·dirs) search off the hot path.
   useEffect(() => {
     setPosOverride({})
-    setTagOffset(autoPlaceTags(Object.values(graph.nodes), graph.edges))
+    setAutoOffsets(autoPlaceTags(Object.values(graph.nodes), graph.edges))
+    setBendFracs({})
+    setLabelOffsets({})
+    setActiveTag(null)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [graph.id])
 
   const containerRef = useRef<HTMLDivElement>(null)
   const panRef = useRef<{ x: number; y: number; vx: number; vy: number } | null>(null)
   const nodeDrag = useRef<{ id: string; sx: number; sy: number; bx: number; by: number; moved: boolean } | null>(null)
-  const tagDrag = useRef<{ id: string; sx: number; sy: number; dx: number; dy: number } | null>(null)
+  const tagDrag = useRef<{ id: string; sx: number; sy: number; startFrac: number; startOff: number; span: number } | null>(null)
 
   // Effective nodes: drag overrides + live status overlay merged in.
   const nodes = useMemo(() => {
@@ -262,24 +270,43 @@ export function PipelineGraph({
     const out: Array<{
       key: string; from: string; to: string; params: string[]
       anchorX: number; anchorY: number; tagX: number; tagY: number
-      off: { dx: number; dy: number }; color: string
+      span: number; hasLeader: boolean; color: string
     }> = []
     for (const g of groupEdgeParams(graph.edges).values()) {
       const src = byId[g.from]; const dst = byId[g.to]
       if (!src || !dst || g.params.length === 0) continue
-      const mid = pairAnchor(src, dst, nodes, g.from, g.to)
       const key = `${g.from}->${g.to}`
-      // Frozen offset from the adaptive pass or a drag; a straight-above fallback
-      // covers the first frame before the init effect populates tagOffset.
-      const off = tagOffset[key] ?? { dx: 0, dy: -(estTagSize(g.params).h / 2 + TAG_MARGIN + 24) }
-      out.push({
-        key, from: g.from, to: g.to, params: g.params,
-        anchorX: mid.x, anchorY: mid.y, tagX: mid.x + off.dx, tagY: mid.y + off.dy, off,
-        color: FLOW[edgeFlow(src.status, dst.status)].color,
-      })
+      const fromP = portPos(src, '', 'out')
+      const toP = portPos(dst, '', 'in')
+      const span = toP.x - fromP.x
+      const color = FLOW[edgeFlow(src.status, dst.status)].color
+      const touched = key in bendFracs || key in labelOffsets
+      if (touched) {
+        // A dragged tag rides its edge's jog (x follows the bendFrac) and lifts
+        // off the line by the perp offset (y), a dashed leader bridging the gap.
+        const frac = bendFracs[key] ?? 0.5
+        const off = labelOffsets[key] ?? 0
+        const jx = fromP.x + span * frac
+        const jy = (fromP.y + toP.y) / 2
+        out.push({
+          key, from: g.from, to: g.to, params: g.params,
+          anchorX: jx, anchorY: jy, tagX: jx, tagY: jy + off, span,
+          hasLeader: Math.abs(off) > 0.5, color,
+        })
+      } else {
+        // Untouched: the frozen collision-free placement, anchored to the pair's
+        // on-edge midpoint; a straight-above fallback covers the first frame.
+        const mid = pairAnchor(src, dst, nodes, g.from, g.to)
+        const ao = autoOffsets[key] ?? { dx: 0, dy: -(estTagSize(g.params).h / 2 + TAG_MARGIN + 24) }
+        out.push({
+          key, from: g.from, to: g.to, params: g.params,
+          anchorX: mid.x, anchorY: mid.y, tagX: mid.x + ao.dx, tagY: mid.y + ao.dy, span,
+          hasLeader: Math.abs(ao.dx) > 2 || Math.abs(ao.dy) > 2, color,
+        })
+      }
     }
     return out
-  }, [nodes, graph.edges, byId, tagOffset])
+  }, [nodes, graph.edges, byId, bendFracs, labelOffsets, autoOffsets])
 
   // Topological order of the nodes (Kahn's) — the linear sequence ↑/↓ step
   // through. Nodes left out by a cycle are appended in insertion order so every
@@ -373,22 +400,32 @@ export function PipelineGraph({
     if (d && !d.moved) select(n.id === selected ? null : n.id)
   }
 
-  // — tag drag: move a pair's param tag in both axes off its edge-midpoint anchor
-  //   (a straight dashed leader bridges the gap); this pins it, overriding the
-  //   auto-placement. stopPropagation keeps the canvas/nodes from also dragging. —
-  const onTagDown = (e: ReactPointerEvent, id: string, off: { dx: number; dy: number }) => {
+  // — tag drag (mirrors WorkflowCanvas): dragging ALONG the edge axis (x) rebends
+  //   its edge (bendFrac); dragging ACROSS it (y) lifts the tag onto a dashed
+  //   leader (labelOffset, snapping back within 3px). stopPropagation keeps the
+  //   canvas/nodes from also dragging. —
+  const onTagDown = (e: ReactPointerEvent, t: { key: string; span: number }) => {
     e.stopPropagation()
     ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
-    tagDrag.current = { id, sx: e.clientX, sy: e.clientY, dx: off.dx, dy: off.dy }
-    setActiveTag(id)   // highlight this tag + its leader + its edge while held
+    tagDrag.current = {
+      id: t.key, sx: e.clientX, sy: e.clientY,
+      startFrac: bendFracs[t.key] ?? 0.5, startOff: labelOffsets[t.key] ?? 0, span: t.span,
+    }
+    setActiveTag(t.key)   // highlight this tag + its leader + its edge while held
   }
   const onTagMove = (e: ReactPointerEvent) => {
     const d = tagDrag.current
     if (!d) return
     e.stopPropagation()
-    const dx = d.dx + (e.clientX - d.sx) / view.k
-    const dy = d.dy + (e.clientY - d.sy) / view.k
-    setTagOffset(o => ({ ...o, [d.id]: { dx, dy } }))
+    const dx = (e.clientX - d.sx) / view.k   // along the edge → bend
+    const dy = (e.clientY - d.sy) / view.k   // across → lift
+    if (Math.abs(d.span) > 1) {
+      const next = Math.max(0.1, Math.min(0.9, d.startFrac + dx / d.span))
+      setBendFracs(o => ({ ...o, [d.id]: next }))
+    }
+    let off = Math.max(-400, Math.min(400, d.startOff + dy))
+    if (Math.abs(off) <= 3) off = 0   // snap back onto the line
+    setLabelOffsets(o => ({ ...o, [d.id]: off }))
   }
   const onTagUp = (e: ReactPointerEvent) => {
     setActiveTag(null)
@@ -494,7 +531,8 @@ export function PipelineGraph({
             const obstacles: Obstacle[] = nodes
               .filter(n => n.id !== e.from && n.id !== e.to)
               .map(n => ({ x0: n.pos.x - 4, x1: n.pos.x + NODE_W + 4, y0: n.pos.y - 4, y1: n.pos.y + NODE_H + 4 }))
-            const d = buildEdgePath(from, to, { obstacles })
+            const frac = bendFracs[`${e.from}->${e.to}`] ?? 0.5
+            const d = buildEdgePath(from, to, { obstacles, bendFrac: frac })
             const flow = edgeFlow(a.status, b.status)
             const spec = FLOW[flow]
             // Hot when the selected node is an endpoint, OR the held tag's pair is
@@ -502,28 +540,41 @@ export function PipelineGraph({
             const selHot = !!selected && (e.from === selected || e.to === selected)
             const tagHot = activeTag === `${e.from}->${e.to}`
             const hot = selHot || tagHot
-            // Highlight in the RELEVANT colour, not a fixed accent: a selection
-            // uses the selected node's status colour; a held tag uses its edge's
-            // own flow colour (== spec.color, so no change needed there).
-            const stroke = selHot ? selColor : spec.color
-            const width = hot ? Math.max(spec.width, 2) : spec.width
             const dim = !!selected && !hot
             // A `mask` edge is a gate/filter, not data flow. In the settled
-            // states (idle / ok) it stays DASHED whether or not it's selected —
-            // so a highlighted mask edge reads as a mask, not a data edge. It's
-            // only faded when unselected; when running/error the flow style wins.
+            // states (idle / ok) it stays DASHED whether or not it's selected.
             const maskGate = e.kind === 'mask' && (flow === 'idle' || flow === 'ok')
             const dash = maskGate ? '4 4' : spec.dash
-            const opacity = dim ? 0.28 : (maskGate && !hot ? 0.6 : 1)
+            // SOLID colours only — never opacity — so overlapping lines can't
+            // stack up and darken. idle → solid pale grey; a dimmed edge → a
+            // solid pale tint of its colour; a mask gate → a slightly paler solid
+            // (its "fainter" cue without the alpha). A selection highlights in the
+            // selected node's status colour.
+            const paleGrey = 'color-mix(in srgb, var(--color-uikit-ink) 22%, var(--color-uikit-panel))'
+            const baseColor = flow === 'idle' ? paleGrey : spec.color
+            const stroke = selHot
+              ? selColor
+              : dim
+                ? `color-mix(in srgb, ${baseColor} 42%, var(--color-uikit-panel))`
+                : maskGate && !hot
+                  ? `color-mix(in srgb, ${baseColor} 62%, var(--color-uikit-panel))`
+                  : baseColor
+            // One thin weight, kept below the 1.5px card border so border and
+            // connectors read consistently (border slightly heavier).
+            const width = hot ? 1.5 : Math.min(spec.width, 1.4)
+            // Pull the arrowhead back off the 6px input dot so its tip never
+            // overlaps it (the line still runs to the port, hidden by the card).
+            const GAP = 4
+            const tx = to.x - GAP
             return (
-              <g key={i} style={{ opacity, transition: 'opacity 160ms ease' }}>
+              <g key={i}>
                 <path
                   d={d} fill="none" stroke={stroke} strokeWidth={width}
                   strokeLinecap="round" strokeDasharray={dash}
                   className={hot ? undefined : spec.anim}
                 />
                 <path
-                  d={`M ${to.x - 6} ${to.y - 4} L ${to.x} ${to.y} L ${to.x - 6} ${to.y + 4}`}
+                  d={`M ${tx - 6} ${to.y - 4} L ${tx} ${to.y} L ${tx - 6} ${to.y + 4}`}
                   fill="none" stroke={stroke} strokeWidth={width}
                   strokeLinecap="round" strokeLinejoin="round"
                 />
@@ -537,7 +588,7 @@ export function PipelineGraph({
               segment it can't run collinear with the axis-aligned edges → it never
               overlaps an inter-node edge. Tinted to match the edge. */}
           {pairTags.map(t => {
-            if (Math.abs(t.off.dx) < 2 && Math.abs(t.off.dy) < 2) return null
+            if (!t.hasLeader) return null
             const dim = !!selected && t.from !== selected && t.to !== selected
             const active = activeTag === t.key
             return (
@@ -565,7 +616,7 @@ export function PipelineGraph({
           return (
             <div
               key={`tag-${t.key}`}
-              onPointerDown={ev => onTagDown(ev, t.key, t.off)}
+              onPointerDown={ev => onTagDown(ev, t)}
               onPointerMove={onTagMove}
               onPointerUp={onTagUp}
               onPointerCancel={onTagUp}
@@ -663,7 +714,9 @@ function PipeNode({ node, selected, dimmed, onPointerDown, onPointerMove, onPoin
         left: node.pos.x, top: node.pos.y,
         width: NODE_W, height: NODE_H,
         background: bg,
-        border: `1px solid ${border}`,
+        // A touch heavier than the edge lines (~1.4px) so card outline and
+        // connectors read at one consistent weight (WorkflowCanvas parity).
+        border: `1.5px solid ${border}`,
         borderRadius: 7,
         padding: '8px 10px',
         display: 'flex', flexDirection: 'column', gap: 4,
