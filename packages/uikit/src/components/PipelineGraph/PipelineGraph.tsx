@@ -419,7 +419,9 @@ export function PipelineGraph({
             const selHot = !!selected && (e.from === selected || e.to === selected)
             const tagHot = activeTag === `${e.from}->${e.to}`
             const hot = selHot || tagHot
-            const dim = !!selected && !hot
+            // Fade the rest when a node is selected OR a tag is held, so the hot
+            // edge reads the same in both cases (thicker, full-colour, others pale).
+            const dim = (!!selected || !!activeTag) && !hot
             // A `mask` edge is a gate/filter, not data flow. In the settled
             // states (idle / ok) it stays DASHED whether or not it's selected.
             const maskGate = e.kind === 'mask' && (flow === 'idle' || flow === 'ok')

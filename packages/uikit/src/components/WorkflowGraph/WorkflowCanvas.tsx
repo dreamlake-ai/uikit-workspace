@@ -753,15 +753,25 @@ export function WorkflowCanvas({
         <svg width={bounds.w} height={bounds.h} className="absolute top-0 left-0 pointer-events-none overflow-visible">
           {labeledSegments.map((s) => {
             const flowSpec = FLOW[s.flow]
-            const hot = !!selected && s.hotIds.includes(selected)
-            const dim = !!selected && !hot
+            // Hot when a selected node is an endpoint, OR the held tag sits on
+            // this segment (press-and-hold a tag to trace its edge) — the same
+            // highlight in both cases: thicker + full colour, the rest faded.
+            const selHot = !!selected && s.hotIds.includes(selected)
+            // Match the whole edge, not just the one segment the tag sits on: a
+            // cross-stage edge is a `#up` (convergence) + `#dn` (fan-out) pair.
+            const tagHot = !!activeTag
+              && s.key.replace(/#(up|dn)$/, '') === activeTag.replace(/#(up|dn)$/, '')
+            const hot = selHot || tagHot
+            const dim = (!!selected || !!activeTag) && !hot
             // SOLID colours only — never opacity — so overlapping lines can't
             // stack up and darken. idle/spine edges use a solid pale grey; a
             // dimmed edge is a solid pale tint of its own colour (mixed toward
             // the canvas, not made translucent).
             const paleGrey = 'color-mix(in srgb, var(--color-uikit-ink) 22%, var(--color-uikit-panel))'
             const baseColor = s.spine || s.flow === 'idle' ? paleGrey : flowSpec.color
-            const stroke = hot
+            // A node selection highlights in the node's status colour (selColor);
+            // a tag hold highlights its edge in the edge's own flow colour.
+            const stroke = selHot
               ? selColor
               : dim
                 ? `color-mix(in srgb, ${baseColor} 45%, var(--color-uikit-panel))`
