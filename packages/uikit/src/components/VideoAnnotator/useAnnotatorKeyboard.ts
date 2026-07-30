@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 export interface AnnotatorKeyActions {
   togglePlay: () => void;
@@ -16,10 +16,18 @@ export interface AnnotatorKeyActions {
  *  start), s (split), a (approve), Backspace (merge). Suppressed while typing in
  *  an input/textarea/select. Install controlled by `enableKeyboard`. */
 export function useAnnotatorKeyboard(enabled: boolean, actions: AnnotatorKeyActions): void {
-  const { togglePlay, stepFrame, gotoBoundary, doSplit, approveToggle, goSeg, doMerge, sel } = actions;
+  // Keep the latest actions in a ref so the document listener attaches once (on
+  // `enabled` change) instead of re-subscribing every time a callback identity
+  // or `sel` changes — the handler always reads current values via the ref.
+  const actionsRef = useRef(actions);
+  useEffect(() => {
+    actionsRef.current = actions;
+  });
   useEffect(() => {
     if (!enabled || typeof document === "undefined") return;
     const onKey = (e: KeyboardEvent) => {
+      const { togglePlay, stepFrame, gotoBoundary, doSplit, approveToggle, goSeg, doMerge, sel } =
+        actionsRef.current;
       const tag = (document.activeElement as HTMLElement | null)?.tagName || "";
       const typing = /^(TEXTAREA|INPUT|SELECT)$/.test(tag);
       if (typing) {
@@ -71,5 +79,5 @@ export function useAnnotatorKeyboard(enabled: boolean, actions: AnnotatorKeyActi
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [enabled, togglePlay, stepFrame, gotoBoundary, doSplit, approveToggle, goSeg, doMerge, sel]);
+  }, [enabled]);
 }

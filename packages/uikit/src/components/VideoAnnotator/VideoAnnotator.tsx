@@ -421,7 +421,7 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
     });
 
     const hasHandpose = Boolean(handpose && handpose.frames && handpose.frames.length);
-    useHandposeOverlay({ enabled: showHands, handpose, videoRef, canvasRef: overlayRef, stageRef });
+    useHandposeOverlay({ enabled: showHands, playing, handpose, videoRef, canvasRef: overlayRef, stageRef });
 
     // ---- derived readout ---------------------------------------------------
     // Frame readout uses srcFps → extractFps → 30, so its frame number matches

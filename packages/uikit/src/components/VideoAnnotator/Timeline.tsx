@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Plus, X } from "lucide-react";
 import { cn } from "../../lib/utils";
@@ -59,15 +59,28 @@ export function Timeline({
 
   // Graduated ruler: a coarse "major" step (labeled `Ns`, bold, tall mark)
   // subdivided into 5 finer "minor" ticks. Picks the smallest nice major so
-  // there are at most ~6 labels across the track.
-  const majorStep = D ? MAJORS.find((m) => D / m <= 6) ?? MAJORS[MAJORS.length - 1] : 0;
-  const minorStep = majorStep / 5;
-  const ticks: { t: number; major: boolean }[] = [];
-  if (D && minorStep)
-    for (let t = 0; t <= D + 1e-6; t += minorStep) {
-      const tt = Math.min(t, D);
-      ticks.push({ t: tt, major: Math.abs(tt % majorStep) < 1e-6 });
-    }
+  // there are at most ~6 labels across the track. Memoized on D so the
+  // high-frequency hover re-renders (setHoverFrac on every mousemove) don't
+  // rebuild the tick list.
+  const { majorStep, minorStep, ticks } = useMemo(() => {
+    const major = D ? MAJORS.find((m) => D / m <= 6) ?? MAJORS[MAJORS.length - 1] : 0;
+    const minor = major / 5;
+    const out: { t: number; major: boolean }[] = [];
+    if (D && minor)
+      for (let t = 0; t <= D + 1e-6; t += minor) {
+        const tt = Math.min(t, D);
+        out.push({ t: tt, major: Math.abs(tt % major) < 1e-6 });
+      }
+    return { majorStep: major, minorStep: minor, ticks: out };
+  }, [D]);
+
+  // Normalized segments per track. The active track reuses the already-normalized
+  // `activeSegs`; inactive tracks are normalized here — memoized so hover
+  // re-renders don't re-run normalizeSegments for every inactive lane.
+  const normTracks = useMemo(
+    () => trackList.map((tr, ti) => (ti === active ? activeSegs : normalizeSegments(tr.segments, D))),
+    [trackList, active, activeSegs, D],
+  );
 
   return (
     <div
@@ -117,7 +130,7 @@ export function Timeline({
       <div className="va-tracks">
         {trackList.map((tr, ti) => {
           const isActive = ti === active;
-          const tsegs = isActive ? activeSegs : normalizeSegments(tr.segments, D);
+          const tsegs = normTracks[ti];
           return (
             <div key={tr.id || ti} className={cn("va-track", !isActive && "inactive")} data-track={ti}>
               {tsegs.map((p, i) => (
