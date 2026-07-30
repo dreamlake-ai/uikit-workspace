@@ -503,6 +503,9 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
             playsInline
             preload="metadata"
             src={videoUrl || undefined}
+            // Click the video frame to toggle play/pause (like a normal player).
+            onClick={togglePlay}
+            style={videoUrl ? { cursor: "pointer" } : undefined}
             onLoadedMetadata={onLoadedMetadata}
             onTimeUpdate={onTimeUpdate}
             onSeeked={() => setCurrentTime(videoRef.current?.currentTime ?? 0)}
