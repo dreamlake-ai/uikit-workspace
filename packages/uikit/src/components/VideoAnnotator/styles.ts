@@ -113,8 +113,25 @@ export const CSS = `
 
 .va-tlwrap{display:flex;flex:none;margin-top:-2px}
 .va-tlwrap.multi{gap:8px}
-.va-tlwrap .va-timeline{flex:1;min-width:0}
-.va-timeline{position:relative;min-height:62px;background:transparent;cursor:pointer;user-select:none}
+/* Horizontal-scroll viewport for the (possibly widened) timeline canvas. The
+   canvas grows to zoom*100% and overflows here; at 1× it's exactly 100% (no
+   scrollbar). overflow-y:hidden is safe: the merge (X) affordance renders inside
+   the active lane (see .va-merge), not above the ruler, so nothing overflows up. */
+.va-tlscroll{flex:1;min-width:0;overflow-x:auto;overflow-y:hidden}
+.va-tlscroll .va-timeline{min-width:100%}
+.va-tlscroll::-webkit-scrollbar{height:8px}
+.va-tlscroll::-webkit-scrollbar-thumb{background:color-mix(in srgb, var(--va-text) 18%, transparent);border-radius:4px}
+.va-tlscroll::-webkit-scrollbar-track{background:transparent}
+/* Zoom cluster in the transport (right of the hand-pose toggle). Buttons reuse
+   .va-icon; only the value chip needs styling. */
+.va-zoom{display:inline-flex;align-items:center;gap:4px}
+.va-zoomval{font:11px var(--f-mono, ui-monospace, Menlo, monospace);color:var(--va-muted);min-width:26px;text-align:center}
+/* display:flow-root gives the timeline its own block formatting context so the
+   .va-tracks margin-top:30px (which drops the lanes below the ruler) is
+   CONTAINED instead of collapsing through — the timeline no longer gets the free
+   BFC it had as a flex item before the scroll wrapper was added. Without this
+   the lanes render at top:0 and overlap the ruler. */
+.va-timeline{position:relative;display:flow-root;min-height:62px;background:transparent;cursor:pointer;user-select:none}
 .va-timeline:not(:has(.va-seg))::before{content:"";position:absolute;top:30px;bottom:0;left:0;right:0;
   border-radius:6px;background:color-mix(in srgb, var(--va-text) 4%, transparent);box-shadow:inset 0 0 0 1px var(--va-line)}
 /* Stacked track lanes below the ruler. Each row hosts its segments (and, for
@@ -190,24 +207,21 @@ html[data-theme="dark"] .va-seg.sel .va-seglabel{color:var(--va-text)}
   background:var(--uikit-accent, #23aaff);color:#fff;z-index:1000;
   box-shadow:0 8px 24px rgba(0,0,0,.18)}
 /* Timeline hover: a blue speech bubble sitting over an internal boundary (a cut
-   between two phases) holding an X that merges those two phases. It's a child of
-   the timeline and its tail bridges down into the boundary, so moving the cursor
-   up to click never trips the timeline's mouseleave. Scoped under .va-timeline
-   to beat the base .va-root button reset. */
-@keyframes va-merge-in{from{opacity:0;transform:translateX(-50%) translateY(4px) scale(.92)}
-  to{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}
-.va-timeline .va-merge{position:absolute;bottom:100%;transform:translateX(-50%);z-index:8;
-  width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;padding:0;
-  background:var(--va-accent);color:#fff;border:0;border-radius:999px;cursor:pointer;
-  box-shadow:0 4px 12px var(--va-shadow);animation:va-merge-in .18s ease-out}
-.va-timeline .va-merge::after{content:"";position:absolute;top:100%;left:50%;transform:translateX(-50%);
-  width:0;height:0;border:5px solid transparent;border-top-color:var(--va-accent)}
+   between two phases) holding an X that merges those two phases. It renders
+   INSIDE the active lane (vertical position set inline from the active track
+   index) so the scroll viewport's overflow-y:hidden never clips it. Scoped
+   under .va-timeline to beat the base .va-root button reset. */
+@keyframes va-merge-in{from{opacity:0;transform:translateX(-50%) scale(.9)}
+  to{opacity:1;transform:translateX(-50%) scale(1)}}
+.va-timeline .va-merge{position:absolute;transform:translateX(-50%);z-index:8;
+  width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;padding:0;
+  background:var(--va-accent);color:#fff;border:2px solid var(--va-bg);border-radius:999px;cursor:pointer;
+  box-shadow:0 2px 8px var(--va-shadow);animation:va-merge-in .15s ease-out}
 /* Keep the centring transform on press — the base button:active rule would
    otherwise replace it with translateY() alone and shove the button right. */
 .va-timeline .va-merge:active{transform:translateX(-50%) translateY(1px)}
 .va-timeline .va-merge:hover{background:color-mix(in srgb,#000 14%,var(--va-accent))}
-.va-timeline .va-merge:hover::after{border-top-color:color-mix(in srgb,#000 14%,var(--va-accent))}
-.va-timeline .va-merge svg{width:14px;height:14px}
+.va-timeline .va-merge svg{width:13px;height:13px}
 .va-ticks{position:absolute;left:0;right:0;top:0;height:24px;pointer-events:none;z-index:4}
 .va-ticks::before{content:"";position:absolute;left:0;right:0;top:22px;height:1px;background:var(--va-line)}
 .va-tick{position:absolute;top:0;height:24px;pointer-events:none}

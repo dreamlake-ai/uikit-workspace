@@ -20,6 +20,7 @@ export function Timeline({
   activeSegs,
   sel,
   D,
+  zoom,
   multi,
   allowAddTracks,
   currentTime,
@@ -33,6 +34,9 @@ export function Timeline({
   activeSegs: Segment[];
   sel: number;
   D: number;
+  /** Horizontal magnification (1/2/4/8/16). The canvas is widened to
+   *  `zoom*100%` inside a scrolling parent; all position math stays `t/D`. */
+  zoom: number;
   multi: boolean;
   allowAddTracks: boolean;
   currentTime: number;
@@ -58,21 +62,24 @@ export function Timeline({
   useEffect(() => () => clearTimeout(delTimer.current), []);
 
   // Graduated ruler: a coarse "major" step (labeled `Ns`, bold, tall mark)
-  // subdivided into 5 finer "minor" ticks. Picks the smallest nice major so
-  // there are at most ~6 labels across the track. Memoized on D so the
-  // high-frequency hover re-renders (setHoverFrac on every mousemove) don't
-  // rebuild the tick list.
+  // subdivided into 5 finer "minor" ticks. The major is picked so there are at
+  // most ~6 labels across the VISIBLE window (`D/zoom`), so zooming in shows a
+  // finer ruler. Ticks still span the full [0,D] at `t/D` positions (the canvas
+  // is the one that's widened). Memoized on [D, zoom]. A guard drops the minor
+  // ticks past ~300 total so a long clip at 16× can't flood the DOM.
   const { majorStep, minorStep, ticks } = useMemo(() => {
-    const major = D ? MAJORS.find((m) => D / m <= 6) ?? MAJORS[MAJORS.length - 1] : 0;
-    const minor = major / 5;
+    const visible = D && zoom ? D / zoom : D;
+    const major = visible ? MAJORS.find((m) => visible / m <= 6) ?? MAJORS[MAJORS.length - 1] : 0;
+    const minorsFit = major ? (D / (major / 5)) <= 300 : false;
+    const step = major ? (minorsFit ? major / 5 : major) : 0;
     const out: { t: number; major: boolean }[] = [];
-    if (D && minor)
-      for (let t = 0; t <= D + 1e-6; t += minor) {
+    if (D && step)
+      for (let t = 0; t <= D + 1e-6; t += step) {
         const tt = Math.min(t, D);
         out.push({ t: tt, major: Math.abs(tt % major) < 1e-6 });
       }
-    return { majorStep: major, minorStep: minor, ticks: out };
-  }, [D]);
+    return { majorStep: major, minorStep: major / 5, ticks: out };
+  }, [D, zoom]);
 
   // Normalized segments per track. The active track reuses the already-normalized
   // `activeSegs`; inactive tracks are normalized here — memoized so hover
@@ -86,6 +93,7 @@ export function Timeline({
     <div
       className="va-timeline"
       ref={timelineRef}
+      style={{ width: `${zoom * 100}%` }}
       onMouseDown={onScrubDown}
       onMouseMove={(e) => {
         const tl = timelineRef.current;
@@ -214,7 +222,13 @@ export function Timeline({
           {mergeReady && mergeIdx != null && activeSegs[mergeIdx] && (
             <button
               className="va-merge"
-              style={{ left: `${(activeSegs[mergeIdx].start / (D || 1)) * 100}%` }}
+              // Sit inside the ACTIVE lane (tracks start at 30px, lane pitch 38px,
+              // 24px button centred in the 32px row → +4) so overflow-y:hidden on
+              // the scroll viewport never clips it — no reserved band needed.
+              style={{
+                left: `${(activeSegs[mergeIdx].start / (D || 1)) * 100}%`,
+                top: `${34 + active * 38}px`,
+              }}
               aria-label="Merge these two phases"
               onMouseDown={(e) => e.stopPropagation()}
               onClick={(e) => {
