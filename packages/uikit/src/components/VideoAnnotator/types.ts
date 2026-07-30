@@ -6,6 +6,15 @@
  * affected segments.
  */
 export interface Segment {
+  /**
+   * Stable identity for the segment, preserved across structural edits
+   * (split keeps the left half's id and mints a new one for the right half;
+   * merge keeps the earlier segment's id). Host bookkeeping (review flags,
+   * unsaved markers, React keys) should track this id, NOT the array index —
+   * indices shift on split/merge. Optional in the public type; the component
+   * backfills a stable id for any segment that omits one.
+   */
+  id?: string;
   start: number;
   end: number;
   description: string;
@@ -53,7 +62,11 @@ export interface VideoAnnotatorProps {
   duration?: number;
   /** Frames-per-second used for frame-stepping granularity (←/→). Falls back to 30. */
   extractFps?: number | null;
-  /** Source fps used only for the "· fN" frame readout. Falls back to 30. */
+  /**
+   * Source fps used only for the "· fN" frame readout. Falls back to
+   * `extractFps`, then 30 — so the readout's frame number matches the
+   * granularity of ←/→ frame-stepping instead of silently assuming 30.
+   */
   srcFps?: number | null;
 
   /**
@@ -92,8 +105,6 @@ export interface VideoAnnotatorProps {
   /** Fired when the user toggles verification on the active segment (A key / no-op if absent). */
   onApproveToggle?: (index: number, verified: boolean) => void;
 
-  /** Loop playback within the selected segment. Default true. */
-  loop?: boolean;
   /** Playback-speed options for the speed dropdown. Default [0.25,0.5,1,1.5,2]. */
   speeds?: number[];
   /**
@@ -170,6 +181,14 @@ export interface VideoAnnotatorHandle {
   merge: () => void;
   stepFrame: (dir: number, big?: boolean) => void;
   gotoBoundary: (dir: number) => void;
+  /**
+   * Select the segment at `index` AND seek the video to its start (the same
+   * action as clicking a not-yet-selected segment on the timeline or pressing
+   * j/k). Lets a host list (e.g. a review panel) drive selection so the seek
+   * happens inside the component, which owns the media element. No-op if the
+   * index is out of range.
+   */
+  goToSegment: (index: number) => void;
   play: () => void;
   pause: () => void;
   toggleApprove: () => void;

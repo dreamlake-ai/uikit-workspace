@@ -4,8 +4,8 @@ import { VideoAnnotator, type Segment, type VideoAnnotatorHandle } from '@dreaml
 import { Button } from '@dreamlake/uikit'
 
 const INITIAL: Segment[] = [
-  { start: 0, end: 4, description: 'Approach', verified: false },
-  { start: 4, end: 10, description: 'Pour', verified: false },
+  { id: 'a', start: 0, end: 4, description: 'Approach', verified: false },
+  { id: 'b', start: 4, end: 10, description: 'Pour', verified: false },
 ]
 
 export const RefControlSpec = () => {

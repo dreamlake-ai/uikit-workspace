@@ -2,9 +2,9 @@ import { useState } from 'react'
 import { VideoAnnotator, type Segment } from '@dreamlake/uikit'
 
 const INITIAL: Segment[] = [
-  { start: 0, end: 3.5, description: 'Reaches for and grasps the wine bottle on the table', verified: false },
-  { start: 3.5, end: 7.3, description: 'Tilts bottle over red mug, pouring liquid into it', verified: false },
-  { start: 7.3, end: 10, description: 'Rights the bottle and lifts it away from the filled mug', verified: false },
+  { id: 'a', start: 0, end: 3.5, description: 'Reaches for and grasps the wine bottle on the table', verified: false },
+  { id: 'b', start: 3.5, end: 7.3, description: 'Tilts bottle over red mug, pouring liquid into it', verified: false },
+  { id: 'c', start: 7.3, end: 10, description: 'Rights the bottle and lifts it away from the filled mug', verified: false },
 ]
 
 export const BasicSpec = () => {

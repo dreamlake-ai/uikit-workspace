@@ -6,18 +6,18 @@ const INITIAL: Track[] = [
     id: 'phase',
     name: 'Phase',
     segments: [
-      { start: 0, end: 3.5, description: 'Reaches for and grasps the wine bottle', verified: false },
-      { start: 3.5, end: 7.3, description: 'Tilts bottle over the mug, pouring', verified: false },
-      { start: 7.3, end: 10, description: 'Rights the bottle and lifts away', verified: false },
+      { id: 'p0', start: 0, end: 3.5, description: 'Reaches for and grasps the wine bottle', verified: false },
+      { id: 'p1', start: 3.5, end: 7.3, description: 'Tilts bottle over the mug, pouring', verified: false },
+      { id: 'p2', start: 7.3, end: 10, description: 'Rights the bottle and lifts away', verified: false },
     ],
   },
   {
     id: 'gripper',
     name: 'Gripper',
     segments: [
-      { start: 0, end: 2.6, description: 'Open', verified: false },
-      { start: 2.6, end: 8.2, description: 'Closed', verified: false },
-      { start: 8.2, end: 10, description: 'Open', verified: false },
+      { id: 'g0', start: 0, end: 2.6, description: 'Open', verified: false },
+      { id: 'g1', start: 2.6, end: 8.2, description: 'Closed', verified: false },
+      { id: 'g2', start: 8.2, end: 10, description: 'Open', verified: false },
     ],
   },
 ]

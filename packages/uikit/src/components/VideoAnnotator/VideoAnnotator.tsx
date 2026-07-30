@@ -6,24 +6,9 @@ import {
   useMemo,
   useRef,
   useState,
-  type ReactNode,
 } from "react";
-import {
-  Check,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  Scissors,
-  ArrowLeftToLine,
-  X,
-  Plus,
-  Hand,
-} from "lucide-react";
-import { createPortal } from "react-dom";
 import { cn } from "../../lib/utils";
-import { Tooltip, TooltipTrigger, TooltipContent } from "../Tooltip";
 import type { Segment, Track, VideoAnnotatorHandle, VideoAnnotatorProps } from "./types";
-import { drawHandposeFrame, frameTolerance, nearestFrame } from "./handpose";
 import {
   boundaryTimes,
   clamp,
@@ -31,89 +16,18 @@ import {
   mergeInto,
   moveBoundary,
   normalizeSegments,
+  segmentIndexAtTime,
   splitAt,
 } from "./segments";
+import { useAnnotatorStyles } from "./styles";
+import { useAnnotatorKeyboard } from "./useAnnotatorKeyboard";
+import { useHandposeOverlay } from "./useHandposeOverlay";
+import { Transport } from "./Transport";
+import { Timeline } from "./Timeline";
+import { TrackHeads } from "./TrackHeads";
+import { DescriptionBox } from "./DescriptionBox";
 
 const DEFAULT_SPEEDS = [0.25, 0.5, 1, 1.5, 2];
-const STYLE_ID = "uikit-video-annotator-styles";
-
-/** Transport icon button with a portaled tooltip (uikit Tooltip → escapes any
- *  container overflow, unlike the old CSS `::after` tip which got clipped by a
- *  scrolling/split layout). The label doubles as the a11y name. */
-function TipButton({
-  label,
-  onClick,
-  className,
-  disabled,
-  children,
-}: {
-  label: string;
-  onClick: () => void;
-  className?: string;
-  disabled?: boolean;
-  children: ReactNode;
-}) {
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <button className={className} aria-label={label} onClick={onClick} disabled={disabled}>
-          {children}
-        </button>
-      </TooltipTrigger>
-      <TooltipContent className="!bg-uikit-panel !text-uikit-ink border border-uikit-faint">{label}</TooltipContent>
-    </Tooltip>
-  );
-}
-
-/**
- * Sharp-cornered transport glyphs. lucide v1.24 bakes rounded corners straight
- * into its Play / Skip path geometry (arc commands), so stroke-linejoin can't
- * undo them — these use flat polygon geometry instead. Same 24x24 / stroke-2
- * box as lucide; they inherit the miter join + square caps from `.va-root svg`.
- * (ChevronLeft/Right stay lucide — their paths are plain lines, so the CSS
- * miter already sharpens them.)
- */
-function glyphAttrs(size = 14) {
-  return {
-    width: size,
-    height: size,
-    viewBox: "0 0 24 24",
-    fill: "none",
-    stroke: "currentColor",
-    strokeWidth: 2,
-  } as const;
-}
-function PlaySharp({ size }: { size?: number }) {
-  return (
-    <svg {...glyphAttrs(size)}>
-      <path d="M6 4 20 12 6 20Z" />
-    </svg>
-  );
-}
-function PauseSharp({ size }: { size?: number }) {
-  return (
-    <svg {...glyphAttrs(size)}>
-      <rect x="6" y="4" width="4" height="16" />
-      <rect x="14" y="4" width="4" height="16" />
-    </svg>
-  );
-}
-function SkipBackSharp({ size }: { size?: number }) {
-  return (
-    <svg {...glyphAttrs(size)}>
-      <path d="M19 4 9 12 19 20Z" />
-      <path d="M5 5 5 19" />
-    </svg>
-  );
-}
-function SkipForwardSharp({ size }: { size?: number }) {
-  return (
-    <svg {...glyphAttrs(size)}>
-      <path d="M5 4 15 12 5 20Z" />
-      <path d="M19 5 19 19" />
-    </svg>
-  );
-}
 
 /**
  * VideoAnnotator — a video player with an editable, contiguous segment
@@ -122,6 +36,12 @@ function SkipForwardSharp({ size }: { size?: number }) {
  * timeline strip with drag-to-move boundaries + click-to-scrub, and the
  * split / merge / boundary-move invariants. Controlled on `segments` +
  * `selectedIndex`; emits new arrays via `onSegmentsChange`.
+ *
+ * Playback runs continuously across segments: while playing, the selection
+ * follows the playhead (no per-segment loop); at the last segment's end the
+ * media simply stops. Clicking a not-yet-selected segment (or a prev/next
+ * action) selects it and seeks to its start; clicking the already-selected
+ * segment seeks to the exact click position within it.
  */
 export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorProps>(
   function VideoAnnotator(
@@ -148,7 +68,6 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
       onAddTrack,
       onRemoveTrack,
       onRenameTrack,
-      loop = true,
       speeds = DEFAULT_SPEEDS,
       enableKeyboard = true,
       handpose,
@@ -158,46 +77,29 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
     ref
   ) {
     const videoRef = useRef<HTMLVideoElement>(null);
-    const timelineRef = useRef<HTMLDivElement>(null);
     const stageRef = useRef<HTMLDivElement>(null);
     const overlayRef = useRef<HTMLCanvasElement>(null);
 
     const [currentTime, setCurrentTime] = useState(0);
     const [playing, setPlaying] = useState(false);
     const [rate, setRate] = useState(1);
-    const [speedOpen, setSpeedOpen] = useState(false);
     const [metaDuration, setMetaDuration] = useState(0);
-    const [hoverFrac, setHoverFrac] = useState<number | null>(null);
-    // Viewport position of the hover-time bubble, so it can be portaled to <body>
-    // and never clipped by a scrolling/split parent's overflow.
-    const [hoverPos, setHoverPos] = useState<{ x: number; y: number } | null>(null);
-    const [renaming, setRenaming] = useState<number | null>(null);
-    // Merge affordance: the X button appears over an internal boundary (a cut
-    // between two phases) after the cursor lingers ~0.5s near that boundary.
-    // `mergeReady` gates the reveal; `mergeIdx` is the segment index whose start
-    // is the boundary (doMerge(i) merges phases i-1 and i). A ref mirrors the
-    // near-boundary so the mousemove handler only resets the timer on change.
-    const [mergeReady, setMergeReady] = useState(false);
-    const [mergeIdx, setMergeIdx] = useState<number | null>(null);
     // Hand-pose overlay: OFF by default (a "Hands" toggle in the transport
     // flips it). Only relevant when `handpose` data is supplied.
     const [showHands, setShowHands] = useState(defaultShowHandpose);
-    const mergeIdxRef = useRef<number | null>(null);
-    const delTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
     const [toast, setToast] = useState("");
     const toastTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
-    // Inject the component's scoped stylesheet once. Kept as an injected
-    // <style> (rather than a Tailwind class soup) because the timeline relies
-    // on :has(), ::before, color-mix(), and dynamic percentage positioning
-    // that don't map to utility classes.
+    useAnnotatorStyles();
+
+    // Keep the toggle in sync if the host later flips `defaultShowHandpose`
+    // (the initial useState only captures the first value).
     useEffect(() => {
-      if (typeof document === "undefined" || document.getElementById(STYLE_ID)) return;
-      const el = document.createElement("style");
-      el.id = STYLE_ID;
-      el.textContent = CSS;
-      document.head.appendChild(el);
-    }, []);
+      setShowHands(defaultShowHandpose);
+    }, [defaultShowHandpose]);
+
+    // Clear the toast timer on unmount so it can't setState after teardown.
+    useEffect(() => () => clearTimeout(toastTimer.current), []);
 
     // Multi-track (tracks) or single-track (segments): normalize both to one
     // track-list + active-index model so the rest of the component is uniform.
@@ -308,6 +210,12 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
       [segs, D]
     );
 
+    // Manual selection: select segment `i` in the active track AND seek to its
+    // start. Used by j/k, the prev/next-segment buttons and the imperative
+    // `goToSegment`. Does NOT auto-play — it preserves the current play/pause
+    // state (seeking while playing continues playback; while paused it stays
+    // paused). Distinct from the playback-driven selection sync in
+    // `onTimeUpdate`, which must NOT seek.
     const goSeg = useCallback(
       (i: number) => {
         const next = clamp(i, 0, segs.length - 1);
@@ -315,10 +223,10 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
         onSelectedChange(next);
         if (p && videoRef.current) {
           videoRef.current.currentTime = p.start;
-          playSafe();
+          setCurrentTime(p.start);
         }
       },
-      [segs, onSelectedChange, playSafe]
+      [segs, onSelectedChange]
     );
 
     const doSplit = useCallback(() => {
@@ -358,24 +266,7 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
     const setSpeed = useCallback((val: number) => {
       if (videoRef.current) videoRef.current.playbackRate = val;
       setRate(val);
-      setSpeedOpen(false);
     }, []);
-
-    // ---- imperative handle -------------------------------------------------
-    useImperativeHandle(
-      ref,
-      () => ({
-        split: doSplit,
-        merge: () => doMerge(sel),
-        stepFrame,
-        gotoBoundary,
-        play: playSafe,
-        pause: () => videoRef.current?.pause(),
-        toggleApprove: approveToggle,
-        video: videoRef.current,
-      }),
-      [doSplit, doMerge, sel, stepFrame, gotoBoundary, playSafe, approveToggle]
-    );
 
     // ---- video element events ---------------------------------------------
     const onLoadedMetadata = useCallback(() => {
@@ -393,17 +284,22 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
     const onTimeUpdate = useCallback(() => {
       const v = videoRef.current;
       if (!v) return;
-      // Loop only during actual playback — never while paused/scrubbing.
-      if (loop && !v.paused && curSeg && v.currentTime >= curSeg.end - 0.03) v.currentTime = curSeg.start;
       setCurrentTime(v.currentTime);
-    }, [loop, curSeg]);
+      // Continuous playback: while actually playing, keep the selection synced
+      // to the segment under the playhead — WITHOUT seeking — so playback
+      // crosses boundaries and runs straight through to the end (no loop).
+      if (!v.paused) {
+        const idx = segmentIndexAtTime(segs, v.currentTime);
+        if (idx !== sel) onSelectedChange(idx);
+      }
+    }, [segs, sel, onSelectedChange]);
 
-    // ---- timeline drag (boundary) + scrub ---------------------------------
+    // ---- timeline drag (boundary) + scrub / click-select ------------------
     const startBoundaryDrag = useCallback(
       (e: React.MouseEvent, i: number) => {
         e.preventDefault();
         e.stopPropagation();
-        const tl = timelineRef.current;
+        const tl = (e.currentTarget as HTMLElement).closest(".va-timeline") as HTMLElement | null;
         if (!tl) return;
         const rect = tl.getBoundingClientRect();
         let latest = segs;
@@ -426,185 +322,114 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
       (e: React.MouseEvent) => {
         if ((e.target as HTMLElement).classList.contains("va-handle")) return;
         const v = videoRef.current;
-        const tl = timelineRef.current;
+        const tl = e.currentTarget as HTMLElement; // .va-timeline
         if (!v || !tl || !D) return;
         e.preventDefault();
-        v.pause();
         const rect = tl.getBoundingClientRect();
         const downX = e.clientX;
         const segEl = (e.target as HTMLElement).closest(".va-seg") as HTMLElement | null;
+        const onSegment = !!segEl;
         let moved = false;
         const seek = (x: number) => {
           const frac = clamp((x - rect.left) / rect.width, 0, 1);
           v.currentTime = frac * D;
         };
-        seek(downX);
+        // Empty ruler (not on a segment): behave like a plain scrubber — pause
+        // and seek immediately on press. On a segment we defer to mouseup so a
+        // pure click can apply the select-vs-scrub rules without a first jump.
+        if (!onSegment) {
+          v.pause();
+          seek(downX);
+        }
         const onMove = (ev: MouseEvent) => {
           if (Math.abs(ev.clientX - downX) > 3) moved = true;
-          seek(ev.clientX);
+          if (moved) {
+            v.pause();
+            seek(ev.clientX);
+          }
         };
         const onUp = () => {
           document.removeEventListener("mousemove", onMove);
           document.removeEventListener("mouseup", onUp);
-          if (!moved && segEl) {
+          if (moved) {
+            setCurrentTime(v.currentTime);
+            return; // was a scrub/drag, not a click
+          }
+          if (onSegment && segEl) {
             // Resolve the click to (track, segment) using the row it landed in,
             // so the index is relative to that track's own segments.
             const row = segEl.closest(".va-track") as HTMLElement | null;
             const i = row ? [...row.querySelectorAll(".va-seg")].indexOf(segEl) : -1;
             const ti = row ? Number(row.dataset.track) : active;
             if (i >= 0) {
-              if (multi && !Number.isNaN(ti) && ti !== active) setActiveTrack(ti);
-              onSelectedChange(i);
+              const sameSeg = (!multi || ti === active) && i === sel;
+              if (sameSeg) {
+                // Bug 3: click within the already-selected segment → seek to the
+                // exact click position (do not jump back to the start).
+                seek(downX);
+                setCurrentTime(v.currentTime);
+              } else {
+                // Click a different segment → select it + seek to its start.
+                // No auto-play: preserve the current play/pause state.
+                if (multi && !Number.isNaN(ti) && ti !== active) setActiveTrack(ti);
+                const tsegs = ti === active ? segs : normalizeSegments(trackList[ti]?.segments ?? [], D);
+                const p = tsegs[i];
+                onSelectedChange(i);
+                if (p) {
+                  v.currentTime = p.start;
+                  setCurrentTime(p.start);
+                }
+              }
             }
+          } else {
+            setCurrentTime(v.currentTime);
           }
         };
         document.addEventListener("mousemove", onMove);
         document.addEventListener("mouseup", onUp);
       },
-      [D, onSelectedChange, multi, active, setActiveTrack]
+      [D, onSelectedChange, multi, active, sel, segs, trackList, setActiveTrack]
     );
 
-    // ---- keyboard ----------------------------------------------------------
-    useEffect(() => {
-      if (!enableKeyboard || typeof document === "undefined") return;
-      const onKey = (e: KeyboardEvent) => {
-        const tag = (document.activeElement as HTMLElement | null)?.tagName || "";
-        const typing = /^(TEXTAREA|INPUT|SELECT)$/.test(tag);
-        if (typing) {
-          if (e.key === "Escape") (document.activeElement as HTMLElement).blur();
-          return;
-        }
-        switch (e.key) {
-          case " ":
-            e.preventDefault();
-            togglePlay();
-            break;
-          case "ArrowLeft":
-            e.preventDefault();
-            if (e.shiftKey) stepFrame(-1, true);
-            else if (e.altKey) gotoBoundary(-1);
-            else stepFrame(-1, false);
-            break;
-          case "ArrowRight":
-            e.preventDefault();
-            if (e.shiftKey) stepFrame(1, true);
-            else if (e.altKey) gotoBoundary(1);
-            else stepFrame(1, false);
-            break;
-          case ",":
-            gotoBoundary(-1);
-            break;
-          case ".":
-            gotoBoundary(1);
-            break;
-          case "s":
-          case "S":
-            doSplit();
-            break;
-          case "a":
-          case "A":
-            approveToggle();
-            break;
-          case "j":
-            goSeg(sel + 1);
-            break;
-          case "k":
-            goSeg(sel - 1);
-            break;
-          case "Backspace":
-            e.preventDefault();
-            doMerge(sel);
-            break;
-        }
-      };
-      document.addEventListener("keydown", onKey);
-      return () => document.removeEventListener("keydown", onKey);
-    }, [enableKeyboard, togglePlay, stepFrame, gotoBoundary, doSplit, approveToggle, goSeg, doMerge, sel]);
+    // ---- imperative handle -------------------------------------------------
+    useImperativeHandle(
+      ref,
+      () => ({
+        split: doSplit,
+        merge: () => doMerge(sel),
+        stepFrame,
+        gotoBoundary,
+        goToSegment: goSeg,
+        play: playSafe,
+        pause: () => videoRef.current?.pause(),
+        toggleApprove: approveToggle,
+        video: videoRef.current,
+      }),
+      [doSplit, doMerge, sel, stepFrame, gotoBoundary, goSeg, playSafe, approveToggle]
+    );
 
-    // ---- hand-pose overlay -------------------------------------------------
-    // A canvas glued to the rendered video box, redrawn each animation frame so
-    // the skeleton stays aligned during play, pause, scrub and resize. Runs only
-    // while the toggle is on and data is present; otherwise the canvas is cleared.
+    // ---- effects: keyboard + hand-pose overlay -----------------------------
+    useAnnotatorKeyboard(enableKeyboard, {
+      togglePlay,
+      stepFrame,
+      gotoBoundary,
+      doSplit,
+      approveToggle,
+      goSeg,
+      doMerge,
+      sel,
+    });
+
     const hasHandpose = Boolean(handpose && handpose.frames && handpose.frames.length);
-    useEffect(() => {
-      const clear = () => {
-        const cv = overlayRef.current;
-        if (!cv) return;
-        const c = cv.getContext("2d");
-        if (c) c.clearRect(0, 0, cv.width, cv.height);
-      };
-      if (!showHands || !hasHandpose || !handpose) {
-        clear();
-        return;
-      }
-      const tol = frameTolerance(handpose);
-      let raf = 0;
-      const tick = () => {
-        const v = videoRef.current;
-        const canvas = overlayRef.current;
-        const stage = stageRef.current;
-        if (v && canvas && stage) {
-          const vr = v.getBoundingClientRect();
-          const sr = stage.getBoundingClientRect();
-          const cssW = vr.width;
-          const cssH = vr.height;
-          if (cssW > 0 && cssH > 0) {
-            // Position the canvas exactly over the (letterboxed) video content.
-            canvas.style.left = `${vr.left - sr.left}px`;
-            canvas.style.top = `${vr.top - sr.top}px`;
-            canvas.style.width = `${cssW}px`;
-            canvas.style.height = `${cssH}px`;
-            const dpr = window.devicePixelRatio || 1;
-            const pw = Math.round(cssW * dpr);
-            const ph = Math.round(cssH * dpr);
-            if (canvas.width !== pw) canvas.width = pw;
-            if (canvas.height !== ph) canvas.height = ph;
-            const ctx = canvas.getContext("2d");
-            if (ctx) {
-              ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-              ctx.clearRect(0, 0, cssW, cssH);
-              // Map image-pixel coords → rendered-video px.
-              const imgW = handpose.image?.width || v.videoWidth || cssW;
-              const imgH = handpose.image?.height || v.videoHeight || cssH;
-              const frame = nearestFrame(handpose, v.currentTime, tol);
-              if (frame) {
-                drawHandposeFrame(ctx, frame, cssW / imgW, cssH / imgH, {
-                  dim: Math.min(cssW, cssH),
-                });
-              }
-            }
-          }
-        }
-        raf = requestAnimationFrame(tick);
-      };
-      raf = requestAnimationFrame(tick);
-      return () => cancelAnimationFrame(raf);
-    }, [showHands, hasHandpose, handpose]);
+    useHandposeOverlay({ enabled: showHands, handpose, videoRef, canvasRef: overlayRef, stageRef });
 
     // ---- derived readout ---------------------------------------------------
-    const fps = srcFps || 30;
+    // Frame readout uses srcFps → extractFps → 30, so its frame number matches
+    // the granularity of ←/→ frame-stepping instead of silently assuming 30.
+    const fps = srcFps || extractFps || 30;
     const readout = `${fmt(currentTime)} / ${fmt(D)} · f${Math.round(currentTime * fps)}`;
-    // Graduated ruler: a coarse "major" step (labeled `Ns`, bold, tall mark)
-    // subdivided into 5 finer "minor" ticks. Picks the smallest nice major so
-    // there are at most ~6 labels across the track.
-    const MAJORS = [5, 10, 15, 30, 60, 120, 300, 600];
-    const majorStep = D ? MAJORS.find((m) => D / m <= 6) ?? MAJORS[MAJORS.length - 1] : 0;
-    const minorStep = majorStep / 5;
-    const ticks: { t: number; major: boolean }[] = [];
-    if (D && minorStep)
-      for (let t = 0; t <= D + 1e-6; t += minorStep) {
-        const tt = Math.min(t, D);
-        ticks.push({ t: tt, major: Math.abs(tt % majorStep) < 1e-6 });
-      }
 
     const hasHeader = Boolean(videoTitle || videoSubtitle || headerLeading);
-    const descWords = curSeg ? (curSeg.description || "").trim().split(/\s+/).filter(Boolean).length : 0;
-    const descRange = curSeg
-      ? `phase ${sel + 1} · ${fmt(curSeg.start)}–${fmt(curSeg.end)}` +
-        (extractFps
-          ? ` · frames ${Math.round(curSeg.start * extractFps) + 1}–${Math.round(curSeg.end * extractFps) + 1}`
-          : "")
-      : "";
 
     return (
       <div className={cn("va-root", className)}>
@@ -633,311 +458,52 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
           {!videoUrl && <div className="va-stage-msg">(no video url provided)</div>}
         </div>
 
-        <div className="va-transport">
-          <div className="va-tp-left">
-            <span className="va-readout">{readout}</span>
-            <div className={cn("va-speedsel", speedOpen && "open")}>
-              <button
-                type="button"
-                className="va-speedbtn"
-                aria-label="Playback speed"
-                aria-haspopup="listbox"
-                aria-expanded={speedOpen}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setSpeedOpen((o) => !o);
-                }}
-              >
-                <span>{rate}×</span>
-                <ChevronDown size={12} className="va-caret" />
-              </button>
-              {speedOpen && (
-                <div className="va-speedmenu" role="listbox">
-                  {speeds.map((v) => (
-                    <button
-                      key={v}
-                      type="button"
-                      role="option"
-                      aria-selected={v === rate}
-                      onClick={() => setSpeed(v)}
-                    >
-                      {v === rate && <Check size={12} className="va-speedcheck" />}
-                      {v}×
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="va-tp-center">
-            <TipButton className="va-icon" label="Prev boundary (,)" onClick={() => gotoBoundary(-1)}>
-              <SkipBackSharp size={14} />
-            </TipButton>
-            <TipButton className="va-icon" label="Prev frame (←)" onClick={() => stepFrame(-1, false)}>
-              <ChevronLeft size={14} />
-            </TipButton>
-            <TipButton className="va-icon va-play" label="Play/Pause (Space)" onClick={togglePlay}>
-              {playing ? <PauseSharp size={14} /> : <PlaySharp size={14} />}
-            </TipButton>
-            <TipButton className="va-icon" label="Next frame (→)" onClick={() => stepFrame(1, false)}>
-              <ChevronRight size={14} />
-            </TipButton>
-            <TipButton className="va-icon" label="Next boundary (.)" onClick={() => gotoBoundary(1)}>
-              <SkipForwardSharp size={14} />
-            </TipButton>
-          </div>
-
-          <div className="va-tp-right">
-            <TipButton className="va-icon" label="Split at playhead (S)" onClick={doSplit}>
-              <Scissors size={14} />
-            </TipButton>
-            <TipButton
-              className="va-icon"
-              label="Merge into previous (Backspace)"
-              onClick={() => doMerge(sel)}
-              disabled={sel <= 0}
-            >
-              <ArrowLeftToLine size={14} />
-            </TipButton>
-            {hasHandpose && (
-              <TipButton
-                className={cn("va-icon va-hands", showHands && "on")}
-                label={showHands ? "Hide hand pose" : "Show hand pose"}
-                onClick={() => setShowHands((s) => !s)}
-              >
-                <Hand size={14} />
-              </TipButton>
-            )}
-          </div>
-        </div>
+        <Transport
+          readout={readout}
+          rate={rate}
+          speeds={speeds}
+          onSpeed={setSpeed}
+          playing={playing}
+          togglePlay={togglePlay}
+          stepFrame={stepFrame}
+          goSeg={goSeg}
+          sel={sel}
+          segCount={segs.length}
+          doSplit={doSplit}
+          doMerge={doMerge}
+          hasHandpose={hasHandpose}
+          showHands={showHands}
+          onToggleHands={() => setShowHands((s) => !s)}
+        />
 
         <div className={cn("va-tlwrap", multi && "multi")}>
-        {multi && (
-          <div className="va-track-heads">
-            <div className="va-th-spacer" />
-            {trackList.map((tr, ti) => (
-              <div
-                key={tr.id || ti}
-                className={cn("va-th", ti === active && "active")}
-                onMouseDown={() => setActiveTrack(ti)}
-              >
-                {renaming === ti ? (
-                  <input
-                    className="va-th-input"
-                    defaultValue={tr.name}
-                    autoFocus
-                    onFocus={(e) => e.currentTarget.select()}
-                    onMouseDown={(e) => e.stopPropagation()}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") e.currentTarget.blur();
-                      else if (e.key === "Escape") {
-                        e.currentTarget.value = tr.name;
-                        e.currentTarget.blur();
-                      }
-                    }}
-                    onBlur={(e) => {
-                      renameTrack(ti, e.currentTarget.value.trim() || tr.name);
-                      setRenaming(null);
-                    }}
-                  />
-                ) : (
-                  <span
-                    className="va-th-name"
-                    title="Double-click to rename"
-                    onDoubleClick={(e) => {
-                      e.stopPropagation();
-                      setRenaming(ti);
-                    }}
-                  >
-                    {tr.name}
-                  </span>
-                )}
-                {trackList.length > 1 && (
-                  <button
-                    className="va-th-x"
-                    aria-label={`Remove ${tr.name}`}
-                    onMouseDown={(e) => e.stopPropagation()}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      removeTrack(ti);
-                    }}
-                  >
-                    <X />
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-        <div
-          className="va-timeline"
-          ref={timelineRef}
-          onMouseDown={startScrub}
-          onMouseMove={(e) => {
-            const tl = timelineRef.current;
-            if (!tl) return;
-            const rect = tl.getBoundingClientRect();
-            const px = e.clientX - rect.left;
-            const frac = clamp(px / rect.width, 0, 1);
-            setHoverFrac(frac);
-            setHoverPos({ x: rect.left + frac * rect.width, y: rect.top });
-            // Keep the button while the cursor is actually over it (or its tail),
-            // so moving up to click never recomputes/hides it. Otherwise it must
-            // disappear as soon as the cursor leaves a boundary's vicinity.
-            if ((e.target as HTMLElement).closest(".va-merge")) return;
-            // Nearest internal boundary within 14px of the cursor (so the button,
-            // centred on the boundary, stays reachable straight up from here).
-            let near: number | null = null;
-            let best = 14;
-            for (let i = 1; i < segs.length; i++) {
-              const d = Math.abs(px - (segs[i].start / (D || 1)) * rect.width);
-              if (d < best) { best = d; near = i; }
-            }
-            if (near !== mergeIdxRef.current) {
-              mergeIdxRef.current = near;
-              setMergeIdx(near);
-              setMergeReady(false);
-              clearTimeout(delTimer.current);
-              if (near != null) delTimer.current = setTimeout(() => setMergeReady(true), 500);
-            }
-          }}
-          onMouseLeave={() => {
-            setHoverFrac(null);
-            setHoverPos(null);
-            clearTimeout(delTimer.current);
-            mergeIdxRef.current = null;
-            setMergeIdx(null);
-            setMergeReady(false);
-          }}
-        >
-          <div className="va-tracks">
-            {trackList.map((tr, ti) => {
-              const isActive = ti === active;
-              const tsegs = isActive ? segs : normalizeSegments(tr.segments, D);
-              return (
-                <div key={tr.id || ti} className={cn("va-track", !isActive && "inactive")} data-track={ti}>
-                  {tsegs.map((p, i) => (
-                    <div
-                      key={i}
-                      className={cn("va-seg", isActive && i === sel && "sel")}
-                      style={{ left: `${(p.start / (D || 1)) * 100}%`, width: `${((p.end - p.start) / (D || 1)) * 100}%` }}
-                    >
-                      <span className="va-seglabel">
-                        {i + 1}
-                        {p.description ? " · " + p.description : ""}
-                      </span>
-                    </div>
-                  ))}
-                  {isActive &&
-                    tsegs.map((p, i) =>
-                      i > 0 ? (
-                        <div
-                          key={`h${i}`}
-                          className="va-handle"
-                          style={{ left: `${(p.start / (D || 1)) * 100}%` }}
-                          title="Drag to move · double-click to merge"
-                          onMouseDown={(e) => startBoundaryDrag(e, i)}
-                          onDoubleClick={(e) => {
-                            e.stopPropagation();
-                            doMerge(i);
-                          }}
-                        />
-                      ) : null
-                    )}
-                </div>
-              );
-            })}
-            {multi && allowAddTracks && (
-              <div
-                className="va-addrow"
-                role="button"
-                aria-label="Add track"
-                onMouseDown={(e) => e.stopPropagation()}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  addTrack();
-                }}
-              >
-                <span className="va-addrow-line" />
-                <span className="va-addrow-btn">
-                  <Plus />
-                </span>
-              </div>
-            )}
-          </div>
-          <div className="va-ticks">
-            {ticks.map((rt, i) => (
-              <div
-                key={i}
-                className={cn("va-tick", rt.major && "major", i === 0 && "start", i === ticks.length - 1 && "end")}
-                style={{ left: `${(rt.t / (D || 1)) * 100}%` }}
-              >
-                <span className="va-ticklabel">
-                  {rt.major
-                    ? `${Math.round(rt.t)}s`
-                    : Math.round((rt.t % majorStep) / minorStep)}
-                </span>
-              </div>
-            ))}
-          </div>
-          {hoverFrac != null && (
-            <>
-              <div className="va-hoverline" style={{ left: `${hoverFrac * 100}%` }} />
-              {/* the time bubble is portaled to <body> (fixed-positioned) so it never gets
-                  clipped by a scrolling/split parent's overflow */}
-              {hoverPos != null &&
-                typeof document !== "undefined" &&
-                createPortal(
-                  <div
-                    className="va-hovertime va-hovertime--fixed"
-                    style={{ position: "fixed", left: hoverPos.x, top: hoverPos.y + 12 }}
-                  >
-                    {fmt(hoverFrac * D)}
-                  </div>,
-                  document.body,
-                )}
-              {mergeReady && mergeIdx != null && (
-                <button
-                  className="va-merge"
-                  style={{ left: `${(segs[mergeIdx].start / (D || 1)) * 100}%` }}
-                  aria-label="Merge these two phases"
-                  onMouseDown={(e) => e.stopPropagation()}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    // Hide the button before merging so it can never render
-                    // against the post-merge (shorter) array and jump right.
-                    const idx = mergeIdx;
-                    mergeIdxRef.current = null;
-                    setMergeIdx(null);
-                    setMergeReady(false);
-                    doMerge(idx);
-                  }}
-                >
-                  <X />
-                </button>
-              )}
-            </>
+          {multi && (
+            <TrackHeads
+              tracks={trackList}
+              active={active}
+              onActivate={setActiveTrack}
+              onRename={renameTrack}
+              onRemove={removeTrack}
+            />
           )}
-          {segs.length > 0 && currentTime > 0.001 && (
-            <div className="va-playhead" style={{ left: `${(clamp(currentTime, 0, D) / (D || 1)) * 100}%` }} />
-          )}
-        </div>
+          <Timeline
+            trackList={trackList}
+            active={active}
+            activeSegs={segs}
+            sel={sel}
+            D={D}
+            multi={multi}
+            allowAddTracks={allowAddTracks}
+            currentTime={currentTime}
+            onScrubDown={startScrub}
+            onBoundaryDown={startBoundaryDrag}
+            onMerge={doMerge}
+            onAddTrack={addTrack}
+          />
         </div>
 
         {showDescription && (
-          <div className="va-desc">
-            <textarea
-              className="va-desc-box"
-              placeholder="Phase description — edit to match the clip"
-              value={curSeg?.description ?? ""}
-              onChange={(e) => onDescriptionChange?.(sel, e.target.value)}
-            />
-            <div className="va-desc-meta">
-              <span>{descWords} words</span>
-              <span>{descRange}</span>
-            </div>
-          </div>
+          <DescriptionBox segment={curSeg} index={sel} extractFps={extractFps} onChange={onDescriptionChange} />
         )}
 
         {toast && <div className="va-toast">{toast}</div>}
@@ -945,231 +511,3 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
     );
   }
 );
-
-/* Scoped stylesheet. Local `--va-*` vars alias the uikit design tokens (with
-   the reference template's hex values as standalone fallbacks) so the widget
-   looks identical to the original AND follows uikit light/dark theming. */
-const CSS = `
-.va-root{
-  --va-bg: var(--bg, #fffefb);
-  --va-panel: var(--panel-bg, #fcfbf7);
-  --va-panel2: var(--search-bg, #f3f1ea);
-  --va-field: var(--panel-bg, #fefefa);
-  --va-line: var(--faint, rgba(0,0,0,.08));
-  --va-text: var(--ink, #1a1a1a);
-  --va-muted: var(--uikit-muted, #6b6b6b);
-  --va-accent: var(--uikit-accent, #23aaff);
-  --va-good: var(--tone-green, #1f8f4a);
-  --va-warn: var(--tone-amber, #c0922e);
-  --va-danger: var(--tone-red, #c8513b);
-  --va-idle: var(--tone-warm-gray, #9c907a);
-  --va-selected: var(--selected-bg, #f5f3ee);
-  --va-radius: var(--radius, 10px);
-  /* Popover/tooltip drop shadow. Aliases the kit's theme-aware shadow token
-     so it stays dark in dark mode — not a white glow off the light ink. */
-  --va-shadow: var(--shadow-tint-2, rgba(0,0,0,.1));
-  --va-hover: color-mix(in srgb, var(--va-text) 5%, var(--va-panel));
-  /* Own stacking context so the timeline/tooltip/menu z-indexes (up to 60) stay
-     contained and can't paint over a host's sticky header when scrolled. */
-  isolation:isolate;
-  display:flex; flex-direction:column; gap:12px; min-width:0; min-height:0; height:100%;
-  color:var(--va-text);
-  font:14px/1.45 var(--f-ui, "Inter Tight", ui-sans-serif, system-ui, -apple-system, sans-serif);
-}
-.va-root button{font:inherit;color:var(--va-text);background:transparent;border:1px solid transparent;
-  border-radius:var(--va-radius);padding:6px 10px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
-.va-root button:hover{background:var(--va-panel2)}
-.va-root button:active{transform:translateY(1px)}
-.va-root button:disabled{opacity:.35;cursor:default}
-.va-root button:disabled:hover{background:transparent}
-
-.va-head{display:flex;align-items:center;gap:10px;flex:none;min-height:28px}
-.va-head-title{font-size:16px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.va-head-sub{font:12px var(--f-mono, ui-monospace, Menlo, monospace);color:var(--va-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-
-.va-stage{position:relative;flex:1;min-height:0;background:#000;border-radius:var(--va-radius);
-  overflow:hidden;display:flex;align-items:center;justify-content:center}
-.va-video{max-width:100%;max-height:100%;background:#000}
-.va-stage-msg{position:absolute;color:var(--va-muted);font-size:13px;text-align:center;padding:20px}
-/* Hand-pose overlay canvas: absolutely positioned by JS to sit exactly over the
-   letterboxed video content. Never intercepts pointer events. */
-.va-overlay{position:absolute;left:0;top:0;pointer-events:none;z-index:2}
-
-/* 3-column grid with equal side tracks keeps the playback cluster on the true
-   horizontal center — aligned with the centered video above — regardless of
-   how wide the readout/speed (left) vs split/extract (right) groups are. */
-.va-transport{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);
-  align-items:center;gap:20px;flex:none;margin-top:-2px}
-.va-tp-left,.va-tp-right{display:flex;align-items:center;gap:6px;min-width:0}
-.va-tp-right{justify-content:flex-end}
-.va-tp-center{display:flex;align-items:center;gap:6px;flex:none}
-.va-transport button{height:28px}
-/* Transport controls read as real buttons: resting panel fill + hairline,
-   not bare icons. Scoped under .va-transport so they beat the base
-   .va-root button transparent-background rule. */
-.va-transport .va-icon{width:28px;height:28px;padding:0;justify-content:center;border-radius:999px;
-  background:transparent;border:1px solid var(--va-line);
-  color:color-mix(in srgb, var(--va-text) 75%, var(--va-muted))}
-/* Neutral outline + glyph at rest; both turn accent-blue on hover. */
-.va-transport .va-icon:hover{background:transparent;border-color:var(--va-accent);color:var(--va-accent)}
-/* Hand-pose toggle: reads as a checkbox — filled accent when ON, neutral OFF. */
-.va-transport .va-hands.on{border-color:var(--va-accent);color:var(--va-accent);
-  background:color-mix(in srgb, var(--va-accent) 14%, transparent)}
-.va-transport .va-hands.on:hover{background:color-mix(in srgb, var(--va-accent) 20%, transparent)}
-.va-icon svg{flex:none}
-.va-root svg{stroke-linejoin:round;stroke-linecap:round}
-
-/* Hover tooltip — matches the component's own floating surfaces (speed menu,
-   toast): panel fill, 1px hairline border, ink text, soft popover shadow.
-   Reads the button's aria-label so the a11y name and the visible tip stay in
-   sync. */
-/* Transport button tooltips are now the portaled uikit <Tooltip> (see TipButton),
-   which escapes any container overflow — the old CSS ::after tip was clipped by a
-   scrolling/split parent. */
-.va-readout{font:11px var(--f-mono, ui-monospace, Menlo, monospace);color:var(--va-muted);
-  padding:6px 0;text-align:left;flex:none;width:162px;white-space:nowrap}
-.va-speedsel{position:relative;display:inline-flex}
-.va-speedsel .va-speedbtn{display:inline-flex;align-items:center;gap:3px;height:28px;padding:0 6px 0 9px;
-  background:var(--va-panel);color:var(--va-text);border:1px solid transparent;border-radius:var(--va-radius);cursor:pointer;
-  font:11px var(--f-mono, ui-monospace, Menlo, monospace)}
-.va-speedbtn .va-caret{color:var(--va-muted)}
-.va-speedbtn:hover{background:var(--va-panel2)}
-/* No press-shift on the speed button — the base button:active translate reads
-   as jitter here next to the readout. */
-.va-speedsel .va-speedbtn:active{transform:none}
-.va-speedsel.open .va-speedbtn{border-color:var(--va-accent)}
-.va-speedmenu{position:absolute;bottom:calc(100% + 6px);left:0;z-index:40;min-width:calc(100% + 8px);
-  background:var(--va-panel);border:1px solid var(--va-line);border-radius:10px;
-  box-shadow:0 8px 24px var(--va-shadow);padding:4px}
-.va-speedmenu button{width:100%;display:flex;align-items:center;gap:6px;white-space:nowrap;height:auto;
-  background:transparent;border:none;border-radius:6px;padding:5px 12px 5px 22px;
-  font:11px var(--f-mono, ui-monospace, Menlo, monospace);color:var(--va-text);text-align:left;position:relative}
-.va-speedmenu button:hover{background:var(--va-panel2)}
-.va-speedmenu button[aria-selected="true"]{color:var(--va-accent)}
-.va-speedcheck{position:absolute;left:6px}
-
-.va-tlwrap{display:flex;flex:none;margin-top:-2px}
-.va-tlwrap.multi{gap:8px}
-.va-tlwrap .va-timeline{flex:1;min-width:0}
-.va-timeline{position:relative;min-height:62px;background:transparent;cursor:pointer;user-select:none}
-.va-timeline:not(:has(.va-seg))::before{content:"";position:absolute;top:30px;bottom:0;left:0;right:0;
-  border-radius:6px;background:color-mix(in srgb, var(--va-text) 4%, transparent);box-shadow:inset 0 0 0 1px var(--va-line)}
-/* Stacked track lanes below the ruler. Each row hosts its segments (and, for
-   the active row, the drag handles); rows flow so the timeline grows with the
-   track count. */
-.va-tracks{margin-top:30px;display:flex;flex-direction:column;gap:6px}
-.va-track{position:relative;height:32px}
-.va-track.inactive{opacity:.55}
-.va-track.inactive .va-seg:hover{background:var(--va-panel2);box-shadow:inset 0 0 0 1px var(--va-line)}
-html[data-theme="dark"] .va-track.inactive .va-seg:hover{background:var(--va-panel2)}
-.va-track.inactive .va-seg:hover .va-seglabel{color:var(--va-muted)}
-/* Left gutter of track headers (multi-track only). A 30px spacer aligns the
-   first header with the first lane (below the ruler). */
-.va-track-heads{flex:none;width:104px;display:flex;flex-direction:column;gap:6px}
-.va-th-spacer{height:24px;flex:none}
-.va-th{height:32px;display:flex;align-items:center;gap:4px;padding:0 8px;border-radius:6px;cursor:pointer;
-  color:var(--va-muted);font:11px var(--f-ui, "Inter Tight", ui-sans-serif, system-ui, sans-serif);overflow:hidden}
-.va-th:hover{background:var(--va-panel2)}
-.va-th.active{color:var(--va-text);background:var(--va-panel2)}
-.va-th-name{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.va-root .va-th-input{flex:1;min-width:0;height:20px;padding:0 5px;border-radius:4px;
-  border:1px solid var(--va-accent);background:var(--va-bg);color:var(--va-text);
-  font:11px var(--f-ui, "Inter Tight", ui-sans-serif, system-ui, sans-serif);outline:none}
-.va-root .va-th-x{width:18px;height:18px;padding:0;border:0;background:transparent;color:var(--va-muted);
-  display:none;align-items:center;justify-content:center;border-radius:4px;cursor:pointer;flex:none}
-.va-th:hover .va-th-x{display:inline-flex}
-.va-root .va-th-x:hover{color:var(--va-text);background:transparent}
-.va-th-x svg{width:12px;height:12px}
-/* Add-track affordance: a thin hover zone below the last lane. On hover a
-   highlighted line fades in with a round "+" node at its left end, inviting a
-   new lane — no permanent full-width button. */
-.va-addrow{position:relative;height:12px;cursor:pointer}
-.va-addrow-line{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%) scaleX(0);transform-origin:left center;
-  height:2px;border-radius:1px;
-  background:linear-gradient(90deg, var(--va-accent), color-mix(in srgb, var(--va-accent) 10%, transparent));
-  opacity:0;transition:opacity .2s ease, transform .3s cubic-bezier(.22,.61,.36,1)}
-.va-addrow-btn{position:absolute;left:0;top:50%;transform:translate(-50%,-50%) scale(.85);width:18px;height:18px;border-radius:50%;
-  background:var(--va-panel2);color:var(--va-muted);border:1px solid var(--va-line);
-  display:inline-flex;align-items:center;justify-content:center;opacity:.5;
-  transition:opacity .18s ease, transform .22s cubic-bezier(.34,1.56,.64,1), background .15s ease, color .15s ease, border-color .15s ease, box-shadow .15s ease}
-.va-addrow:hover .va-addrow-line{opacity:1;transform:translateY(-50%) scaleX(1)}
-.va-addrow:hover .va-addrow-btn{opacity:1;transform:translate(-50%,-50%) scale(1);
-  background:var(--va-accent);color:#fff;border-color:transparent;box-shadow:0 1px 5px var(--va-shadow)}
-.va-addrow-btn svg{width:12px;height:12px}
-.va-seg{position:absolute;top:0;bottom:0;border-radius:6px;display:flex;align-items:center;
-  padding:0 9px;overflow:hidden;background:var(--va-panel2);box-shadow:inset 0 0 0 1px var(--va-line)}
-.va-seg:hover{background:#edf6fc;box-shadow:inset 0 0 0 1px var(--va-line)}
-.va-seg.sel{background:#edf6fc;box-shadow:inset 0 0 0 1.5px #23a9ff;z-index:3}
-.va-seg.sel .va-seglabel{color:#1a1a1a}
-/* Dark mode swaps the blue selection/hover accent for yellow. The fill is a
-   translucent amber tint so the dark surface reads through it; the label
-   flips to light ink to stay legible over that dark-tinted fill. */
-html[data-theme="dark"] .va-seg:hover{background:rgba(243,230,204,.14)}
-html[data-theme="dark"] .va-seg.sel{background:rgba(243,230,204,.2);box-shadow:inset 0 0 0 1.5px var(--va-warn)}
-html[data-theme="dark"] .va-seg:hover .va-seglabel,
-html[data-theme="dark"] .va-seg.sel .va-seglabel{color:var(--va-text)}
-.va-seglabel{font-size:11px;color:var(--va-muted);font-weight:400;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
-.va-seg:hover .va-seglabel{color:#1a1a1a}
-.va-handle{position:absolute;top:0;bottom:0;width:9px;margin-left:-5px;cursor:ew-resize;z-index:5}
-.va-handle::after{content:"";position:absolute;left:4px;top:0;bottom:0;width:1.5px;background:var(--va-accent);opacity:0}
-.va-handle:hover::after{opacity:1}
-.va-playhead{position:absolute;top:14px;bottom:0;width:1.5px;background:var(--va-accent);pointer-events:none;z-index:6}
-.va-hoverline{position:absolute;top:14px;bottom:0;width:1.5px;
-  background:color-mix(in srgb, var(--va-accent) 50%, transparent);pointer-events:none;z-index:5}
-.va-hovertime{position:absolute;top:12px;transform:translateX(4px);
-  background:var(--va-accent);color:#fff;
-  padding:2px 6px;border-radius:4px;white-space:nowrap;pointer-events:none;z-index:7;
-  font-family:var(--f-mono, ui-monospace, Menlo, monospace);font-size:11px;line-height:1.3;
-  box-shadow:0 8px 24px var(--va-shadow)}
-/* Portaled variant (rendered on <body>, outside .va-root) — the va-scoped vars
-   don't resolve there, so use the global uikit tokens with hard fallbacks. */
-.va-hovertime--fixed{
-  background:var(--uikit-accent, #23aaff);color:#fff;z-index:1000;
-  box-shadow:0 8px 24px rgba(0,0,0,.18)}
-/* Timeline hover: a blue speech bubble sitting over an internal boundary (a cut
-   between two phases) holding an X that merges those two phases. It's a child of
-   the timeline and its tail bridges down into the boundary, so moving the cursor
-   up to click never trips the timeline's mouseleave. Scoped under .va-timeline
-   to beat the base .va-root button reset. */
-@keyframes va-merge-in{from{opacity:0;transform:translateX(-50%) translateY(4px) scale(.92)}
-  to{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}
-.va-timeline .va-merge{position:absolute;bottom:100%;transform:translateX(-50%);z-index:8;
-  width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;padding:0;
-  background:var(--va-accent);color:#fff;border:0;border-radius:999px;cursor:pointer;
-  box-shadow:0 4px 12px var(--va-shadow);animation:va-merge-in .18s ease-out}
-.va-timeline .va-merge::after{content:"";position:absolute;top:100%;left:50%;transform:translateX(-50%);
-  width:0;height:0;border:5px solid transparent;border-top-color:var(--va-accent)}
-/* Keep the centring transform on press — the base button:active rule would
-   otherwise replace it with translateY() alone and shove the button right. */
-.va-timeline .va-merge:active{transform:translateX(-50%) translateY(1px)}
-.va-timeline .va-merge:hover{background:color-mix(in srgb,#000 14%,var(--va-accent))}
-.va-timeline .va-merge:hover::after{border-top-color:color-mix(in srgb,#000 14%,var(--va-accent))}
-.va-timeline .va-merge svg{width:14px;height:14px}
-.va-ticks{position:absolute;left:0;right:0;top:0;height:24px;pointer-events:none;z-index:4}
-.va-ticks::before{content:"";position:absolute;left:0;right:0;top:22px;height:1px;background:var(--va-line)}
-.va-tick{position:absolute;top:0;height:24px;pointer-events:none}
-.va-tick::before{content:"";position:absolute;top:17px;left:0;width:1px;height:5px;background:var(--va-line)}
-.va-tick.major::before{top:14px;height:8px;background:var(--va-muted)}
-.va-ticklabel{position:absolute;top:1px;left:0;transform:translateX(-50%);white-space:nowrap;
-  font:11px var(--f-mono, ui-monospace, Menlo, monospace);color:var(--va-muted);line-height:1}
-.va-tick.major .va-ticklabel{font-weight:600;color:color-mix(in srgb, var(--va-text) 55%, var(--va-muted))}
-.va-tick.start .va-ticklabel{transform:translateX(0)}
-.va-tick.end .va-ticklabel{left:auto;right:0;transform:translateX(0)}
-
-/* Description + meta framed as one card; the textarea is borderless inside it
-   so there's a single frame, and the meta row sits in the same box (separated
-   by whitespace, no divider). Focus lifts the whole frame's border. */
-.va-desc{display:flex;flex-direction:column;gap:8px;flex:none;
-  background:var(--va-field);border:1px solid var(--va-line);border-radius:var(--va-radius);padding:9px}
-.va-desc:focus-within{border-color:var(--va-accent)}
-.va-desc-box{width:100%;min-height:60px;resize:vertical;background:transparent;color:var(--va-text);
-  border:0;padding:0;font:13px/1.45 inherit}
-.va-desc-box:focus{outline:none}
-.va-desc-meta{display:flex;gap:12px;color:var(--va-muted);
-  font:11px var(--f-mono, ui-monospace, Menlo, monospace)}
-.va-desc-meta > span:first-child{width:72px;flex:none}
-
-.va-toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--va-panel);
-  border:1px solid var(--va-line);border-radius:var(--va-radius);padding:8px 14px;color:var(--va-text);
-  box-shadow:0 8px 24px var(--va-shadow);z-index:50}
-`;
