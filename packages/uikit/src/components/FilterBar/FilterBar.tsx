@@ -213,10 +213,13 @@ function FilterSearchLine({
             onClearToken()
           }
         }}
-        // This is a search box, never an autofillable field. Without these,
-        // browser heuristics misclassify the bare input and pop the address /
-        // payment-method autofill dropdown over the results.
-        type="text"
+        // This is a search box, never an autofillable field. Chrome ignores
+        // autoComplete="off" for its address/payment autofill, so the decisive
+        // signal is the semantic type="search" + a search-y name — browsers
+        // don't offer credit-card/address fill on a native search field. The
+        // remaining hints keep password managers (1Password/LastPass) away too.
+        type="search"
+        name="search"
         autoComplete="off"
         autoCorrect="off"
         autoCapitalize="off"
@@ -228,6 +231,8 @@ function FilterSearchLine({
         className={cn(
           'bg-transparent border-0 outline-none p-0 min-w-0 flex-1',
           'font-uikit-mono text-uikit-12 text-uikit-ink tracking-uikit-snug',
+          // hide the native WebKit search clear button (we render our own)
+          '[&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-decoration]:appearance-none',
         )}
       />
 
