@@ -10,6 +10,16 @@ import type { Segment } from "./types";
 export const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
 export const round3 = (v: number) => Math.round((v || 0) * 1000) / 1000;
 
+/** Mint a fresh unique segment id (crypto.randomUUID with a non-crypto fallback
+ *  for older/embedded runtimes). Used for the right half of a split and for
+ *  filler/whole-video segments the model creates. */
+let idSeq = 0;
+export function newSegmentId(): string {
+  if (typeof crypto !== "undefined" && crypto.randomUUID) return `s-${crypto.randomUUID()}`;
+  idSeq += 1;
+  return `s-${idSeq}-${(performance?.now?.() ?? 0).toString(36)}`;
+}
+
 /** `m:ss.SS` */
 export function fmt(t: number): string {
   t = Math.max(0, t || 0);
@@ -40,6 +50,10 @@ export function normalizeSegments(input: Segment[], duration: number): Segment[]
   for (let i = 0; i < segs.length; i++) {
     const nextStart = i < segs.length - 1 ? segs[i + 1].start : duration || segs[i].end || 0;
     segs[i].end = nextStart;
+    // Backfill a stable id for any segment (or inserted filler) that lacks one.
+    // Deterministic by position so pure re-renders don't churn ids; the first
+    // structural edit replaces these with minted ids that the host then owns.
+    if (!segs[i].id) segs[i].id = `__s${i}`;
   }
   return segs;
 }
@@ -48,6 +62,18 @@ export function normalizeSegments(input: Segment[], duration: number): Segment[]
 export function firstUnverified(segs: Segment[]): number {
   const i = segs.findIndex((s) => !s.verified);
   return i < 0 ? 0 : i;
+}
+
+/** Index of the (contiguous) segment covering time `t`: the last segment whose
+ *  start is ≤ t. Used to keep the selection synced to the playhead during
+ *  continuous playback. Returns 0 for empty input. */
+export function segmentIndexAtTime(segs: Segment[], t: number): number {
+  let idx = 0;
+  for (let i = 0; i < segs.length; i++) {
+    if (segs[i].start <= t + 1e-6) idx = i;
+    else break;
+  }
+  return idx;
 }
 
 export type SplitResult = { segments: Segment[]; selected: number } | { error: string };
@@ -60,7 +86,8 @@ export function splitAt(input: Segment[], t: number, duration: number): SplitRes
   const k = segs.findIndex((s) => t > s.start + 1e-3 && t < s.end - 1e-3);
   if (k < 0) return { error: "A split already exists here" };
   const s = segs[k];
-  const right: Segment = { start: t, end: s.end, description: "", verified: false };
+  // Left half keeps `s`'s id; right half is a brand-new segment → new id.
+  const right: Segment = { id: newSegmentId(), start: t, end: s.end, description: "", verified: false };
   s.end = t;
   s.verified = false;
   segs.splice(k + 1, 0, right);
