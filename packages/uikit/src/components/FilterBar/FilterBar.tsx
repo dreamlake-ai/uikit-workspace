@@ -213,6 +213,17 @@ function FilterSearchLine({
             onClearToken()
           }
         }}
+        // This is a search box, never an autofillable field. Without these,
+        // browser heuristics misclassify the bare input and pop the address /
+        // payment-method autofill dropdown over the results.
+        type="text"
+        autoComplete="off"
+        autoCorrect="off"
+        autoCapitalize="off"
+        spellCheck={false}
+        data-1p-ignore
+        data-lpignore="true"
+        data-form-type="other"
         placeholder={token ? 'filter…' : placeholder}
         className={cn(
           'bg-transparent border-0 outline-none p-0 min-w-0 flex-1',
