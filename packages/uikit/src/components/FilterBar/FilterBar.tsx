@@ -213,14 +213,14 @@ function FilterSearchLine({
             onClearToken()
           }
         }}
-        // This is a search box, never an autofillable field. Without these,
-        // browser heuristics misclassify the bare input and pop the address /
-        // payment-method autofill dropdown over the results.
-        type="text"
+        // This is a search box, never an autofillable field. The decisive
+        // signal is the native type="search" — Chrome/Safari don't offer
+        // address/payment autofill on a search field, regardless of how their
+        // heuristics would otherwise classify it. (autoComplete="off" is
+        // ignored by Chrome for payment autofill; kept only as a cheap fallback
+        // for other browsers, alongside the password-manager opt-out hints.)
+        type="search"
         autoComplete="off"
-        autoCorrect="off"
-        autoCapitalize="off"
-        spellCheck={false}
         data-1p-ignore
         data-lpignore="true"
         data-form-type="other"
@@ -228,6 +228,8 @@ function FilterSearchLine({
         className={cn(
           'bg-transparent border-0 outline-none p-0 min-w-0 flex-1',
           'font-uikit-mono text-uikit-12 text-uikit-ink tracking-uikit-snug',
+          // hide the native WebKit search clear ✕ (FilterBar renders its own)
+          '[&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-decoration]:appearance-none',
         )}
       />
 
