@@ -28,6 +28,7 @@ import { TrackHeads } from "./TrackHeads";
 import { DescriptionBox } from "./DescriptionBox";
 
 const DEFAULT_SPEEDS = [0.25, 0.5, 1, 1.5, 2];
+const ZOOM_LEVELS = [1, 2, 4, 8, 16];
 
 /**
  * VideoAnnotator — a video player with an editable, contiguous segment
@@ -79,11 +80,16 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
     const videoRef = useRef<HTMLVideoElement>(null);
     const stageRef = useRef<HTMLDivElement>(null);
     const overlayRef = useRef<HTMLCanvasElement>(null);
+    const scrollRef = useRef<HTMLDivElement>(null);
 
     const [currentTime, setCurrentTime] = useState(0);
     const [playing, setPlaying] = useState(false);
     const [rate, setRate] = useState(1);
     const [metaDuration, setMetaDuration] = useState(0);
+    // Timeline horizontal magnification (1/2/4/8/16). The timeline canvas widens
+    // to `zoom*100%` inside `scrollRef`'s overflow-x container; view is kept
+    // centered via scrollLeft.
+    const [zoom, setZoom] = useState(1);
     // Hand-pose overlay: OFF by default (a "Hands" toggle in the transport
     // flips it). Only relevant when `handpose` data is supplied.
     const [showHands, setShowHands] = useState(defaultShowHandpose);
@@ -124,6 +130,47 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
     const segs = useMemo(() => normalizeSegments(activeSegments, D), [activeSegments, D]);
     const sel = clamp(selectedIndex, 0, Math.max(0, segs.length - 1));
     const curSeg: Segment | null = segs[sel] || null;
+
+    // ---- timeline zoom (horizontal magnification) --------------------------
+    const stepZoom = useCallback((dir: number) => {
+      setZoom((z) => {
+        const i = ZOOM_LEVELS.indexOf(z);
+        const ni = clamp((i < 0 ? 0 : i) + dir, 0, ZOOM_LEVELS.length - 1);
+        return ZOOM_LEVELS[ni];
+      });
+    }, []);
+
+    // Scroll the widened timeline so time `t` sits at the horizontal center.
+    // Out-of-range scrollLeft is clamped by the browser (flush at the edges).
+    const recenter = useCallback(
+      (t: number) => {
+        const sc = scrollRef.current;
+        if (!sc || !D) return;
+        sc.scrollLeft = (t / D) * sc.scrollWidth - sc.clientWidth / 2;
+      },
+      [D]
+    );
+
+    // On zoom change: recenter on the playhead. At 1× reset the scroll to the
+    // start. rAF so the new canvas width is laid out before we measure scrollWidth.
+    useEffect(() => {
+      if (zoom <= 1) {
+        if (scrollRef.current) scrollRef.current.scrollLeft = 0;
+        return;
+      }
+      const raf = requestAnimationFrame(() => recenter(currentTime));
+      return () => cancelAnimationFrame(raf);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [zoom]);
+
+    // Paused selection change while zoomed → recenter on the playhead (selecting
+    // seeks it to the segment's start). During playback the timeupdate handler
+    // follows the playhead instead.
+    useEffect(() => {
+      if (zoom <= 1 || playing) return;
+      recenter(currentTime);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [sel]);
 
     // Route a structural edit of the active track back to the host in the shape
     // the current mode expects.
@@ -291,8 +338,17 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
       if (!v.paused) {
         const idx = segmentIndexAtTime(segs, v.currentTime);
         if (idx !== sel) onSelectedChange(idx);
+        // When zoomed, follow the playhead with a dead-zone (only re-center once
+        // it nears the visible edges) so the scroll doesn't jitter every tick.
+        const sc = scrollRef.current;
+        if (sc && zoom > 1 && D) {
+          const px = (v.currentTime / D) * sc.scrollWidth;
+          if (px < sc.scrollLeft + 40 || px > sc.scrollLeft + sc.clientWidth - 80) {
+            sc.scrollLeft = px - sc.clientWidth / 2;
+          }
+        }
       }
-    }, [segs, sel, onSelectedChange]);
+    }, [segs, sel, onSelectedChange, zoom, D]);
 
     // ---- timeline drag (boundary) + scrub / click-select ------------------
     const startBoundaryDrag = useCallback(
@@ -447,6 +503,9 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
             playsInline
             preload="metadata"
             src={videoUrl || undefined}
+            // Click the video frame to toggle play/pause (like a normal player).
+            onClick={togglePlay}
+            style={videoUrl ? { cursor: "pointer" } : undefined}
             onLoadedMetadata={onLoadedMetadata}
             onTimeUpdate={onTimeUpdate}
             onSeeked={() => setCurrentTime(videoRef.current?.currentTime ?? 0)}
@@ -474,6 +533,8 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
           hasHandpose={hasHandpose}
           showHands={showHands}
           onToggleHands={() => setShowHands((s) => !s)}
+          zoom={zoom}
+          onStepZoom={stepZoom}
         />
 
         <div className={cn("va-tlwrap", multi && "multi")}>
@@ -486,20 +547,24 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
               onRemove={removeTrack}
             />
           )}
-          <Timeline
-            trackList={trackList}
-            active={active}
-            activeSegs={segs}
-            sel={sel}
-            D={D}
-            multi={multi}
-            allowAddTracks={allowAddTracks}
-            currentTime={currentTime}
-            onScrubDown={startScrub}
-            onBoundaryDown={startBoundaryDrag}
-            onMerge={doMerge}
-            onAddTrack={addTrack}
-          />
+          {/* Horizontal-scroll viewport; the Timeline canvas widens to zoom*100%. */}
+          <div className="va-tlscroll" ref={scrollRef}>
+            <Timeline
+              trackList={trackList}
+              active={active}
+              activeSegs={segs}
+              sel={sel}
+              D={D}
+              zoom={zoom}
+              multi={multi}
+              allowAddTracks={allowAddTracks}
+              currentTime={currentTime}
+              onScrubDown={startScrub}
+              onBoundaryDown={startBoundaryDrag}
+              onMerge={doMerge}
+              onAddTrack={addTrack}
+            />
+          </div>
         </div>
 
         {showDescription && (
