@@ -39,6 +39,16 @@ export interface VideoAnnotatorProps {
   /** Video source URL. When empty, a placeholder message shows in the stage. */
   videoUrl?: string | null;
 
+  /**
+   * Take over the `<video>` element's media source instead of `videoUrl`. Called
+   * once with the mounted `<video>` (may return a cleanup run on unmount / when
+   * the callback identity changes). Use for streaming sources the component
+   * can't express as a plain URL — e.g. a MediaSource fed by a seek-aware
+   * fragment streamer. When provided, the component does NOT set `src` from
+   * `videoUrl` and hides the "no video" placeholder.
+   */
+  attachMedia?: (video: HTMLVideoElement) => void | (() => void);
+
   /** Optional title shown in a header row above the video (e.g. the clip name). */
   videoTitle?: string;
   /** Optional monospace subtitle beside the title (e.g. the file path). */

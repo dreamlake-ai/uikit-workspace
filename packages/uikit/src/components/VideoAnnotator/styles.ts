@@ -61,6 +61,9 @@ export const CSS = `
   overflow:hidden;display:flex;align-items:center;justify-content:center}
 .va-video{max-width:100%;max-height:100%;background:#000}
 .va-stage-msg{position:absolute;color:var(--va-muted);font-size:13px;text-align:center;padding:20px}
+/* Buffering spinner overlay — centered over the video, never intercepts clicks
+   (so click-to-play still works underneath). */
+.va-buffering{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;z-index:3}
 /* Hand-pose overlay canvas: absolutely positioned by JS to sit exactly over the
    letterboxed video content. Never intercepts pointer events. */
 .va-overlay{position:absolute;left:0;top:0;pointer-events:none;z-index:2}

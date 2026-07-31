@@ -8,6 +8,7 @@ import {
   useState,
 } from "react";
 import { cn } from "../../lib/utils";
+import { Spinner } from "../Spinner";
 import type { Segment, Track, VideoAnnotatorHandle, VideoAnnotatorProps } from "./types";
 import {
   boundaryTimes,
@@ -48,6 +49,7 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
   function VideoAnnotator(
     {
       videoUrl,
+      attachMedia,
       videoTitle,
       videoSubtitle,
       headerLeading,
@@ -95,6 +97,19 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
     const [showHands, setShowHands] = useState(defaultShowHandpose);
     const [toast, setToast] = useState("");
     const toastTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+    // Buffering overlay: shown while the media is waiting for data (initial
+    // load, or seeking into a not-yet-buffered region of a streamed source).
+    // Debounced so instant (already-buffered) seeks don't flash the spinner.
+    const [buffering, setBuffering] = useState(false);
+    const bufTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+    const showBuffering = useCallback(() => {
+      clearTimeout(bufTimer.current);
+      bufTimer.current = setTimeout(() => setBuffering(true), 180);
+    }, []);
+    const hideBuffering = useCallback(() => {
+      clearTimeout(bufTimer.current);
+      setBuffering(false);
+    }, []);
 
     useAnnotatorStyles();
 
@@ -104,8 +119,22 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
       setShowHands(defaultShowHandpose);
     }, [defaultShowHandpose]);
 
-    // Clear the toast timer on unmount so it can't setState after teardown.
-    useEffect(() => () => clearTimeout(toastTimer.current), []);
+    // Clear timers on unmount so they can't setState after teardown.
+    useEffect(() => () => {
+      clearTimeout(toastTimer.current);
+      clearTimeout(bufTimer.current);
+    }, []);
+
+    // External media takeover: hand the mounted <video> to the caller (e.g. a
+    // streaming source). The caller sets the source and may return a cleanup.
+    useEffect(() => {
+      const v = videoRef.current;
+      if (!attachMedia || !v) return;
+      const cleanup = attachMedia(v);
+      return () => {
+        if (typeof cleanup === "function") cleanup();
+      };
+    }, [attachMedia]);
 
     // Multi-track (tracks) or single-track (segments): normalize both to one
     // track-list + active-index model so the rest of the component is uniform.
@@ -502,19 +531,34 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
             className="va-video"
             playsInline
             preload="metadata"
-            src={videoUrl || undefined}
+            src={attachMedia ? undefined : videoUrl || undefined}
             // Click the video frame to toggle play/pause (like a normal player).
             onClick={togglePlay}
             style={videoUrl ? { cursor: "pointer" } : undefined}
             onLoadedMetadata={onLoadedMetadata}
             onTimeUpdate={onTimeUpdate}
-            onSeeked={() => setCurrentTime(videoRef.current?.currentTime ?? 0)}
+            onSeeked={() => {
+              setCurrentTime(videoRef.current?.currentTime ?? 0);
+              hideBuffering();
+            }}
             onPlay={() => setPlaying(true)}
             onPause={() => setPlaying(false)}
+            onLoadStart={showBuffering}
+            onWaiting={showBuffering}
+            onSeeking={showBuffering}
+            onStalled={showBuffering}
+            onCanPlay={hideBuffering}
+            onPlaying={hideBuffering}
+            onLoadedData={hideBuffering}
           />
           {/* Hand-pose overlay: positioned/sized over the video by the rAF loop. */}
           <canvas ref={overlayRef} className="va-overlay" aria-hidden="true" />
-          {!videoUrl && <div className="va-stage-msg">(no video url provided)</div>}
+          {buffering && (
+            <div className="va-buffering" aria-hidden="true">
+              <Spinner size={40} style={{ color: "rgba(255,255,255,.9)" }} />
+            </div>
+          )}
+          {!videoUrl && !attachMedia && <div className="va-stage-msg">(no video url provided)</div>}
         </div>
 
         <Transport
