@@ -8,7 +8,7 @@ export const MinimalSpec = () => (
     trigger={(open) => (
       <span
         data-open={open || undefined}
-        className="inline-flex items-center gap-1.5 font-uikit-mono text-uikit-11 font-medium leading-uikit-snug text-uikit-ink px-2.5 py-1.5 rounded-md bg-transparent data-[open]:bg-uikit-ink-6 cursor-pointer transition-[background] duration-[120ms]"
+        className="inline-flex items-center gap-1.5 font-uikit-ui text-uikit-12 font-medium leading-uikit-snug tracking-uikit-snug text-uikit-ink px-2.5 py-1.5 rounded-md bg-transparent data-[open]:bg-uikit-ink-6 cursor-pointer transition-[background] duration-[120ms]"
       >
         Actions
         <ChevronDown
