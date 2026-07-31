@@ -1,3 +1,4 @@
+import { ChevronDown } from 'lucide-react'
 import { Menu, MenuItem, MenuDivider } from '@dreamlake/uikit'
 
 export const MinimalSpec = () => (
@@ -9,14 +10,13 @@ export const MinimalSpec = () => (
         data-open={open || undefined}
         className="inline-flex items-center gap-1.5 font-uikit-mono text-uikit-11 font-medium leading-uikit-snug text-uikit-ink px-2.5 py-1.5 rounded-md bg-transparent data-[open]:bg-uikit-ink-6 cursor-pointer transition-[background] duration-[120ms]"
       >
-        Actions{' '}
-        <span
+        Actions
+        <ChevronDown
+          size={12}
           data-menu-arrow
           data-open={open || undefined}
-          className="opacity-55 inline-block rotate-0 data-[open]:rotate-180 transition-transform duration-[280ms] ease-[cubic-bezier(0.2,0.8,0.2,1)]"
-        >
-          ▾
-        </span>
+          className="opacity-55 shrink-0 rotate-0 data-[open]:rotate-180 transition-transform duration-[280ms] ease-[cubic-bezier(0.2,0.8,0.2,1)]"
+        />
       </span>
     )}
   >

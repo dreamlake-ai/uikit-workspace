@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { User, Users, Plus, LogOut } from 'lucide-react'
+import { User, Users, Plus, LogOut, ChevronDown } from 'lucide-react'
 import { Menu, MenuSection, MenuItem, MenuDivider, Avatar } from '@dreamlake/uikit'
 
 type Account = { id: string; kind: 'user' | 'org'; name: string; handle: string }
@@ -56,15 +56,13 @@ export const WorkspaceSwitcherSpec = () => {
         <div className="text-left">
           <div className="font-uikit-ui text-uikit-12 font-medium leading-uikit-snug text-uikit-muted opacity-75 tracking-uikit-snug mb-1.5 inline-flex items-center gap-1">
             <span>{possessive}</span>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+            {/* Points down at rest; 0deg → 180deg sweeps it clockwise to up. */}
+            <ChevronDown
+              size={12}
               data-menu-arrow
               data-open={open || undefined}
               className="opacity-70 shrink-0 rotate-0 data-[open]:rotate-180 transition-transform duration-[280ms] ease-[cubic-bezier(0.2,0.8,0.2,1)]"
-            >
-              {/* Drawn pointing down; 0deg → 180deg sweeps it clockwise to up. */}
-              <polyline points="6 9 12 15 18 9" />
-            </svg>
+            />
           </div>
           <div className="font-uikit-ui text-uikit-22 font-semibold text-uikit-ink tracking-uikit-tightest leading-none">
             DreamLake<span className="text-uikit-accent font-black text-[1.25em] inline-block leading-none align-baseline ml-px">.</span>
