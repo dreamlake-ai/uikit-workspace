@@ -12,6 +12,12 @@ import { cn } from '../../lib/utils'
 /** Wedge side length in px, pre-rotation. */
 const ARROW_SIZE = 7
 /**
+ * Width of the hairline ring in `--shadow-uikit-soft` (`0 0 0 1px var(--faint)`).
+ * A box-shadow ring paints *outside* the border box, so the panel's visible top
+ * line is centered half of this above `y: 0` — see the wedge's `translate`.
+ */
+const PANEL_RING = 1
+/**
  * Smallest distance from a panel edge to the wedge's center — keeps the wedge
  * off the panel's `rounded-lg` corners, where its base would hang in the air.
  */
@@ -191,7 +197,7 @@ export function Menu({
               <span
                 aria-hidden
                 className={cn(
-                  'absolute top-0 -translate-y-1/2 rotate-45',
+                  'absolute top-0 rotate-45',
                   'rounded-tl-[2px] border-t border-l border-uikit-faint',
                   'bg-uikit-bg',
                 )}
@@ -201,6 +207,12 @@ export function Menu({
                   // `translate` only shifts Y, so left/right still position the
                   // un-rotated box — back off by half a side to center it.
                   [align]: arrowInset - ARROW_SIZE / 2,
+                  // Sit the rotated square's side vertices on the *center of the
+                  // panel's hairline*, not on the border-box edge. The ring
+                  // paints outside the box, so centering at y:0 leaves the two
+                  // bordered edges running a full ring-width past the visible
+                  // line — they poke out below it as little ears at the base.
+                  translate: `0 calc(-50% - ${PANEL_RING / 2}px)`,
                 }}
               />
             )}
