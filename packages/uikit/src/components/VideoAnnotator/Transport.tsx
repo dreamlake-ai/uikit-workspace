@@ -8,6 +8,7 @@ import {
   Plus,
 } from "lucide-react";
 import { cn } from "../../lib/utils";
+import { Spinner } from "../Spinner";
 import {
   TipButton,
   PlaySharp,
@@ -37,6 +38,7 @@ export function Transport({
   doMerge,
   hasHandpose,
   showHands,
+  handsLoading,
   onToggleHands,
   zoom,
   onStepZoom,
@@ -55,6 +57,7 @@ export function Transport({
   doMerge: (index: number) => void;
   hasHandpose: boolean;
   showHands: boolean;
+  handsLoading?: boolean;
   onToggleHands: () => void;
   zoom: number;
   onStepZoom: (dir: number) => void;
@@ -109,10 +112,10 @@ export function Transport({
         {hasHandpose && (
           <TipButton
             className={cn("va-icon va-hands", showHands && "on")}
-            label={showHands ? "Hide hand pose" : "Show hand pose"}
+            label={handsLoading ? "Loading hand pose…" : showHands ? "Hide hand pose" : "Show hand pose"}
             onClick={onToggleHands}
           >
-            <Hand size={14} />
+            {handsLoading ? <Spinner size={14} style={{ color: "currentColor" }} /> : <Hand size={14} />}
           </TipButton>
         )}
         {/* Timeline zoom: −/N×/+, de-crowds a dense timeline (1→16×). */}

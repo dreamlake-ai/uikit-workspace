@@ -74,6 +74,8 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
       speeds = DEFAULT_SPEEDS,
       enableKeyboard = true,
       handpose,
+      handposeAvailable = false,
+      handposeLoading = false,
       defaultShowHandpose = false,
       className,
     }: VideoAnnotatorProps,
@@ -505,7 +507,11 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
       sel,
     });
 
-    const hasHandpose = Boolean(handpose && handpose.frames && handpose.frames.length);
+    const handposeReady = Boolean(handpose && handpose.frames && handpose.frames.length);
+    // Show the toggle if data is present OR the host says it's available (loading
+    // in the background). While on but not yet loaded, the button spins.
+    const hasHandpose = handposeReady || handposeAvailable;
+    const handsLoading = showHands && handposeLoading && !handposeReady;
     useHandposeOverlay({ enabled: showHands, playing, handpose, videoRef, canvasRef: overlayRef, stageRef });
 
     // ---- derived readout ---------------------------------------------------
@@ -576,6 +582,7 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
           doMerge={doMerge}
           hasHandpose={hasHandpose}
           showHands={showHands}
+          handsLoading={handsLoading}
           onToggleHands={() => setShowHands((s) => !s)}
           zoom={zoom}
           onStepZoom={stepZoom}

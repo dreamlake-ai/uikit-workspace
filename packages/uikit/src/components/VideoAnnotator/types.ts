@@ -131,6 +131,16 @@ export interface VideoAnnotatorProps {
    * playhead. Self-contained — no viz dependency. The overlay is OFF by default.
    */
   handpose?: HandposeEnvelope | null;
+  /**
+   * Show the hand-pose toggle even before `handpose` data has arrived — for
+   * sources that load the (possibly large) pose blob in the background. The
+   * toggle appears; turning it on before the data is ready shows a spinner on
+   * the button (see `handposeLoading`).
+   */
+  handposeAvailable?: boolean;
+  /** The hand-pose blob is still downloading. When the toggle is on and data
+   *  isn't ready yet, the button shows a loading spinner instead of the icon. */
+  handposeLoading?: boolean;
   /** Start with the hand-pose overlay visible. Default false (unchecked). */
   defaultShowHandpose?: boolean;
 
