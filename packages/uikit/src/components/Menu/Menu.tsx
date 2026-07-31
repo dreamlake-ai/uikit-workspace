@@ -9,6 +9,20 @@ import {
 import { createPortal } from 'react-dom'
 import { cn } from '../../lib/utils'
 
+/** Wedge side length in px, pre-rotation. */
+const ARROW_SIZE = 7
+/**
+ * Width of the hairline ring in `--shadow-uikit-soft` (`0 0 0 1px var(--faint)`).
+ * A box-shadow ring paints *outside* the border box, so the panel's visible top
+ * line is centered half of this above `y: 0` — see the wedge's `translate`.
+ */
+const PANEL_RING = 1
+/**
+ * Smallest distance from a panel edge to the wedge's center — keeps the wedge
+ * off the panel's `rounded-lg` corners, where its base would hang in the air.
+ */
+const ARROW_MIN_INSET = 16
+
 export interface MenuProps {
   /**
    * Trigger element. Receives the current open state so the trigger can style
@@ -19,6 +33,13 @@ export interface MenuProps {
   align?: 'left' | 'right'
   /** Panel min-width in px. Default `240`. */
   width?: number
+  /**
+   * Render a wedge on the panel's top edge, pointing back at the trigger.
+   * Default `true`. The wedge centers on the first `[data-menu-arrow]`
+   * descendant of the trigger — put it on the chevron — and falls back to the
+   * trigger's own center when no such element exists.
+   */
+  arrow?: boolean
 
   /** Controlled open state. Omit for uncontrolled mode. */
   open?: boolean
@@ -42,6 +63,7 @@ export function Menu({
   trigger,
   align = 'left',
   width = 240,
+  arrow = true,
   open: openProp,
   onOpenChange,
   defaultOpen = false,
@@ -66,6 +88,8 @@ export function Menu({
     left: number
     right: number
   }>({ top: 0, left: 0, right: 0 })
+  // Wedge center, in px from whichever panel edge `align` pins.
+  const [arrowInset, setArrowInset] = useState(ARROW_MIN_INSET)
 
   // Track the trigger's viewport rect so the portaled panel stays anchored
   // through scroll / resize. Mirrors the BreadcrumbTree approach.
@@ -84,6 +108,24 @@ export function Menu({
         left: r.left,
         right: viewportContentWidth - r.right,
       })
+
+      if (!arrow) return
+      // Aim the wedge at the trigger's chevron when one is tagged, else at the
+      // trigger's midpoint. `align` decides which panel edge the offset is
+      // measured from: 'left' pins the panel's left edge to r.left, 'right'
+      // pins its right edge to r.right — so both are trigger-relative and the
+      // panel's own width is only needed for the far-edge clamp.
+      const anchor = triggerRef.current!.querySelector('[data-menu-arrow]')
+      const aRect = anchor?.getBoundingClientRect()
+      const anchorCenter = aRect
+        ? aRect.left + aRect.width / 2
+        : r.left + r.width / 2
+      const raw =
+        align === 'left' ? anchorCenter - r.left : r.right - anchorCenter
+      // Keep the wedge clear of the panel's rounded corners at both ends.
+      const panelWidth = panelRef.current?.offsetWidth ?? width
+      const far = Math.max(ARROW_MIN_INSET, panelWidth - ARROW_MIN_INSET)
+      setArrowInset(Math.min(Math.max(raw, ARROW_MIN_INSET), far))
     }
     update()
     window.addEventListener('scroll', update, true)
@@ -92,7 +134,7 @@ export function Menu({
       window.removeEventListener('scroll', update, true)
       window.removeEventListener('resize', update)
     }
-  }, [open])
+  }, [open, align, width, arrow])
 
   // Esc dismiss.
   useEffect(() => {
@@ -139,15 +181,45 @@ export function Menu({
             role="menu"
             onClick={(e) => e.stopPropagation()}
             className={cn(
-              'uikit-panel-in fixed z-[1000] flex flex-col',
-              'rounded-lg py-1.5',
+              'uikit-panel-in fixed z-[1000]',
+              // No padding on the panel itself — it's the containing block for
+              // the wedge, and padding would offset the wedge's `left`/`right`
+              // from the visible edge the inset is measured against. The inner
+              // wrapper below does the padding instead.
+              'rounded-lg',
               'bg-uikit-bg text-uikit-ink font-uikit-ui',
               'shadow-uikit-soft',
               className,
             )}
             style={panelStyle}
           >
-            {children}
+            {arrow && (
+              <span
+                aria-hidden
+                className={cn(
+                  'absolute top-0 rotate-45',
+                  'rounded-tl-[2px] border-t border-l border-uikit-faint',
+                  'bg-uikit-bg',
+                )}
+                style={{
+                  width: ARROW_SIZE,
+                  height: ARROW_SIZE,
+                  // `translate` only shifts Y, so left/right still position the
+                  // un-rotated box — back off by half a side to center it.
+                  [align]: arrowInset - ARROW_SIZE / 2,
+                  // Sit the rotated square's side vertices on the *center of the
+                  // panel's hairline*, not on the border-box edge. The ring
+                  // paints outside the box, so centering at y:0 leaves the two
+                  // bordered edges running a full ring-width past the visible
+                  // line — they poke out below it as little ears at the base.
+                  translate: `0 calc(-50% - ${PANEL_RING / 2}px)`,
+                }}
+              />
+            )}
+            {/* Side padding here is what insets rows from the panel edge, so
+                hover / selected fills read as rounded chips instead of
+                edge-to-edge bands. Rows carry px-2 to keep text at 14px. */}
+            <div className="flex flex-col px-1.5 py-1.5">{children}</div>
           </div>,
           document.body,
         )}
