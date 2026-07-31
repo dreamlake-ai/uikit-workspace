@@ -375,31 +375,41 @@ html[data-theme="dark"] {
    transparent at rest and fades to var(--faint) only while the element carries
    the `.is-scrolling` class — a global capture-phase scroll listener (installed
    in vuer-web's root layout) adds it on scroll and removes it after an idle
-   timeout. var(--faint) is theme-aware, so no separate dark rules are needed. */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: transparent transparent;
-  transition: scrollbar-color 400ms ease;
-}
-*.is-scrolling {
-  scrollbar-color: var(--faint) transparent;
-}
+   timeout. var(--faint) is theme-aware, so no separate dark rules are needed.
 
-*::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
+   These live in `@layer base` on purpose. `*` sets the `transition`
+   *shorthand*, which resets `transition-property` to `scrollbar-color` alone —
+   and unlayered declarations outrank every layered one no matter the
+   specificity, so leaving this block unlayered silently voided every Tailwind
+   `transition-*` / `duration-*` / `ease-*` utility on every element in the app.
+   In `base` it still applies to elements that declare no transition of their
+   own, and any utility now wins as authored. */
+@layer base {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+    transition: scrollbar-color 400ms ease;
+  }
+  *.is-scrolling {
+    scrollbar-color: var(--faint) transparent;
+  }
 
-*::-webkit-scrollbar-track {
-  background: transparent;
-}
+  *::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
 
-*::-webkit-scrollbar-thumb {
-  background: transparent;
-  border-radius: 3px;
-  transition: background 400ms ease;
-}
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
 
-*.is-scrolling::-webkit-scrollbar-thumb {
-  background: var(--faint);
+  *::-webkit-scrollbar-thumb {
+    background: transparent;
+    border-radius: 3px;
+    transition: background 400ms ease;
+  }
+
+  *.is-scrolling::-webkit-scrollbar-thumb {
+    background: var(--faint);
+  }
 }
