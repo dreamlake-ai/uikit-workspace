@@ -4,8 +4,6 @@ import {
   Scissors,
   ArrowLeftToLine,
   Hand,
-  Minus,
-  Plus,
 } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { Spinner } from "../Spinner";
@@ -40,8 +38,6 @@ export function Transport({
   showHands,
   handsLoading,
   onToggleHands,
-  zoom,
-  onStepZoom,
 }: {
   readout: string;
   rate: number;
@@ -59,8 +55,6 @@ export function Transport({
   showHands: boolean;
   handsLoading?: boolean;
   onToggleHands: () => void;
-  zoom: number;
-  onStepZoom: (dir: number) => void;
 }) {
   return (
     <div className="va-transport">
@@ -118,16 +112,6 @@ export function Transport({
             {handsLoading ? <Spinner size={14} style={{ color: "currentColor" }} /> : <Hand size={14} />}
           </TipButton>
         )}
-        {/* Timeline zoom: −/N×/+, de-crowds a dense timeline (1→16×). */}
-        <span className="va-zoom">
-          <TipButton className="va-icon va-zoombtn" label="Zoom out" onClick={() => onStepZoom(-1)} disabled={zoom <= 1}>
-            <Minus size={13} />
-          </TipButton>
-          <span className="va-zoomval">{zoom}×</span>
-          <TipButton className="va-icon va-zoombtn" label="Zoom in" onClick={() => onStepZoom(1)} disabled={zoom >= 16}>
-            <Plus size={13} />
-          </TipButton>
-        </span>
       </div>
     </div>
   );

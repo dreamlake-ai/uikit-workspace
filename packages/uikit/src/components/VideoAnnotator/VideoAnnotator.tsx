@@ -24,12 +24,15 @@ import { useAnnotatorStyles } from "./styles";
 import { useAnnotatorKeyboard } from "./useAnnotatorKeyboard";
 import { useHandposeOverlay } from "./useHandposeOverlay";
 import { Transport } from "./Transport";
+import { ZoomControl } from "./ZoomControl";
 import { Timeline } from "./Timeline";
 import { TrackHeads } from "./TrackHeads";
 import { DescriptionBox } from "./DescriptionBox";
 
 const DEFAULT_SPEEDS = [0.25, 0.5, 1, 1.5, 2];
-const ZOOM_LEVELS = [1, 2, 4, 8, 16];
+// Timeline zoom bounds (continuous). The transport's drag/step both clamp here.
+const MIN_ZOOM = 1;
+const MAX_ZOOM = 16;
 
 /**
  * VideoAnnotator — a video player with an editable, contiguous segment
@@ -163,13 +166,13 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
     const curSeg: Segment | null = segs[sel] || null;
 
     // ---- timeline zoom (horizontal magnification) --------------------------
-    const stepZoom = useCallback((dir: number) => {
-      setZoom((z) => {
-        const i = ZOOM_LEVELS.indexOf(z);
-        const ni = clamp((i < 0 ? 0 : i) + dir, 0, ZOOM_LEVELS.length - 1);
-        return ZOOM_LEVELS[ni];
-      });
-    }, []);
+    // Continuous zoom in [MIN_ZOOM, MAX_ZOOM]; the transport's ZoomControl drives
+    // it (drag the value to scale, ± to step). The recenter effects below keep
+    // the playhead pinned as the value changes.
+    const setZoomClamped = useCallback(
+      (z: number) => setZoom(Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, z))),
+      []
+    );
 
     // Scroll the widened timeline so time `t` sits at the horizontal center.
     // Out-of-range scrollLeft is clamped by the browser (flush at the edges).
@@ -440,6 +443,10 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
           document.removeEventListener("mouseup", onUp);
           if (moved) {
             setCurrentTime(v.currentTime);
+            // Selection follows the scrub: highlight the segment now under the
+            // playhead (same sync as continuous playback, but for manual scrub).
+            const idx = segmentIndexAtTime(segs, v.currentTime);
+            if (idx !== sel) onSelectedChange(idx);
             return; // was a scrub/drag, not a click
           }
           if (onSegment && segEl) {
@@ -469,7 +476,11 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
               }
             }
           } else {
+            // Plain click on the empty ruler: the seek already happened on
+            // press — now move the selection to the segment under the playhead.
             setCurrentTime(v.currentTime);
+            const idx = segmentIndexAtTime(segs, v.currentTime);
+            if (idx !== sel) onSelectedChange(idx);
           }
         };
         document.addEventListener("mousemove", onMove);
@@ -584,11 +595,14 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
           showHands={showHands}
           handsLoading={handsLoading}
           onToggleHands={() => setShowHands((s) => !s)}
-          zoom={zoom}
-          onStepZoom={stepZoom}
         />
 
         <div className={cn("va-tlwrap", multi && "multi")}>
+          {/* Zoom capsule floats at the top-center of the timeline (over the
+              ruler), matching the viz episode-timeline ZoomBar placement. */}
+          <div className="va-zoomfloat">
+            <ZoomControl zoom={zoom} minZoom={MIN_ZOOM} maxZoom={MAX_ZOOM} onZoom={setZoomClamped} />
+          </div>
           {multi && (
             <TrackHeads
               tracks={trackList}

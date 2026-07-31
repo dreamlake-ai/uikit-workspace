@@ -114,7 +114,9 @@ export const CSS = `
 .va-speedmenu button[aria-selected="true"]{color:var(--va-accent)}
 .va-speedcheck{position:absolute;left:6px}
 
-.va-tlwrap{display:flex;flex:none;margin-top:-2px}
+/* margin-top opens a gap above the timeline for the floating zoom capsule
+   (which sits over the ruler) and separates it from the transport row. */
+.va-tlwrap{position:relative;display:flex;flex:none;margin-top:13.5px}
 .va-tlwrap.multi{gap:8px}
 /* Horizontal-scroll viewport for the (possibly widened) timeline canvas. The
    canvas grows to zoom*100% and overflows here; at 1× it's exactly 100% (no
@@ -125,22 +127,52 @@ export const CSS = `
 .va-tlscroll::-webkit-scrollbar{height:8px}
 .va-tlscroll::-webkit-scrollbar-thumb{background:color-mix(in srgb, var(--va-text) 18%, transparent);border-radius:4px}
 .va-tlscroll::-webkit-scrollbar-track{background:transparent}
-/* Zoom cluster in the transport (right of the hand-pose toggle). Buttons reuse
-   .va-icon; only the value chip needs styling. */
-.va-zoom{display:inline-flex;align-items:center;gap:4px}
-.va-zoomval{font:11px var(--f-mono, ui-monospace, Menlo, monospace);color:var(--va-muted);min-width:26px;text-align:center}
+/* Timeline zoom capsule — a direct port of the viz episode-timeline ZoomBar.
+   FLOATS at the top-center of the timeline (over the ruler), exactly like the
+   reference (absolute, top:0, left:50%, translateX(-50%)). A pill with the
+   two steppers around a draggable value (drag right = zoom in). */
+/* Bottom edge sits on the ruler baseline (.va-ticks::before, top:28px): the
+   capsule floats just ABOVE the timeline's horizontal line, centered. */
+.va-zoomfloat{position:absolute;top:28px;left:50%;transform:translate(-50%,-100%);z-index:9;pointer-events:auto}
+.va-zoom{display:inline-flex;align-items:center;gap:0;padding:2px 3px;border-radius:8px;
+  background:var(--va-panel);border:1px solid color-mix(in srgb, var(--va-text) 12%, transparent);
+  box-shadow:0 3px 10px var(--va-shadow), 0 1px 2px var(--va-shadow);
+  font:11px var(--f-mono, ui-monospace, Menlo, monospace);user-select:none;-webkit-user-select:none}
+/* ‹ / › ghost steppers. 2-class selectors beat the base .va-root button rules. */
+.va-zoom .va-zoombtn{width:20px;height:20px;min-width:20px;padding:0;
+  display:inline-flex;align-items:center;justify-content:center;
+  border:0;border-radius:5px;background:transparent;color:var(--va-text);cursor:pointer;
+  transition:background-color .12s ease}
+.va-zoom .va-zoombtn:hover{background:color-mix(in srgb, var(--va-text) 8%, transparent)}
+.va-zoom .va-zoombtn:active{transform:none}
+.va-zoom .va-zoombtn:disabled{opacity:.35;cursor:default}
+.va-zoom .va-zoombtn:disabled:hover{background:transparent}
+.va-zoom .va-zoombtn svg{flex:none}
+/* Draggable value: bold number + small muted ×. Fixed min-width keeps the ‹ / ›
+   from shifting as the value's width changes; touch-action:none lets pointer
+   capture own the gesture on touch. */
+.va-zoomdrag{display:inline-flex;align-items:center;justify-content:center;gap:2px;line-height:1;
+  height:20px;min-width:56px;padding:0 6px;border-radius:5px;
+  cursor:ew-resize;user-select:none;-webkit-user-select:none;touch-action:none;outline:none;
+  transition:background-color .12s ease}
+.va-zoomdrag:hover{background:color-mix(in srgb, var(--va-text) 5%, transparent)}
+.va-zoomdrag.on{cursor:grabbing;background:color-mix(in srgb, var(--va-text) 8%, transparent)}
+.va-zoomnum{font:11px var(--f-mono, ui-monospace, Menlo, monospace);font-weight:700;
+  letter-spacing:-0.01em;font-variant-numeric:tabular-nums;color:var(--va-text)}
+.va-zoomx{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;
+  color:color-mix(in srgb, var(--va-text) 55%, transparent)}
 /* display:flow-root gives the timeline its own block formatting context so the
    .va-tracks margin-top:30px (which drops the lanes below the ruler) is
    CONTAINED instead of collapsing through — the timeline no longer gets the free
    BFC it had as a flex item before the scroll wrapper was added. Without this
    the lanes render at top:0 and overlap the ruler. */
-.va-timeline{position:relative;display:flow-root;min-height:62px;background:transparent;cursor:pointer;user-select:none}
-.va-timeline:not(:has(.va-seg))::before{content:"";position:absolute;top:30px;bottom:0;left:0;right:0;
+.va-timeline{position:relative;display:flow-root;min-height:68px;background:transparent;cursor:pointer;user-select:none}
+.va-timeline:not(:has(.va-seg))::before{content:"";position:absolute;top:36px;bottom:0;left:0;right:0;
   border-radius:6px;background:color-mix(in srgb, var(--va-text) 4%, transparent);box-shadow:inset 0 0 0 1px var(--va-line)}
 /* Stacked track lanes below the ruler. Each row hosts its segments (and, for
    the active row, the drag handles); rows flow so the timeline grows with the
    track count. */
-.va-tracks{margin-top:30px;display:flex;flex-direction:column;gap:6px}
+.va-tracks{margin-top:36px;display:flex;flex-direction:column;gap:6px}
 .va-track{position:relative;height:32px}
 .va-track.inactive{opacity:.55}
 .va-track.inactive .va-seg:hover{background:var(--va-panel2);box-shadow:inset 0 0 0 1px var(--va-line)}
@@ -196,10 +228,10 @@ html[data-theme="dark"] .va-seg.sel .va-seglabel{color:var(--va-text)}
 .va-handle{position:absolute;top:0;bottom:0;width:9px;margin-left:-5px;cursor:ew-resize;z-index:5}
 .va-handle::after{content:"";position:absolute;left:4px;top:0;bottom:0;width:1.5px;background:var(--va-accent);opacity:0}
 .va-handle:hover::after{opacity:1}
-.va-playhead{position:absolute;top:14px;bottom:0;width:1.5px;background:var(--va-accent);pointer-events:none;z-index:6}
-.va-hoverline{position:absolute;top:14px;bottom:0;width:1.5px;
+.va-playhead{position:absolute;top:19px;bottom:0;width:1.5px;background:var(--va-accent);pointer-events:none;z-index:6}
+.va-hoverline{position:absolute;top:19px;bottom:0;width:1.5px;
   background:color-mix(in srgb, var(--va-accent) 50%, transparent);pointer-events:none;z-index:5}
-.va-hovertime{position:absolute;top:12px;transform:translateX(4px);
+.va-hovertime{position:absolute;top:17px;transform:translateX(4px);
   background:var(--va-accent);color:#fff;
   padding:2px 6px;border-radius:4px;white-space:nowrap;pointer-events:none;z-index:7;
   font-family:var(--f-mono, ui-monospace, Menlo, monospace);font-size:11px;line-height:1.3;
@@ -225,11 +257,11 @@ html[data-theme="dark"] .va-seg.sel .va-seglabel{color:var(--va-text)}
 .va-timeline .va-merge:active{transform:translateX(-50%) translateY(1px)}
 .va-timeline .va-merge:hover{background:color-mix(in srgb,#000 14%,var(--va-accent))}
 .va-timeline .va-merge svg{width:13px;height:13px}
-.va-ticks{position:absolute;left:0;right:0;top:0;height:24px;pointer-events:none;z-index:4}
-.va-ticks::before{content:"";position:absolute;left:0;right:0;top:22px;height:1px;background:var(--va-line)}
-.va-tick{position:absolute;top:0;height:24px;pointer-events:none}
-.va-tick::before{content:"";position:absolute;top:17px;left:0;width:1px;height:5px;background:var(--va-line)}
-.va-tick.major::before{top:14px;height:8px;background:var(--va-muted)}
+.va-ticks{position:absolute;left:0;right:0;top:0;height:30px;pointer-events:none;z-index:4}
+.va-ticks::before{content:"";position:absolute;left:0;right:0;top:28px;height:1px;background:var(--va-line)}
+.va-tick{position:absolute;top:0;height:30px;pointer-events:none}
+.va-tick::before{content:"";position:absolute;top:23px;left:0;width:1px;height:5px;background:var(--va-line)}
+.va-tick.major::before{top:19px;height:9px;background:var(--va-muted)}
 .va-ticklabel{position:absolute;top:1px;left:0;transform:translateX(-50%);white-space:nowrap;
   font:11px var(--f-mono, ui-monospace, Menlo, monospace);color:var(--va-muted);line-height:1}
 .va-tick.major .va-ticklabel{font-weight:600;color:color-mix(in srgb, var(--va-text) 55%, var(--va-muted))}
