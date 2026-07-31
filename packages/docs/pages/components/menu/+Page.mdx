@@ -44,6 +44,19 @@ decision before that's been made.
 
 ## Behavior
 
+- **Wedge points at the chevron** — the panel's top edge carries a wedge that
+  centers on the first `[data-menu-arrow]` descendant of the trigger. Tag the
+  chevron with it; without a tag the wedge falls back to the trigger's center,
+  which is only right for triggers whose chevron sits near the middle. The
+  wedge is clamped 16px off both panel corners, and `arrow={false}` drops it.
+- **Chevron rests pointing up** — draw the chevron up and rotate it `0deg →
+  180deg` on open so it sweeps clockwise down toward the panel. Match the
+  panel's own entry motion — `duration-[280ms]`,
+  `ease-[cubic-bezier(0.2,0.8,0.2,1)]` — so chevron and panel move as one.
+- **Rows are inset chips** — the panel pads 6px on each side so `MenuItem`
+  hover and any caller-composed selected state render as rounded 6px chips,
+  never edge-to-edge bands. Caller-composed rows should use `px-2` +
+  `rounded-uikit-badge` to line up with `MenuItem` (see the switcher above).
 - **Floats above clipping ancestors** — the panel is not clipped by
   `overflow: hidden`, `transform`, or sticky containers, and follows the
   trigger as the page scrolls or resizes.
@@ -65,6 +78,7 @@ decision before that's been made.
 | `trigger` | `(open: boolean) => ReactNode` | — | Render-prop for the trigger element. Receives the current open state. |
 | `align` | `'left' \| 'right'` | `'left'` | Panel horizontal alignment relative to the trigger. |
 | `width` | `number` | `240` | Panel min-width in px. |
+| `arrow` | `boolean` | `true` | Render a wedge on the panel's top edge pointing back at the trigger. |
 | `open` | `boolean` | — | Controlled open state. Omit for uncontrolled mode. |
 | `onOpenChange` | `(open: boolean) => void` | — | Fires when the menu wants to open or close. Required when controlled. |
 | `defaultOpen` | `boolean` | `false` | Initial open state in uncontrolled mode. |

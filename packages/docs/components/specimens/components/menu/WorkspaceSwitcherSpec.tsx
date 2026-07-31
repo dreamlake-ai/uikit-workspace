@@ -16,7 +16,8 @@ function AccountRow({
   return (
     <div
       onClick={onClick}
-      className="flex items-center gap-2 px-3.5 py-[7px] cursor-pointer bg-transparent hover:bg-uikit-ink-4 transition-[background] duration-[120ms]"
+      data-active={active || undefined}
+      className="flex items-center gap-2 px-2 py-[7px] cursor-pointer rounded-uikit-badge bg-transparent hover:bg-uikit-ink-4 data-[active]:bg-uikit-ink-5 data-[active]:hover:bg-uikit-ink-8 transition-[background] duration-[120ms]"
     >
       <Avatar name={account.name} size={22} />
       <div className="flex flex-col gap-px min-w-0 flex-1">
@@ -57,14 +58,16 @@ export const WorkspaceSwitcherSpec = () => {
             <span>{possessive}</span>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
               stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+              data-menu-arrow
               data-open={open || undefined}
-              className="opacity-70 shrink-0 rotate-0 data-[open]:rotate-180 transition-transform duration-[180ms]"
+              className="opacity-70 shrink-0 rotate-0 data-[open]:rotate-180 transition-transform duration-[280ms] ease-[cubic-bezier(0.2,0.8,0.2,1)]"
             >
+              {/* Drawn pointing down; 0deg → 180deg sweeps it clockwise to up. */}
               <polyline points="6 9 12 15 18 9" />
             </svg>
           </div>
           <div className="font-uikit-ui text-uikit-22 font-semibold text-uikit-ink tracking-uikit-tightest leading-none">
-            dream<span className="text-uikit-accent font-black text-[1.25em] inline-block leading-none align-baseline ml-px">.</span>lake
+            DreamLake<span className="text-uikit-accent font-black text-[1.25em] inline-block leading-none align-baseline ml-px">.</span>
           </div>
         </div>
       )}

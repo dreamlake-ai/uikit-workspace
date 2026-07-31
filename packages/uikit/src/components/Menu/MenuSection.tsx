@@ -11,7 +11,7 @@ export function MenuSection({ label, children }: MenuSectionProps) {
     <div className="py-1">
       <div
         className={
-          'pt-1.5 pb-1 px-3.5 ' +
+          'pt-1.5 pb-1 px-2 ' +
           'font-uikit-mono text-uikit-9 font-medium leading-uikit-snug ' +
           'text-uikit-muted opacity-55 tracking-uikit-widest uppercase'
         }
