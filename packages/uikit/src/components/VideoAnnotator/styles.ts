@@ -31,6 +31,7 @@ export const CSS = `
   --va-accent: var(--uikit-accent, #23aaff);
   --va-good: var(--tone-green, #1f8f4a);
   --va-warn: var(--tone-amber, #c0922e);
+  --va-reseg: var(--tone-purple, #8b5cf6);
   --va-danger: var(--tone-red, #c8513b);
   --va-idle: var(--tone-warm-gray, #9c907a);
   --va-selected: var(--selected-bg, #f5f3ee);
@@ -218,6 +219,10 @@ html[data-theme="dark"] .va-track.inactive .va-seg:hover{background:var(--va-pan
    structural change). Higher specificity than :hover so hover keeps it; the .sel
    rule below is declared after, so a selected segment's accent border wins. */
 .va-seg.edited{box-shadow:inset 0 0 0 1.5px color-mix(in srgb, var(--va-warn) 40%, transparent)}
+/* Resegmented (split / merge / retime) — a purple border, distinct from both the
+   amber "edited" border and the blue selection border. Declared before .sel so a
+   selected chip's accent border still wins. */
+.va-seg.reseg{box-shadow:inset 0 0 0 1.5px color-mix(in srgb, var(--va-reseg) 55%, transparent)}
 .va-seg.sel{background:#edf6fc;box-shadow:inset 0 0 0 1.5px #23a9ff;z-index:3}
 .va-seg.sel .va-seglabel{color:#1a1a1a}
 /* Dark mode uses the same blue accent as light for hover/selection (a

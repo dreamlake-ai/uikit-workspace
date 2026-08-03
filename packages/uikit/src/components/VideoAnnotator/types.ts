@@ -20,11 +20,15 @@ export interface Segment {
   description: string;
   verified: boolean;
   /**
-   * Purely-presentational hint: the host has edited this segment (caption
-   * changed and/or a structural split/merge/retime). When set, the timeline
-   * chip shows an "edited" marker. The component never reads or sets it.
+   * Purely-presentational hints (host-set; the component only reflects them as
+   * timeline-chip borders — it never reads or sets them):
+   *  - `edited`: the caption was edited (with no structural change) → amber border.
+   *  - `resegmented`: a structural split / merge / retime touched it → purple border.
+   * These are meant to be mutually exclusive; a selected chip's accent border
+   * takes precedence over both.
    */
   edited?: boolean;
+  resegmented?: boolean;
 }
 
 /**
