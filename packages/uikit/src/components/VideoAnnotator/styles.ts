@@ -93,7 +93,7 @@ export const CSS = `
 .va-root svg{stroke-linejoin:round;stroke-linecap:round}
 
 .va-readout{font:11px var(--f-mono, ui-monospace, Menlo, monospace);color:var(--va-muted);
-  padding:6px 0;text-align:left;flex:none;width:162px;white-space:nowrap}
+  padding:6px 0;text-align:left;flex:none;width:176px;white-space:nowrap}
 .va-speedsel{position:relative;display:inline-flex}
 .va-speedsel .va-speedbtn{display:inline-flex;align-items:center;gap:3px;height:28px;padding:0 6px 0 9px;
   background:var(--va-panel);color:var(--va-text);border:1px solid transparent;border-radius:var(--va-radius);cursor:pointer;
@@ -131,9 +131,9 @@ export const CSS = `
    FLOATS at the top-center of the timeline (over the ruler), exactly like the
    reference (absolute, top:0, left:50%, translateX(-50%)). A pill with the
    two steppers around a draggable value (drag right = zoom in). */
-/* Bottom edge sits on the ruler baseline (.va-ticks::before, top:28px): the
-   capsule floats just ABOVE the timeline's horizontal line, centered. */
-.va-zoomfloat{position:absolute;top:28px;left:50%;transform:translate(-50%,-100%);z-index:9;pointer-events:auto}
+/* Top edge sits at the TOP of the ruler zone (y:0), centered — the capsule
+   hangs down over the labels rather than resting on the baseline. */
+.va-zoomfloat{position:absolute;top:0;left:50%;transform:translateX(-50%);z-index:9;pointer-events:auto}
 .va-zoom{display:inline-flex;align-items:center;gap:0;padding:2px 3px;border-radius:8px;
   background:var(--va-panel);border:1px solid color-mix(in srgb, var(--va-text) 12%, transparent);
   box-shadow:0 3px 10px var(--va-shadow), 0 1px 2px var(--va-shadow);
@@ -166,14 +166,14 @@ export const CSS = `
    CONTAINED instead of collapsing through — the timeline no longer gets the free
    BFC it had as a flex item before the scroll wrapper was added. Without this
    the lanes render at top:0 and overlap the ruler. */
-.va-timeline{position:relative;display:flow-root;min-height:68px;background:transparent;cursor:pointer;user-select:none}
-.va-timeline:not(:has(.va-seg))::before{content:"";position:absolute;top:36px;bottom:0;left:0;right:0;
+.va-timeline{position:relative;display:flow-root;min-height:89px;background:transparent;cursor:pointer;user-select:none}
+.va-timeline:not(:has(.va-seg))::before{content:"";position:absolute;top:41px;bottom:0;left:0;right:0;
   border-radius:6px;background:color-mix(in srgb, var(--va-text) 4%, transparent);box-shadow:inset 0 0 0 1px var(--va-line)}
 /* Stacked track lanes below the ruler. Each row hosts its segments (and, for
    the active row, the drag handles); rows flow so the timeline grows with the
    track count. */
-.va-tracks{margin-top:36px;display:flex;flex-direction:column;gap:6px}
-.va-track{position:relative;height:32px}
+.va-tracks{margin-top:41px;display:flex;flex-direction:column;gap:6px}
+.va-track{position:relative;height:48px}
 .va-track.inactive{opacity:.55}
 .va-track.inactive .va-seg:hover{background:var(--va-panel2);box-shadow:inset 0 0 0 1px var(--va-line)}
 html[data-theme="dark"] .va-track.inactive .va-seg:hover{background:var(--va-panel2)}
@@ -211,8 +211,8 @@ html[data-theme="dark"] .va-track.inactive .va-seg:hover{background:var(--va-pan
 .va-addrow:hover .va-addrow-btn{opacity:1;transform:translate(-50%,-50%) scale(1);
   background:var(--va-accent);color:#fff;border-color:transparent;box-shadow:0 1px 5px var(--va-shadow)}
 .va-addrow-btn svg{width:12px;height:12px}
-.va-seg{position:absolute;top:0;bottom:0;border-radius:6px;display:flex;align-items:center;
-  padding:0 9px;overflow:hidden;background:var(--va-panel2);box-shadow:inset 0 0 0 1px var(--va-line)}
+.va-seg{position:absolute;top:0;bottom:0;border-radius:0;
+  padding:4px 3px;overflow:hidden;background:var(--va-panel2);box-shadow:inset 0 0 0 1px var(--va-line)}
 .va-seg:hover{background:#edf6fc;box-shadow:inset 0 0 0 1px var(--va-line)}
 .va-seg.sel{background:#edf6fc;box-shadow:inset 0 0 0 1.5px #23a9ff;z-index:3}
 .va-seg.sel .va-seglabel{color:#1a1a1a}
@@ -223,15 +223,16 @@ html[data-theme="dark"] .va-seg:hover{background:rgba(243,230,204,.14)}
 html[data-theme="dark"] .va-seg.sel{background:rgba(243,230,204,.2);box-shadow:inset 0 0 0 1.5px var(--va-warn)}
 html[data-theme="dark"] .va-seg:hover .va-seglabel,
 html[data-theme="dark"] .va-seg.sel .va-seglabel{color:var(--va-text)}
-.va-seglabel{font-size:11px;color:var(--va-muted);font-weight:400;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
+.va-seglabel{font-size:9px;line-height:1.3;color:var(--va-muted);font-weight:400;
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;overflow-wrap:break-word}
 .va-seg:hover .va-seglabel{color:#1a1a1a}
 .va-handle{position:absolute;top:0;bottom:0;width:9px;margin-left:-5px;cursor:ew-resize;z-index:5}
 .va-handle::after{content:"";position:absolute;left:4px;top:0;bottom:0;width:1.5px;background:var(--va-accent);opacity:0}
 .va-handle:hover::after{opacity:1}
-.va-playhead{position:absolute;top:19px;bottom:0;width:1.5px;background:var(--va-accent);pointer-events:none;z-index:6}
-.va-hoverline{position:absolute;top:19px;bottom:0;width:1.5px;
+.va-playhead{position:absolute;top:22px;bottom:0;width:1.5px;background:var(--va-accent);pointer-events:none;z-index:6}
+.va-hoverline{position:absolute;top:22px;bottom:0;width:1.5px;
   background:color-mix(in srgb, var(--va-accent) 50%, transparent);pointer-events:none;z-index:5}
-.va-hovertime{position:absolute;top:17px;transform:translateX(4px);
+.va-hovertime{position:absolute;top:20px;transform:translateX(4px);
   background:var(--va-accent);color:#fff;
   padding:2px 6px;border-radius:4px;white-space:nowrap;pointer-events:none;z-index:7;
   font-family:var(--f-mono, ui-monospace, Menlo, monospace);font-size:11px;line-height:1.3;
@@ -257,11 +258,11 @@ html[data-theme="dark"] .va-seg.sel .va-seglabel{color:var(--va-text)}
 .va-timeline .va-merge:active{transform:translateX(-50%) translateY(1px)}
 .va-timeline .va-merge:hover{background:color-mix(in srgb,#000 14%,var(--va-accent))}
 .va-timeline .va-merge svg{width:13px;height:13px}
-.va-ticks{position:absolute;left:0;right:0;top:0;height:30px;pointer-events:none;z-index:4}
-.va-ticks::before{content:"";position:absolute;left:0;right:0;top:28px;height:1px;background:var(--va-line)}
-.va-tick{position:absolute;top:0;height:30px;pointer-events:none}
-.va-tick::before{content:"";position:absolute;top:23px;left:0;width:1px;height:5px;background:var(--va-line)}
-.va-tick.major::before{top:19px;height:9px;background:var(--va-muted)}
+.va-ticks{position:absolute;left:0;right:0;top:0;height:34px;pointer-events:none;z-index:4}
+.va-ticks::before{content:"";position:absolute;left:0;right:0;top:32px;height:1px;background:var(--va-line)}
+.va-tick{position:absolute;top:0;height:34px;pointer-events:none}
+.va-tick::before{content:"";position:absolute;top:26px;left:0;width:1px;height:6px;background:var(--va-line)}
+.va-tick.major::before{top:22px;height:10px;background:var(--va-muted)}
 .va-ticklabel{position:absolute;top:1px;left:0;transform:translateX(-50%);white-space:nowrap;
   font:11px var(--f-mono, ui-monospace, Menlo, monospace);color:var(--va-muted);line-height:1}
 .va-tick.major .va-ticklabel{font-weight:600;color:color-mix(in srgb, var(--va-text) 55%, var(--va-muted))}

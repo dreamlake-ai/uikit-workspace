@@ -626,7 +626,6 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
               currentTime={currentTime}
               onScrubDown={startScrub}
               onBoundaryDown={startBoundaryDrag}
-              onMerge={doMerge}
               onAddTrack={addTrack}
             />
           </div>
