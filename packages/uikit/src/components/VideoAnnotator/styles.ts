@@ -34,7 +34,7 @@ export const CSS = `
   --va-danger: var(--tone-red, #c8513b);
   --va-idle: var(--tone-warm-gray, #9c907a);
   --va-selected: var(--selected-bg, #f5f3ee);
-  --va-radius: var(--radius, 10px);
+  --va-radius: var(--radius, 6px);
   /* Popover/tooltip drop shadow. Aliases the kit's theme-aware shadow token
      so it stays dark in dark mode — not a white glow off the light ink. */
   --va-shadow: var(--shadow-tint-2, rgba(0,0,0,.1));
@@ -105,7 +105,7 @@ export const CSS = `
 .va-speedsel .va-speedbtn:active{transform:none}
 .va-speedsel.open .va-speedbtn{border-color:var(--va-accent)}
 .va-speedmenu{position:absolute;bottom:calc(100% + 6px);left:0;z-index:40;min-width:calc(100% + 8px);
-  background:var(--va-panel);border:1px solid var(--va-line);border-radius:10px;
+  background:var(--va-panel);border:1px solid var(--va-line);border-radius:6px;
   box-shadow:0 8px 24px var(--va-shadow);padding:4px}
 .va-speedmenu button{width:100%;display:flex;align-items:center;gap:6px;white-space:nowrap;height:auto;
   background:transparent;border:none;border-radius:6px;padding:5px 12px 5px 22px;
@@ -134,7 +134,7 @@ export const CSS = `
 /* Top edge sits at the TOP of the ruler zone (y:0), centered — the capsule
    hangs down over the labels rather than resting on the baseline. */
 .va-zoomfloat{position:absolute;top:0;left:50%;transform:translateX(-50%);z-index:9;pointer-events:auto}
-.va-zoom{display:inline-flex;align-items:center;gap:0;padding:2px 3px;border-radius:8px;
+.va-zoom{display:inline-flex;align-items:center;gap:0;padding:2px 3px;border-radius:6px;
   background:var(--va-panel);border:1px solid color-mix(in srgb, var(--va-text) 12%, transparent);
   box-shadow:0 3px 10px var(--va-shadow), 0 1px 2px var(--va-shadow);
   font:11px var(--f-mono, ui-monospace, Menlo, monospace);user-select:none;-webkit-user-select:none}
