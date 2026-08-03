@@ -105,7 +105,7 @@ export function Timeline({
               {tsegs.map((p, i) => (
                 <div
                   key={p.id ?? i}
-                  className={cn("va-seg", isActive && i === sel && "sel")}
+                  className={cn("va-seg", isActive && i === sel && "sel", p.edited && "edited")}
                   style={{ left: `${(p.start / (D || 1)) * 100}%`, width: `${((p.end - p.start) / (D || 1)) * 100}%` }}
                 >
                   <span className="va-seglabel">

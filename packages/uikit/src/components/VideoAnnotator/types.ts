@@ -19,6 +19,12 @@ export interface Segment {
   end: number;
   description: string;
   verified: boolean;
+  /**
+   * Purely-presentational hint: the host has edited this segment (caption
+   * changed and/or a structural split/merge/retime). When set, the timeline
+   * chip shows an "edited" marker. The component never reads or sets it.
+   */
+  edited?: boolean;
 }
 
 /**

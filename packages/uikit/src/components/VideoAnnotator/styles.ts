@@ -214,13 +214,17 @@ html[data-theme="dark"] .va-track.inactive .va-seg:hover{background:var(--va-pan
 .va-seg{position:absolute;top:0;bottom:0;border-radius:0;
   padding:4px 3px;overflow:hidden;background:var(--va-panel2);box-shadow:inset 0 0 0 1px var(--va-line)}
 .va-seg:hover{background:#edf6fc;box-shadow:inset 0 0 0 1px var(--va-line)}
+/* Edited segments get an amber border (host sets Segment.edited on a caption or
+   structural change). Higher specificity than :hover so hover keeps it; the .sel
+   rule below is declared after, so a selected segment's accent border wins. */
+.va-seg.edited{box-shadow:inset 0 0 0 1.5px color-mix(in srgb, var(--va-warn) 40%, transparent)}
 .va-seg.sel{background:#edf6fc;box-shadow:inset 0 0 0 1.5px #23a9ff;z-index:3}
 .va-seg.sel .va-seglabel{color:#1a1a1a}
-/* Dark mode swaps the blue selection/hover accent for yellow. The fill is a
-   translucent amber tint so the dark surface reads through it; the label
-   flips to light ink to stay legible over that dark-tinted fill. */
-html[data-theme="dark"] .va-seg:hover{background:rgba(243,230,204,.14)}
-html[data-theme="dark"] .va-seg.sel{background:rgba(243,230,204,.2);box-shadow:inset 0 0 0 1.5px var(--va-warn)}
+/* Dark mode uses the same blue accent as light for hover/selection (a
+   translucent accent tint so the dark surface reads through); the label flips to
+   light ink to stay legible over the tinted fill. */
+html[data-theme="dark"] .va-seg:hover{background:color-mix(in srgb, var(--va-accent) 14%, transparent)}
+html[data-theme="dark"] .va-seg.sel{background:color-mix(in srgb, var(--va-accent) 20%, transparent);box-shadow:inset 0 0 0 1.5px var(--va-accent)}
 html[data-theme="dark"] .va-seg:hover .va-seglabel,
 html[data-theme="dark"] .va-seg.sel .va-seglabel{color:var(--va-text)}
 .va-seglabel{font-size:9px;line-height:1.3;color:var(--va-muted);font-weight:400;
