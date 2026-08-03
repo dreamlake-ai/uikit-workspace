@@ -424,17 +424,17 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
           const frac = clamp((x - rect.left) / rect.width, 0, 1);
           v.currentTime = frac * D;
         };
-        // Empty ruler (not on a segment): behave like a plain scrubber — pause
-        // and seek immediately on press. On a segment we defer to mouseup so a
-        // pure click can apply the select-vs-scrub rules without a first jump.
+        // Empty ruler (not on a segment): behave like a plain scrubber — seek
+        // immediately on press. Seeking does NOT change play/pause state (a
+        // click while playing keeps playing from the new position). On a segment
+        // we defer to mouseup so a pure click can apply the select-vs-scrub
+        // rules without a first jump.
         if (!onSegment) {
-          v.pause();
           seek(downX);
         }
         const onMove = (ev: MouseEvent) => {
           if (Math.abs(ev.clientX - downX) > 3) moved = true;
           if (moved) {
-            v.pause();
             seek(ev.clientX);
           }
         };
