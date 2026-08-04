@@ -62,9 +62,37 @@ export const CSS = `
   overflow:hidden;display:flex;align-items:center;justify-content:center}
 .va-video{max-width:100%;max-height:100%;background:#000}
 .va-stage-msg{position:absolute;color:var(--va-muted);font-size:13px;text-align:center;padding:20px}
-/* Buffering spinner overlay — centered over the video, never intercepts clicks
-   (so click-to-play still works underneath). */
+/* Buffering overlay (design-spec dreamlake-loading: thin ring + mono status),
+   centered over the video; never intercepts clicks. */
 .va-buffering{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;z-index:3}
+.va-buf{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px}
+@keyframes va-bufspin{to{transform:rotate(360deg)}}
+.va-bufring{width:26px;height:26px;border-radius:50%;
+  border:1.5px solid rgba(255,255,255,.18);border-top-color:rgba(255,255,255,.62);
+  animation:va-bufspin .8s linear infinite}
+.va-buflabel{font:500 9px/1 var(--f-mono, ui-monospace, monospace);letter-spacing:.14em;
+  text-transform:uppercase;color:rgba(255,255,255,.55)}
+.va-buflabel b{font-weight:500;color:rgba(255,255,255,.38)}
+@media (prefers-reduced-motion: reduce){.va-bufring{animation:none}}
+/* Custom seek bar — mimics the native <video controls> progress bar: a thin
+   translucent-white track (buffered lighter, played solid white) with a small
+   white thumb that only appears on hover. Shown while paused; fades in on hover
+   while playing (the .on class). A bottom scrim darkens the video behind it. */
+.va-scrim{position:absolute;left:0;right:0;bottom:0;height:50px;pointer-events:none;z-index:3;
+  background:linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%);
+  opacity:0;transition:opacity .2s ease}
+.va-scrim.on{opacity:1}
+.va-seek{position:absolute;left:12px;right:12px;bottom:20px;height:16px;
+  display:flex;align-items:center;cursor:pointer;z-index:4;touch-action:none;
+  opacity:0;pointer-events:none;transition:opacity .2s ease}
+.va-seek.on{opacity:1;pointer-events:auto}
+.va-seek-track{position:relative;flex:1;height:3px;border-radius:2px;background:rgba(255,255,255,.3)}
+.va-seek-buf{position:absolute;left:0;top:0;bottom:0;border-radius:2px;background:rgba(255,255,255,.5)}
+.va-seek-fill{position:absolute;left:0;top:0;bottom:0;border-radius:2px;background:#fff}
+.va-seek-thumb{position:absolute;top:50%;width:12px;height:12px;margin-left:-6px;border-radius:50%;
+  background:#fff;transform:translateY(-50%);box-shadow:0 1px 2px rgba(0,0,0,.35);
+  opacity:0;transition:opacity .12s ease;pointer-events:none}
+.va-seek:hover .va-seek-thumb{opacity:1}
 /* Hand-pose overlay canvas: absolutely positioned by JS to sit exactly over the
    letterboxed video content. Never intercepts pointer events. */
 .va-overlay{position:absolute;left:0;top:0;pointer-events:none;z-index:2}

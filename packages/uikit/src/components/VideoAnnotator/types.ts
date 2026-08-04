@@ -134,11 +134,12 @@ export interface VideoAnnotatorProps {
    */
   enableKeyboard?: boolean;
   /**
-   * Show the browser's native `<video controls>` (scrubber + play + volume +
-   * fullscreen + playback-rate menu) on the video, in addition to the custom
-   * transport + segment timeline below it. Off by default.
+   * Overlay a custom, native-styled seek bar (progress only — a translucent-white
+   * track with a white thumb; click/drag to scrub) at the bottom of the video.
+   * No buttons — play / speed / volume live in the transport. Off by default.
+   * (Not the browser's `<video controls>`, whose loading spinner can't be hidden.)
    */
-  nativeControls?: boolean;
+  showSeekBar?: boolean;
 
   /**
    * Optional hand-pose keypoint overlay (the `handpose_keypoints` standard

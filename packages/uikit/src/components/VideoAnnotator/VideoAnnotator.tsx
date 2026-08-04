@@ -8,7 +8,6 @@ import {
   useState,
 } from "react";
 import { cn } from "../../lib/utils";
-import { Spinner } from "../Spinner";
 import type { Segment, Track, VideoAnnotatorHandle, VideoAnnotatorProps } from "./types";
 import {
   boundaryTimes,
@@ -78,7 +77,7 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
       onRenameTrack,
       speeds = DEFAULT_SPEEDS,
       enableKeyboard = true,
-      nativeControls = false,
+      showSeekBar = false,
       handpose,
       handposeAvailable = false,
       handposeLoading = false,
@@ -96,6 +95,8 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
     const [playing, setPlaying] = useState(false);
     const [rate, setRate] = useState(1);
     const [metaDuration, setMetaDuration] = useState(0);
+    // Buffered seconds for the custom seek bar's buffered fill (from video.buffered).
+    const [buffered, setBuffered] = useState(0);
     // Timeline horizontal magnification (1/2/4/8/16). The timeline canvas widens
     // to `zoom*100%` inside `scrollRef`'s overflow-x container; view is kept
     // centered via scrollLeft.
@@ -119,6 +120,20 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
       setBuffering(false);
     }, []);
 
+    // Seek-bar visibility (native-like): always shown while paused; while playing,
+    // shown on pointer activity over the video and auto-hidden ~2.5s after it stops.
+    const [videoHover, setVideoHover] = useState(false);
+    const hoverTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+    const bumpHover = useCallback(() => {
+      setVideoHover(true);
+      clearTimeout(hoverTimer.current);
+      hoverTimer.current = setTimeout(() => setVideoHover(false), 2500);
+    }, []);
+    const clearHover = useCallback(() => {
+      clearTimeout(hoverTimer.current);
+      setVideoHover(false);
+    }, []);
+
     useAnnotatorStyles();
 
     // Keep the toggle in sync if the host later flips `defaultShowHandpose`
@@ -131,6 +146,7 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
     useEffect(() => () => {
       clearTimeout(toastTimer.current);
       clearTimeout(bufTimer.current);
+      clearTimeout(hoverTimer.current);
     }, []);
 
     // External media takeover: hand the mounted <video> to the caller (e.g. a
@@ -352,6 +368,53 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
       setRate(val);
     }, []);
 
+    // ---- custom seek bar (native-styled progress control) ------------------
+    // Track how much is buffered so the seek bar can draw the lighter buffered
+    // fill (the range covering the playhead, else the largest end).
+    const updateBuffered = useCallback(() => {
+      const v = videoRef.current;
+      if (!v) return;
+      const b = v.buffered;
+      let end = 0;
+      for (let i = 0; i < b.length; i++) {
+        if (v.currentTime >= b.start(i) - 0.25 && v.currentTime <= b.end(i) + 0.25) {
+          end = b.end(i);
+          break;
+        }
+        end = Math.max(end, b.end(i));
+      }
+      setBuffered(end);
+    }, []);
+
+    // Click / drag anywhere on the bar to seek. `setPointerCapture` isn't used —
+    // a document listener keeps the drag alive even past the bar's edges.
+    const onSeekDown = useCallback(
+      (e: React.PointerEvent<HTMLDivElement>) => {
+        const v = videoRef.current;
+        if (!v || !D) return;
+        e.preventDefault();
+        const rect = e.currentTarget.getBoundingClientRect();
+        const seek = (clientX: number) => {
+          const t = clamp((clientX - rect.left) / rect.width, 0, 1) * D;
+          v.currentTime = t;
+          setCurrentTime(t);
+          // Switch the selected segment immediately — don't wait for the video's
+          // `timeupdate` (which is delayed while the seeked frame buffers).
+          const idx = segmentIndexAtTime(segs, t);
+          if (idx !== sel) onSelectedChange(idx);
+        };
+        seek(e.clientX);
+        const onMove = (ev: PointerEvent) => seek(ev.clientX);
+        const onUp = () => {
+          document.removeEventListener("pointermove", onMove);
+          document.removeEventListener("pointerup", onUp);
+        };
+        document.addEventListener("pointermove", onMove);
+        document.addEventListener("pointerup", onUp);
+      },
+      [D, segs, sel, onSelectedChange]
+    );
+
     // ---- video element events ---------------------------------------------
     const onLoadedMetadata = useCallback(() => {
       const v = videoRef.current;
@@ -545,20 +608,24 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
             {videoSubtitle && <span className="va-head-sub">{videoSubtitle}</span>}
           </div>
         )}
-        <div className="va-stage" ref={stageRef}>
+        <div
+          className="va-stage"
+          ref={stageRef}
+          onMouseMove={showSeekBar ? bumpHover : undefined}
+          onMouseLeave={showSeekBar ? clearHover : undefined}
+        >
           <video
             ref={videoRef}
             className="va-video"
             playsInline
             preload="metadata"
-            controls={nativeControls}
             src={attachMedia ? undefined : videoUrl || undefined}
-            // Click the video frame to toggle play/pause (like a normal player) —
-            // but not with native controls, whose own click already toggles play.
-            onClick={nativeControls ? undefined : togglePlay}
-            style={!nativeControls && videoUrl ? { cursor: "pointer" } : undefined}
+            // Click the video frame to toggle play/pause (like a normal player).
+            onClick={togglePlay}
+            style={videoUrl ? { cursor: "pointer" } : undefined}
             onLoadedMetadata={onLoadedMetadata}
             onTimeUpdate={onTimeUpdate}
+            onProgress={updateBuffered}
             onSeeked={() => {
               setCurrentTime(videoRef.current?.currentTime ?? 0);
               hideBuffering();
@@ -580,10 +647,31 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
           <canvas ref={overlayRef} className="va-overlay" aria-hidden="true" />
           {buffering && (
             <div className="va-buffering" aria-hidden="true">
-              <Spinner size={40} style={{ color: "rgba(255,255,255,.9)" }} />
+              <div className="va-buf">
+                <div className="va-bufring" />
+                <div className="va-buflabel">Loading<b> ···</b></div>
+              </div>
             </div>
           )}
           {!videoUrl && !attachMedia && <div className="va-stage-msg">(no video url provided)</div>}
+          {/* Custom native-styled seek bar (progress only — no buttons), with a
+              bottom scrim. Shown while paused; while playing it fades in on pointer
+              activity and auto-hides. The thumb only appears on hover (like native). */}
+          {showSeekBar && D > 0 && (() => {
+            const on = !playing || videoHover;
+            return (
+              <>
+                <div className={cn("va-scrim", on && "on")} aria-hidden="true" />
+                <div className={cn("va-seek", on && "on")} onPointerDown={onSeekDown}>
+                  <div className="va-seek-track">
+                    <div className="va-seek-buf" style={{ width: `${clamp(buffered / D, 0, 1) * 100}%` }} />
+                    <div className="va-seek-fill" style={{ width: `${clamp(currentTime / D, 0, 1) * 100}%` }} />
+                  </div>
+                  <div className="va-seek-thumb" style={{ left: `${clamp(currentTime / D, 0, 1) * 100}%` }} />
+                </div>
+              </>
+            );
+          })()}
         </div>
 
         <Transport
