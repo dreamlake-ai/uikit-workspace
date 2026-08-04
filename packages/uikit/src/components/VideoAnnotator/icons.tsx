@@ -50,22 +50,22 @@ function glyphAttrs(size = 14) {
 export function PlaySharp({ size }: { size?: number }) {
   return (
     <svg {...glyphAttrs(size)}>
-      <path d="M6 4 20 12 6 20Z" />
+      <path d="M6 4 20 12 6 20Z" fill="currentColor" />
     </svg>
   );
 }
 export function PauseSharp({ size }: { size?: number }) {
   return (
     <svg {...glyphAttrs(size)}>
-      <rect x="6" y="4" width="4" height="16" />
-      <rect x="14" y="4" width="4" height="16" />
+      <rect x="6" y="4" width="4" height="16" fill="currentColor" />
+      <rect x="14" y="4" width="4" height="16" fill="currentColor" />
     </svg>
   );
 }
 export function SkipBackSharp({ size }: { size?: number }) {
   return (
     <svg {...glyphAttrs(size)}>
-      <path d="M19 4 9 12 19 20Z" />
+      <path d="M19 4 9 12 19 20Z" fill="currentColor" />
       <path d="M5 5 5 19" />
     </svg>
   );
@@ -73,7 +73,7 @@ export function SkipBackSharp({ size }: { size?: number }) {
 export function SkipForwardSharp({ size }: { size?: number }) {
   return (
     <svg {...glyphAttrs(size)}>
-      <path d="M5 4 15 12 5 20Z" />
+      <path d="M5 4 15 12 5 20Z" fill="currentColor" />
       <path d="M19 5 19 19" />
     </svg>
   );

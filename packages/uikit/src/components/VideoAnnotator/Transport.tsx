@@ -6,7 +6,6 @@ import {
   Hand,
 } from "lucide-react";
 import { cn } from "../../lib/utils";
-import { Spinner } from "../Spinner";
 import {
   TipButton,
   PlaySharp,
@@ -104,12 +103,15 @@ export function Transport({
           <ArrowLeftToLine size={14} />
         </TipButton>
         {hasHandpose && (
+          // While the pose blob is still loading, show the Hand in its active
+          // (on) state but disabled — no spinner icon.
           <TipButton
             className={cn("va-icon va-hands", showHands && "on")}
             label={handsLoading ? "Loading hand pose…" : showHands ? "Hide hand pose" : "Show hand pose"}
             onClick={onToggleHands}
+            disabled={handsLoading}
           >
-            {handsLoading ? <Spinner size={14} style={{ color: "currentColor" }} /> : <Hand size={14} />}
+            <Hand size={14} />
           </TipButton>
         )}
       </div>
