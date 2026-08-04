@@ -133,6 +133,12 @@ export interface VideoAnnotatorProps {
    * imperative ref, e.g. when the host owns a global shortcut scheme.
    */
   enableKeyboard?: boolean;
+  /**
+   * Show the browser's native `<video controls>` (scrubber + play + volume +
+   * fullscreen + playback-rate menu) on the video, in addition to the custom
+   * transport + segment timeline below it. Off by default.
+   */
+  nativeControls?: boolean;
 
   /**
    * Optional hand-pose keypoint overlay (the `handpose_keypoints` standard

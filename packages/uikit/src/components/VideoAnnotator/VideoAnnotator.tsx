@@ -29,7 +29,9 @@ import { Timeline } from "./Timeline";
 import { TrackHeads } from "./TrackHeads";
 import { DescriptionBox } from "./DescriptionBox";
 
-const DEFAULT_SPEEDS = [0.25, 0.5, 1, 1.5, 2];
+// Match the browser's native playback-rate menu so the custom menu shows the
+// same set (and any rate picked in native controls maps to a listed option).
+const DEFAULT_SPEEDS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
 // Timeline zoom bounds (continuous). The transport's drag/step both clamp here.
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 16;
@@ -76,6 +78,7 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
       onRenameTrack,
       speeds = DEFAULT_SPEEDS,
       enableKeyboard = true,
+      nativeControls = false,
       handpose,
       handposeAvailable = false,
       handposeLoading = false,
@@ -548,10 +551,12 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
             className="va-video"
             playsInline
             preload="metadata"
+            controls={nativeControls}
             src={attachMedia ? undefined : videoUrl || undefined}
-            // Click the video frame to toggle play/pause (like a normal player).
-            onClick={togglePlay}
-            style={videoUrl ? { cursor: "pointer" } : undefined}
+            // Click the video frame to toggle play/pause (like a normal player) —
+            // but not with native controls, whose own click already toggles play.
+            onClick={nativeControls ? undefined : togglePlay}
+            style={!nativeControls && videoUrl ? { cursor: "pointer" } : undefined}
             onLoadedMetadata={onLoadedMetadata}
             onTimeUpdate={onTimeUpdate}
             onSeeked={() => {
@@ -567,6 +572,9 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
             onCanPlay={hideBuffering}
             onPlaying={hideBuffering}
             onLoadedData={hideBuffering}
+            // Keep the custom speed readout in sync when playbackRate changes
+            // elsewhere — e.g. the native controls' playback-rate menu.
+            onRateChange={() => setRate(videoRef.current?.playbackRate ?? 1)}
           />
           {/* Hand-pose overlay: positioned/sized over the video by the rAF loop. */}
           <canvas ref={overlayRef} className="va-overlay" aria-hidden="true" />
