@@ -37,7 +37,7 @@ import {
   type WfOrientation, type WfRect,
 } from './layout'
 import {
-  nodeInputs, nodeOutputs,
+  nodeInputs, nodeOutputs, outputPortColor,
   type AgentInstance, type WorkflowNodeRunStateValue, type WorkflowSpec,
 } from './spec'
 import { WF_KIND_TOKEN, WF_STATE_COLOR } from './nodes/chrome'
@@ -1006,13 +1006,19 @@ export function WorkflowCanvas({
             const named = p.name !== (dir === 'in' ? 'in' : 'out')
             const labelOffset = dir === 'in' ? -11 : 11
             const isCollect = dir === 'in' && p.collect === true
+            // Semantic accent for branch outputs — only condition's true/false
+            // (green/red); every other port stays the neutral muted dot.
+            const accent = dir === 'out' ? outputPortColor(n, p.name) : undefined
+            const dotColor = accent ?? 'var(--color-uikit-muted)'
             return (
               <span key={`${n.id}-${dir}-${p.name}-${i}`} style={{ opacity: dim ? 0.3 : 1, transition: 'opacity 160ms ease' }}>
                 <span style={{
                   position: 'absolute', left: a.x - 3, top: a.y - 3,
                   width: 6, height: 6, borderRadius: 3,
                   background: 'var(--color-uikit-panel)',
-                  border: '1px solid var(--color-uikit-muted)',
+                  // Accented branch dots get a slightly heavier ring so the tone
+                  // reads at 6px; neutral dots keep the 1px muted outline.
+                  border: `${accent ? 1.5 : 1}px solid ${dotColor}`,
                   // collect ports (fan-in) get a second ring
                   boxShadow: isCollect ? '0 0 0 2.5px var(--color-uikit-panel), 0 0 0 3.5px var(--color-uikit-muted)' : undefined,
                   zIndex: 3, pointerEvents: 'none',
@@ -1028,7 +1034,9 @@ export function WorkflowCanvas({
                     fontFamily: 'var(--font-uikit-mono)', fontSize: 8.5, lineHeight: 1,
                     padding: '1px 4px', borderRadius: 4,
                     background: 'var(--color-uikit-canvas-bg, var(--color-uikit-panel))',
-                    color: 'var(--color-uikit-muted)',
+                    // Match the dot's accent (true→green / false→red) so the
+                    // label + dot read as one branch signal; neutral otherwise.
+                    color: dotColor,
                     whiteSpace: 'nowrap', pointerEvents: 'none', zIndex: 3,
                   }}>
                     {p.name}
