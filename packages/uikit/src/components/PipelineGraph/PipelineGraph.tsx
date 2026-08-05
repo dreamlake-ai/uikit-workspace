@@ -188,7 +188,11 @@ export function PipelineGraph({
       const span = toP.x - fromP.x
       const frac = bendFracs[key] ?? 0.5
       const off = labelOffsets[key] ?? restOffsets[key] ?? 0
-      const color = FLOW[edgeFlow(src.status, dst.status)].color
+      // Idle edges render muted (not the faint --edge-idle) — matching the edge
+      // line's own idle treatment below — so the filled tag pill stays legible
+      // on the dark panel instead of washing out (~1.5:1 in dark).
+      const flow = edgeFlow(src.status, dst.status)
+      const color = flow === 'idle' ? 'var(--color-uikit-muted)' : FLOW[flow].color
       // Anchor the tag ON the actual routed edge — buildEdgePath reports its
       // jog/detour point via `out` (the SAME obstacle-avoidance the drawn edge
       // uses), so the tag and its leader always sit on the line, detours
