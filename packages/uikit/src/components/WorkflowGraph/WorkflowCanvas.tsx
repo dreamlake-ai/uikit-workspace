@@ -1061,6 +1061,11 @@ export function WorkflowCanvas({
           const hot = !!selected && s.hotIds.includes(selected)
           const active = activeTag === s.key
           const color = hot ? selColor : FLOW[s.flow].color
+          // Idle (unexecuted) edges use --edge-idle: fine as a thin line on the
+          // canvas, but too faint as filled-pill text/border on the dark panel
+          // (~1.5:1). Read the pill in the muted token instead — legible in both
+          // themes — while the edge line + leader keep their quiet idle grey.
+          const tagColor = !hot && s.flow === 'idle' ? 'var(--color-uikit-muted)' : color
           return (
             <span
               key={`tag-${s.key}`}
@@ -1072,10 +1077,10 @@ export function WorkflowCanvas({
                 letterSpacing: '.04em', lineHeight: 1,
                 padding: '2px 6px', borderRadius: 3,
                 background: 'var(--color-uikit-panel, #fcfbf7)',
-                border: `${active ? 1.4 : 1}px solid ${color}`,
-                color,
+                border: `${active ? 1.4 : 1}px solid ${tagColor}`,
+                color: tagColor,
                 boxShadow: active
-                  ? `0 0 0 2px color-mix(in oklab, ${color} 30%, transparent), 0 1px 1px rgba(0,0,0,.06)`
+                  ? `0 0 0 2px color-mix(in oklab, ${tagColor} 30%, transparent), 0 1px 1px rgba(0,0,0,.06)`
                   : '0 1px 1px rgba(0,0,0,.06)',
                 whiteSpace: 'nowrap',
                 cursor: 'move', userSelect: 'none', pointerEvents: 'auto',
