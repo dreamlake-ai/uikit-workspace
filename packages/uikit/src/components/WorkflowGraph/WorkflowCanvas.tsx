@@ -31,6 +31,7 @@ import {
 import { cn } from '../../lib/utils'
 import { buildEdgePath, type Obstacle, type Pt } from '../PipelineGraph/edge-path'
 import { FLOW, type EdgeFlow } from '../PipelineGraph/flow'
+import { clearOffset, type Rect } from '../PipelineGraph/tag-place'
 import {
   labelAnchor, layoutWorkflow, portAnchor, roundedPath,
   type WfOrientation, type WfRect,
@@ -328,7 +329,7 @@ export function WorkflowCanvas({
         key: seg.key, sx: e.clientX, sy: e.clientY,
         span: seg.bend?.span ?? 0,
         startFrac: bendFracs[seg.key] ?? 0.5,
-        startOff: labelOffsets[seg.key] ?? 0,
+        startOff: labelOffsets[seg.key] ?? restOffsets[seg.key] ?? 0,
         bendable: !!seg.bend && Math.abs(seg.bend.span) > 1,
       }
       setActiveTag(seg.key)
@@ -694,33 +695,46 @@ export function WorkflowCanvas({
     return segs
   }, [spec, stageRects, nodeRects, nodeById, membersByStage, statusByNodeId, orientation, verticalPrimary, bendFracs])
 
-  // Label placement pass: on the routed path, dodging cards + other labels.
-  const labeledSegments = useMemo(() => {
-    // Inflate card rects so pills keep daylight from card edges.
+  // One-time card-avoidance: the initial perpendicular LIFT for each labeled tag
+  // (bend-capable and hub-side alike) so none spawn on top of a card. Computed
+  // ONCE per layout (spec / orientation) and then FROZEN — NOT recomputed on a
+  // node drag, so moving a card never reshuffles the other tags. It seeds the
+  // same `labelOffsets` the across-drag uses, so a lifted tag rides its live
+  // anchor through drags/rebends and grabbing it never teleports it.
+  const restOffsets = useMemo(() => {
     const grow = (r: WfRect): WfRect => ({ x: r.x - 6, y: r.y - 6, w: r.w + 12, h: r.h + 12 })
-    const avoid: WfRect[] = [
+    const avoid: Rect[] = [
       ...Object.values(stageRects).map(grow),
       ...Object.values(nodeRects).map(grow),
       ...layout.agentRects.map(grow),
     ]
-    const taken: { x: number; y: number; w: number; h: number }[] = []
+    const taken: Rect[] = []
+    const axis: 'x' | 'y' = verticalPrimary ? 'x' : 'y' // the edge's side axis
+    const offs: Record<string, number> = {}
+    for (const s of segments) {
+      if (!s.label) continue
+      const anchor = s.bend ? s.bend.anchor : labelAnchor(s.d, [], { swapped: s.swapped }).pt
+      const { off, box } = clearOffset(anchor, s.label.length * 5.6 + 14, 16, avoid, taken, axis)
+      taken.push(box)
+      offs[s.key] = off
+    }
+    return offs
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- init-only: frozen
+    // per layout, NOT recomputed on node drag (that would reshuffle siblings).
+  }, [spec, orientation])
+
+  // Resting on-line anchor for each labeled tag: the live elbow for bend-capable
+  // segments (tracks the routed jog/detour and rebends), else the deterministic
+  // longest-segment midpoint for hand-routed hub side faces. No card-avoidance
+  // search here — restOffsets froze the perpendicular lift — so node drags move
+  // the tag with its line instead of reshuffling siblings.
+  const labeledSegments = useMemo(() => {
     return segments.map((s) => {
       if (!s.label) return s
-      // Bend-capable segments rest their tag ON the elbow (bend.anchor), which
-      // tracks the routed jog/detour live — so touching it never teleports the
-      // tag, and its leader is always on the line. Only the hand-routed hub side
-      // segments (no bend) still auto-place, dodging cards + other pills.
-      if (s.bend) return { ...s, labelPos: s.bend.anchor }
-      const { pt, box } = labelAnchor(s.d, avoid, {
-        swapped: s.swapped,
-        boxW: s.label.length * 5.6 + 14,
-        boxH: 16,
-        taken,
-      })
-      taken.push(box)
-      return { ...s, labelPos: pt }
+      const labelPos = s.bend ? s.bend.anchor : labelAnchor(s.d, [], { swapped: s.swapped }).pt
+      return { ...s, labelPos }
     })
-  }, [segments, stageRects, nodeRects, layout.agentRects, verticalPrimary])
+  }, [segments])
 
   // Selection highlight colour = the selected node's own run-state colour (a
   // stage, or an idle / not-yet-run node, reads as neutral muted), so a
@@ -841,7 +855,7 @@ export function WorkflowCanvas({
               point on its edge it annotates (design's displaced-label leader).
               World coords (labelPos is already un-swapped), tinted to the edge. */}
           {labeledSegments.map((s) => {
-            const off = labelOffsets[s.key] ?? 0
+            const off = labelOffsets[s.key] ?? restOffsets[s.key] ?? 0
             if (!s.label || !s.labelPos || Math.abs(off) <= 0.5) return null
             // labelPos IS the on-line anchor (the elbow for bendable tags, the
             // auto-placed point otherwise); the leader bridges it to the tag.
@@ -1038,7 +1052,7 @@ export function WorkflowCanvas({
             colour). */}
         {labeledSegments.map((s) => {
           if (!s.label || !s.labelPos) return null
-          const off = labelOffsets[s.key] ?? 0
+          const off = labelOffsets[s.key] ?? restOffsets[s.key] ?? 0
           // The tag rides labelPos (the live elbow for bendable tags): the same
           // point at rest and while dragged, so grabbing it never teleports.
           const base = s.labelPos
