@@ -52,11 +52,15 @@ export interface CardChromeOpts {
   state?: WorkflowNodeRunStateValue
   selected?: boolean
   dimmed?: boolean
+  /** Subordinate sub-card chrome (agent instances fanned under a uda node):
+   *  flat (no drop shadow), thinner + fainter border, tighter radius — so it
+   *  reads as belonging to its parent node rather than as a peer member. */
+  recessed?: boolean
 }
 
 /** Base card style — panel surface tinted by run state, PipeNode-identical. */
 export function cardStyle(opts: CardChromeOpts): CSSProperties {
-  const { pos, width = WF_NODE_W, height = WF_NODE_H, state, selected, dimmed } = opts
+  const { pos, width = WF_NODE_W, height = WF_NODE_H, state, selected, dimmed, recessed } = opts
   const panel = 'var(--color-uikit-panel)'
   const active = state && state !== 'idle' && state !== 'skipped'
   const stateColor = state ? WF_STATE_COLOR[state] : undefined
@@ -70,25 +74,35 @@ export function cardStyle(opts: CardChromeOpts): CSSProperties {
     ? (stateColor ?? 'var(--color-uikit-muted)')
     : active
       ? `color-mix(in srgb, var(--color-uikit-faint) 55%, ${stateColor})`
-      : 'var(--color-uikit-faint)'
+      // Recessed idle sub-cards use an even fainter outline than a member card
+      // so they don't compete with their parent node.
+      : recessed
+        ? 'color-mix(in srgb, var(--color-uikit-faint) 60%, transparent)'
+        : 'var(--color-uikit-faint)'
   return {
     ...(pos ? { position: 'absolute', left: pos.x, top: pos.y } : { position: 'relative' }),
     width,
     height,
     background: bg,
-    // Border is intentionally a touch heavier than the edge lines (~1.4px) so
-    // card outline and connectors read at one consistent weight.
-    border: `1.5px solid ${border}`,
-    borderRadius: 7,
+    // Member cards: border a touch heavier than the edge lines (~1.4px) so card
+    // outline and connectors read at one consistent weight. Recessed sub-cards
+    // (agents) drop to 1px so they read as subordinate, not peer.
+    border: `${recessed ? 1 : 1.5}px solid ${border}`,
+    borderRadius: recessed ? 6 : 7,
     padding: '8px 10px',
     display: 'flex',
     flexDirection: 'column',
     gap: 4,
     boxSizing: 'border-box',
     overflow: 'hidden',
-    boxShadow: selected
-      ? '0 1px 0 rgba(0,0,0,.05), 0 6px 18px rgba(0,0,0,.10)'
-      : '0 1px 0 rgba(0,0,0,.04)',
+    // The drop shadow is what makes a card read as a floating peer. Recessed
+    // sub-cards sit FLAT on the plane (no shadow) so they belong to their
+    // parent node rather than standing alongside the members.
+    boxShadow: recessed
+      ? 'none'
+      : selected
+        ? '0 1px 0 rgba(0,0,0,.05), 0 6px 18px rgba(0,0,0,.10)'
+        : '0 1px 0 rgba(0,0,0,.04)',
     opacity: dimmed ? 0.4 : state === 'skipped' ? 0.55 : 1,
     transition: 'opacity 160ms ease, border-color 120ms ease, background 120ms ease',
     fontFamily: 'var(--font-uikit-mono)',

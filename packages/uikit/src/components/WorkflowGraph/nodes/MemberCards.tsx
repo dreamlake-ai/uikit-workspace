@@ -189,7 +189,7 @@ export interface AgentInstanceCardProps {
 export function AgentInstanceCard({ agent, pos, dimmed }: AgentInstanceCardProps) {
   const base = cardStyle({
     pos, width: WF_AGENT_W, height: WF_AGENT_H,
-    state: agent.state, dimmed,
+    state: agent.state, dimmed, recessed: true,
   })
   const bits: string[] = []
   if (agent.tokens != null) bits.push(`${agent.tokens >= 1000 ? `${(agent.tokens / 1000).toFixed(1)}k` : agent.tokens} tok`)
