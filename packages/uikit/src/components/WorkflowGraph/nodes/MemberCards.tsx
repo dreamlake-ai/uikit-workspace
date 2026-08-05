@@ -13,7 +13,7 @@ import { providerSummary, samplerSummary } from '../spec'
 import {
   WF_AGENT_H, WF_AGENT_W, WF_KIND_LABEL, WF_KIND_TOKEN, WF_STATE_COLOR,
   cardStyle, chipFlexStyle, chipRowStyle, chipStyle, kindDotStyle, metaStyle,
-  previewStyle, titleRowStyle, titleStyle,
+  titleRowStyle, titleStyle,
 } from './chrome'
 
 interface MemberCardCommon {
@@ -92,7 +92,7 @@ export function UdaNodeCard({ node, ...p }: UdaNodeCardProps) {
         <span style={kindDotStyle(WF_KIND_TOKEN.uda)} />
         <span style={titleStyle}>{node.title}</span>
       </div>
-      <span style={previewStyle}>“{node.uda.instructions}”</span>
+      <span style={metaStyle}>{WF_KIND_LABEL.uda}</span>
       <div style={chipRowStyle}>
         {/* perms count is short and always visible; model + target truncate */}
         <span style={chipStyle}>{perms} perm{perms === 1 ? '' : 's'}</span>
@@ -172,7 +172,10 @@ export function ControlNodeCard({ node, ...p }: ControlNodeCardProps) {
         </span>
         <span style={titleStyle}>{node.title}</span>
       </div>
-      <span style={metaStyle}>{WF_KIND_LABEL.control} · {c.type} · {detail}</span>
+      <span style={metaStyle}>{WF_KIND_LABEL.control} · {c.type}</span>
+      {/* detail (expression / loop bounds / approval message) on its own line
+          below the meta — normal-case so expressions stay readable. */}
+      <span style={{ ...metaStyle, textTransform: 'none', letterSpacing: 0, fontSize: 9.5 }}>{detail}</span>
     </div>
   )
 }

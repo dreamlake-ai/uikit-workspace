@@ -169,8 +169,9 @@ export const chipStyle: CSSProperties = {
   letterSpacing: '.04em',
   textTransform: 'uppercase',
   color: 'var(--color-uikit-muted)',
-  background: 'color-mix(in oklab, var(--color-uikit-ink) 5%, transparent)',
-  border: '1px solid color-mix(in oklab, var(--color-uikit-ink) 10%, transparent)',
+  // Borderless soft chip — a faint fill carries the shape, no outline (keeps
+  // the compute/uda chip rows quieter than the bordered pills they were).
+  background: 'color-mix(in oklab, var(--color-uikit-ink) 6%, transparent)',
   borderRadius: 4,
   padding: '1px 5px',
   whiteSpace: 'nowrap',
