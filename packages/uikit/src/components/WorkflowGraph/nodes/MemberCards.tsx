@@ -4,6 +4,7 @@
  * render in-flow unless `pos` is given.
  */
 import type { PointerEvent as ReactPointerEvent } from 'react'
+import { Diamond, Pause, RotateCcw, Split, type LucideIcon } from 'lucide-react'
 import type {
   AgentInstance, ComputeNode, ControlNode, SamplerNode, UdaNode,
   WorkflowNodeRunStateValue,
@@ -125,11 +126,14 @@ export function SamplerNodeCard({ node, ...p }: SamplerNodeCardProps) {
 
 // ---------------------------------------------------------------------------
 
-const CONTROL_GLYPH: Record<ControlNode['control']['type'], string> = {
-  condition: '◇',
-  switch: '⑃',
-  loop: '⟲',
-  approval: '⏸',
+// Control-flow glyphs as lucide icons (the codebase's icon system) — crisp and
+// precisely sized, unlike the bare Unicode glyphs they replace, which rendered
+// noticeably smaller than the other kinds' filled 7×7 kind dot.
+const CONTROL_ICON: Record<ControlNode['control']['type'], LucideIcon> = {
+  condition: Diamond,
+  switch: Split,
+  loop: RotateCcw,
+  approval: Pause,
 }
 
 export interface ControlNodeCardProps extends MemberCardCommon { node: ControlNode }
@@ -152,13 +156,20 @@ export function ControlNodeCard({ node, ...p }: ControlNodeCardProps) {
       {...handlers(p)}
     >
       <div style={titleRowStyle}>
-        {/* Same 7×7 footprint as the kind dot (centered glyph), so the
-            icon→title gap matches every other node kind. */}
+        {/* Same 7×7 footprint as the kind dot (icon centered, overflowing
+            symmetrically), so the icon→title gap matches every other node kind.
+            The outline icon is sized a touch larger than the 7px filled dot so
+            the two read at the same visual size (filled looks heavier). */}
         <span style={{
           width: 7, height: 7, flexShrink: 0,
           display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 10, lineHeight: 1, color: WF_KIND_TOKEN.control,
-        }}>{CONTROL_GLYPH[c.type]}</span>
+          color: WF_KIND_TOKEN.control,
+        }}>
+          {(() => {
+            const Icon = CONTROL_ICON[c.type]
+            return <Icon size={12} strokeWidth={3} />
+          })()}
+        </span>
         <span style={titleStyle}>{node.title}</span>
       </div>
       <span style={metaStyle}>{WF_KIND_LABEL.control} · {c.type} · {detail}</span>
