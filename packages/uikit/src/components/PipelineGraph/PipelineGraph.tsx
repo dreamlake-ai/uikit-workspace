@@ -25,6 +25,7 @@ import { cn } from '../../lib/utils'
 import type { GraphNode, GraphEdge, PipelineGraphData, StatusOverlay } from './types'
 import { FLOW, NODE_H, NODE_W, STATUS, edgeFlow, kindColor, portPos } from './flow'
 import { buildEdgePath, type Obstacle, type Pt } from './edge-path'
+import { clearOffset, type Rect } from './tag-place'
 
 export interface PipelineGraphProps {
   graph: PipelineGraphData
@@ -136,12 +137,42 @@ export function PipelineGraph({
 
   const byId = useMemo(() => Object.fromEntries(nodes.map(n => [n.id, n])), [nodes])
 
+  // One-time card-avoidance: the initial perpendicular LIFT for each tag so it
+  // doesn't spawn on top of a node card. Computed ONCE per graph and then
+  // FROZEN — keyed on `graph.id`, NOT node positions, so dragging a card never
+  // re-runs the search (which would make unrelated tags jump). It seeds the same
+  // `labelOffsets` channel the across-drag uses, so a lifted tag rides its live
+  // anchor through node drags/rebends and grabbing it never teleports it.
+  const restOffsets = useMemo(() => {
+    const grow = (n: GraphNode): Rect => ({ x: n.pos.x - 6, y: n.pos.y - 6, w: NODE_W + 12, h: NODE_H + 12 })
+    const avoid: Rect[] = nodes.map(grow)
+    const taken: Rect[] = []
+    const offs: Record<string, number> = {}
+    for (const g of groupEdgeParams(graph.edges).values()) {
+      const src = byId[g.from]; const dst = byId[g.to]
+      if (!src || !dst || g.params.length === 0) continue
+      const fromP = portPos(src, '', 'out')
+      const toP = portPos(dst, '', 'in')
+      const obstacles: Obstacle[] = nodes
+        .filter(n => n.id !== g.from && n.id !== g.to)
+        .map(n => ({ x0: n.pos.x - 4, x1: n.pos.x + NODE_W + 4, y0: n.pos.y - 4, y1: n.pos.y + NODE_H + 4 }))
+      const probe: { anchor: Pt } = { anchor: { x: (fromP.x + toP.x) / 2, y: (fromP.y + toP.y) / 2 } }
+      buildEdgePath(fromP, toP, { obstacles, bendFrac: 0.5, out: probe })
+      const longest = g.params.reduce((m, p) => Math.max(m, p.length), 0)
+      const { off, box } = clearOffset(probe.anchor, longest * 5.6 + 22, g.params.length * 12 + 2, avoid, taken, 'y')
+      taken.push(box)
+      offs[`${g.from}->${g.to}`] = off
+    }
+    return offs
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- init-only: frozen
+    // per graph, NOT recomputed on node drag (that would reshuffle siblings).
+  }, [graph.id])
+
   // Per-edge param tags — one per node-pair (A→B), listing the params it transfers
-  // (edge toPorts). Anchored at the pair's ON-EDGE midpoint (tracks both nodes as
-  // they move); positioned by a FROZEN offset from the one-time adaptive placement
-  // (the graph.id effect) or a manual drag. A straight dashed leader joins tag to
-  // anchor. This recomputes per render so anchors follow node drags, but does NO
-  // collision search — only the cheap per-pair anchor measurement.
+  // (edge toPorts). Anchored ON its edge's routed jog/detour point (buildEdgePath's
+  // `out`, so it tracks both nodes, detours and rebends live). The perpendicular
+  // lift is the user's across-drag (labelOffsets) if touched, else the frozen
+  // card-avoidance offset (restOffsets) — one value, so grabbing never teleports.
   const pairTags = useMemo(() => {
     const out: Array<{
       key: string; from: string; to: string; params: string[]
@@ -156,7 +187,7 @@ export function PipelineGraph({
       const toP = portPos(dst, '', 'in')
       const span = toP.x - fromP.x
       const frac = bendFracs[key] ?? 0.5
-      const off = labelOffsets[key] ?? 0
+      const off = labelOffsets[key] ?? restOffsets[key] ?? 0
       const color = FLOW[edgeFlow(src.status, dst.status)].color
       // Anchor the tag ON the actual routed edge — buildEdgePath reports its
       // jog/detour point via `out` (the SAME obstacle-avoidance the drawn edge
@@ -191,7 +222,7 @@ export function PipelineGraph({
       })
     }
     return out
-  }, [nodes, graph.edges, byId, bendFracs, labelOffsets])
+  }, [nodes, graph.edges, byId, bendFracs, labelOffsets, restOffsets])
 
   // Topological order of the nodes (Kahn's) — the linear sequence ↑/↓ step
   // through. Nodes left out by a cycle are appended in insertion order so every
@@ -294,7 +325,7 @@ export function PipelineGraph({
     ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
     tagDrag.current = {
       id: t.key, sx: e.clientX, sy: e.clientY,
-      startFrac: bendFracs[t.key] ?? 0.5, startOff: labelOffsets[t.key] ?? 0, span: t.span,
+      startFrac: bendFracs[t.key] ?? 0.5, startOff: labelOffsets[t.key] ?? restOffsets[t.key] ?? 0, span: t.span,
     }
     setActiveTag(t.key)   // highlight this tag + its leader + its edge while held
   }
