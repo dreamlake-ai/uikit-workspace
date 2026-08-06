@@ -336,6 +336,22 @@ export function nodeOutputs(n: WorkflowNodeSpec): PortSpec[] {
   return n.outputs && n.outputs.length ? n.outputs : [DEFAULT_OUT_PORT]
 }
 
+/**
+ * Accent color for a control node's OUTPUT port dot. Only `condition`'s
+ * true/false branch carries a universal polarity — green (true) / red (false),
+ * the flowchart / BPMN convention. Every other multi-out control (switch cases
+ * + default) has arbitrary, non-polar branch names, so its dots stay neutral;
+ * single-out kinds and non-control nodes likewise return undefined (the caller
+ * falls back to the default muted dot).
+ */
+export function outputPortColor(n: WorkflowNodeSpec, portName: string): string | undefined {
+  if (n.kind === 'control' && n.control.type === 'condition') {
+    if (portName === 'true') return 'var(--color-uikit-tone-green)'
+    if (portName === 'false') return 'var(--color-uikit-tone-red)'
+  }
+  return undefined
+}
+
 /** One-line human summary of a sampler config, e.g. "bernoulli 10% · ≥50". */
 export function samplerSummary(s: SamplerNode['sampler']): string {
   switch (s.strategy) {

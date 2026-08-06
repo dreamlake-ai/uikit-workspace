@@ -4,6 +4,7 @@
  * render in-flow unless `pos` is given.
  */
 import type { PointerEvent as ReactPointerEvent } from 'react'
+import { Diamond, Pause, RotateCcw, Split, type LucideIcon } from 'lucide-react'
 import type {
   AgentInstance, ComputeNode, ControlNode, SamplerNode, UdaNode,
   WorkflowNodeRunStateValue,
@@ -12,7 +13,7 @@ import { providerSummary, samplerSummary } from '../spec'
 import {
   WF_AGENT_H, WF_AGENT_W, WF_KIND_LABEL, WF_KIND_TOKEN, WF_STATE_COLOR,
   cardStyle, chipFlexStyle, chipRowStyle, chipStyle, kindDotStyle, metaStyle,
-  previewStyle, titleRowStyle, titleStyle,
+  titleRowStyle, titleStyle,
 } from './chrome'
 
 interface MemberCardCommon {
@@ -91,7 +92,7 @@ export function UdaNodeCard({ node, ...p }: UdaNodeCardProps) {
         <span style={kindDotStyle(WF_KIND_TOKEN.uda)} />
         <span style={titleStyle}>{node.title}</span>
       </div>
-      <span style={previewStyle}>“{node.uda.instructions}”</span>
+      <span style={metaStyle}>{WF_KIND_LABEL.uda}</span>
       <div style={chipRowStyle}>
         {/* perms count is short and always visible; model + target truncate */}
         <span style={chipStyle}>{perms} perm{perms === 1 ? '' : 's'}</span>
@@ -125,11 +126,14 @@ export function SamplerNodeCard({ node, ...p }: SamplerNodeCardProps) {
 
 // ---------------------------------------------------------------------------
 
-const CONTROL_GLYPH: Record<ControlNode['control']['type'], string> = {
-  condition: '◇',
-  switch: '⑃',
-  loop: '⟲',
-  approval: '⏸',
+// Control-flow glyphs as lucide icons (the codebase's icon system) — crisp and
+// precisely sized, unlike the bare Unicode glyphs they replace, which rendered
+// noticeably smaller than the other kinds' filled 7×7 kind dot.
+const CONTROL_ICON: Record<ControlNode['control']['type'], LucideIcon> = {
+  condition: Diamond,
+  switch: Split,
+  loop: RotateCcw,
+  approval: Pause,
 }
 
 export interface ControlNodeCardProps extends MemberCardCommon { node: ControlNode }
@@ -152,16 +156,26 @@ export function ControlNodeCard({ node, ...p }: ControlNodeCardProps) {
       {...handlers(p)}
     >
       <div style={titleRowStyle}>
-        {/* Same 7×7 footprint as the kind dot (centered glyph), so the
-            icon→title gap matches every other node kind. */}
+        {/* Same 7×7 footprint as the kind dot (icon centered, overflowing
+            symmetrically), so the icon→title gap matches every other node kind.
+            The outline icon is sized a touch larger than the 7px filled dot so
+            the two read at the same visual size (filled looks heavier). */}
         <span style={{
           width: 7, height: 7, flexShrink: 0,
           display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 10, lineHeight: 1, color: WF_KIND_TOKEN.control,
-        }}>{CONTROL_GLYPH[c.type]}</span>
+          color: WF_KIND_TOKEN.control,
+        }}>
+          {(() => {
+            const Icon = CONTROL_ICON[c.type]
+            return <Icon size={12} strokeWidth={3} />
+          })()}
+        </span>
         <span style={titleStyle}>{node.title}</span>
       </div>
-      <span style={metaStyle}>{WF_KIND_LABEL.control} · {c.type} · {detail}</span>
+      <span style={metaStyle}>{WF_KIND_LABEL.control} · {c.type}</span>
+      {/* detail (expression / loop bounds / approval message) on its own line
+          below the meta — normal-case so expressions stay readable. */}
+      <span style={{ ...metaStyle, textTransform: 'none', letterSpacing: 0, fontSize: 9.5 }}>{detail}</span>
     </div>
   )
 }
@@ -178,7 +192,7 @@ export interface AgentInstanceCardProps {
 export function AgentInstanceCard({ agent, pos, dimmed }: AgentInstanceCardProps) {
   const base = cardStyle({
     pos, width: WF_AGENT_W, height: WF_AGENT_H,
-    state: agent.state, dimmed,
+    state: agent.state, dimmed, recessed: true,
   })
   const bits: string[] = []
   if (agent.tokens != null) bits.push(`${agent.tokens >= 1000 ? `${(agent.tokens / 1000).toFixed(1)}k` : agent.tokens} tok`)

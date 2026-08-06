@@ -27,7 +27,6 @@ export function StageNode({
 }: StageNodeProps) {
   const bits: string[] = ['stage']
   if (memberCount != null) bits.push(`${memberCount} member${memberCount === 1 ? '' : 's'}`)
-  if (doneCount != null) bits.push(`${doneCount} done`)
   return (
     <div
       data-node={stage.id}
@@ -42,7 +41,8 @@ export function StageNode({
         <span style={titleStyle}>{stage.title}</span>
       </div>
       <span style={metaStyle}>{bits.join(' · ')}</span>
-      {stage.detail && <span style={{ ...metaStyle, textTransform: 'none', letterSpacing: 0, fontSize: 9.5 }}>{stage.detail}</span>}
+      {/* Run-time done count on its own line below the meta. */}
+      {doneCount != null && <span style={metaStyle}>{doneCount} done</span>}
     </div>
   )
 }
