@@ -67,6 +67,20 @@ export interface VideoAnnotatorProps {
   headerLeading?: ReactNode;
 
   /**
+   * Extra controls appended to the END of the transport's right group (after the
+   * hand-pose toggle). Use for host-specific toggles that live with the playback
+   * controls; style them with the `va-icon` class for visual parity.
+   */
+  transportExtra?: ReactNode;
+  /**
+   * Node rendered INSIDE the video stage, layered above the video + hand-pose
+   * overlay but below the seek bar — for host overlays (e.g. a picture-in-picture
+   * window) that must sit over the video yet never cover the scrubber. Position it
+   * absolutely; it shares the stage's containing block and is clipped to it.
+   */
+  stageOverlay?: ReactNode;
+
+  /**
    * Render the boxed description editor for the selected segment below the
    * timeline (matches the reference labeling layout). Requires
    * `onDescriptionChange` to be interactive.

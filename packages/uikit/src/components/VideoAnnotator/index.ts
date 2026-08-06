@@ -23,3 +23,4 @@ export {
   moveBoundary,
   firstUnverified,
 } from "./segments";
+export { TipButton } from "./icons";

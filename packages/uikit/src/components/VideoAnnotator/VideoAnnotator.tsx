@@ -57,6 +57,8 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
       videoTitle,
       videoSubtitle,
       headerLeading,
+      transportExtra,
+      stageOverlay,
       showDescription = false,
       onDescriptionChange,
       duration,
@@ -645,6 +647,9 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
           />
           {/* Hand-pose overlay: positioned/sized over the video by the rAF loop. */}
           <canvas ref={overlayRef} className="va-overlay" aria-hidden="true" />
+          {/* Host overlay (e.g. a 3D picture-in-picture) — layered above the video
+              + hand-pose but below the seek bar (which follows in DOM at z-index 4). */}
+          {stageOverlay}
           {buffering && (
             <div className="va-buffering" aria-hidden="true">
               <div className="va-buf">
@@ -691,6 +696,7 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
           showHands={showHands}
           handsLoading={handsLoading}
           onToggleHands={() => setShowHands((s) => !s)}
+          transportExtra={transportExtra}
         />
 
         <div className={cn("va-tlwrap", multi && "multi")}>

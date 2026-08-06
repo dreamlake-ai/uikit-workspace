@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -37,6 +38,7 @@ export function Transport({
   showHands,
   handsLoading,
   onToggleHands,
+  transportExtra,
 }: {
   readout: string;
   rate: number;
@@ -54,6 +56,7 @@ export function Transport({
   showHands: boolean;
   handsLoading?: boolean;
   onToggleHands: () => void;
+  transportExtra?: ReactNode;
 }) {
   return (
     <div className="va-transport">
@@ -114,6 +117,7 @@ export function Transport({
             <Hand size={14} />
           </TipButton>
         )}
+        {transportExtra}
       </div>
     </div>
   );

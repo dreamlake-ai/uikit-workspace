@@ -114,10 +114,11 @@ export const CSS = `
   color:color-mix(in srgb, var(--va-text) 75%, var(--va-muted))}
 /* Neutral outline + glyph at rest; both turn accent-blue on hover. */
 .va-transport .va-icon:hover{background:transparent;border-color:var(--va-accent);color:var(--va-accent)}
-/* Hand-pose toggle: reads as a checkbox — filled accent when ON, neutral OFF. */
-.va-transport .va-hands.on{border-color:var(--va-accent);color:var(--va-accent);
+/* Toggle icons (hand-pose, and host transportExtra toggles): read as a checkbox
+   — filled accent when ON, neutral OFF. */
+.va-transport .va-icon.on{border-color:var(--va-accent);color:var(--va-accent);
   background:color-mix(in srgb, var(--va-accent) 14%, transparent)}
-.va-transport .va-hands.on:hover{background:color-mix(in srgb, var(--va-accent) 20%, transparent)}
+.va-transport .va-icon.on:hover{background:color-mix(in srgb, var(--va-accent) 20%, transparent)}
 .va-icon svg{flex:none}
 .va-root svg{stroke-linejoin:round;stroke-linecap:round}
 
