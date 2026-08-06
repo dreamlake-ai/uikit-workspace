@@ -24,7 +24,7 @@ import {
 import { cn } from '../../lib/utils'
 import type { GraphNode, GraphEdge, PipelineGraphData, StatusOverlay } from './types'
 import { FLOW, NODE_H, NODE_W, STATUS, edgeFlow, kindColor, portPos } from './flow'
-import { buildEdgePath, type Obstacle, type Pt } from './edge-path'
+import { buildEdgePath, pickSides, type Obstacle, type PortSide, type Pt } from './edge-path'
 import { clearOffset, type Rect } from './tag-place'
 
 export interface PipelineGraphProps {
@@ -37,7 +37,72 @@ export interface PipelineGraphProps {
   /** Show the canvas overlay chrome — the edge legend (top-left) and the
    *  keyboard-hint strip (bottom). Default true; pass false for tiny embeds. */
   showControls?: boolean
+  /** Which card faces a connector leaves and arrives on.
+   *
+   *  `'flow'` (the default) is the historical behaviour: every edge leaves
+   *  through the source's right face and arrives on the target's left face, so
+   *  a target sitting behind its source gets a full loop-back around both
+   *  cards. `'auto'` lets each edge pick its faces from the geometry — top or
+   *  bottom when the target is behind, or when the vertical offset dominates —
+   *  which turns most of those loop-backs into a short jog.
+   *
+   *  Opt-in on purpose: it changes the shape of already-published figures, so
+   *  it is a choice the embedder makes rather than one that lands on them. */
+  edgeSides?: 'flow' | 'auto'
   className?: string
+}
+
+/**
+ * The arrowhead at an edge's arrival port, oriented to the face it lands on.
+ *
+ * It used to be two hardcoded +x barbs, which was correct only because every
+ * edge arrived from the left. Now that a connector can arrive on any face, the
+ * head is built from the face's inward normal: pulled `GAP` back off the 6 px
+ * input dot (radius 3 + 1) so the tip hugs it without overlapping, with the
+ * barbs 6 px behind the tip and 4 px to either side.
+ */
+function arrowHead(to: Pt, side: PortSide): string {
+  const GAP = 4
+  // Inward normal — the direction the line is travelling as it arrives.
+  const n: Pt =
+    side === 'left' ? { x: 1, y: 0 } :
+    side === 'right' ? { x: -1, y: 0 } :
+    side === 'top' ? { x: 0, y: 1 } : { x: 0, y: -1 }
+  const p: Pt = { x: -n.y, y: n.x }
+  const tip: Pt = { x: to.x - n.x * GAP, y: to.y - n.y * GAP }
+  const back: Pt = { x: tip.x - n.x * 6, y: tip.y - n.y * 6 }
+  return `M ${back.x + p.x * 4} ${back.y + p.y * 4} L ${tip.x} ${tip.y} L ${back.x - p.x * 4} ${back.y - p.y * 4}`
+}
+
+/**
+ * The two port points and two card rects for one edge, in ONE place.
+ *
+ * All three consumers — the drawn path, the frozen tag-avoidance pass and the
+ * live tag anchor — must agree exactly, or a tag drifts off the line it is
+ * supposed to ride. They used to agree by three copies of the same two
+ * `portPos` calls; now that a side can vary per edge, they agree by
+ * construction instead.
+ */
+function edgeEnds(a: GraphNode, b: GraphNode, auto: boolean): {
+  from: Pt; to: Pt
+  fromRect: Obstacle; toRect: Obstacle
+  fromSide?: PortSide; toSide?: PortSide
+} {
+  const rect = (n: GraphNode): Obstacle => ({
+    x0: n.pos.x, y0: n.pos.y, x1: n.pos.x + NODE_W, y1: n.pos.y + NODE_H,
+  })
+  const centre = (n: GraphNode): Pt => ({ x: n.pos.x + NODE_W / 2, y: n.pos.y + NODE_H / 2 })
+  const fromRect = rect(a)
+  const toRect = rect(b)
+  if (!auto) {
+    return { from: portPos(a, '', 'out'), to: portPos(b, '', 'in'), fromRect, toRect }
+  }
+  const { fromSide, toSide } = pickSides(centre(a), centre(b), 'horizontal')
+  return {
+    from: portPos(a, '', 'out', fromSide),
+    to: portPos(b, '', 'in', toSide),
+    fromRect, toRect, fromSide, toSide,
+  }
 }
 
 // Injected once — the flow/pulse keyframes (design's <style> block).
@@ -85,8 +150,10 @@ function groupEdgeParams(edges: GraphEdge[]): Map<string, { from: string; to: st
 }
 
 export function PipelineGraph({
-  graph, statusById, selectedNodeId, onSelectNode, showControls = true, className,
+  graph, statusById, selectedNodeId, onSelectNode, showControls = true,
+  edgeSides = 'flow', className,
 }: PipelineGraphProps) {
+  const autoSides = edgeSides === 'auto'
   useInjectedStyles()
 
   const [internalSel, setInternalSel] = useState<string | null>(null)
@@ -119,7 +186,7 @@ export function PipelineGraph({
   const containerRef = useRef<HTMLDivElement>(null)
   const panRef = useRef<{ x: number; y: number; vx: number; vy: number } | null>(null)
   const nodeDrag = useRef<{ id: string; sx: number; sy: number; bx: number; by: number; moved: boolean } | null>(null)
-  const tagDrag = useRef<{ id: string; sx: number; sy: number; startFrac: number; startOff: number; span: number } | null>(null)
+  const tagDrag = useRef<{ id: string; sx: number; sy: number; startFrac: number; startOff: number; span: number; vertical: boolean } | null>(null)
 
   // Effective nodes: drag overrides + live status overlay merged in.
   const nodes = useMemo(() => {
@@ -151,13 +218,17 @@ export function PipelineGraph({
     for (const g of groupEdgeParams(graph.edges).values()) {
       const src = byId[g.from]; const dst = byId[g.to]
       if (!src || !dst || g.params.length === 0) continue
-      const fromP = portPos(src, '', 'out')
-      const toP = portPos(dst, '', 'in')
+      const ends = edgeEnds(src, dst, autoSides)
+      const { from: fromP, to: toP } = ends
       const obstacles: Obstacle[] = nodes
         .filter(n => n.id !== g.from && n.id !== g.to)
         .map(n => ({ x0: n.pos.x - 4, x1: n.pos.x + NODE_W + 4, y0: n.pos.y - 4, y1: n.pos.y + NODE_H + 4 }))
       const probe: { anchor: Pt } = { anchor: { x: (fromP.x + toP.x) / 2, y: (fromP.y + toP.y) / 2 } }
-      buildEdgePath(fromP, toP, { obstacles, bendFrac: 0.5, out: probe })
+      buildEdgePath(fromP, toP, {
+        obstacles, bendFrac: 0.5, out: probe,
+        fromRect: ends.fromRect, toRect: ends.toRect,
+        fromSide: ends.fromSide, toSide: ends.toSide,
+      })
       const longest = g.params.reduce((m, p) => Math.max(m, p.length), 0)
       const { off, box } = clearOffset(probe.anchor, longest * 5.6 + 22, g.params.length * 12 + 2, avoid, taken, 'y')
       taken.push(box)
@@ -177,15 +248,21 @@ export function PipelineGraph({
     const out: Array<{
       key: string; from: string; to: string; params: string[]
       tagX: number; tagY: number; leaderY: number
-      span: number; hasLeader: boolean; color: string
+      span: number; vertical: boolean; hasLeader: boolean; color: string
     }> = []
     for (const g of groupEdgeParams(graph.edges).values()) {
       const src = byId[g.from]; const dst = byId[g.to]
       if (!src || !dst || g.params.length === 0) continue
       const key = `${g.from}->${g.to}`
-      const fromP = portPos(src, '', 'out')
-      const toP = portPos(dst, '', 'in')
-      const span = toP.x - fromP.x
+      const ends = edgeEnds(src, dst, autoSides)
+      const { from: fromP, to: toP } = ends
+      // Which way does this edge actually run? With `edgeSides='auto'` a
+      // top/bottom pair routes vertically, and then the bend parameter advances
+      // along world *y*, not world *x*. Measuring the span on the wrong axis
+      // gives a near-zero denominator for a vertical edge, so the drag either
+      // does nothing or snaps straight to a clamp.
+      const vertical = ends.fromSide === 'top' || ends.fromSide === 'bottom'
+      const span = vertical ? toP.y - fromP.y : toP.x - fromP.x
       const frac = bendFracs[key] ?? 0.5
       const off = labelOffsets[key] ?? restOffsets[key] ?? 0
       // Idle edges render muted (not the faint --edge-idle) — matching the edge
@@ -205,7 +282,11 @@ export function PipelineGraph({
       const probe: { anchor: Pt; jog?: { y0: number; y1: number } } = {
         anchor: { x: fromP.x + span * frac, y: (fromP.y + toP.y) / 2 },
       }
-      buildEdgePath(fromP, toP, { obstacles, bendFrac: frac, out: probe })
+      buildEdgePath(fromP, toP, {
+        obstacles, bendFrac: frac, out: probe,
+        fromRect: ends.fromRect, toRect: ends.toRect,
+        fromSide: ends.fromSide, toSide: ends.toSide,
+      })
       const ax = probe.anchor.x
       const tagY = probe.anchor.y + off
       // The leader is vertical at ax. When the routed edge has a vertical JOG at
@@ -221,12 +302,12 @@ export function PipelineGraph({
         : probe.anchor.y
       out.push({
         key, from: g.from, to: g.to, params: g.params,
-        tagX: ax, tagY, leaderY, span,
+        tagX: ax, tagY, leaderY, span, vertical,
         hasLeader: Math.abs(tagY - leaderY) > 0.5, color,
       })
     }
     return out
-  }, [nodes, graph.edges, byId, bendFracs, labelOffsets, restOffsets])
+  }, [nodes, graph.edges, byId, bendFracs, labelOffsets, restOffsets, autoSides])
 
   // Topological order of the nodes (Kahn's) — the linear sequence ↑/↓ step
   // through. Nodes left out by a cycle are appended in insertion order so every
@@ -324,12 +405,13 @@ export function PipelineGraph({
   //   its edge (bendFrac); dragging ACROSS it (y) lifts the tag onto a dashed
   //   leader (labelOffset, snapping back within 3px). stopPropagation keeps the
   //   canvas/nodes from also dragging. —
-  const onTagDown = (e: ReactPointerEvent, t: { key: string; span: number }) => {
+  const onTagDown = (e: ReactPointerEvent, t: { key: string; span: number; vertical?: boolean }) => {
     e.stopPropagation()
     ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
     tagDrag.current = {
       id: t.key, sx: e.clientX, sy: e.clientY,
       startFrac: bendFracs[t.key] ?? 0.5, startOff: labelOffsets[t.key] ?? restOffsets[t.key] ?? 0, span: t.span,
+      vertical: t.vertical ?? false,
     }
     setActiveTag(t.key)   // highlight this tag + its leader + its edge while held
   }
@@ -337,13 +419,18 @@ export function PipelineGraph({
     const d = tagDrag.current
     if (!d) return
     e.stopPropagation()
-    const dx = (e.clientX - d.sx) / view.k   // along the edge → bend
-    const dy = (e.clientY - d.sy) / view.k   // across → lift
+    // The bend runs ALONG the edge and the lift runs ACROSS it, so which
+    // pointer axis is which depends on how the edge is routed. A top/bottom
+    // pair (edgeSides='auto') runs vertically, and there the roles swap.
+    const px = (e.clientX - d.sx) / view.k
+    const py = (e.clientY - d.sy) / view.k
+    const along = d.vertical ? py : px
+    const across = d.vertical ? px : py
     if (Math.abs(d.span) > 1) {
-      const next = Math.max(0.1, Math.min(0.9, d.startFrac + dx / d.span))
+      const next = Math.max(0.1, Math.min(0.9, d.startFrac + along / d.span))
       setBendFracs(o => ({ ...o, [d.id]: next }))
     }
-    let off = Math.max(-400, Math.min(400, d.startOff + dy))
+    let off = Math.max(-400, Math.min(400, d.startOff + across))
     if (Math.abs(off) <= 3) off = 0   // snap back onto the line
     setLabelOffsets(o => ({ ...o, [d.id]: off }))
   }
@@ -458,13 +545,21 @@ export function PipelineGraph({
             const a = byId[e.from]
             const b = byId[e.to]
             if (!a || !b) return null
-            const from = portPos(a, e.fromPort, 'out')
-            const to = portPos(b, e.toPort, 'in')
+            const ends = edgeEnds(a, b, autoSides)
             const obstacles: Obstacle[] = nodes
               .filter(n => n.id !== e.from && n.id !== e.to)
               .map(n => ({ x0: n.pos.x - 4, x1: n.pos.x + NODE_W + 4, y0: n.pos.y - 4, y1: n.pos.y + NODE_H + 4 }))
             const frac = bendFracs[`${e.from}->${e.to}`] ?? 0.5
-            const d = buildEdgePath(from, to, { obstacles, bendFrac: frac })
+            // The edge's OWN two cards go in as fromRect/toRect, not obstacles:
+            // the line has to land on their ports, so it must not be detoured
+            // around them — but the router still needs them to keep the line
+            // out of their bodies. Filtering them out of `obstacles` and then
+            // never mentioning them again is the defect this fixes.
+            const d = buildEdgePath(ends.from, ends.to, {
+              obstacles, bendFrac: frac,
+              fromRect: ends.fromRect, toRect: ends.toRect,
+              fromSide: ends.fromSide, toSide: ends.toSide,
+            })
             const flow = edgeFlow(a.status, b.status)
             const spec = FLOW[flow]
             // Hot when the selected node is an endpoint, OR the held tag's pair is
@@ -505,8 +600,6 @@ export function PipelineGraph({
             // without overlap. The dot is drawn in world coords centred exactly
             // on `to`, so GAP = radius(3) + 1 lands the tip 1px off its edge.
             // The line still runs to the port, hidden by the dot / card.
-            const GAP = 4
-            const tx = to.x - GAP
             return (
               <g key={i}>
                 <path
@@ -515,7 +608,7 @@ export function PipelineGraph({
                   className={hot ? undefined : spec.anim}
                 />
                 <path
-                  d={`M ${tx - 6} ${to.y - 4} L ${tx} ${to.y} L ${tx - 6} ${to.y + 4}`}
+                  d={arrowHead(ends.to, ends.toSide ?? 'left')}
                   fill="none" stroke={stroke} strokeWidth={width}
                   strokeLinecap="round" strokeLinejoin="round"
                 />

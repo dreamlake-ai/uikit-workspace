@@ -113,6 +113,12 @@ const swap = (p: Pt): Pt => ({ x: p.y, y: p.x })
 // boundary, so lines keep clear daylight from card edges.
 const swapRect = (r: WfRect): Obstacle => ({ x0: r.y - 8, y0: r.x - 8, x1: r.y + r.h + 8, y1: r.x + r.w + 8 })
 const rectObstacle = (r: WfRect): Obstacle => ({ x0: r.x - 8, y0: r.y - 8, x1: r.x + r.w + 8, y1: r.y + r.h + 8 })
+// An edge's OWN endpoint card, for the router's fromRect/toRect channel. Note
+// the absent 8 px growth the obstacle forms carry: a port sits exactly ON its
+// card's boundary, so a grown rect would swallow the port and make every edge
+// read as cutting the card it departs from.
+const swapEndRect = (r: WfRect): Obstacle => ({ x0: r.y, y0: r.x, x1: r.y + r.h, y1: r.x + r.w })
+const endRect = (r: WfRect): Obstacle => ({ x0: r.x, y0: r.y, x1: r.x + r.w, y1: r.y + r.h })
 
 interface Seg {
   key: string
@@ -367,6 +373,16 @@ export function WorkflowCanvas({
   const segments = useMemo<Seg[]>(() => {
     const allRects = [...Object.values(stageRects), ...Object.values(nodeRects)]
     const obstacles = verticalPrimary ? allRects.map(swapRect) : allRects.map(rectObstacle)
+    // `exclude` is always [the source's card, the target's card], in that order.
+    // They come OUT of the obstacle list — the line has to land on their ports,
+    // so it must not be detoured around them — and go straight back IN through
+    // the router's fromRect/toRect channel, which is what lets it keep the line
+    // clear of their bodies. Dropping them on the floor at this exact point is
+    // the reason an untagged fan-out segment could bend through its own hub.
+    const endRects = (exclude: WfRect[]): { fromRect?: Obstacle; toRect?: Obstacle } => {
+      const as = verticalPrimary ? swapEndRect : endRect
+      return { fromRect: exclude[0] && as(exclude[0]), toRect: exclude[1] && as(exclude[1]) }
+    }
     const route = (from: Pt, to: Pt, exclude: WfRect[], bendKey?: string): string => {
       const ex = new Set(exclude.map((r) => (verticalPrimary ? swapRect(r) : rectObstacle(r))
       ).map((o) => `${o.x0},${o.y0}`))
@@ -375,9 +391,10 @@ export function WorkflowCanvas({
       // in swapped space for the vertical layout, so the same frac drives the
       // flow-axis jog either way).
       const bendFrac = bendKey ? bendFracs[bendKey] : undefined
+      const ends = endRects(exclude)
       return verticalPrimary
-        ? buildEdgePath(swap(from), swap(to), { obstacles: obs, bendFrac })
-        : buildEdgePath(from, to, { obstacles: obs, bendFrac })
+        ? buildEdgePath(swap(from), swap(to), { obstacles: obs, bendFrac, ...ends })
+        : buildEdgePath(from, to, { obstacles: obs, bendFrac, ...ends })
     }
     // Flow-axis span of a segment (the axis a bend-drag moves along).
     const flowSpan = (from: Pt, to: Pt) => (verticalPrimary ? to.y - from.y : to.x - from.x)
@@ -390,8 +407,9 @@ export function WorkflowCanvas({
       const ex = new Set(exclude.map((r) => (verticalPrimary ? swapRect(r) : rectObstacle(r))).map((o) => `${o.x0},${o.y0}`))
       const obs = obstacles.filter((o) => !ex.has(`${o.x0},${o.y0}`))
       const out: { anchor: Pt; jog?: { y0: number; y1: number } } = { anchor: { x: 0, y: 0 } }
-      if (verticalPrimary) buildEdgePath(swap(from), swap(to), { obstacles: obs, bendFrac: bendFracs[key], out })
-      else buildEdgePath(from, to, { obstacles: obs, bendFrac: bendFracs[key], out })
+      const ends = endRects(exclude)
+      if (verticalPrimary) buildEdgePath(swap(from), swap(to), { obstacles: obs, bendFrac: bendFracs[key], out, ...ends })
+      else buildEdgePath(from, to, { obstacles: obs, bendFrac: bendFracs[key], out, ...ends })
       const anchor = verticalPrimary ? swap(out.anchor) : out.anchor // un-swap to world
       // Cross-axis span of the vertical JOG the anchor sits on (world coords: x
       // for the vertical layout, y for horizontal) — so a lifted tag's leader can
@@ -630,6 +648,16 @@ export function WorkflowCanvas({
         // the line INTO the card body instead of onto the input dot. Route port
         // → port straight through buildEdgePath, which reaches the dot from the
         // correct side and loops with an inverted-S when it sits behind.
+        //
+        // This is the exact segment class Ge's "connector bends through the
+        // starting node" report was about, and the reason a tag was never the
+        // cause: `label` is hardcoded null just above, so no pill is rendered,
+        // so the `bendKey` passed here can never be populated — `bendFracs` is
+        // written only by a tag drag. The segment is permanently pinned at
+        // bendFrac 0.5 with no user recourse, which is why the fix had to be in
+        // the geometry (the endpoint rects the router now receives) rather than
+        // in the interaction. The key is left in place so the segment starts
+        // working the day it grows a pill.
         if (toF(T).f < H.fMax) {
           const from = portAnchor(stageRects[t], 'out', 0, 1, orientation)
           segs.push({

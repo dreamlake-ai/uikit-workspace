@@ -4,6 +4,7 @@
  * prototype (pipelines-canvas.jsx). Colours use uikit tone tokens so they
  * adapt to light/dark automatically.
  */
+import type { PortSide } from './edge-path'
 import type { NodeKind, NodeStatus } from './types'
 
 // Node card size (design: 156 × 72).
@@ -97,18 +98,31 @@ export function portAlong(count: number, idx: number, vertical = false): number 
  *  now shares ONE dot per side (the parameter list is surfaced in the per-node
  *  input tag instead), so this is the edge-centre — all edges into a node
  *  converge on the left-centre dot, all edges out share the right-centre dot.
- *  `port` is accepted for call-site compatibility but no longer affects position. */
+ *  `port` is accepted for call-site compatibility but no longer affects position.
+ *
+ *  `face` chooses which side of the card the dot sits on. Historically this was
+ *  a `vertical` boolean whose branch was dead — no call site ever passed it —
+ *  which is a large part of why an edge could only ever leave to the right and
+ *  arrive from the left, loop-backs and all. It now also accepts an explicit
+ *  `PortSide`, so a caller that has looked at the geometry (see `pickSides`) can
+ *  route an edge out through the top or bottom instead. Passing nothing keeps
+ *  the historical left/right faces, so no existing render changes. */
 export function portPos(
   node: { pos: { x: number; y: number } },
   _port: string,
   dir: 'in' | 'out',
-  vertical = false,
+  face: boolean | PortSide = false,
 ): { x: number; y: number } {
-  if (vertical) {
-    return { x: node.pos.x + NODE_W / 2, y: dir === 'in' ? node.pos.y : node.pos.y + NODE_H }
-  }
-  return {
-    x: dir === 'in' ? node.pos.x : node.pos.x + NODE_W,
-    y: node.pos.y + NODE_H / 2,
+  const side: PortSide = typeof face === 'string'
+    ? face
+    : face
+      ? (dir === 'in' ? 'top' : 'bottom')
+      : (dir === 'in' ? 'left' : 'right')
+  const { x, y } = node.pos
+  switch (side) {
+    case 'top': return { x: x + NODE_W / 2, y }
+    case 'bottom': return { x: x + NODE_W / 2, y: y + NODE_H }
+    case 'right': return { x: x + NODE_W, y: y + NODE_H / 2 }
+    default: return { x, y: y + NODE_H / 2 }
   }
 }

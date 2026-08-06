@@ -6,8 +6,8 @@ export { PipelineSource } from './PipelineSource'
 export type { PipelineSourceProps, RunTarget } from './PipelineSource'
 export { edgeFlow, kindColor, FLOW, STATUS, NODE_W, NODE_H } from './flow'
 export type { EdgeFlow } from './flow'
-export { buildEdgePath } from './edge-path'
-export type { Pt, Obstacle } from './edge-path'
+export { buildEdgePath, pickSides } from './edge-path'
+export type { Pt, Obstacle, PortSide } from './edge-path'
 export type {
   GraphNode,
   GraphEdge,

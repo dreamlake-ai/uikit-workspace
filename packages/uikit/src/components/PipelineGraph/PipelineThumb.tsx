@@ -27,6 +27,11 @@ const truncate = (s: string) => (s.length > MAX_CHARS ? `${s.slice(0, MAX_CHARS 
 // Single in/out dot per side at the edge centre — matches PipelineGraph's portPos.
 const outPt = (n: { pos: { x: number; y: number } }) => ({ x: n.pos.x + NODE_W, y: n.pos.y + NODE_H / 2 })
 const inPt = (n: { pos: { x: number; y: number } }) => ({ x: n.pos.x, y: n.pos.y + NODE_H / 2 })
+// The edge's own two cards — passed to the router SEPARATELY from `obstacles`
+// (the line must reach their ports, so it must not detour around them) so it can
+// still keep the line out of their bodies.
+const cardRect = (n: { pos: { x: number; y: number } }): Obstacle =>
+  ({ x0: n.pos.x, y0: n.pos.y, x1: n.pos.x + NODE_W, y1: n.pos.y + NODE_H })
 
 export interface PipelineThumbProps {
   graph: PipelineGraphData
@@ -72,7 +77,7 @@ export function PipelineThumb({ graph }: PipelineThumbProps) {
         return (
           <path
             key={i}
-            d={buildEdgePath(from, to, { obstacles })}
+            d={buildEdgePath(from, to, { obstacles, fromRect: cardRect(s), toRect: cardRect(d) })}
             fill="none"
             stroke={EDGE}
             strokeWidth={0.6}
