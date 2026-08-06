@@ -53,6 +53,23 @@ initDocs({
     // The three-button segmented slider this site has always used (the
     // library default is the single-button cycle toggle).
     themeToggle: 'segmented',
+    /**
+     * Studio's preview-inspector bridge (the "DOM picker"). With this site
+     * open in Studio's Web Preview panel, the composer's element picker can
+     * reach inside the frame and attach a `<dom-selection>` block — component
+     * root + selector, computed styles, box metrics — to a chat message.
+     *
+     * Served same-origin-agnostic from the Studio docs CDN rather than via
+     * the `previewInspector()` Vite plugin, because `@dreamlake/design-
+     * integration` is not published to npm — a CDN tag needs no dependency
+     * and, unlike the dev-only plugin, also ships on the deployed site, so
+     * uikit.dreamlake.ai itself is pickable.
+     *
+     * It stays dormant until an allowlisted parent origin (any `dreamlake.ai`
+     * / `fortyfive.ai` subdomain, or localhost) turns the picker on, and only
+     * ever sends DOM metadata — never page contents.
+     */
+    headScripts: ['https://docs.studio.dreamlake.ai/design-integration.js'],
   },
   pages,
   rawPages,
