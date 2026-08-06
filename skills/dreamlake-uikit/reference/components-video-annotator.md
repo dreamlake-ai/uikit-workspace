@@ -2,11 +2,13 @@
 
 A video player with an **editable, contiguous segment timeline** — the labeling
 surface for splitting a clip into consecutive phases and captioning each one.
-It owns the `<video>` element, a transport bar (frame-step, boundary jump,
+It owns the `<video>` element, a transport bar (prev/next segment, frame-step,
 play/pause, playback speed) and a percentage-positioned timeline strip with
 drag-to-move boundaries and click-to-scrub. Segments always tile the whole clip
 with no gaps or overlaps (`end === next.start`); any structural edit resets the
-`verified` flag on the affected segments.
+`verified` flag on the affected segments. Playback runs **continuously across
+segments** — the selection follows the playhead and stops at the last segment's
+end (no per-segment loop).
 
 The component is **controlled** on `segments` + `selectedIndex`: it runs the
 split/merge/boundary invariants internally and hands the host a fresh array via
@@ -14,10 +16,17 @@ split/merge/boundary invariants internally and hands the host a fresh array via
 
 ## Demo
 
-Drag a boundary to move it, double-click a boundary to merge, click a segment to
-select it, drag anywhere on the track to scrub. Keyboard: `Space` play/pause,
-`←`/`→` step frame (`Shift` = 1s, `Alt` = jump boundary), `,`/`.` prev/next
-boundary, `s` split, `Backspace` merge, `j`/`k` prev/next phase, `a` approve.
+Click the video frame to play/pause. Drag a boundary to move it, double-click a
+boundary to merge, click a segment to select it and seek to its start (click the
+already-selected segment again to seek to that exact spot within it), drag
+anywhere on the track to scrub.
+Selecting never auto-plays — it preserves the current play/pause state. Use the
+`− N× +` control in the transport bar to magnify the timeline 1→2→4→8→16× when
+segments are crowded; the view centers on the playhead and can be scrolled
+horizontally, and follows the playhead during playback. Keyboard: `Space`
+play/pause, `←`/`→` step frame (`Shift` = 1s, `Alt` = nudge playhead to
+boundary), `,`/`.` or `j`/`k` prev/next segment, `s` split, `Backspace` merge,
+`a` approve.
 
 ## Multiple tracks
 
@@ -32,8 +41,11 @@ Single-track callers (`segments`) are unaffected.
 ## Driving it from a ref
 
 Set `enableKeyboard={false}` and drive the widget through its imperative handle
-(`split`, `merge`, `stepFrame`, `gotoBoundary`, `play`, `pause`, `toggleApprove`)
-when the host owns its own transport chrome or a global shortcut scheme.
+(`split`, `merge`, `stepFrame`, `gotoBoundary`, `goToSegment`, `play`, `pause`,
+`toggleApprove`) when the host owns its own transport chrome or a global shortcut
+scheme. `goToSegment(index)` selects a segment and seeks to its start — the same
+action as clicking it — so a host list can drive selection and let the component
+own the seek.
 
 ## Props
 
@@ -59,8 +71,7 @@ when the host owns its own transport chrome or a global shortcut scheme.
 | `onRemoveTrack` | `(index: number) => void` | — | Custom remove-track handler. If omitted, drops the track by index via `onTracksChange`. |
 | `duration` | `number` | — | Authoritative clip duration (s). Falls back to the video's `loadedmetadata` duration, then the largest segment end. |
 | `extractFps` | `number \| null` | `30` | Frames-per-second for frame-stepping granularity (`←`/`→`). |
-| `srcFps` | `number \| null` | `30` | Source fps for the "· fN" frame readout. |
-| `loop` | `boolean` | `true` | Loop playback within the selected segment. |
+| `srcFps` | `number \| null` | `extractFps` → `30` | Source fps for the "· fN" frame readout. |
 | `speeds` | `number[]` | `[0.25,0.5,1,1.5,2]` | Playback-speed options for the speed dropdown. |
 | `enableKeyboard` | `boolean` | `true` | Install the document-level keyboard shortcuts. Set `false` to drive only via the ref. |
 | `className` | `string` | — | Extra classes on the root element. |
@@ -69,6 +80,7 @@ when the host owns its own transport chrome or a global shortcut scheme.
 
 | Field | Type | Description |
 | --- | --- | --- |
+| `id` | `string` (optional) | Stable identity preserved across split/merge (split keeps the left id + mints one for the right half; merge keeps the earlier id). Track review flags / React keys by this, not the array index. Backfilled if omitted. |
 | `start` | `number` | Segment start time in seconds. |
 | `end` | `number` | Segment end time in seconds (`= next.start` after normalization). |
 | `description` | `string` | Free-text caption for the phase. |
