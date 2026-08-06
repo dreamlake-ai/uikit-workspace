@@ -280,9 +280,18 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
     }, []);
 
     const playSafe = useCallback(() => {
-      const pr = videoRef.current?.play();
+      const v = videoRef.current;
+      if (!v) return;
+      // If playback has reached the end, restart from the beginning rather than
+      // no-op'ing at the final frame.
+      const end = v.duration && isFinite(v.duration) ? v.duration : D;
+      if (v.ended || (end > 0 && v.currentTime >= end - 0.05)) {
+        v.currentTime = 0;
+        setCurrentTime(0);
+      }
+      const pr = v.play();
       if (pr && pr.catch) pr.catch(() => {});
-    }, []);
+    }, [D]);
 
     const stepFrame = useCallback(
       (dir: number, big?: boolean) => {
@@ -597,7 +606,11 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
     // Frame readout uses srcFps → extractFps → 30, so its frame number matches
     // the granularity of ←/→ frame-stepping instead of silently assuming 30.
     const fps = srcFps || extractFps || 30;
-    const readout = `${fmt(currentTime)} / ${fmt(D)} · f${Math.round(currentTime * fps)}`;
+    // The encoded media can run a hair past the authored duration (metadata fps×
+    // frames vs the container's real length), so clamp the readout to D — never
+    // show a current time greater than the total.
+    const shownTime = D > 0 ? Math.min(currentTime, D) : currentTime;
+    const readout = `${fmt(shownTime)} / ${fmt(D)} · f${Math.round(shownTime * fps)}`;
 
     const hasHeader = Boolean(videoTitle || videoSubtitle || headerLeading);
 
@@ -634,6 +647,12 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
             }}
             onPlay={() => setPlaying(true)}
             onPause={() => setPlaying(false)}
+            onEnded={() => {
+              // Reflect the end in the UI (show the Play glyph, drop the buffering
+              // spinner) — some browsers don't fire `pause` on end.
+              setPlaying(false);
+              hideBuffering();
+            }}
             onLoadStart={showBuffering}
             onWaiting={showBuffering}
             onSeeking={showBuffering}
