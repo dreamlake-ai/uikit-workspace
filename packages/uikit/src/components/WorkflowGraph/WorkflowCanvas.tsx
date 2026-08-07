@@ -34,7 +34,7 @@ import { FLOW, type EdgeFlow } from '../PipelineGraph/flow'
 import { clearOffset, type Rect } from '../PipelineGraph/tag-place'
 import {
   labelAnchor, layoutWorkflow, portAnchor, roundedPath,
-  type WfOrientation, type WfRect,
+  type WfOrientation, type WfRect, type WfLayoutOverrides,
 } from './layout'
 import {
   nodeInputs, nodeOutputs, outputPortColor,
@@ -63,6 +63,19 @@ export interface WorkflowCanvasProps {
   /** The node-kind/edge-state legend specifically — small embeds (docs
    *  figures, thumbnails) turn it off while keeping the switcher. Default true. */
   showLegend?: boolean
+  /** Stable identity of the workflow being shown (e.g. `${slug}/${name}`). Layout
+   *  overrides are re-seeded when this or the orientation changes — NOT when the
+   *  `spec` object identity changes (polling / hot-reload keeps the same content),
+   *  so saved drags survive a re-read. */
+  layoutKey?: string
+  /** Persisted layout overrides for the CURRENT orientation, merged onto the
+   *  computed default layout. Pass a memoized value so its identity is stable
+   *  between unrelated re-renders. */
+  layoutOverrides?: WfLayoutOverrides
+  /** Fired on drag end (and on reset) with the full next overrides for the
+   *  current orientation. The host persists it (e.g. per-workflow localStorage).
+   *  An empty object means "back to the default layout". */
+  onLayoutOverridesChange?: (next: WfLayoutOverrides) => void
   className?: string
 }
 
@@ -144,7 +157,8 @@ interface Seg {
 export function WorkflowCanvas({
   spec, orientation: orientationProp = 'vertical', onOrientationChange,
   statusByNodeId, agentsByNodeId,
-  selectedId, onSelect, showControls = true, showLegend = true, className,
+  selectedId, onSelect, showControls = true, showLegend = true,
+  layoutKey, layoutOverrides, onLayoutOverridesChange, className,
 }: WorkflowCanvasProps) {
   useInjectedStyles()
 
@@ -167,8 +181,9 @@ export function WorkflowCanvas({
   }, [selectedId, onSelect])
 
   const [view, setView] = useState<View>({ x: 24, y: 16, k: 1 })
-  const [posOverride, setPosOverride] = useState<Record<string, { x: number; y: number }>>({})
-  useEffect(() => { setPosOverride({}) }, [spec, orientation])
+  const [posOverride, setPosOverride] = useState<Record<string, { x: number; y: number }>>(
+    () => layoutOverrides?.nodes ?? {},
+  )
 
   const containerRef = useRef<HTMLDivElement>(null)
   const fitViewRef = useRef<() => void>(() => {})
@@ -179,12 +194,40 @@ export function WorkflowCanvas({
   // dragging a tag along the FLOW axis rebends its edge (bendFracs, fed to
   // buildEdgePath); dragging ACROSS the axis lifts the tag off the line onto a
   // dashed leader (labelOffsets, in world px). Reset when the graph re-lays-out.
-  const [bendFracs, setBendFracs] = useState<Record<string, number>>({})
-  const [labelOffsets, setLabelOffsets] = useState<Record<string, number>>({})
+  const [bendFracs, setBendFracs] = useState<Record<string, number>>(() => layoutOverrides?.bends ?? {})
+  const [labelOffsets, setLabelOffsets] = useState<Record<string, number>>(() => layoutOverrides?.lifts ?? {})
   const [activeTag, setActiveTag] = useState<string | null>(null)
-  useEffect(() => { setBendFracs({}); setLabelOffsets({}); setActiveTag(null) }, [spec, orientation])
+
+  // Seed the drag overrides from the host's persisted layout. Keyed on the
+  // workflow identity, orientation, and the overrides value — NOT on `spec`:
+  // polling / hot-reload swaps the spec object identity with identical content,
+  // and re-seeding there would wipe the user's saved drags (the bug this fixes).
+  // The one redundant re-seed after our own onLayoutOverridesChange echo is
+  // harmless (same values). Drag end is the only writer, so no mid-drag churn.
+  useEffect(() => {
+    setPosOverride(layoutOverrides?.nodes ?? {})
+    setBendFracs(layoutOverrides?.bends ?? {})
+    setLabelOffsets(layoutOverrides?.lifts ?? {})
+    setActiveTag(null)
+  }, [layoutKey, orientation, layoutOverrides])
+
+  // Emit the full current override set (drag end / reset) for the host to persist.
+  const emitOverrides = useCallback(
+    (nodes = posOverride, bends = bendFracs, lifts = labelOffsets) => {
+      onLayoutOverridesChange?.({ nodes, bends, lifts })
+    },
+    [onLayoutOverridesChange, posOverride, bendFracs, labelOffsets],
+  )
+  const resetLayout = useCallback(() => {
+    setPosOverride({}); setBendFracs({}); setLabelOffsets({}); setActiveTag(null)
+    onLayoutOverridesChange?.({})
+  }, [onLayoutOverridesChange])
+  const hasOverrides =
+    Object.keys(posOverride).length > 0 ||
+    Object.keys(bendFracs).length > 0 ||
+    Object.keys(labelOffsets).length > 0
   const tagDragRef = useRef<
-    { key: string; sx: number; sy: number; span: number; startFrac: number; startOff: number; bendable: boolean } | null
+    { key: string; sx: number; sy: number; span: number; startFrac: number; startOff: number; bendable: boolean; moved: boolean } | null
   >(null)
 
   const layout = useMemo(
@@ -314,7 +357,10 @@ export function WorkflowCanvas({
       const d = dragRef.current
       dragRef.current = null
       try { (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId) } catch { /* noop */ }
-      if (d && !d.moved) select(id === selected ? null : id)
+      if (!d) return
+      // A real drag → persist the new positions; a click → toggle selection.
+      if (d.moved) emitOverrides()
+      else select(id === selected ? null : id)
     },
   })
 
@@ -331,6 +377,7 @@ export function WorkflowCanvas({
         startFrac: bendFracs[seg.key] ?? 0.5,
         startOff: labelOffsets[seg.key] ?? restOffsets[seg.key] ?? 0,
         bendable: !!seg.bend && Math.abs(seg.bend.span) > 1,
+        moved: false,
       }
       setActiveTag(seg.key)
     },
@@ -339,6 +386,7 @@ export function WorkflowCanvas({
       if (!d || d.key !== seg.key) return
       const dx = (e.clientX - d.sx) / view.k
       const dy = (e.clientY - d.sy) / view.k
+      if (Math.abs(dx) + Math.abs(dy) > 2) d.moved = true
       const primary = verticalPrimary ? dy : dx   // flow axis → bend
       const perp = verticalPrimary ? dx : dy       // side axis → lift
       if (d.bendable) {
@@ -350,14 +398,18 @@ export function WorkflowCanvas({
       setLabelOffsets((p) => ({ ...p, [seg.key]: off }))
     },
     onPointerUp: (e: ReactPointerEvent) => {
+      const moved = tagDragRef.current?.moved
       tagDragRef.current = null
       setActiveTag(null)
       try { (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId) } catch { /* noop */ }
+      if (moved) emitOverrides()
     },
     onPointerCancel: (e: ReactPointerEvent) => {
+      const moved = tagDragRef.current?.moved
       tagDragRef.current = null
       setActiveTag(null)
       try { (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId) } catch { /* noop */ }
+      if (moved) emitOverrides()
     },
   })
 
@@ -1106,6 +1158,7 @@ export function WorkflowCanvas({
 
       {showControls && showLegend && <Legend />}
       {showControls && <OrientationSwitch value={orientation} onChange={changeOrientation} />}
+      {showControls && hasOverrides && <ResetLayoutButton onClick={resetLayout} />}
     </div>
   )
 }
@@ -1180,6 +1233,53 @@ function OrientationSwitch({ value, onChange }: {
         )
       })}
     </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Reset-layout control — sits in the top-right cluster, to the LEFT of the
+// orientation switch, and appears only once the user has dragged a node or tag.
+// Clears the saved positions for the current orientation back to the default
+// computed layout. Inline SVG (no lucide) so embeds don't need the peer dep.
+// ---------------------------------------------------------------------------
+
+function ResetLayoutButton({ onClick }: { onClick: () => void }) {
+  const [hov, setHov] = useState(false)
+  return (
+    <button
+      type="button"
+      onPointerDown={(e) => e.stopPropagation()}
+      onDoubleClick={(e) => e.stopPropagation()}
+      onClick={onClick}
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+      title="Reset layout — restore the default node & tag positions"
+      aria-label="Reset layout"
+      style={{
+        position: 'absolute', top: 12, right: 80, left: 'auto', bottom: 'auto', zIndex: 6,
+        width: 'max-content',
+        display: 'inline-flex', alignItems: 'center', gap: 5,
+        height: 28, padding: '0 10px',
+        border: '1px solid color-mix(in oklab, var(--color-uikit-faint) 70%, transparent)',
+        borderRadius: 7,
+        background: hov
+          ? 'color-mix(in oklab, var(--color-uikit-panel) 96%, transparent)'
+          : 'color-mix(in oklab, var(--color-uikit-panel) 88%, transparent)',
+        backdropFilter: 'blur(8px) saturate(1.05)',
+        WebkitBackdropFilter: 'blur(8px) saturate(1.05)',
+        boxShadow: '0 1px 2px rgba(0,0,0,.06)',
+        cursor: 'pointer',
+        fontFamily: 'var(--font-uikit-mono)', fontSize: 11, fontWeight: 500, letterSpacing: '.02em',
+        color: hov ? 'var(--color-uikit-ink)' : 'var(--color-uikit-muted)',
+        transition: 'background 120ms ease, color 120ms ease',
+      }}
+    >
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+        <path d="M3 12a9 9 0 1 0 3-6.7L3 8" />
+        <path d="M3 3v5h5" />
+      </svg>
+      reset
+    </button>
   )
 }
 

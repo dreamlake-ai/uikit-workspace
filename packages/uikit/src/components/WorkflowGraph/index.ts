@@ -3,7 +3,7 @@ export type { WorkflowCanvasProps } from './WorkflowCanvas'
 export { WorkflowThumb } from './WorkflowThumb'
 export type { WorkflowThumbProps } from './WorkflowThumb'
 export { layoutWorkflow, portAnchor } from './layout'
-export type { WfOrientation, WfRect, WorkflowLayoutResult } from './layout'
+export type { WfOrientation, WfRect, WfLayoutOverrides, WorkflowLayoutResult } from './layout'
 export { StageNode } from './nodes/StageNode'
 export type { StageNodeProps } from './nodes/StageNode'
 export {
