@@ -27,6 +27,21 @@ export type WfOrientation = 'vertical' | 'horizontal'
 export interface WfRect { x: number; y: number; w: number; h: number }
 export interface WfPt { x: number; y: number }
 
+/**
+ * User layout overrides for ONE orientation, persisted by the host and merged
+ * onto the freshly-computed default layout. A sparse map: any id/segKey absent
+ * here falls back to its default position, so added nodes appear at their
+ * computed spot and removed ones simply drop out of the record.
+ *  - `nodes`  — stage / member node id → absolute position (drag).
+ *  - `bends`  — edge segKey → bend fraction along the edge (tag drag along).
+ *  - `lifts`  — edge segKey → perpendicular offset onto a leader (tag drag across).
+ */
+export interface WfLayoutOverrides {
+  nodes?: Record<string, { x: number; y: number }>
+  bends?: Record<string, number>
+  lifts?: Record<string, number>
+}
+
 export interface WfAgentRect extends WfRect { nodeId: string; agentId: string }
 
 export interface WorkflowLayoutResult {
