@@ -1185,16 +1185,20 @@ export function WorkflowCanvas({
       </div>
 
       {showControls && showLegend && <Legend />}
-      {showControls && <OrientationSwitch value={orientation} onChange={changeOrientation} />}
-      {showControls && hasOverrides && <ResetLayoutButton onClick={resetLayout} />}
+      {showControls && (
+        <CanvasControls
+          orientation={orientation}
+          onOrientationChange={changeOrientation}
+          canReset={hasOverrides}
+          onReset={resetLayout}
+        />
+      )}
     </div>
   )
 }
 
 // ---------------------------------------------------------------------------
-// Orientation switcher — part of the canvas controls: two icon buttons whose
-// glyph shows the flow direction from the root (top→down / left→right).
-// Inline SVG (not lucide) so embeds don't need the peer dep.
+// Canvas controls — the top-right toolbar (reset + orientation switch).
 // ---------------------------------------------------------------------------
 
 // A miniature of what the layout actually does: a root node fanning to two
@@ -1214,46 +1218,83 @@ function OrientIcon({ o }: { o: WfOrientation }) {
   )
 }
 
-function OrientationSwitch({ value, onChange }: {
-  value: WfOrientation
-  onChange: (o: WfOrientation) => void
+// Canvas control cluster — ONE quiet glass toolbar (top-right) holding the
+// reset control (only once a drag has been saved) + the orientation switch.
+// The inner buttons match the app's segmented controls (e.g. the profile page's
+// GridColsToggle): transparent, an ink-8% pill on the active/hovered one, muted
+// otherwise — rather than separate heavy pills. Inline SVG (no lucide) so embeds
+// don't need the peer dep.
+function CanvasControls({ orientation, onOrientationChange, canReset, onReset }: {
+  orientation: WfOrientation
+  onOrientationChange: (o: WfOrientation) => void
+  canReset: boolean
+  onReset: () => void
 }) {
+  const [resetHov, setResetHov] = useState(false)
   return (
     <div
       onPointerDown={(e) => e.stopPropagation()}
       onDoubleClick={(e) => e.stopPropagation()}
       style={{
-        // left/bottom pinned to auto INLINE: host scopes (docs figures) carry
-        // a broad `[role=application] > div { left:0 }` rule that would
-        // otherwise stretch this bar across the canvas.
+        // left/bottom pinned to auto INLINE: host scopes (docs figures) carry a
+        // broad `[role=application] > div { left:0 }` rule that would otherwise
+        // stretch this bar across the canvas.
         position: 'absolute', top: 12, right: 12, left: 'auto', bottom: 'auto', zIndex: 6,
         width: 'max-content',
-        display: 'inline-flex', overflow: 'hidden',
+        display: 'inline-flex', alignItems: 'center', gap: 2, padding: 3,
         border: '1px solid color-mix(in oklab, var(--color-uikit-faint) 70%, transparent)',
-        borderRadius: 7,
+        borderRadius: 9,
         background: 'color-mix(in oklab, var(--color-uikit-panel) 88%, transparent)',
         backdropFilter: 'blur(8px) saturate(1.05)',
         WebkitBackdropFilter: 'blur(8px) saturate(1.05)',
         boxShadow: '0 1px 2px rgba(0,0,0,.06)',
       }}
     >
+      {canReset && (
+        <>
+          <button
+            type="button"
+            onClick={onReset}
+            onMouseEnter={() => setResetHov(true)}
+            onMouseLeave={() => setResetHov(false)}
+            title="Reset layout — restore the default node & tag positions"
+            aria-label="Reset layout"
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 5,
+              height: 24, padding: '0 8px', border: 'none', borderRadius: 6, cursor: 'pointer',
+              fontFamily: 'var(--font-uikit-mono)', fontSize: 11, fontWeight: 500, letterSpacing: '.02em',
+              color: resetHov ? 'var(--color-uikit-ink)' : 'var(--color-uikit-muted)',
+              background: resetHov ? 'color-mix(in oklab, var(--color-uikit-ink) 8%, transparent)' : 'transparent',
+              transition: 'background 120ms ease, color 120ms ease',
+            }}
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <path d="M3 12a9 9 0 1 0 3-6.7L3 8" />
+              <path d="M3 3v5h5" />
+            </svg>
+            reset
+          </button>
+          <span aria-hidden style={{ width: 1, height: 16, background: 'color-mix(in oklab, var(--color-uikit-faint) 70%, transparent)', margin: '0 1px' }} />
+        </>
+      )}
       {(['vertical', 'horizontal'] as const).map((o) => {
-        const active = o === value
+        const active = o === orientation
         const label = o === 'vertical' ? 'Vertical layout (top → bottom)' : 'Horizontal layout (left → right)'
         return (
           <button
             key={o}
             type="button"
-            onClick={() => onChange(o)}
+            onClick={() => onOrientationChange(o)}
             title={label}
             aria-label={label}
             aria-pressed={active}
             style={{
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-              width: 30, height: 26, border: 'none', cursor: 'pointer', padding: 0,
+              width: 30, height: 24, border: 'none', borderRadius: 6, cursor: 'pointer', padding: 0,
               color: active ? 'var(--color-uikit-ink)' : 'var(--color-uikit-muted)',
+              opacity: active ? 1 : 0.6,
               background: active ? 'color-mix(in oklab, var(--color-uikit-ink) 8%, transparent)' : 'transparent',
-              transition: 'background 120ms ease, color 120ms ease',
+              transition: 'background 120ms ease, color 120ms ease, opacity 120ms ease',
             }}
           >
             <OrientIcon o={o} />
@@ -1261,53 +1302,6 @@ function OrientationSwitch({ value, onChange }: {
         )
       })}
     </div>
-  )
-}
-
-// ---------------------------------------------------------------------------
-// Reset-layout control — sits in the top-right cluster, to the LEFT of the
-// orientation switch, and appears only once the user has dragged a node or tag.
-// Clears the saved positions for the current orientation back to the default
-// computed layout. Inline SVG (no lucide) so embeds don't need the peer dep.
-// ---------------------------------------------------------------------------
-
-function ResetLayoutButton({ onClick }: { onClick: () => void }) {
-  const [hov, setHov] = useState(false)
-  return (
-    <button
-      type="button"
-      onPointerDown={(e) => e.stopPropagation()}
-      onDoubleClick={(e) => e.stopPropagation()}
-      onClick={onClick}
-      onMouseEnter={() => setHov(true)}
-      onMouseLeave={() => setHov(false)}
-      title="Reset layout — restore the default node & tag positions"
-      aria-label="Reset layout"
-      style={{
-        position: 'absolute', top: 12, right: 80, left: 'auto', bottom: 'auto', zIndex: 6,
-        width: 'max-content',
-        display: 'inline-flex', alignItems: 'center', gap: 5,
-        height: 28, padding: '0 10px',
-        border: '1px solid color-mix(in oklab, var(--color-uikit-faint) 70%, transparent)',
-        borderRadius: 7,
-        background: hov
-          ? 'color-mix(in oklab, var(--color-uikit-panel) 96%, transparent)'
-          : 'color-mix(in oklab, var(--color-uikit-panel) 88%, transparent)',
-        backdropFilter: 'blur(8px) saturate(1.05)',
-        WebkitBackdropFilter: 'blur(8px) saturate(1.05)',
-        boxShadow: '0 1px 2px rgba(0,0,0,.06)',
-        cursor: 'pointer',
-        fontFamily: 'var(--font-uikit-mono)', fontSize: 11, fontWeight: 500, letterSpacing: '.02em',
-        color: hov ? 'var(--color-uikit-ink)' : 'var(--color-uikit-muted)',
-        transition: 'background 120ms ease, color 120ms ease',
-      }}
-    >
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-        <path d="M3 12a9 9 0 1 0 3-6.7L3 8" />
-        <path d="M3 3v5h5" />
-      </svg>
-      reset
-    </button>
   )
 }
 
