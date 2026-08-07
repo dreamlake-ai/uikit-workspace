@@ -29,6 +29,38 @@ export interface DialogProps {
   children: ReactNode
 }
 
+// Own component so its hover state unmounts with the dialog content. Clicking
+// × closes the dialog while the pointer is still over the button, so
+// mouseleave never fires — hover state held by the (still-mounted) Dialog
+// instance would survive the close and reopen pre-highlighted.
+//
+// Inline styles on purpose: consumers compile our utility classes at their own
+// Tailwind pass, and a new arbitrary-value class here could silently miss
+// older content configs.
+function CloseButton({ onClose }: { onClose: () => void }) {
+  const [hov, setHov] = useState(false)
+  return (
+    <button
+      type="button"
+      aria-label="Close"
+      onClick={onClose}
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+      style={{
+        appearance: 'none', border: 0, padding: 0, cursor: 'pointer',
+        width: 22, height: 22, borderRadius: 5, alignSelf: 'center',
+        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+        background: hov ? 'color-mix(in srgb, var(--ink) 8%, transparent)' : 'transparent',
+        color: hov ? 'var(--ink)' : 'var(--uikit-muted)',
+        opacity: hov ? 1 : 0.65,
+        transition: 'background 120ms ease, color 120ms ease, opacity 120ms ease',
+      }}
+    >
+      <X size={14} strokeWidth={2} />
+    </button>
+  )
+}
+
 export function Dialog({
   open,
   onClose,
@@ -42,8 +74,6 @@ export function Dialog({
   className,
   children,
 }: DialogProps) {
-  const [closeHov, setCloseHov] = useState(false)
-
   // Esc to dismiss.
   useEffect(() => {
     if (!open || !dismissOnEsc) return
@@ -100,29 +130,7 @@ export function Dialog({
               </span>
             )}
             <span className="flex-1" />
-            {showEscHint && (
-              // Inline styles on purpose: consumers compile our utility
-              // classes at their own Tailwind pass, and a new arbitrary-value
-              // class here could silently miss older content configs.
-              <button
-                type="button"
-                aria-label="Close"
-                onClick={onClose}
-                onMouseEnter={() => setCloseHov(true)}
-                onMouseLeave={() => setCloseHov(false)}
-                style={{
-                  appearance: 'none', border: 0, padding: 0, cursor: 'pointer',
-                  width: 22, height: 22, borderRadius: 5, alignSelf: 'center',
-                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                  background: closeHov ? 'color-mix(in srgb, var(--ink) 8%, transparent)' : 'transparent',
-                  color: closeHov ? 'var(--ink)' : 'var(--uikit-muted)',
-                  opacity: closeHov ? 1 : 0.65,
-                  transition: 'background 120ms ease, color 120ms ease, opacity 120ms ease',
-                }}
-              >
-                <X size={14} strokeWidth={2} />
-              </button>
-            )}
+            {showEscHint && <CloseButton onClose={onClose} />}
           </div>
         )}
 
