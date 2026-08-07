@@ -1,6 +1,6 @@
 {
   "name": "docs",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "description": "Documentation site (@dreamlake/dockit shell + MDX pages)",
   "private": true,
   "type": "module",
