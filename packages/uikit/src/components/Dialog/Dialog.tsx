@@ -1,12 +1,13 @@
-import { ReactNode, useEffect } from 'react'
+import { ReactNode, useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { X } from 'lucide-react'
 import { cn } from '../../lib/utils'
 
 export interface DialogProps {
   /** Controlled open state. */
   open: boolean
   /** Fires when the dialog requests dismissal (Esc key, backdrop click, or
-   *  any explicit "esc" / "cancel" affordance). Caller must flip `open` to false. */
+   *  any explicit close / cancel affordance). Caller must flip `open` to false. */
   onClose: () => void
   /** Heading shown at the top-left of the panel. */
   title?: ReactNode
@@ -16,7 +17,8 @@ export interface DialogProps {
   footer?: ReactNode
   /** Panel width in px. Default 480. */
   width?: number
-  /** Show the "esc" hint in the header. Default true. */
+  /** Show the close (×) button in the header. Default true. (Named for the
+   *  "esc" text hint it used to render; kept for API compatibility.) */
   showEscHint?: boolean
   /** Dismiss when the user clicks the dimmed backdrop. Default true. */
   dismissOnBackdropClick?: boolean
@@ -40,6 +42,8 @@ export function Dialog({
   className,
   children,
 }: DialogProps) {
+  const [closeHov, setCloseHov] = useState(false)
+
   // Esc to dismiss.
   useEffect(() => {
     if (!open || !dismissOnEsc) return
@@ -97,13 +101,27 @@ export function Dialog({
             )}
             <span className="flex-1" />
             {showEscHint && (
-              <span
-                role="button"
+              // Inline styles on purpose: consumers compile our utility
+              // classes at their own Tailwind pass, and a new arbitrary-value
+              // class here could silently miss older content configs.
+              <button
+                type="button"
+                aria-label="Close"
                 onClick={onClose}
-                className="font-uikit-mono text-uikit-11 leading-uikit-snug text-uikit-muted opacity-65 cursor-pointer tracking-uikit-snug"
+                onMouseEnter={() => setCloseHov(true)}
+                onMouseLeave={() => setCloseHov(false)}
+                style={{
+                  appearance: 'none', border: 0, padding: 0, cursor: 'pointer',
+                  width: 22, height: 22, borderRadius: 5, alignSelf: 'center',
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                  background: closeHov ? 'color-mix(in srgb, var(--ink) 8%, transparent)' : 'transparent',
+                  color: closeHov ? 'var(--ink)' : 'var(--uikit-muted)',
+                  opacity: closeHov ? 1 : 0.65,
+                  transition: 'background 120ms ease, color 120ms ease, opacity 120ms ease',
+                }}
               >
-                esc
-              </span>
+                <X size={14} strokeWidth={2} />
+              </button>
             )}
           </div>
         )}
