@@ -164,33 +164,36 @@ export const CSS = `
 /* Top edge sits at the TOP of the ruler zone (y:0), centered — the capsule
    hangs down over the labels rather than resting on the baseline. */
 .va-zoomfloat{position:absolute;top:0;left:50%;transform:translateX(-50%);z-index:9;pointer-events:auto}
-.va-zoom{display:inline-flex;align-items:center;gap:0;padding:2px 3px;border-radius:6px;
-  background:var(--va-panel);border:1px solid color-mix(in srgb, var(--va-text) 12%, transparent);
-  box-shadow:0 3px 10px var(--va-shadow), 0 1px 2px var(--va-shadow);
-  font:11px var(--f-mono, ui-monospace, Menlo, monospace);user-select:none;-webkit-user-select:none}
-/* ‹ / › ghost steppers. 2-class selectors beat the base .va-root button rules. */
-.va-zoom .va-zoombtn{width:20px;height:20px;min-width:20px;padding:0;
+/* Zoom capsule — ported 1:1 from the design's raised-surface pill: fixed 92×24,
+   no border (a 1px ink ring + soft shadow), mono, round muted ‹ / › steppers. */
+.va-zoom{display:inline-flex;align-items:center;justify-content:space-between;gap:1px;
+  width:92px;height:24px;padding:0 4px;border-radius:6px;
+  background:var(--va-bg);
+  box-shadow:0 1px 2px rgba(0,0,0,.05), 0 0 0 1px color-mix(in srgb, var(--va-text) 6%, transparent);
+  font:11px var(--f-mono, ui-monospace, Menlo, monospace);color:var(--va-text);
+  user-select:none;-webkit-user-select:none}
+/* ‹ / › ghost steppers — round, muted, ink + tint on hover. 2-class selectors
+   beat the base .va-root button rules. */
+.va-zoom .va-zoombtn{width:16px;height:16px;min-width:16px;padding:0;
   display:inline-flex;align-items:center;justify-content:center;
-  border:0;border-radius:5px;background:transparent;color:var(--va-text);cursor:pointer;
-  transition:background-color .12s ease}
-.va-zoom .va-zoombtn:hover{background:color-mix(in srgb, var(--va-text) 8%, transparent)}
+  border:0;border-radius:999px;background:transparent;color:var(--va-muted);cursor:pointer;
+  transition:background-color .12s ease, color .12s ease}
+.va-zoom .va-zoombtn:hover{color:var(--va-text);background:color-mix(in srgb, var(--va-text) 6%, transparent)}
 .va-zoom .va-zoombtn:active{transform:none}
 .va-zoom .va-zoombtn:disabled{opacity:.35;cursor:default}
-.va-zoom .va-zoombtn:disabled:hover{background:transparent}
+.va-zoom .va-zoombtn:disabled:hover{background:transparent;color:var(--va-muted)}
 .va-zoom .va-zoombtn svg{flex:none}
-/* Draggable value: bold number + small muted ×. Fixed min-width keeps the ‹ / ›
-   from shifting as the value's width changes; touch-action:none lets pointer
-   capture own the gesture on touch. */
+/* Draggable value: 500-weight number + small muted ×. touch-action:none lets
+   pointer capture own the gesture on touch. */
 .va-zoomdrag{display:inline-flex;align-items:center;justify-content:center;gap:2px;line-height:1;
-  height:20px;min-width:56px;padding:0 6px;border-radius:5px;
+  height:18px;padding:0 4px;border-radius:5px;
   cursor:ew-resize;user-select:none;-webkit-user-select:none;touch-action:none;outline:none;
   transition:background-color .12s ease}
-.va-zoomdrag:hover{background:color-mix(in srgb, var(--va-text) 5%, transparent)}
-.va-zoomdrag.on{cursor:grabbing;background:color-mix(in srgb, var(--va-text) 8%, transparent)}
-.va-zoomnum{font:11px var(--f-mono, ui-monospace, Menlo, monospace);font-weight:700;
+.va-zoomdrag:hover{background:color-mix(in srgb, var(--va-text) 6%, transparent)}
+.va-zoomdrag.on{cursor:grabbing;background:color-mix(in srgb, var(--va-text) 6%, transparent)}
+.va-zoomnum{font:11px var(--f-mono, ui-monospace, Menlo, monospace);font-weight:500;
   letter-spacing:-0.01em;font-variant-numeric:tabular-nums;color:var(--va-text)}
-.va-zoomx{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;
-  color:color-mix(in srgb, var(--va-text) 55%, transparent)}
+.va-zoomx{font-size:9px;font-weight:400;color:var(--va-muted)}
 /* display:flow-root gives the timeline its own block formatting context so the
    .va-tracks margin-top:30px (which drops the lanes below the ruler) is
    CONTAINED instead of collapsing through — the timeline no longer gets the free
@@ -296,16 +299,29 @@ html[data-theme="dark"] .va-seg.sel .va-seglabel{color:var(--va-text)}
 .va-timeline .va-merge:active{transform:translateX(-50%) translateY(1px)}
 .va-timeline .va-merge:hover{background:color-mix(in srgb,#000 14%,var(--va-accent))}
 .va-timeline .va-merge svg{width:13px;height:13px}
-.va-ticks{position:absolute;left:0;right:0;top:0;height:34px;pointer-events:none;z-index:4}
-.va-ticks::before{content:"";position:absolute;left:0;right:0;top:32px;height:1px;background:var(--va-line)}
-.va-tick{position:absolute;top:0;height:34px;pointer-events:none}
-.va-tick::before{content:"";position:absolute;top:26px;left:0;width:1px;height:6px;background:var(--va-line)}
-.va-tick.major::before{top:22px;height:10px;background:var(--va-muted)}
-.va-ticklabel{position:absolute;top:1px;left:0;transform:translateX(-50%);white-space:nowrap;
-  font:11px var(--f-mono, ui-monospace, Menlo, monospace);color:var(--va-muted);line-height:1}
-.va-tick.major .va-ticklabel{font-weight:600;color:color-mix(in srgb, var(--va-text) 55%, var(--va-muted))}
+/* Three-tier ruler (major / minor / micro) — ported 1:1 from the shared
+   episode-timeline DLDetailRuler. A faint strip with a bottom hairline; ticks
+   grow UP from that baseline, tiered by height/width/ink-alpha; major + minor
+   carry mono labels (bold ink / muted residual). */
+.va-ticks{position:absolute;left:0;right:0;top:0;height:32px;pointer-events:none;z-index:4;overflow:hidden;
+  background:color-mix(in oklab, var(--va-text) 2.5%, transparent);
+  border-radius:4px;
+  border-bottom:1px solid color-mix(in srgb, var(--va-text) 8%, transparent)}
+.va-tick{position:absolute;top:0;height:32px;pointer-events:none}
+.va-tickmark{position:absolute;left:0;bottom:0;transform:translateX(-50%);
+  transition:height 200ms ease, width 200ms ease, background 200ms ease}
+.va-tick--major .va-tickmark{width:1.5px;height:12px;background:color-mix(in srgb, var(--va-text) 55%, transparent)}
+.va-tick--minor .va-tickmark{width:1px;height:7px;background:color-mix(in srgb, var(--va-text) 28%, transparent)}
+.va-tick--micro .va-tickmark{width:1px;height:3px;background:color-mix(in srgb, var(--va-text) 14%, transparent)}
+.va-ticklabel{position:absolute;left:0;transform:translateX(-50%);white-space:nowrap;line-height:1;
+  font-family:var(--f-mono, ui-monospace, Menlo, monospace);font-variant-numeric:tabular-nums;
+  transition:opacity 200ms ease}
+.va-ticklabel--major{top:2px;padding:0 4px;font-size:10.5px;font-weight:700;letter-spacing:.01em;
+  color:color-mix(in srgb, var(--va-text) 78%, transparent)}
+.va-ticklabel--minor{top:4px;padding:0 2px;font-size:8.5px;font-weight:500;letter-spacing:.02em;
+  color:color-mix(in srgb, var(--va-text) 42%, transparent)}
 .va-tick.start .va-ticklabel{transform:translateX(0)}
-.va-tick.end .va-ticklabel{left:auto;right:0;transform:translateX(0)}
+.va-tick.end .va-ticklabel{transform:translateX(-100%)}
 
 /* Description + meta framed as one card; the textarea is borderless inside it
    so there's a single frame, and the meta row sits in the same box (separated

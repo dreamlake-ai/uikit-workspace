@@ -1,11 +1,10 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Plus } from "lucide-react";
 import { cn } from "../../lib/utils";
 import type { Segment, Track } from "./types";
 import { clamp, fmt, normalizeSegments } from "./segments";
-
-const MAJORS = [5, 10, 15, 30, 60, 120, 300, 600];
+import { computeVaTicks, cullMinorLabels, formatMajorLabel, formatMinorLabel } from "./ruler-ticks";
 
 /**
  * The timeline strip: stacked track lanes over a graduated ruler, drag handles
@@ -48,25 +47,65 @@ export function Timeline({
   // and never clipped by a scrolling/split parent's overflow.
   const [hoverPos, setHoverPos] = useState<{ x: number; y: number } | null>(null);
 
-  // Graduated ruler: a coarse "major" step (labeled `Ns`, bold, tall mark)
-  // subdivided into 5 finer "minor" ticks. The major is picked so there are at
-  // most ~6 labels across the VISIBLE window (`D/zoom`), so zooming in shows a
-  // finer ruler. Ticks still span the full [0,D] at `t/D` positions (the canvas
-  // is the one that's widened). Memoized on [D, zoom]. A guard drops the minor
-  // ticks past ~300 total so a long clip at 16× can't flood the DOM.
-  const { majorStep, minorStep, ticks } = useMemo(() => {
-    const visible = D && zoom ? D / zoom : D;
-    const major = visible ? MAJORS.find((m) => visible / m <= 6) ?? MAJORS[MAJORS.length - 1] : 0;
-    const minorsFit = major ? (D / (major / 5)) <= 300 : false;
-    const step = major ? (minorsFit ? major / 5 : major) : 0;
-    const out: { t: number; major: boolean }[] = [];
-    if (D && step)
-      for (let t = 0; t <= D + 1e-6; t += step) {
-        const tt = Math.min(t, D);
-        out.push({ t: tt, major: Math.abs(tt % major) < 1e-6 });
+  // Three-tier ruler (major / minor / micro), ported from the shared
+  // episode-timeline DLDetailRuler so it matches the design 1:1. The major step
+  // is picked so ~8 land in the VISIBLE window (`D/zoom`); minor + micro
+  // subdivide it. Ticks span the full [0,D] at `t/D` (the canvas is the one
+  // that's widened); finer tiers drop out past a cap so a long clip at high zoom
+  // can't flood the DOM. Memoized on [D, zoom].
+  // The ruler redraws the VISIBLE window (like the design's DLDetailRuler)
+  // instead of laying the whole widened clip — so dense micro ticks show at ANY
+  // zoom. Track the scroll viewport (`.va-tlscroll`, this timeline's parent) for
+  // the window, plus the widened strip's pixel width (minor-label culling).
+  // scroll/resize are coalesced into one rAF-batched measure.
+  const [wrapW, setWrapW] = useState(0);
+  const [vis, setVis] = useState({ start: 0, end: 0 });
+  useEffect(() => {
+    const el = timelineRef.current;
+    const sc = el?.parentElement;
+    if (!el) return;
+    let raf = 0;
+    const compute = () => {
+      const fullW = el.getBoundingClientRect().width || 1;
+      setWrapW(fullW);
+      if (sc) {
+        const span = D && zoom ? D / zoom : D;
+        const pad = span * 0.25;
+        setVis({
+          start: (sc.scrollLeft / fullW) * D - pad,
+          end: ((sc.scrollLeft + sc.clientWidth) / fullW) * D + pad,
+        });
+      } else {
+        setVis({ start: 0, end: D });
       }
-    return { majorStep: major, minorStep: major / 5, ticks: out };
+    };
+    const update = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(compute);
+    };
+    compute();
+    sc?.addEventListener("scroll", update, { passive: true });
+    let ro: ResizeObserver | undefined;
+    if (typeof ResizeObserver !== "undefined") {
+      ro = new ResizeObserver(update);
+      ro.observe(el);
+      if (sc) ro.observe(sc);
+    }
+    return () => {
+      cancelAnimationFrame(raf);
+      sc?.removeEventListener("scroll", update);
+      ro?.disconnect();
+    };
   }, [D, zoom]);
+
+  const { major, minor, ticks } = useMemo(
+    () => computeVaTicks(D, zoom, vis.start, vis.end),
+    [D, zoom, vis.start, vis.end],
+  );
+  const keepMinor = useMemo(
+    () => cullMinorLabels(ticks, major, minor, D, wrapW),
+    [ticks, major, minor, D, wrapW],
+  );
 
   // Normalized segments per track. The active track reuses the already-normalized
   // `activeSegs`; inactive tracks are normalized here — memoized so hover
@@ -148,17 +187,31 @@ export function Timeline({
         )}
       </div>
       <div className="va-ticks">
-        {ticks.map((rt, i) => (
-          <div
-            key={i}
-            className={cn("va-tick", rt.major && "major", i === 0 && "start", i === ticks.length - 1 && "end")}
-            style={{ left: `${(rt.t / (D || 1)) * 100}%` }}
-          >
-            <span className="va-ticklabel">
-              {rt.major ? `${Math.round(rt.t)}s` : Math.round((rt.t % majorStep) / minorStep)}
-            </span>
-          </div>
-        ))}
+        {ticks.map((rt, i) => {
+          const label =
+            rt.tier === "major"
+              ? formatMajorLabel(rt.t, major)
+              : rt.tier === "minor" && keepMinor.has(i)
+                ? formatMinorLabel(rt.t, major, minor)
+                : "";
+          return (
+            <div
+              key={rt.t}
+              className={cn(
+                "va-tick",
+                `va-tick--${rt.tier}`,
+                i === 0 && "start",
+                i === ticks.length - 1 && "end",
+              )}
+              style={{ left: `${(rt.t / (D || 1)) * 100}%` }}
+            >
+              <span className="va-tickmark" />
+              {label && (
+                <span className={cn("va-ticklabel", `va-ticklabel--${rt.tier}`)}>{label}</span>
+              )}
+            </div>
+          );
+        })}
       </div>
       {hoverFrac != null && (
         <>
