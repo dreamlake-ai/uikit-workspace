@@ -22,6 +22,7 @@ import {
 import { useAnnotatorStyles } from "./styles";
 import { useAnnotatorKeyboard } from "./useAnnotatorKeyboard";
 import { useHandposeOverlay } from "./useHandposeOverlay";
+import { frameAtMediaTime } from "./handpose";
 import { Transport } from "./Transport";
 import { ZoomControl } from "./ZoomControl";
 import { Timeline } from "./Timeline";
@@ -34,6 +35,11 @@ const DEFAULT_SPEEDS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
 // Timeline zoom bounds (continuous). The transport's drag/step both clamp here.
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 16;
+// requestVideoFrameCallback support — drives the frame-accurate readout when
+// present (falls back to the media clock otherwise).
+const HAS_RVFC =
+  typeof HTMLVideoElement !== "undefined" &&
+  "requestVideoFrameCallback" in HTMLVideoElement.prototype;
 
 /**
  * VideoAnnotator — a video player with an editable, contiguous segment
@@ -94,6 +100,14 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
     const scrollRef = useRef<HTMLDivElement>(null);
 
     const [currentTime, setCurrentTime] = useState(0);
+    // Authoritative displayed frame — the frame the decoder is actually
+    // presenting (see the rVFC effect), so the readout + frame-stepping match
+    // the picture and the hand-pose overlay, not the media clock (which runs
+    // ahead of the picture during cold-start buffering). `contentStartRef` is
+    // the stream's media-time origin (a CMAF baseMediaDecodeTime can be
+    // non-zero), shared with frame-stepping so both agree on frame N's time.
+    const [currentFrame, setCurrentFrame] = useState(0);
+    const contentStartRef = useRef(Infinity);
     const [playing, setPlaying] = useState(false);
     const [rate, setRate] = useState(1);
     const [metaDuration, setMetaDuration] = useState(0);
@@ -298,10 +312,27 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
         const v = videoRef.current;
         if (!v) return;
         v.pause();
-        const dt = big ? 1.0 : extractFps ? 1 / extractFps : 1 / 30;
-        v.currentTime = clamp(v.currentTime + dir * dt, 0, D);
+        // Step by FRAME INDEX and seek to the frame CENTER, not the n/fps
+        // boundary: n/fps*fps often lands a hair below n, so the decoder shows
+        // frame n-1 while the clock reads n — which makes a ←/→ step move the
+        // frame-indexed hand-pose overlay while the picture stays put. +0.5
+        // guarantees the decoder paints `next`. `cs` shifts by the stream's
+        // content start so N maps to the right absolute media time. `cur` uses
+        // floor (the frame interval the playhead sits in) so a prior center-seek
+        // doesn't round up a frame.
+        const fps = srcFps || extractFps || 30;
+        const cs = Number.isFinite(contentStartRef.current)
+          ? contentStartRef.current
+          : v.buffered.length
+            ? v.buffered.start(0)
+            : 0;
+        const stepN = big ? Math.max(1, Math.round(fps)) : 1;
+        const cur = Math.floor((v.currentTime - cs) * fps + 1e-6);
+        const maxFrame = Math.max(0, Math.round(D * fps) - 1);
+        const next = clamp(cur + dir * stepN, 0, maxFrame);
+        v.currentTime = cs + (next + 0.5) / fps;
       },
-      [D, extractFps]
+      [D, extractFps, srcFps]
     );
 
     const gotoBoundary = useCallback(
@@ -602,15 +633,44 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
     const handsLoading = showHands && handposeLoading && !handposeReady;
     useHandposeOverlay({ enabled: showHands, playing, handpose, videoRef, canvasRef: overlayRef, stageRef });
 
+    // Authoritative displayed-frame tracker. rVFC fires per PRESENTED frame
+    // (playback, and once after a paused seek/step lands) and NOT while the
+    // picture is stalled — so `currentFrame` follows the picture, freezing with
+    // it during cold-start buffering instead of racing ahead like the clock. It
+    // also captures the stream's content start (min buffered.start) into the ref
+    // shared with frame-stepping. setState only on change → no-op while idle.
+    useEffect(() => {
+      const v = videoRef.current;
+      if (!v || typeof v.requestVideoFrameCallback !== "function") return;
+      const fps = srcFps || extractFps || 30;
+      let handle = v.requestVideoFrameCallback(function loop(_now, meta) {
+        if (v.buffered.length)
+          contentStartRef.current = Math.min(contentStartRef.current, v.buffered.start(0));
+        const cs = Number.isFinite(contentStartRef.current) ? contentStartRef.current : 0;
+        const f = frameAtMediaTime(meta.mediaTime, cs, fps);
+        setCurrentFrame((prev) => (prev === f ? prev : f));
+        handle = v.requestVideoFrameCallback(loop);
+      });
+      return () => v.cancelVideoFrameCallback?.(handle);
+    }, [srcFps, extractFps]);
+
     // ---- derived readout ---------------------------------------------------
     // Frame readout uses srcFps → extractFps → 30, so its frame number matches
     // the granularity of ←/→ frame-stepping instead of silently assuming 30.
     const fps = srcFps || extractFps || 30;
-    // The encoded media can run a hair past the authored duration (metadata fps×
-    // frames vs the container's real length), so clamp the readout to D — never
-    // show a current time greater than the total.
-    const shownTime = D > 0 ? Math.min(currentTime, D) : currentTime;
-    const readout = `${fmt(shownTime)} / ${fmt(D)} · f${Math.round(shownTime * fps)}`;
+    // Read out the frame the decoder is actually PRESENTING (currentFrame, from
+    // the rVFC loop) — not the media clock, which runs ahead of the picture
+    // during cold-start buffering. Fall back to the clock where rVFC is absent
+    // (floor + content-start shift so a center-seek reads back the right frame).
+    // Time is derived FROM that frame so the two never disagree; both clamp to D.
+    const rcs = Number.isFinite(contentStartRef.current) ? contentStartRef.current : 0;
+    const maxFrame = D > 0 ? Math.max(0, Math.round(D * fps) - 1) : Number.POSITIVE_INFINITY;
+    const shownFrame = Math.min(
+      HAS_RVFC ? currentFrame : Math.max(0, Math.floor((currentTime - rcs) * fps + 1e-6)),
+      maxFrame
+    );
+    const shownTime = D > 0 ? Math.min(shownFrame / fps, D) : shownFrame / fps;
+    const readout = `${fmt(shownTime)} / ${fmt(D)} · f${shownFrame}`;
 
     const hasHeader = Boolean(videoTitle || videoSubtitle || headerLeading);
 

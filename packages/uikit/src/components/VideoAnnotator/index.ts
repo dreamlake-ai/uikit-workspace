@@ -14,6 +14,7 @@ export {
   fingerOfIndex,
   colorForIndex,
   nearestFrame,
+  frameAtMediaTime,
   drawHandposeFrame,
 } from "./handpose";
 export {

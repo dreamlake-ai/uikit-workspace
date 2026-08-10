@@ -1,6 +1,6 @@
 import { useEffect, type RefObject } from "react";
 import type { HandposeEnvelope } from "./types";
-import { drawHandposeFrame, frameTolerance, nearestFrame } from "./handpose";
+import { drawHandposeFrame, frameAtMediaTime, frameTolerance, nearestFrame } from "./handpose";
 
 /**
  * Hand-pose overlay driver. A canvas glued to the rendered video box, drawing
@@ -85,10 +85,11 @@ export function useHandposeOverlay(opts: {
       // Shift media time → pose (0-based) time by the stream's content start.
       if (v.buffered.length) contentStart = Math.min(contentStart, v.buffered.start(0));
       const cs = Number.isFinite(contentStart) ? contentStart : 0;
-      const poseT = (atTime ?? v.currentTime) - cs;
+      const mt = atTime ?? v.currentTime;
+      const poseT = mt - cs;
       const frame =
         fps > 0
-          ? (byIndex.get(Math.round(poseT * fps)) ?? nearestFrame(handpose, poseT, tol))
+          ? (byIndex.get(frameAtMediaTime(mt, cs, fps)) ?? nearestFrame(handpose, poseT, tol))
           : nearestFrame(handpose, poseT, tol);
       if (frame) {
         drawHandposeFrame(ctx, frame, cssW / imgW, cssH / imgH, { dim: Math.min(cssW, cssH) });
