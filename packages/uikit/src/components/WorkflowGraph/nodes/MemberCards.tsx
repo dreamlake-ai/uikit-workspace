@@ -4,7 +4,7 @@
  * render in-flow unless `pos` is given.
  */
 import type { PointerEvent as ReactPointerEvent } from 'react'
-import { Diamond, Pause, RotateCcw, Split, type LucideIcon } from 'lucide-react'
+import { Diamond, Pause, Repeat, RotateCcw, Split, Zap, type LucideIcon } from 'lucide-react'
 import type {
   AgentInstance, ComputeNode, ControlNode, SamplerNode, UdaNode,
   WorkflowNodeRunStateValue,
@@ -58,12 +58,13 @@ export function ComputeNodeCard({ node, ...p }: ComputeNodeCardProps) {
       <div style={chipRowStyle}>
         {prov && <span style={chipFlexStyle}>{prov}</span>}
         {dispatch && (
+          // Dispatch mode is a TYPE, so an icon carries it — colour stays
+          // reserved for run status (a coloured dot here read as done/running).
+          // direct = fired inline (Zap); daemon = persistent worker (Repeat).
           <span style={{ ...chipStyle, display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-            <span style={{
-              width: 4, height: 4, borderRadius: 2, flexShrink: 0,
-              background: dispatch === 'daemon'
-                ? 'var(--color-uikit-tone-green)' : 'var(--color-uikit-tone-blue)',
-            }} />
+            {dispatch === 'daemon'
+              ? <Repeat size={9} strokeWidth={2.5} style={{ flexShrink: 0 }} />
+              : <Zap size={9} strokeWidth={2.5} style={{ flexShrink: 0 }} />}
             {dispatch}
           </span>
         )}
