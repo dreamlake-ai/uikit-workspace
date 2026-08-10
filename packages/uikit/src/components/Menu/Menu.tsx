@@ -128,7 +128,7 @@ export function Menu({
     <span
       ref={triggerRef}
       onClick={() => setOpen(!open)}
-      className="inline-block cursor-pointer"
+      className="inline-flex items-center cursor-pointer"
     >
       {trigger(open)}
       {open &&
