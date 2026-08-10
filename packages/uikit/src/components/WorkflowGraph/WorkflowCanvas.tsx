@@ -187,6 +187,12 @@ export function WorkflowCanvas({
   }, [selectedId, onSelect])
 
   const [view, setView] = useState<View>({ x: 24, y: 16, k: 1 })
+  // Latest view, read by the smooth-pan animation without re-subscribing effects.
+  const viewRef = useRef(view)
+  viewRef.current = view
+  // rAF handle for the "centre the selected node" tween (item: click a node in
+  // the side panel → glide it into view). Cancelled the moment the user pans/zooms.
+  const panAnimRef = useRef<number | null>(null)
   const [posOverride, setPosOverride] = useState<Record<string, { x: number; y: number }>>(
     () => layoutOverrides?.nodes ?? {},
   )
@@ -257,7 +263,15 @@ export function WorkflowCanvas({
     setView({ x, y, k })
   }, [layout.size])
   fitViewRef.current = fitView
-  useEffect(() => { fitView() }, [fitView])
+  // Auto-fit only when the FRAMING actually changes — the workflow shown, its
+  // orientation, or the laid-out size — NOT on every `spec` object swap. Editing
+  // a node's settings hands us a new draft spec (hence a new `layout` object)
+  // with identical geometry; re-fitting there would discard the pan/zoom the
+  // user set while inspecting and snap the graph back to the default view.
+  useEffect(() => {
+    fitViewRef.current()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [layoutKey, orientation, Math.round(layout.size.w), Math.round(layout.size.h)])
 
   // Drag overrides on top of the computed layout.
   const stageRects = useMemo(() => {
@@ -276,6 +290,13 @@ export function WorkflowCanvas({
     }
     return out
   }, [layout.nodeRects, posOverride])
+  // Read the current rects from the centre-on-select effect WITHOUT keying it on
+  // rect identity — otherwise every poll/draft recompute would re-pan a selected
+  // node. The effect fires on `selected` alone and reads the live rects here.
+  const nodeRectsRef = useRef(nodeRects)
+  nodeRectsRef.current = nodeRects
+  const stageRectsRef = useRef(stageRects)
+  stageRectsRef.current = stageRects
 
   const nodeById = useMemo(
     () => Object.fromEntries(spec.nodes.map((n) => [n.id, n])),
@@ -311,6 +332,11 @@ export function WorkflowCanvas({
     if (!el) return
     const onWheel = (e: WheelEvent) => {
       e.preventDefault()
+      // A user gesture wins over any in-flight glide-to-node animation.
+      if (panAnimRef.current != null) {
+        cancelAnimationFrame(panAnimRef.current)
+        panAnimRef.current = null
+      }
       if (e.ctrlKey || e.metaKey) {
         const rect = el.getBoundingClientRect()
         const cx = e.clientX - rect.left
@@ -329,8 +355,59 @@ export function WorkflowCanvas({
     return () => el.removeEventListener('wheel', onWheel)
   }, [])
 
+  // -- smooth pan to a node --------------------------------------------------
+  const cancelPanAnim = useCallback(() => {
+    if (panAnimRef.current != null) {
+      cancelAnimationFrame(panAnimRef.current)
+      panAnimRef.current = null
+    }
+  }, [])
+  // Glide the pan (x/y only — zoom is left untouched) from where we are to a
+  // target, easing out. Any concurrent pan/zoom cancels it, so it never fights
+  // the user's own gesture.
+  const animateViewTo = useCallback((tx: number, ty: number) => {
+    cancelPanAnim()
+    const start = { x: viewRef.current.x, y: viewRef.current.y }
+    const t0 = performance.now()
+    const DUR = 340
+    const ease = (p: number) => 1 - Math.pow(1 - p, 3)
+    const step = (now: number) => {
+      const p = Math.min(1, (now - t0) / DUR)
+      const e = ease(p)
+      setView((v) => ({ ...v, x: start.x + (tx - start.x) * e, y: start.y + (ty - start.y) * e }))
+      panAnimRef.current = p < 1 ? requestAnimationFrame(step) : null
+    }
+    panAnimRef.current = requestAnimationFrame(step)
+  }, [cancelPanAnim])
+
+  // When the selection changes (typically from the side-panel outline), bring
+  // the node into view if it is off-screen — centred, at the CURRENT zoom. A
+  // node the user clicked on the canvas is already visible, so this no-ops there.
+  useEffect(() => {
+    if (!selected) return
+    const el = containerRef.current
+    if (!el) return
+    const r = nodeRectsRef.current[selected] ?? stageRectsRef.current[selected]
+    if (!r) return
+    const cw = el.clientWidth
+    const ch = el.clientHeight
+    if (!cw || !ch) return
+    const v = viewRef.current
+    const wx = r.x + r.w / 2
+    const wy = r.y + r.h / 2
+    const sx = v.x + wx * v.k
+    const sy = v.y + wy * v.k
+    const PAD = 44
+    const onScreen = sx >= PAD && sx <= cw - PAD && sy >= PAD && sy <= ch - PAD
+    if (onScreen) return
+    animateViewTo(cw / 2 - wx * v.k, ch / 2 - wy * v.k)
+  }, [selected, animateViewTo])
+  // Stop any in-flight tween on unmount.
+  useEffect(() => cancelPanAnim, [cancelPanAnim])
+
   const onBgDown = (e: ReactPointerEvent) => {
     if ((e.target as HTMLElement).closest('[data-node]')) return
+    cancelPanAnim()
     ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
     panRef.current = { x: e.clientX, y: e.clientY, vx: view.x, vy: view.y }
     select(null)
@@ -348,6 +425,7 @@ export function WorkflowCanvas({
   const cardHandlers = (id: string, rect: WfRect) => ({
     onPointerDown: (e: ReactPointerEvent) => {
       e.stopPropagation()
+      cancelPanAnim()
       ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
       dragRef.current = { id, sx: e.clientX, sy: e.clientY, bx: rect.x, by: rect.y, moved: false }
     },
