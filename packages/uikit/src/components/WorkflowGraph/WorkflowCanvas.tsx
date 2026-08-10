@@ -1284,7 +1284,7 @@ export function WorkflowCanvas({
 // `network` glyph, inlined + rotated so embeds don't need the peer dep).
 function OrientIcon({ o }: { o: WfOrientation }) {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
       <g transform={o === 'horizontal' ? 'rotate(-90 12 12)' : undefined}>
         <rect x="9" y="2" width="6" height="6" rx="1.5" />
         <rect x="2" y="16" width="6" height="6" rx="1.5" />
@@ -1319,9 +1319,9 @@ function CanvasControls({ orientation, onOrientationChange, canReset, onReset }:
         // stretch this bar across the canvas.
         position: 'absolute', top: 12, right: 12, left: 'auto', bottom: 'auto', zIndex: 6,
         width: 'max-content',
-        display: 'inline-flex', alignItems: 'center', gap: 2, padding: 3,
+        display: 'inline-flex', alignItems: 'center', gap: 2, padding: 2,
         border: '1px solid color-mix(in oklab, var(--color-uikit-faint) 70%, transparent)',
-        borderRadius: 9,
+        borderRadius: 8,
         background: 'color-mix(in oklab, var(--color-uikit-panel) 88%, transparent)',
         backdropFilter: 'blur(8px) saturate(1.05)',
         WebkitBackdropFilter: 'blur(8px) saturate(1.05)',
@@ -1339,18 +1339,18 @@ function CanvasControls({ orientation, onOrientationChange, canReset, onReset }:
             aria-label="Reset layout"
             style={{
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-              width: 30, height: 24, padding: 0, border: 'none', borderRadius: 6, cursor: 'pointer',
+              width: 26, height: 21, padding: 0, border: 'none', borderRadius: 6, cursor: 'pointer',
               color: resetHov ? 'var(--color-uikit-ink)' : 'var(--color-uikit-muted)',
               background: resetHov ? 'color-mix(in oklab, var(--color-uikit-ink) 8%, transparent)' : 'transparent',
               transition: 'background 120ms ease, color 120ms ease',
             }}
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <path d="M3 12a9 9 0 1 0 3-6.7L3 8" />
               <path d="M3 3v5h5" />
             </svg>
           </button>
-          <span aria-hidden style={{ width: 1, height: 16, background: 'color-mix(in oklab, var(--color-uikit-faint) 70%, transparent)', margin: '0 1px' }} />
+          <span aria-hidden style={{ width: 1, height: 13, background: 'color-mix(in oklab, var(--color-uikit-faint) 70%, transparent)', margin: '0 1px' }} />
         </>
       )}
       {(['vertical', 'horizontal'] as const).map((o) => {
@@ -1366,7 +1366,7 @@ function CanvasControls({ orientation, onOrientationChange, canReset, onReset }:
             aria-pressed={active}
             style={{
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-              width: 30, height: 24, border: 'none', borderRadius: 6, cursor: 'pointer', padding: 0,
+              width: 26, height: 21, border: 'none', borderRadius: 6, cursor: 'pointer', padding: 0,
               color: active ? 'var(--color-uikit-ink)' : 'var(--color-uikit-muted)',
               opacity: active ? 1 : 0.6,
               background: active ? 'color-mix(in oklab, var(--color-uikit-ink) 8%, transparent)' : 'transparent',
