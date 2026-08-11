@@ -17,6 +17,7 @@ export type {
   AgentInstanceCardProps,
   ComputeNodeCardProps,
   ControlNodeCardProps,
+  DispatchMeta,
   SamplerNodeCardProps,
   UdaNodeCardProps,
 } from './nodes/MemberCards'

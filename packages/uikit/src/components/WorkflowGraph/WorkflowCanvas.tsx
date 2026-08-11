@@ -44,6 +44,7 @@ import { WF_KIND_TOKEN, WF_STATE_COLOR } from './nodes/chrome'
 import { StageNode } from './nodes/StageNode'
 import {
   AgentInstanceCard, ComputeNodeCard, ControlNodeCard, SamplerNodeCard, UdaNodeCard,
+  type DispatchMeta,
 } from './nodes/MemberCards'
 
 export interface WorkflowCanvasProps {
@@ -58,6 +59,9 @@ export interface WorkflowCanvasProps {
   agentsByNodeId?: Record<string, AgentInstance[]>
   selectedId?: string | null
   onSelect?: (id: string | null) => void
+  /** How to display each compute node's dispatch mode (icon + label). Injected
+   *  so the mode→display mapping stays out of the graph component. */
+  dispatchMeta?: DispatchMeta
   /** Canvas controls (legend + orientation switcher). Default true. */
   showControls?: boolean
   /** The node-kind/edge-state legend specifically — small embeds (docs
@@ -164,6 +168,7 @@ export function WorkflowCanvas({
   spec, orientation: orientationProp = 'vertical', onOrientationChange,
   statusByNodeId, agentsByNodeId,
   selectedId, onSelect, showControls = true, showLegend = true,
+  dispatchMeta,
   layoutKey, layoutOverrides, onLayoutOverridesChange, className,
 }: WorkflowCanvasProps) {
   useInjectedStyles()
@@ -1141,7 +1146,7 @@ export function WorkflowCanvas({
             ...cardHandlers(n.id, r),
           }
           switch (n.kind) {
-            case 'compute': return <ComputeNodeCard key={n.id} node={n} {...common} />
+            case 'compute': return <ComputeNodeCard key={n.id} node={n} dispatchMeta={dispatchMeta} {...common} />
             case 'uda': return <UdaNodeCard key={n.id} node={n} {...common} />
             case 'sampler': return <SamplerNodeCard key={n.id} node={n} {...common} />
             case 'control': return <ControlNodeCard key={n.id} node={n} {...common} />

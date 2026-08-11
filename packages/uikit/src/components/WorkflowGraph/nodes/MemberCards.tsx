@@ -3,8 +3,8 @@
  * AgentInstanceCard. All share the PipelineGraph card DNA via chrome.ts and
  * render in-flow unless `pos` is given.
  */
-import type { PointerEvent as ReactPointerEvent } from 'react'
-import { Diamond, Pause, Repeat, RotateCcw, Split, Zap, type LucideIcon } from 'lucide-react'
+import type { PointerEvent as ReactPointerEvent, ReactNode } from 'react'
+import { Diamond, Pause, RotateCcw, Split, type LucideIcon } from 'lucide-react'
 import type {
   AgentInstance, ComputeNode, ControlNode, SamplerNode, UdaNode,
   WorkflowNodeRunStateValue,
@@ -38,11 +38,20 @@ const handlers = (p: MemberCardCommon) => ({
 
 // ---------------------------------------------------------------------------
 
-export interface ComputeNodeCardProps extends MemberCardCommon { node: ComputeNode }
+/** How to display a compute node's dispatch mode. Which icon / label a mode
+ *  gets is business config, so the host injects it — the card renders only what
+ *  it's handed (label falls back to the raw mode string, icon is optional). */
+export type DispatchMeta = Record<string, { icon?: ReactNode; label?: string }>
 
-export function ComputeNodeCard({ node, ...p }: ComputeNodeCardProps) {
+export interface ComputeNodeCardProps extends MemberCardCommon {
+  node: ComputeNode
+  dispatchMeta?: DispatchMeta
+}
+
+export function ComputeNodeCard({ node, dispatchMeta, ...p }: ComputeNodeCardProps) {
   const prov = providerSummary(node.compute.provider)
   const dispatch = node.compute.dispatch ?? node.compute.provider?.dispatch
+  const dispatchInfo = dispatch ? dispatchMeta?.[dispatch] : undefined
   return (
     <div
       data-node={node.id}
@@ -54,18 +63,15 @@ export function ComputeNodeCard({ node, ...p }: ComputeNodeCardProps) {
         <span style={kindDotStyle(WF_KIND_TOKEN.compute)} />
         <span style={titleStyle}>{node.title}</span>
       </div>
-      <span style={metaStyle}>{WF_KIND_LABEL.compute} · {node.compute.udf}</span>
+      <span style={metaStyle}>{WF_KIND_LABEL.compute}</span>
       <div style={chipRowStyle}>
         {prov && <span style={chipFlexStyle}>{prov}</span>}
         {dispatch && (
-          // Dispatch mode is a TYPE, so an icon carries it — colour stays
-          // reserved for run status (a coloured dot here read as done/running).
-          // direct = fired inline (Zap); daemon = persistent worker (Repeat).
-          <span style={{ ...chipStyle, display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-            {dispatch === 'daemon'
-              ? <Repeat size={9} strokeWidth={2.5} style={{ flexShrink: 0 }} />
-              : <Zap size={9} strokeWidth={2.5} style={{ flexShrink: 0 }} />}
-            {dispatch}
+          // Dispatch mode as a soft pill. The icon + label come from the injected
+          // dispatchMeta (business config), not from any mode logic in here.
+          <span style={{ ...chipStyle, gap: 4 }}>
+            {dispatchInfo?.icon}
+            {dispatchInfo?.label ?? dispatch}
           </span>
         )}
       </div>

@@ -162,26 +162,39 @@ export const chipRowStyle: CSSProperties = {
   overflow: 'hidden',
 }
 
-/** Tiny inline chip (launcher badge, model chip, queue chip). */
+/** Fixed chip height — content is vertically centred against it. */
+const CHIP_H = 15
+
+/** Tiny inline chip (launcher badge, model chip, queue chip). A flex box with a
+ *  fixed height centres its content (text, or icon + text) vertically in the
+ *  pill — no baseline drift. */
 export const chipStyle: CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  height: CHIP_H,
+  boxSizing: 'border-box',
   fontSize: 8.5,
   fontWeight: 600,
   letterSpacing: '.04em',
   textTransform: 'uppercase',
+  lineHeight: 1,
   color: 'var(--color-uikit-muted)',
   // Borderless soft chip — a faint fill carries the shape, no outline (keeps
   // the compute/uda chip rows quieter than the bordered pills they were).
   background: 'color-mix(in oklab, var(--color-uikit-ink) 6%, transparent)',
   borderRadius: 4,
-  padding: '1px 5px',
+  padding: '0 6px',
   whiteSpace: 'nowrap',
-  lineHeight: 1.4,
   flexShrink: 0,
 }
 
-/** A chip allowed to truncate when the row runs out of room. */
+/** A chip allowed to truncate when the row runs out of room. Uses inline-block
+ *  (not flex) so text-overflow ellipsis still applies; a line-height equal to
+ *  the chip height keeps the single line vertically centred. */
 export const chipFlexStyle: CSSProperties = {
   ...chipStyle,
+  display: 'inline-block',
+  lineHeight: `${CHIP_H}px`,
   flexShrink: 1,
   minWidth: 0,
   overflow: 'hidden',
