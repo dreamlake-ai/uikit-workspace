@@ -1339,7 +1339,7 @@ function CanvasControls({ orientation, onOrientationChange, canReset, onReset }:
             aria-label="Reset layout"
             style={{
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-              width: 26, height: 21, padding: 0, border: 'none', borderRadius: 6, cursor: 'pointer',
+              width: 24, height: 24, padding: 0, border: 'none', borderRadius: 6, cursor: 'pointer',
               color: resetHov ? 'var(--color-uikit-ink)' : 'var(--color-uikit-muted)',
               background: resetHov ? 'color-mix(in oklab, var(--color-uikit-ink) 8%, transparent)' : 'transparent',
               transition: 'background 120ms ease, color 120ms ease',
@@ -1366,7 +1366,7 @@ function CanvasControls({ orientation, onOrientationChange, canReset, onReset }:
             aria-pressed={active}
             style={{
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-              width: 26, height: 21, border: 'none', borderRadius: 6, cursor: 'pointer', padding: 0,
+              width: 24, height: 24, border: 'none', borderRadius: 6, cursor: 'pointer', padding: 0,
               color: active ? 'var(--color-uikit-ink)' : 'var(--color-uikit-muted)',
               opacity: active ? 1 : 0.6,
               background: active ? 'color-mix(in oklab, var(--color-uikit-ink) 8%, transparent)' : 'transparent',
