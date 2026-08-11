@@ -164,6 +164,11 @@ export function Menu({
     top: coords.top,
     ...(align === 'left' ? { left: coords.left } : { right: coords.right }),
     minWidth: width,
+    // Menu elevation — set inline (not via a shadow-* utility) so it always
+    // applies. Uses the MEDIUM shadow tint + a tight spread so it doesn't read
+    // as a heavy black blob in dark (where the deep tint-3 hits 0.75); the 1px
+    // ring keeps the edge crisp. Lighter than `--shadow-uikit-soft`.
+    boxShadow: '0 8px 22px -12px var(--shadow-tint-2), 0 0 0 1px var(--faint)',
   }
 
   return (
@@ -179,7 +184,14 @@ export function Menu({
           <div
             ref={panelRef}
             role="menu"
-            onClick={(e) => e.stopPropagation()}
+            // Contain stray clicks so they don't reach whatever the menu is
+            // mounted inside — but NEVER swallow a link click. Menus can hold
+            // real <a href> rows (e.g. the account switcher); Vike's client
+            // router intercepts those at `document`, so stopping propagation
+            // here would turn every menu link into a full page reload.
+            onClick={(e) => {
+              if (!(e.target as HTMLElement).closest?.('a[href]')) e.stopPropagation()
+            }}
             className={cn(
               'uikit-panel-in fixed z-[1000]',
               // No padding on the panel itself — it's the containing block for
@@ -188,7 +200,6 @@ export function Menu({
               // wrapper below does the padding instead.
               'rounded-lg',
               'bg-uikit-bg text-uikit-ink font-uikit-ui',
-              'shadow-uikit-soft',
               className,
             )}
             style={panelStyle}
