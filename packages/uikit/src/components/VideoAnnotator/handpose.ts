@@ -76,6 +76,15 @@ export function frameTolerance(env: HandposeEnvelope): number {
   return Math.max(0.12, 1.5 / fps);
 }
 
+/** Frame index of the video frame presented at `mediaTime`, in the 0-based pose
+ *  index space. `contentStart` is the stream's media-time origin (a CMAF
+ *  fragment's baseMediaDecodeTime can be non-zero); subtracting it lands index 0
+ *  on pose frame 0. Shared by the hand-pose overlay and the VideoAnnotator
+ *  readout/frame-stepping so all three name the exact same frame. */
+export function frameAtMediaTime(mediaTime: number, contentStart: number, fps: number): number {
+  return Math.max(0, Math.round((mediaTime - contentStart) * fps));
+}
+
 interface DrawOpts {
   /** Rendered short side (px) — auto-scales dot radius / bone width. */
   dim?: number;
