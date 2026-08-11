@@ -25,7 +25,14 @@ import { cn } from '../../lib/utils'
 import type { GraphNode, GraphEdge, PipelineGraphData, StatusOverlay } from './types'
 import { FLOW, NODE_H, NODE_W, STATUS, edgeFlow, kindColor, portPos } from './flow'
 import { buildEdgePath, pickSides, type Obstacle, type PortSide, type Pt } from './edge-path'
-import { clearOffset, type Rect } from './tag-place'
+import { restingOffsets, type Rect, type TagProbe } from './tag-place'
+
+/**
+ * Clearance kept between a lifted connector tag and a node card, in world px.
+ * The tag is placed outside the card's area by this much rather than merely
+ * not overlapping it — "close" should never read as "touching".
+ */
+const TAG_CARD_GAP = 8
 
 export interface PipelineGraphProps {
   graph: PipelineGraphData
@@ -174,12 +181,19 @@ export function PipelineGraph({
   // The pair key of the tag currently pressed/held — highlights that tag, its
   // leader, and the edge its anchor sits on. Cleared on pointer up / cancel.
   const [activeTag, setActiveTag] = useState<string | null>(null)
+  // Last resting-lift pass, fed back in as hysteresis so a tag holds a lift
+  // that still works instead of re-searching (and possibly flipping sides)
+  // every frame of a node drag.
+  const prevRest = useRef<Record<string, number>>({})
   // Reset drag state on load / version change.
   useEffect(() => {
     setPosOverride({})
     setBendFracs({})
     setLabelOffsets({})
     setActiveTag(null)
+    // Drop the avoidance hysteresis too — carrying a previous graph's lifts in
+    // would hold tags off the line for edges that no longer exist.
+    prevRest.current = {}
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [graph.id])
 
@@ -204,45 +218,56 @@ export function PipelineGraph({
 
   const byId = useMemo(() => Object.fromEntries(nodes.map(n => [n.id, n])), [nodes])
 
-  // One-time card-avoidance: the initial perpendicular LIFT for each tag so it
-  // doesn't spawn on top of a node card. Computed ONCE per graph and then
-  // FROZEN — keyed on `graph.id`, NOT node positions, so dragging a card never
-  // re-runs the search (which would make unrelated tags jump). It seeds the same
-  // `labelOffsets` channel the across-drag uses, so a lifted tag rides its live
-  // anchor through node drags/rebends and grabbing it never teleports it.
+  // LIVE card-avoidance: the resting perpendicular LIFT for each tag, refreshed
+  // whenever the nodes move. A tag defaults to sitting ON its connector and
+  // lifts clear only while a card is close enough to touch it — so pulling two
+  // nodes together pushes the tag out of the way, and pulling them apart drops
+  // it back on the line.
+  //
+  // This deliberately re-runs on node drags. It used to be frozen at load
+  // (keyed on `graph.id`) to stop siblings reshuffling mid-drag, but that also
+  // meant the avoidance never reacted to the layout it was avoiding: drag two
+  // cards together and the tag stayed at its stale lift, sitting on top of a
+  // card. `restingOffsets` handles the churn the freeze was working around —
+  // it holds a tag's previous lift while that lift is still clear, so nothing
+  // flip-flops — and it never touches a tag the user has dragged.
   const restOffsets = useMemo(() => {
-    const grow = (n: GraphNode): Rect => ({ x: n.pos.x - 6, y: n.pos.y - 6, w: NODE_W + 12, h: NODE_H + 12 })
-    const avoid: Rect[] = nodes.map(grow)
-    const taken: Rect[] = []
-    const offs: Record<string, number> = {}
+    const cards: Rect[] = nodes.map(n => ({ x: n.pos.x, y: n.pos.y, w: NODE_W, h: NODE_H }))
+    const probes: TagProbe[] = []
     for (const g of groupEdgeParams(graph.edges).values()) {
       const src = byId[g.from]; const dst = byId[g.to]
       if (!src || !dst || g.params.length === 0) continue
+      const key = `${g.from}->${g.to}`
       const ends = edgeEnds(src, dst, autoSides)
       const { from: fromP, to: toP } = ends
       const obstacles: Obstacle[] = nodes
         .filter(n => n.id !== g.from && n.id !== g.to)
         .map(n => ({ x0: n.pos.x - 4, x1: n.pos.x + NODE_W + 4, y0: n.pos.y - 4, y1: n.pos.y + NODE_H + 4 }))
-      const probe: { anchor: Pt } = { anchor: { x: (fromP.x + toP.x) / 2, y: (fromP.y + toP.y) / 2 } }
+      // Probe at the tag's LIVE bend, not a fixed mid-edge 0.5 — otherwise a
+      // rebent edge is avoided at a point its tag no longer occupies.
+      const frac = bendFracs[key] ?? 0.5
+      const vertical = ends.fromSide === 'top' || ends.fromSide === 'bottom'
+      const span = vertical ? toP.y - fromP.y : toP.x - fromP.x
+      const probe: { anchor: Pt } = {
+        anchor: { x: fromP.x + (vertical ? 0 : span * frac), y: (fromP.y + toP.y) / 2 },
+      }
       buildEdgePath(fromP, toP, {
-        obstacles, bendFrac: 0.5, out: probe,
+        obstacles, bendFrac: frac, out: probe,
         fromRect: ends.fromRect, toRect: ends.toRect,
         fromSide: ends.fromSide, toSide: ends.toSide,
       })
       const longest = g.params.reduce((m, p) => Math.max(m, p.length), 0)
-      const { off, box } = clearOffset(probe.anchor, longest * 5.6 + 22, g.params.length * 12 + 2, avoid, taken, 'y')
-      taken.push(box)
-      offs[`${g.from}->${g.to}`] = off
+      probes.push({ key, anchor: probe.anchor, boxW: longest * 5.6 + 22, boxH: g.params.length * 12 + 2 })
     }
+    const offs = restingOffsets(probes, cards, labelOffsets, prevRest.current, 'y', TAG_CARD_GAP)
+    prevRest.current = offs
     return offs
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- init-only: frozen
-    // per graph, NOT recomputed on node drag (that would reshuffle siblings).
-  }, [graph.id])
+  }, [nodes, graph.edges, byId, bendFracs, labelOffsets, autoSides])
 
   // Per-edge param tags — one per node-pair (A→B), listing the params it transfers
   // (edge toPorts). Anchored ON its edge's routed jog/detour point (buildEdgePath's
   // `out`, so it tracks both nodes, detours and rebends live). The perpendicular
-  // lift is the user's across-drag (labelOffsets) if touched, else the frozen
+  // lift is the user's across-drag (labelOffsets) if touched, else the live
   // card-avoidance offset (restOffsets) — one value, so grabbing never teleports.
   const pairTags = useMemo(() => {
     const out: Array<{
