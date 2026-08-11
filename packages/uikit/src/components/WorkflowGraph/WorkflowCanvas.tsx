@@ -331,6 +331,30 @@ export function WorkflowCanvas({
     return { w, h }
   }, [layout.size, stageRects, nodeRects])
 
+  // A dashed group box around the member nodes of each stage. Computed from the
+  // (drag-overridden) nodeRects, so it re-fits live as nodes are dragged.
+  const stageGroups = useMemo(() => {
+    const PAD = 14
+    const byStage = new Map<string, WfRect[]>()
+    for (const n of spec.nodes) {
+      const r = nodeRects[n.id]
+      if (!r) continue
+      const arr = byStage.get(n.stageId)
+      if (arr) arr.push(r)
+      else byStage.set(n.stageId, [r])
+    }
+    const out: { id: string; x: number; y: number; w: number; h: number }[] = []
+    for (const [id, rects] of byStage) {
+      let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity
+      for (const r of rects) {
+        x0 = Math.min(x0, r.x); y0 = Math.min(y0, r.y)
+        x1 = Math.max(x1, r.x + r.w); y1 = Math.max(y1, r.y + r.h)
+      }
+      out.push({ id, x: x0 - PAD, y: y0 - PAD, w: x1 - x0 + PAD * 2, h: y1 - y0 + PAD * 2 })
+    }
+    return out
+  }, [spec.nodes, nodeRects])
+
   // -- pan / zoom ------------------------------------------------------------
   useEffect(() => {
     const el = containerRef.current
@@ -946,6 +970,23 @@ export function WorkflowCanvas({
         className="absolute top-0 left-0 origin-top-left"
         style={{ transform: `translate(${view.x}px, ${view.y}px) scale(${view.k})` }}
       >
+        {/* Stage group boxes — a dashed enclosure around each stage's member
+            nodes, painted at the bottom so edges and cards sit on top. Re-fits
+            live on drag (reads the overridden nodeRects). Whitish in both themes
+            via theme-swapped --wf-stage-* tokens (a stronger white in light mode,
+            where a faint white on the cream canvas was invisible). */}
+        {stageGroups.map((g) => (
+          <div
+            key={g.id}
+            aria-hidden
+            style={{
+              position: 'absolute', left: g.x, top: g.y, width: g.w, height: g.h,
+              border: '1px dashed var(--wf-stage-border)',
+              background: 'var(--wf-stage-fill)',
+              borderRadius: 12, pointerEvents: 'none',
+            }}
+          />
+        ))}
         <svg width={bounds.w} height={bounds.h} className="absolute top-0 left-0 pointer-events-none overflow-visible">
           {orderedSegments.map((s) => {
             const flowSpec = FLOW[s.flow]

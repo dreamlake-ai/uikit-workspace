@@ -80,6 +80,13 @@
   /* Modal/drawer backdrop. Theme-aware so it dims correctly in both modes. */
   --scrim: rgba(0, 0, 0, 0.5);
 
+  /* Workflow stage group box (dashed enclosure around a stage's member nodes).
+     Whitish in BOTH themes — on the cream light canvas a faint white is nearly
+     invisible, so light mode uses a stronger white fill so the group still reads
+     as a lighter patch (dark mode keeps it subtle). */
+  --wf-stage-fill: rgba(255, 255, 255, 0.42);
+  --wf-stage-border: rgba(255, 255, 255, 0.85);
+
   /* ── Typography ─────────────────────────────────────────────── */
   --f-ui: "Inter Tight", ui-sans-serif, system-ui, sans-serif;
   --f-mono: "JetBrains Mono", ui-monospace, monospace;
@@ -128,6 +135,10 @@ html[data-theme="dark"] {
   --shadow-tint-3: rgba(0, 0, 0, 0.75);
   --shadow-inset: rgba(0, 0, 0, 0.5);
   --scrim: rgba(0, 0, 0, 0.62);
+
+  /* Stage group box — subtle faint-white on the dark canvas. */
+  --wf-stage-fill: rgba(255, 255, 255, 0.04);
+  --wf-stage-border: rgba(255, 255, 255, 0.2);
 }
 
 /* System-dark fallback — applied only when the consumer hasn't pinned light.
@@ -164,6 +175,10 @@ html[data-theme="dark"] {
     --shadow-tint-3: rgba(0, 0, 0, 0.75);
     --shadow-inset: rgba(0, 0, 0, 0.5);
     --scrim: rgba(0, 0, 0, 0.62);
+
+    /* Stage group box — subtle faint-white on the dark canvas. */
+    --wf-stage-fill: rgba(255, 255, 255, 0.04);
+    --wf-stage-border: rgba(255, 255, 255, 0.2);
   }
 }
 
