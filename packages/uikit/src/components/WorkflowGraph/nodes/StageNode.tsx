@@ -6,8 +6,9 @@
 import type { PointerEvent as ReactPointerEvent } from 'react'
 import type { WorkflowStage } from '../spec'
 import {
-  WF_KIND_TOKEN, cardStyle, kindDotStyle, metaStyle, titleRowStyle, titleStyle,
+  WF_KIND_ICON, cardStyle, metaStyle, titleRowStyle, titleStyle,
 } from './chrome'
+import { NodeKindIcon } from './MemberCards'
 
 export interface StageNodeProps {
   stage: WorkflowStage
@@ -37,7 +38,7 @@ export function StageNode({
       onPointerUp={onPointerUp}
     >
       <div style={titleRowStyle}>
-        <span style={kindDotStyle(WF_KIND_TOKEN.stage)} />
+        <NodeKindIcon icon={WF_KIND_ICON.stage} />
         <span style={titleStyle}>{stage.title}</span>
       </div>
       <span style={metaStyle}>{bits.join(' · ')}</span>

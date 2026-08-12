@@ -11,8 +11,8 @@ import type {
 } from '../spec'
 import { providerSummary, samplerSummary } from '../spec'
 import {
-  WF_AGENT_H, WF_AGENT_W, WF_KIND_LABEL, WF_KIND_TOKEN, WF_STATE_COLOR,
-  cardStyle, chipFlexStyle, chipRowStyle, chipStyle, kindDotStyle, metaStyle,
+  WF_AGENT_H, WF_AGENT_W, WF_KIND_ICON, WF_KIND_LABEL, WF_STATE_COLOR,
+  cardStyle, chipFlexStyle, chipRowStyle, chipStyle, metaStyle,
   titleRowStyle, titleStyle,
 } from './chrome'
 
@@ -35,6 +35,26 @@ const handlers = (p: MemberCardCommon) => ({
   onPointerMove: p.onPointerMove,
   onPointerUp: p.onPointerUp,
 })
+
+/** A node's leading glyph: the kind's lucide icon carries the TYPE (shape), tinted
+ *  by run STATUS (neutral muted when there's no run state) — so colour never
+ *  encodes type. Sized to sit at the title's visual height and vertically centred
+ *  with it (titleRowStyle centres the row). `color`/`size` override for the legend. */
+export function NodeKindIcon({ icon: Icon, state, color, size = 13 }: {
+  icon: LucideIcon
+  state?: WorkflowNodeRunStateValue
+  color?: string
+  size?: number
+}) {
+  const c = color ?? (state ? WF_STATE_COLOR[state] : 'var(--color-uikit-muted)')
+  return (
+    <span style={{
+      flexShrink: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: c,
+    }}>
+      <Icon size={size} strokeWidth={2} />
+    </span>
+  )
+}
 
 // ---------------------------------------------------------------------------
 
@@ -60,7 +80,7 @@ export function ComputeNodeCard({ node, dispatchMeta, ...p }: ComputeNodeCardPro
       {...handlers(p)}
     >
       <div style={titleRowStyle}>
-        <span style={kindDotStyle(WF_KIND_TOKEN.compute)} />
+        <NodeKindIcon icon={WF_KIND_ICON.compute} state={p.state} />
         <span style={titleStyle}>{node.title}</span>
       </div>
       <span style={metaStyle}>{WF_KIND_LABEL.compute}</span>
@@ -96,7 +116,7 @@ export function UdaNodeCard({ node, ...p }: UdaNodeCardProps) {
       {...handlers(p)}
     >
       <div style={titleRowStyle}>
-        <span style={kindDotStyle(WF_KIND_TOKEN.uda)} />
+        <NodeKindIcon icon={WF_KIND_ICON.uda} state={p.state} />
         <span style={titleStyle}>{node.title}</span>
       </div>
       <span style={metaStyle}>{WF_KIND_LABEL.uda}</span>
@@ -123,7 +143,7 @@ export function SamplerNodeCard({ node, ...p }: SamplerNodeCardProps) {
       {...handlers(p)}
     >
       <div style={titleRowStyle}>
-        <span style={kindDotStyle(WF_KIND_TOKEN.sampler)} />
+        <NodeKindIcon icon={WF_KIND_ICON.sampler} state={p.state} />
         <span style={titleStyle}>{node.title}</span>
       </div>
       <span style={metaStyle}>{WF_KIND_LABEL.sampler} · {samplerSummary(node.sampler)}</span>
@@ -133,9 +153,9 @@ export function SamplerNodeCard({ node, ...p }: SamplerNodeCardProps) {
 
 // ---------------------------------------------------------------------------
 
-// Control-flow glyphs as lucide icons (the codebase's icon system) — crisp and
-// precisely sized, unlike the bare Unicode glyphs they replace, which rendered
-// noticeably smaller than the other kinds' filled 7×7 kind dot.
+// Per-subtype control-flow icons. Rendered through the shared NodeKindIcon, so
+// they match every other kind's icon exactly (same size + stroke weight, tinted
+// by run status).
 const CONTROL_ICON: Record<ControlNode['control']['type'], LucideIcon> = {
   condition: Diamond,
   switch: Split,
@@ -163,20 +183,9 @@ export function ControlNodeCard({ node, ...p }: ControlNodeCardProps) {
       {...handlers(p)}
     >
       <div style={titleRowStyle}>
-        {/* Same 7×7 footprint as the kind dot (icon centered, overflowing
-            symmetrically), so the icon→title gap matches every other node kind.
-            The outline icon is sized a touch larger than the 7px filled dot so
-            the two read at the same visual size (filled looks heavier). */}
-        <span style={{
-          width: 7, height: 7, flexShrink: 0,
-          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-          color: WF_KIND_TOKEN.control,
-        }}>
-          {(() => {
-            const Icon = CONTROL_ICON[c.type]
-            return <Icon size={12} strokeWidth={3} />
-          })()}
-        </span>
+        {/* Control nodes keep a per-SUBTYPE icon (condition / switch / loop /
+            approval) — its shape is the type; the colour tracks run status. */}
+        <NodeKindIcon icon={CONTROL_ICON[c.type]} state={p.state} />
         <span style={titleStyle}>{node.title}</span>
       </div>
       <span style={metaStyle}>{WF_KIND_LABEL.control} · {c.type}</span>

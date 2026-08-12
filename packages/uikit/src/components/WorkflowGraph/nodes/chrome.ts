@@ -7,6 +7,7 @@
  * positioning (the canvas does this). Docs render them without `pos`.
  */
 import type { CSSProperties } from 'react'
+import { Bot, Cpu, GitBranch, Layers, Shuffle, type LucideIcon } from 'lucide-react'
 import type { WorkflowNodeKind, WorkflowNodeRunStateValue } from '../spec'
 
 export const WF_NODE_W = 156
@@ -16,6 +17,19 @@ export const WF_STAGE_W = WF_NODE_W
 export const WF_STAGE_H = WF_NODE_H
 export const WF_AGENT_W = 140
 export const WF_AGENT_H = 40
+
+/** Kind → lucide icon. TYPE is carried by the icon SHAPE (colour is reserved for
+ *  run status), so the card's leading glyph is this icon tinted by state rather
+ *  than a status-colliding coloured dot. `control` here is the generic branch
+ *  icon (the control CARD still uses a per-subtype icon: condition / switch / …). */
+export const WF_KIND_ICON: Record<WorkflowNodeKind | 'stage' | 'agent', LucideIcon> = {
+  stage: Layers,
+  compute: Cpu,
+  uda: Bot,
+  sampler: Shuffle,
+  control: GitBranch,
+  agent: Bot,
+}
 
 /** Kind → uikit tone token (extends PipelineGraph's KIND_TOKEN vocabulary). */
 export const WF_KIND_TOKEN: Record<WorkflowNodeKind | 'stage' | 'agent', string> = {

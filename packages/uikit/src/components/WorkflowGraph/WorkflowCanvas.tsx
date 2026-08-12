@@ -40,10 +40,10 @@ import {
   nodeInputs, nodeOutputs, outputPortColor,
   type AgentInstance, type WorkflowNodeRunStateValue, type WorkflowSpec,
 } from './spec'
-import { WF_KIND_TOKEN, WF_STATE_COLOR } from './nodes/chrome'
+import { WF_KIND_ICON, WF_STATE_COLOR } from './nodes/chrome'
 import { StageNode } from './nodes/StageNode'
 import {
-  AgentInstanceCard, ComputeNodeCard, ControlNodeCard, SamplerNodeCard, UdaNodeCard,
+  AgentInstanceCard, ComputeNodeCard, ControlNodeCard, NodeKindIcon, SamplerNodeCard, UdaNodeCard,
   type DispatchMeta,
 } from './nodes/MemberCards'
 
@@ -1481,7 +1481,9 @@ function Legend() {
       }}>nodes</span>
       {LEGEND_KINDS.map((k) => (
         <span key={k} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ width: 7, height: 7, borderRadius: 2, background: WF_KIND_TOKEN[k], opacity: k === 'stage' ? 0.75 : 1 }} />
+          {/* Type is the icon; colour is reserved for status, so the legend glyph
+              is neutral (the edges section below is the status-colour key). */}
+          <NodeKindIcon icon={WF_KIND_ICON[k]} color="var(--color-uikit-muted)" size={12} />
           <span style={{ opacity: 0.9 }}>{k}</span>
         </span>
       ))}
