@@ -136,20 +136,6 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
       setBuffering(false);
     }, []);
 
-    // Seek-bar visibility (native-like): always shown while paused; while playing,
-    // shown on pointer activity over the video and auto-hidden ~2.5s after it stops.
-    const [videoHover, setVideoHover] = useState(false);
-    const hoverTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-    const bumpHover = useCallback(() => {
-      setVideoHover(true);
-      clearTimeout(hoverTimer.current);
-      hoverTimer.current = setTimeout(() => setVideoHover(false), 2500);
-    }, []);
-    const clearHover = useCallback(() => {
-      clearTimeout(hoverTimer.current);
-      setVideoHover(false);
-    }, []);
-
     useAnnotatorStyles();
 
     // Keep the toggle in sync if the host later flips `defaultShowHandpose`
@@ -162,7 +148,6 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
     useEffect(() => () => {
       clearTimeout(toastTimer.current);
       clearTimeout(bufTimer.current);
-      clearTimeout(hoverTimer.current);
     }, []);
 
     // External media takeover: hand the mounted <video> to the caller (e.g. a
@@ -683,12 +668,7 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
             {videoSubtitle && <span className="va-head-sub">{videoSubtitle}</span>}
           </div>
         )}
-        <div
-          className="va-stage"
-          ref={stageRef}
-          onMouseMove={showSeekBar ? bumpHover : undefined}
-          onMouseLeave={showSeekBar ? clearHover : undefined}
-        >
+        <div className="va-stage" ref={stageRef}>
           <video
             ref={videoRef}
             className="va-video"
@@ -738,25 +718,19 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
             </div>
           )}
           {!videoUrl && !attachMedia && <div className="va-stage-msg">(no video url provided)</div>}
-          {/* Custom native-styled seek bar (progress only — no buttons), with a
-              bottom scrim. Shown while paused; while playing it fades in on pointer
-              activity and auto-hides. The thumb only appears on hover (like native). */}
-          {showSeekBar && D > 0 && (() => {
-            const on = !playing || videoHover;
-            return (
-              <>
-                <div className={cn("va-scrim", on && "on")} aria-hidden="true" />
-                <div className={cn("va-seek", on && "on")} onPointerDown={onSeekDown}>
-                  <div className="va-seek-track">
-                    <div className="va-seek-buf" style={{ width: `${clamp(buffered / D, 0, 1) * 100}%` }} />
-                    <div className="va-seek-fill" style={{ width: `${clamp(currentTime / D, 0, 1) * 100}%` }} />
-                  </div>
-                  <div className="va-seek-thumb" style={{ left: `${clamp(currentTime / D, 0, 1) * 100}%` }} />
-                </div>
-              </>
-            );
-          })()}
         </div>
+
+        {/* Shared scrub bar — a slim static progress rail BELOW the video stage
+            (progress only; the transport holds the controls). Always visible. */}
+        {showSeekBar && D > 0 && (
+          <div className="va-seek" onPointerDown={onSeekDown}>
+            <div className="va-seek-track">
+              <div className="va-seek-buf" style={{ width: `${clamp(buffered / D, 0, 1) * 100}%` }} />
+              <div className="va-seek-fill" style={{ width: `${clamp(currentTime / D, 0, 1) * 100}%` }} />
+            </div>
+            <div className="va-seek-thumb" style={{ left: `${clamp(currentTime / D, 0, 1) * 100}%` }} />
+          </div>
+        )}
 
         <Transport
           readout={readout}

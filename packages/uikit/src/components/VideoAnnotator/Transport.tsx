@@ -72,16 +72,16 @@ export function Transport({
           onClick={() => goSeg(sel - 1)}
           disabled={sel <= 0}
         >
-          <SkipBackSharp size={14} />
+          <SkipBackSharp size={15} />
         </TipButton>
         <TipButton className="va-icon" label="Prev frame (←)" onClick={() => stepFrame(-1, false)}>
-          <ChevronLeft size={14} />
+          <ChevronLeft size={15} strokeWidth={1.8} />
         </TipButton>
         <TipButton className="va-icon va-play" label="Play/Pause (Space)" onClick={togglePlay}>
-          {playing ? <PauseSharp size={14} /> : <PlaySharp size={14} />}
+          {playing ? <PauseSharp size={18} /> : <PlaySharp size={18} />}
         </TipButton>
         <TipButton className="va-icon" label="Next frame (→)" onClick={() => stepFrame(1, false)}>
-          <ChevronRight size={14} />
+          <ChevronRight size={15} strokeWidth={1.8} />
         </TipButton>
         <TipButton
           className="va-icon"
@@ -89,13 +89,13 @@ export function Transport({
           onClick={() => goSeg(sel + 1)}
           disabled={sel >= segCount - 1}
         >
-          <SkipForwardSharp size={14} />
+          <SkipForwardSharp size={15} />
         </TipButton>
       </div>
 
       <div className="va-tp-right">
         <TipButton className="va-icon" label="Split at playhead (S)" onClick={doSplit}>
-          <Scissors size={14} />
+          <Scissors size={15} strokeWidth={1.8} />
         </TipButton>
         <TipButton
           className="va-icon"
@@ -103,7 +103,7 @@ export function Transport({
           onClick={() => doMerge(sel)}
           disabled={sel <= 0}
         >
-          <ArrowLeftToLine size={14} />
+          <ArrowLeftToLine size={15} strokeWidth={1.8} />
         </TipButton>
         {hasHandpose && (
           // While the pose blob is still loading, show the Hand in its active
@@ -114,7 +114,7 @@ export function Transport({
             onClick={onToggleHands}
             disabled={handsLoading}
           >
-            <Hand size={14} />
+            <Hand size={15} strokeWidth={1.8} />
           </TipButton>
         )}
         {transportExtra}

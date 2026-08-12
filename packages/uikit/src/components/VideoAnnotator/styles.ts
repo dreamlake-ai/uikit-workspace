@@ -36,6 +36,12 @@ export const CSS = `
   --va-idle: var(--tone-warm-gray, #9c907a);
   --va-selected: var(--selected-bg, #f5f3ee);
   --va-radius: var(--radius, 6px);
+  /* Scrub rail — opaque so fill/knob never stack translucently (design tokens). */
+  --va-scrub-track: #e6e4dc;
+  --va-scrub-fill:  #73726e;
+  --va-scrub-knob:  #5c5b57;
+  /* Edited-segment ring — green (design --lab-edit = --diff-add). */
+  --va-edit: var(--diff-add, var(--tone-green, #1f8f4a));
   /* Popover/tooltip drop shadow. Aliases the kit's theme-aware shadow token
      so it stays dark in dark mode — not a white glow off the light ink. */
   --va-shadow: var(--shadow-tint-2, rgba(0,0,0,.1));
@@ -74,25 +80,19 @@ export const CSS = `
   text-transform:uppercase;color:rgba(255,255,255,.55)}
 .va-buflabel b{font-weight:500;color:rgba(255,255,255,.38)}
 @media (prefers-reduced-motion: reduce){.va-bufring{animation:none}}
-/* Custom seek bar — mimics the native <video controls> progress bar: a thin
-   translucent-white track (buffered lighter, played solid white) with a small
-   white thumb that only appears on hover. Shown while paused; fades in on hover
-   while playing (the .on class). A bottom scrim darkens the video behind it. */
-.va-scrim{position:absolute;left:0;right:0;bottom:0;height:50px;pointer-events:none;z-index:3;
-  background:linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%);
-  opacity:0;transition:opacity .2s ease}
-.va-scrim.on{opacity:1}
-.va-seek{position:absolute;left:12px;right:12px;bottom:20px;height:16px;
-  display:flex;align-items:center;cursor:pointer;z-index:4;touch-action:none;
-  opacity:0;pointer-events:none;transition:opacity .2s ease}
-.va-seek.on{opacity:1;pointer-events:auto}
-.va-seek-track{position:relative;flex:1;height:3px;border-radius:2px;background:rgba(255,255,255,.3)}
-.va-seek-buf{position:absolute;left:0;top:0;bottom:0;border-radius:2px;background:rgba(255,255,255,.5)}
-.va-seek-fill{position:absolute;left:0;top:0;bottom:0;border-radius:2px;background:#fff}
-.va-seek-thumb{position:absolute;top:50%;width:12px;height:12px;margin-left:-6px;border-radius:50%;
-  background:#fff;transform:translateY(-50%);box-shadow:0 1px 2px rgba(0,0,0,.35);
-  opacity:0;transition:opacity .12s ease;pointer-events:none}
-.va-seek:hover .va-seek-thumb{opacity:1}
+/* Shared scrub bar — a slim static progress rail that sits BELOW the video
+   stage (design .lab-video__scrub): a 3px track, a played fill, and a small
+   round knob that only appears on hover/drag. Full-width, always visible. */
+.va-seek{position:relative;display:flex;align-items:center;height:11px;margin:-6px 2px 0;
+  flex:none;cursor:pointer;touch-action:none}
+.va-seek::before{content:"";position:absolute;left:0;right:0;top:-6px;bottom:-6px}
+.va-seek-track{position:relative;flex:1;height:3px;border-radius:2px;background:var(--va-scrub-track)}
+.va-seek-buf{position:absolute;left:0;top:0;bottom:0;border-radius:2px;
+  background:color-mix(in srgb, var(--va-scrub-fill) 30%, transparent)}
+.va-seek-fill{position:absolute;left:0;top:0;bottom:0;border-radius:2px;background:var(--va-scrub-fill)}
+.va-seek-thumb{position:absolute;top:50%;width:9px;height:9px;margin:-4.5px 0 0 -4.5px;border-radius:999px;
+  background:var(--va-scrub-knob);opacity:0;transition:opacity .12s ease;pointer-events:none}
+.va-seek:hover .va-seek-thumb,.va-seek:active .va-seek-thumb{opacity:1}
 /* Hand-pose overlay canvas: absolutely positioned by JS to sit exactly over the
    letterboxed video content. Never intercepts pointer events. */
 .va-overlay{position:absolute;left:0;top:0;pointer-events:none;z-index:2}
@@ -101,39 +101,47 @@ export const CSS = `
    horizontal center — aligned with the centered video above — regardless of
    how wide the readout/speed (left) vs split/extract (right) groups are. */
 .va-transport{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);
-  align-items:center;gap:20px;flex:none;margin-top:-2px}
-.va-tp-left,.va-tp-right{display:flex;align-items:center;gap:6px;min-width:0}
+  align-items:center;gap:10px;flex:none;margin-top:-2px}
+.va-tp-left,.va-tp-right{display:flex;align-items:center;gap:8px;min-width:0}
 .va-tp-right{justify-content:flex-end}
-.va-tp-center{display:flex;align-items:center;gap:6px;flex:none}
-.va-transport button{height:28px}
-/* Transport controls read as real buttons: resting panel fill + hairline,
-   not bare icons. Scoped under .va-transport so they beat the base
-   .va-root button transparent-background rule. */
-.va-transport .va-icon{width:28px;height:28px;padding:0;justify-content:center;border-radius:999px;
-  background:transparent;border:1px solid var(--va-line);
-  color:color-mix(in srgb, var(--va-text) 75%, var(--va-muted))}
-/* Neutral outline + glyph at rest; both turn accent-blue on hover. */
-.va-transport .va-icon:hover{background:transparent;border-color:var(--va-accent);color:var(--va-accent)}
-/* Toggle icons (hand-pose, and host transportExtra toggles): read as a checkbox
-   — filled accent when ON, neutral OFF. */
-.va-transport .va-icon.on{border-color:var(--va-accent);color:var(--va-accent);
-  background:color-mix(in srgb, var(--va-accent) 14%, transparent)}
-.va-transport .va-icon.on:hover{background:color-mix(in srgb, var(--va-accent) 20%, transparent)}
+.va-tp-center{display:flex;align-items:center;gap:8px;flex:none}
+/* Transport controls are quiet round buttons (design .lab-round): fully round,
+   transparent, resting at .75 opacity → ink on hover with a soft ink wash;
+   active (toggles) turn accent. Scoped under .va-transport to beat the base
+   .va-root button rules. */
+.va-transport .va-icon{width:30px;height:30px;padding:0;justify-content:center;border-radius:999px;
+  background:transparent;border:0;color:var(--va-text);opacity:.75;
+  transition:opacity .12s ease, background .12s ease, color .12s ease}
+.va-transport .va-icon:hover{opacity:1;color:var(--va-text);
+  background:color-mix(in srgb, var(--va-text) 5%, transparent)}
+/* Disabled (e.g. prev/next segment at the ends): no hover, no tooltip, no click.
+   pointer-events:none stops the portaled tooltip from firing too. */
+.va-transport .va-icon:disabled{opacity:.35;cursor:default;pointer-events:none;
+  background:transparent;color:var(--va-text)}
+/* Big center play/pause. */
+.va-transport .va-icon.va-play{width:36px;height:36px}
+/* Solid glyphs (play/pause/skip): fill from the current text color. */
+.va-transport .va-icon.va-fill svg{fill:currentColor}
+/* Toggle icons (hand-pose + host transportExtra toggles): accent when ON. */
+.va-transport .va-icon.on{opacity:1;color:var(--va-accent);background:transparent}
+.va-transport .va-icon.on:hover{background:color-mix(in srgb, var(--va-text) 5%, transparent)}
 .va-icon svg{flex:none}
 .va-root svg{stroke-linejoin:round;stroke-linecap:round}
 
-.va-readout{font:11px var(--f-mono, ui-monospace, Menlo, monospace);color:var(--va-muted);
+.va-readout{font:12px var(--f-mono, ui-monospace, Menlo, monospace);color:var(--va-text);opacity:.8;
   padding:6px 0;text-align:left;flex:none;width:176px;white-space:nowrap}
 .va-speedsel{position:relative;display:inline-flex}
-.va-speedsel .va-speedbtn{display:inline-flex;align-items:center;gap:3px;height:28px;padding:0 6px 0 9px;
-  background:var(--va-panel);color:var(--va-text);border:1px solid transparent;border-radius:var(--va-radius);cursor:pointer;
-  font:11px var(--f-mono, ui-monospace, Menlo, monospace)}
+/* Speed picker (design .lab-speed): a quiet mono token, no chrome at rest,
+   ink + soft wash on hover/open. */
+.va-speedsel .va-speedbtn{display:inline-flex;align-items:center;gap:3px;height:auto;padding:2px 4px;
+  background:transparent;color:var(--va-muted);border:0;border-radius:6px;cursor:pointer;
+  font:12px var(--f-mono, ui-monospace, Menlo, monospace)}
 .va-speedbtn .va-caret{color:var(--va-muted)}
-.va-speedbtn:hover{background:var(--va-panel2)}
+.va-speedbtn:hover{background:color-mix(in srgb, var(--va-text) 6%, transparent);color:var(--va-text)}
 /* No press-shift on the speed button — the base button:active translate reads
    as jitter here next to the readout. */
 .va-speedsel .va-speedbtn:active{transform:none}
-.va-speedsel.open .va-speedbtn{border-color:var(--va-accent)}
+.va-speedsel.open .va-speedbtn{background:color-mix(in srgb, var(--va-text) 6%, transparent);color:var(--va-text)}
 .va-speedmenu{position:absolute;bottom:calc(100% + 6px);left:0;z-index:40;min-width:calc(100% + 8px);
   background:var(--va-panel);border:1px solid var(--va-line);border-radius:6px;
   box-shadow:0 8px 24px var(--va-shadow);padding:4px}
@@ -244,29 +252,39 @@ html[data-theme="dark"] .va-track.inactive .va-seg:hover{background:var(--va-pan
 .va-addrow:hover .va-addrow-btn{opacity:1;transform:translate(-50%,-50%) scale(1);
   background:var(--va-accent);color:#fff;border-color:transparent;box-shadow:0 1px 5px var(--va-shadow)}
 .va-addrow-btn svg{width:12px;height:12px}
-.va-seg{position:absolute;top:0;bottom:0;border-radius:0;
-  padding:4px 3px;overflow:hidden;background:var(--va-panel2);box-shadow:inset 0 0 0 1px var(--va-line)}
-.va-seg:hover{background:#edf6fc;box-shadow:inset 0 0 0 1px var(--va-line)}
-/* Edited segments get an amber border (host sets Segment.edited on a caption or
-   structural change). Higher specificity than :hover so hover keeps it; the .sel
-   rule below is declared after, so a selected segment's accent border wins. */
-.va-seg.edited{box-shadow:inset 0 0 0 1.5px color-mix(in srgb, var(--va-warn) 40%, transparent)}
-/* Resegmented (split / merge / retime) — a purple border, distinct from both the
-   amber "edited" border and the blue selection border. Declared before .sel so a
-   selected chip's accent border still wins. */
-.va-seg.reseg{box-shadow:inset 0 0 0 1.5px color-mix(in srgb, var(--va-reseg) 55%, transparent)}
-.va-seg.sel{background:#edf6fc;box-shadow:inset 0 0 0 1.5px #23a9ff;z-index:3}
-.va-seg.sel .va-seglabel{color:#1a1a1a}
-/* Dark mode uses the same blue accent as light for hover/selection (a
-   translucent accent tint so the dark surface reads through); the label flips to
-   light ink to stay legible over the tinted fill. */
-html[data-theme="dark"] .va-seg:hover{background:color-mix(in srgb, var(--va-accent) 14%, transparent)}
-html[data-theme="dark"] .va-seg.sel{background:color-mix(in srgb, var(--va-accent) 20%, transparent);box-shadow:inset 0 0 0 1.5px var(--va-accent)}
-html[data-theme="dark"] .va-seg:hover .va-seglabel,
-html[data-theme="dark"] .va-seg.sel .va-seglabel{color:var(--va-text)}
-.va-seglabel{font-size:9px;line-height:1.3;color:var(--va-muted);font-weight:400;
-  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;overflow-wrap:break-word}
-.va-seg:hover .va-seglabel{color:#1a1a1a}
+/* Segment cells (design .lab-cell): rounded, soft ink-tint fill, a mono index
+   above a 2-line f-ui caption. Hover = quiet accent ring; selected = accent tint
+   + accent ring; edited = green ring (outranks selection); resegmented = purple
+   ring. All color-mix / accent-tinted, so light + dark read from the same rules. */
+.va-seg{position:absolute;top:0;bottom:0;border-radius:6px;padding:5px 6px;overflow:hidden;
+  background:color-mix(in srgb, var(--va-text) 4%, var(--va-bg));box-shadow:none;
+  display:flex;flex-direction:column;gap:2px;
+  transition:background .12s ease, box-shadow .12s ease}
+.va-seg:hover{background:color-mix(in srgb, var(--va-text) 8%, var(--va-bg));
+  box-shadow:inset 0 0 0 1.5px color-mix(in srgb, var(--va-accent) 45%, transparent)}
+.va-seg.sel{background:color-mix(in srgb, var(--va-accent) 14%, var(--va-bg));
+  box-shadow:inset 0 0 0 1.5px var(--va-accent);z-index:3}
+/* Edited / resegmented both get the green ring, which outranks hover + selection
+   (the app's structural-edit "reseg" reads as an edit here, per design). */
+.va-seg.edited,.va-seg.reseg,.va-seg.edited.sel,.va-seg.reseg.sel{box-shadow:inset 0 0 0 1.5px var(--va-edit)}
+.va-seg-line{display:flex;align-items:baseline;gap:4px;min-width:0}
+.va-seg-n{flex:none;font-size:9px;line-height:1.25;opacity:.7;color:var(--va-muted);
+  font-family:var(--f-mono, ui-monospace, Menlo, monospace)}
+.va-seg.edited .va-seg-n,.va-seg.reseg .va-seg-n{color:var(--va-edit);opacity:1}
+.va-seglabel{flex:1;min-width:0;font-size:10px;line-height:1.25;color:var(--va-text);opacity:.75;
+  font-family:var(--f-ui, "Inter Tight", ui-sans-serif, system-ui, sans-serif);
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;overflow-wrap:break-word}
+/* Segment hover tooltip (design .lab-tip--wide): a fixed chip (portaled to
+   <body>, so no lane overflow clips it) — mono muted label, wrapped caption, and
+   a struck-through "was:" line for edited cells. */
+.va-celltip{position:fixed;transform:translateX(-50%);z-index:4000;max-width:420px;
+  padding:4px 8px;border-radius:6px;background:var(--bg, #fffefb);color:var(--ink, #1a1a1a);
+  box-shadow:0 3px 10px rgba(0,0,0,.10), 0 0 0 1px color-mix(in srgb, var(--ink, #1a1a1a) 10%, transparent);
+  font:11px/1.3 var(--f-ui, "Inter Tight", ui-sans-serif, system-ui, sans-serif);
+  white-space:normal;pointer-events:none;display:flex;flex-direction:column;gap:2px}
+.va-celltip b{font-family:var(--f-mono, ui-monospace, Menlo, monospace);font-weight:500;
+  color:var(--uikit-muted, #6b6b6b)}
+.va-celltip-was{font-style:normal;color:var(--uikit-muted, #6b6b6b);opacity:.7;text-decoration:line-through}
 .va-handle{position:absolute;top:0;bottom:0;width:9px;margin-left:-5px;cursor:ew-resize;z-index:5}
 .va-handle::after{content:"";position:absolute;left:4px;top:0;bottom:0;width:1.5px;background:var(--va-accent);opacity:0}
 .va-handle:hover::after{opacity:1}

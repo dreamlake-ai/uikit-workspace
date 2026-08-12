@@ -29,6 +29,12 @@ export interface Segment {
    */
   edited?: boolean;
   resegmented?: boolean;
+  /**
+   * The caption before it was edited (host-set). Purely presentational: shown
+   * as a struck-through "was: …" line in the segment's hover tooltip when
+   * `edited` is set. Ignored otherwise.
+   */
+  original?: string;
 }
 
 /**

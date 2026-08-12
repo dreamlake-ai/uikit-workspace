@@ -46,6 +46,12 @@ export function Timeline({
   // Viewport position of the hover-time bubble, so it can be portaled to <body>
   // and never clipped by a scrolling/split parent's overflow.
   const [hoverPos, setHoverPos] = useState<{ x: number; y: number } | null>(null);
+  // Per-segment hover tooltip (design .lab-tip--wide): the segment number, its
+  // caption, and — for edited segments — the pre-edit caption. Fixed-positioned
+  // (portaled to <body>) so a scrolling lane never clips it.
+  const [cellTip, setCellTip] = useState<
+    { n: number; cap: string; was: string | null; left: number; bottom: number } | null
+  >(null);
 
   // Three-tier ruler (major / minor / micro), ported from the shared
   // episode-timeline DLDetailRuler so it matches the design 1:1. The major step
@@ -146,11 +152,22 @@ export function Timeline({
                   key={p.id ?? i}
                   className={cn("va-seg", isActive && i === sel && "sel", p.edited && "edited", p.resegmented && "reseg")}
                   style={{ left: `${(p.start / (D || 1)) * 100}%`, width: `${((p.end - p.start) / (D || 1)) * 100}%` }}
+                  onMouseEnter={(e) => {
+                    const r = e.currentTarget.getBoundingClientRect();
+                    setCellTip({
+                      n: i + 1,
+                      cap: p.description ?? "",
+                      was: p.edited && p.original && p.original !== p.description ? p.original : null,
+                      left: r.left + r.width / 2,
+                      bottom: window.innerHeight - r.top + 8,
+                    });
+                  }}
+                  onMouseLeave={() => setCellTip(null)}
                 >
-                  <span className="va-seglabel">
-                    {i + 1}
-                    {p.description ? " · " + p.description : ""}
-                  </span>
+                  <div className="va-seg-line">
+                    <span className="va-seg-n">{i + 1}</span>
+                    {p.description && <span className="va-seglabel">{p.description}</span>}
+                  </div>
                 </div>
               ))}
               {isActive &&
@@ -234,6 +251,18 @@ export function Timeline({
       {activeSegs.length > 0 && currentTime > 0.001 && (
         <div className="va-playhead" style={{ left: `${(clamp(currentTime, 0, D) / (D || 1)) * 100}%` }} />
       )}
+      {cellTip != null &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div className="va-celltip" role="tooltip" style={{ left: cellTip.left, bottom: cellTip.bottom }}>
+            <span>
+              <b>{cellTip.n}</b>
+              {cellTip.cap ? " " + cellTip.cap : ""}
+            </span>
+            {cellTip.was != null && <span className="va-celltip-was">was: {cellTip.was}</span>}
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }
