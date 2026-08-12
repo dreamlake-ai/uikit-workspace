@@ -64,14 +64,19 @@ export function cardStyle(opts: CardChromeOpts): CSSProperties {
   const panel = 'var(--color-uikit-panel)'
   const active = state && state !== 'idle' && state !== 'skipped'
   const stateColor = state ? WF_STATE_COLOR[state] : undefined
-  const bg = active
-    ? `color-mix(in srgb, ${panel} ${selected ? '84%' : '90%'}, ${stateColor})`
-    : panel
-  // Selection border = the node's own STATE colour (an idle / not-yet-run node,
-  // or a stage with no run state, reads as neutral muted) — matching
-  // PipelineGraph, never the fixed blue accent.
+  // The colour that carries a selection. A running / done / failed node keeps its
+  // status colour; an idle / not-yet-run node (or a stage) uses NEUTRAL grey
+  // (muted) — never a status colour like the accent blue, which would read as
+  // "running", and softer than full ink. The strengthened border/ring/tint below
+  // keep even the grey selection clearly readable.
+  const selColor = stateColor ?? 'var(--color-uikit-muted)'
+  const bg = selected
+    ? `color-mix(in srgb, ${panel} ${active ? '85%' : '92%'}, ${selColor})`
+    : active
+      ? `color-mix(in srgb, ${panel} 90%, ${stateColor})`
+      : panel
   const border = selected
-    ? (stateColor ?? 'var(--color-uikit-muted)')
+    ? selColor
     : active
       ? `color-mix(in srgb, var(--color-uikit-faint) 55%, ${stateColor})`
       // Recessed idle sub-cards use an even fainter outline than a member card
@@ -87,7 +92,7 @@ export function cardStyle(opts: CardChromeOpts): CSSProperties {
     // Member cards: border a touch heavier than the edge lines (~1.4px) so card
     // outline and connectors read at one consistent weight. Recessed sub-cards
     // (agents) drop to 1px so they read as subordinate, not peer.
-    border: `${recessed ? 1 : 1.5}px solid ${border}`,
+    border: `${recessed ? 1 : selected ? 2 : 1.5}px solid ${border}`,
     borderRadius: recessed ? 6 : 7,
     padding: '8px 10px',
     display: 'flex',
@@ -101,10 +106,13 @@ export function cardStyle(opts: CardChromeOpts): CSSProperties {
     boxShadow: recessed
       ? 'none'
       : selected
-        ? '0 1px 0 rgba(0,0,0,.05), 0 6px 18px rgba(0,0,0,.10)'
+        // A soft ring in the selection colour + a slightly deeper drop shadow
+        // lift the selected card off the plane — stronger than the original, but
+        // dialled back from the first (too-heavy) pass.
+        ? `0 0 0 2px color-mix(in srgb, ${selColor} 22%, transparent), 0 1px 0 rgba(0,0,0,.05), 0 8px 20px rgba(0,0,0,.11)`
         : '0 1px 0 rgba(0,0,0,.04)',
     opacity: dimmed ? 0.4 : state === 'skipped' ? 0.55 : 1,
-    transition: 'opacity 160ms ease, border-color 120ms ease, background 120ms ease',
+    transition: 'opacity 160ms ease, border-color 120ms ease, background 120ms ease, box-shadow 120ms ease',
     fontFamily: 'var(--font-uikit-mono)',
     cursor: 'grab',
     userSelect: 'none',
