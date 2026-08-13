@@ -120,8 +120,6 @@ export const CSS = `
   background:transparent;color:var(--va-text)}
 /* Big center play/pause. */
 .va-transport .va-icon.va-play{width:36px;height:36px}
-/* Solid glyphs (play/pause/skip): fill from the current text color. */
-.va-transport .va-icon.va-fill svg{fill:currentColor}
 /* Toggle icons (hand-pose + host transportExtra toggles): accent when ON. */
 .va-transport .va-icon.on{opacity:1;color:var(--va-accent);background:transparent}
 .va-transport .va-icon.on:hover{background:color-mix(in srgb, var(--va-text) 5%, transparent)}
