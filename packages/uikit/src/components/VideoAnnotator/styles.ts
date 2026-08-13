@@ -275,6 +275,11 @@ export const CSS = `
   background:color-mix(in srgb, var(--va-text) 4%, var(--va-bg));box-shadow:none;
   display:flex;flex-direction:column;gap:2px;
   transition:background .12s ease, box-shadow .12s ease}
+/* Adjacent segments tile edge-to-edge; a 1px pure-bg inset on every segment
+   after the first fakes a hairline gap between them (design .lab-cell +
+   .lab-cell). It's an inset shadow, not real spacing, so the hover/selected/
+   edited rings below simply replace it and fill the gap with no layout shift. */
+.va-seg + .va-seg{box-shadow:inset 1px 0 0 var(--va-bg)}
 .va-seg:hover{background:color-mix(in srgb, var(--va-text) 8%, var(--va-bg));
   box-shadow:inset 0 0 0 1.5px color-mix(in srgb, var(--va-accent) 45%, transparent)}
 /* .sel = the active lane's selected segment; .cur = the segment under the
