@@ -49,7 +49,7 @@ export const CSS = `
   /* Own stacking context so the timeline/tooltip/menu z-indexes (up to 60) stay
      contained and can't paint over a host's sticky header when scrolled. */
   isolation:isolate;
-  display:flex; flex-direction:column; gap:12px; min-width:0; min-height:0; height:100%;
+  display:flex; flex-direction:column; gap:8px; min-width:0; min-height:0; height:100%;
   color:var(--va-text);
   font:14px/1.45 var(--f-ui, "Inter Tight", ui-sans-serif, system-ui, -apple-system, sans-serif);
 }
@@ -152,7 +152,7 @@ export const CSS = `
 
 /* margin-top opens a gap above the timeline for the floating zoom capsule
    (which sits over the ruler) and separates it from the transport row. */
-.va-tlwrap{position:relative;display:flex;flex:none;margin-top:13.5px}
+.va-tlwrap{position:relative;display:flex;flex:none}
 .va-tlwrap.multi{gap:8px}
 /* Horizontal-scroll viewport for the (possibly widened) timeline canvas. The
    canvas grows to zoom*100% and overflows here; at 1× it's exactly 100% (no
