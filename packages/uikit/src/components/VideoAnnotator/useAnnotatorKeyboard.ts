@@ -28,10 +28,13 @@ export function useAnnotatorKeyboard(enabled: boolean, actions: AnnotatorKeyActi
     const onKey = (e: KeyboardEvent) => {
       const { togglePlay, stepFrame, gotoBoundary, doSplit, approveToggle, goSeg, doMerge, sel } =
         actionsRef.current;
-      const tag = (document.activeElement as HTMLElement | null)?.tagName || "";
-      const typing = /^(TEXTAREA|INPUT|SELECT)$/.test(tag);
+      const el = document.activeElement as HTMLElement | null;
+      // Suppress every shortcut while a field is focused — an input/textarea/
+      // select OR any contentEditable (e.g. the segment-list caption editor),
+      // so typing a caption never triggers play/split/merge/etc.
+      const typing = /^(TEXTAREA|INPUT|SELECT)$/.test(el?.tagName || "") || !!el?.isContentEditable;
       if (typing) {
-        if (e.key === "Escape") (document.activeElement as HTMLElement).blur();
+        if (e.key === "Escape") el?.blur();
         return;
       }
       switch (e.key) {
