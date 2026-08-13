@@ -80,6 +80,7 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
       selectedTracks,
       onSelectedTracksChange,
       labelGutter,
+      laneLabel,
       onTracksChange,
       onActiveTrackChange,
       allowAddTracks = true,
@@ -168,7 +169,10 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
     const multi = tracks != null;
     const trackList: Track[] = multi
       ? tracks
-      : [{ id: "__single", name: "", segments: segments ?? [] }];
+      : [{ id: "__single", name: laneLabel ?? "", segments: segments ?? [] }];
+    // Show the lane-label gutter (+ negative-tick ruler) either in multi-track OR
+    // when a single-track host opts in via `laneLabel`, so both look consistent.
+    const showLanes = multi || laneLabel != null;
     const active = clamp(activeTrackIndex ?? 0, 0, Math.max(0, trackList.length - 1));
 
     // Multi-select lane set — a display-only distinction in the component
@@ -208,7 +212,7 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
       [selTracks, active, commitSelTracks, onActiveTrackChange]
     );
     // Left label gutter (multi-track only): the ruler's 0 tick insets to it.
-    const gutterPx = multi ? (labelGutter ?? 54) : 0;
+    const gutterPx = showLanes ? (labelGutter ?? 54) : 0;
 
     const D =
       duration ||
@@ -832,19 +836,22 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
               stack of selectable lane labels overlaid on the timeline's left
               gutter. Rendered OUTSIDE the scroll so it stays put while the strip
               scrolls; vertically aligned with the lanes. Click toggles select. */}
-          {multi && gutterPx > 0 && (
+          {gutterPx > 0 && (
             <div className="va-rowlabs" style={{ width: gutterPx }}>
               {trackList.map((tr, ti) => {
                 const on = selTracks.includes(ti);
                 const nm = tr.name || `track ${ti + 1}`;
+                // With a single lane there's nothing to toggle (always selected) —
+                // the label is display-only.
+                const toggleable = trackList.length > 1;
                 return (
                   <div key={tr.id || ti} className={cn("va-rowlab", on && "on", ti === active && "focus")}>
                     <button
                       type="button"
                       className="va-rowlab-btn"
                       aria-pressed={on}
-                      title={on ? `Deselect ${nm}` : `Select ${nm}`}
-                      onClick={() => toggleLane(ti)}
+                      title={toggleable ? (on ? `Deselect ${nm}` : `Select ${nm}`) : nm}
+                      onClick={toggleable ? () => toggleLane(ti) : undefined}
                     >
                       <span className="va-rowlab-txt">{nm}</span>
                     </button>

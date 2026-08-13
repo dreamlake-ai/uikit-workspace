@@ -152,6 +152,11 @@ export interface VideoAnnotatorProps {
    *  0 tick insets to it (ticks run negative to its left, so 0 aligns with the
    *  first segment). Default 54. 0 disables the gutter. */
   labelGutter?: number;
+  /** Single-track only: a lane name for the ONE lane. When set, single-track
+   *  renders the same lane-label gutter + negative-tick ruler as multi-track (so
+   *  the two look consistent), with this label shown for the single lane. Ignored
+   *  when `tracks` is provided. */
+  laneLabel?: string;
   /** Fired after a structural edit in multi-track mode (returns the full track list). */
   onTracksChange?: (next: Track[]) => void;
   /** Fired when the active track changes (click a lane, add/remove). */
