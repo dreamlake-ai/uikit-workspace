@@ -7,6 +7,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { X } from "lucide-react";
 import { cn } from "../../lib/utils";
 import type { Segment, Track, VideoAnnotatorHandle, VideoAnnotatorProps } from "./types";
 import {
@@ -26,7 +27,6 @@ import { frameAtMediaTime } from "./handpose";
 import { Transport } from "./Transport";
 import { ZoomControl } from "./ZoomControl";
 import { Timeline } from "./Timeline";
-import { TrackHeads } from "./TrackHeads";
 import { DescriptionBox } from "./DescriptionBox";
 
 // Match the browser's native playback-rate menu so the custom menu shows the
@@ -77,12 +77,14 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
       onApproveToggle,
       tracks,
       activeTrackIndex,
+      selectedTracks,
+      onSelectedTracksChange,
+      labelGutter,
       onTracksChange,
       onActiveTrackChange,
       allowAddTracks = true,
       onAddTrack,
       onRemoveTrack,
-      onRenameTrack,
       speeds = DEFAULT_SPEEDS,
       enableKeyboard = true,
       showSeekBar = false,
@@ -169,6 +171,45 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
       : [{ id: "__single", name: "", segments: segments ?? [] }];
     const active = clamp(activeTrackIndex ?? 0, 0, Math.max(0, trackList.length - 1));
 
+    // Multi-select lane set — a display-only distinction in the component
+    // (selected lanes show live borders, unselected are muted); the set is
+    // emitted so the host can act on it. Controlled via selectedTracks, else
+    // self-managed. Always ≥1 and always contains the active (edit-focused) lane.
+    const [internalSel, setInternalSel] = useState<number[]>([0]);
+    const selTracks = useMemo(() => {
+      const raw = selectedTracks ?? internalSel;
+      const valid = Array.from(new Set(raw.filter((i) => i >= 0 && i < trackList.length)));
+      if (!valid.includes(active)) valid.push(active);
+      return (valid.length ? valid : [active]).sort((a, b) => a - b);
+    }, [selectedTracks, internalSel, trackList.length, active]);
+    const commitSelTracks = useCallback(
+      (next: number[]) => {
+        const uniq = Array.from(new Set(next))
+          .filter((i) => i >= 0 && i < trackList.length)
+          .sort((a, b) => a - b);
+        const safe = uniq.length ? uniq : [active];
+        onSelectedTracksChange?.(safe);
+        if (selectedTracks == null) setInternalSel(safe);
+      },
+      [onSelectedTracksChange, selectedTracks, trackList.length, active]
+    );
+    const toggleLane = useCallback(
+      (i: number) => {
+        const has = selTracks.includes(i);
+        if (has && selTracks.length <= 1) return; // keep at least one selected
+        const next = has ? selTracks.filter((x) => x !== i) : [...selTracks, i];
+        commitSelTracks(next);
+        // Deselecting the focused lane hands focus to the first remaining one.
+        if (has && i === active) {
+          const fallback = next.find((x) => x !== i) ?? next[0];
+          if (fallback != null) onActiveTrackChange?.(fallback);
+        }
+      },
+      [selTracks, active, commitSelTracks, onActiveTrackChange]
+    );
+    // Left label gutter (multi-track only): the ruler's 0 tick insets to it.
+    const gutterPx = multi ? (labelGutter ?? 54) : 0;
+
     const D =
       duration ||
       metaDuration ||
@@ -236,11 +277,13 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
       [multi, onTracksChange, onSegmentsChange, trackList, active]
     );
 
-    const setActiveTrack = useCallback(
-      (i: number) => onActiveTrackChange?.(clamp(i, 0, trackList.length - 1)),
-      [onActiveTrackChange, trackList.length]
-    );
 
+    // Add / remove a whole lane. These are RETAINED CAPABILITIES (exposed on the
+    // imperative handle) but no longer render an on-page entry — the built-in
+    // add-track row was dropped to match the design. A host can still trigger
+    // them, or override via onAddTrack/onRemoveTrack. The lane they append is a
+    // plain Track (id/name/segments) — the exact shape the component already
+    // accepts — so an added lane is data-compatible with the supplied `tracks`.
     const addTrack = useCallback(() => {
       if (onAddTrack) return onAddTrack();
       const uid =
@@ -264,13 +307,6 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
       [onRemoveTrack, onTracksChange, onActiveTrackChange, trackList, active]
     );
 
-    const renameTrack = useCallback(
-      (i: number, name: string) => {
-        if (onRenameTrack) return onRenameTrack(i, name);
-        onTracksChange?.(trackList.map((t, idx) => (idx === i ? { ...t, name } : t)));
-      },
-      [onRenameTrack, onTracksChange, trackList]
-    );
 
     const showToast = useCallback((msg: string) => {
       setToast(msg);
@@ -469,13 +505,13 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
         // it nears the visible edges) so the scroll doesn't jitter every tick.
         const sc = scrollRef.current;
         if (sc && zoom > 1 && D) {
-          const px = (v.currentTime / D) * sc.scrollWidth;
+          const px = gutterPx + (v.currentTime / D) * Math.max(1, sc.scrollWidth - gutterPx);
           if (px < sc.scrollLeft + 40 || px > sc.scrollLeft + sc.clientWidth - 80) {
             sc.scrollLeft = px - sc.clientWidth / 2;
           }
         }
       }
-    }, [segs, sel, onSelectedChange, zoom, D]);
+    }, [segs, sel, onSelectedChange, zoom, D, gutterPx]);
 
     // ---- timeline drag (boundary) + scrub / click-select ------------------
     const startBoundaryDrag = useCallback(
@@ -487,7 +523,7 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
         const rect = tl.getBoundingClientRect();
         let latest = segs;
         const onMove = (ev: MouseEvent) => {
-          const frac = clamp((ev.clientX - rect.left) / rect.width, 0, 1);
+          const frac = clamp((ev.clientX - rect.left - gutterPx) / Math.max(1, rect.width - gutterPx), 0, 1);
           latest = moveBoundary(latest, i, frac * D);
           commitSegs(latest);
         };
@@ -498,7 +534,7 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
         document.addEventListener("mousemove", onMove);
         document.addEventListener("mouseup", onUp);
       },
-      [segs, D, commitSegs]
+      [segs, D, commitSegs, gutterPx]
     );
 
     const startScrub = useCallback(
@@ -514,7 +550,9 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
         const onSegment = !!segEl;
         let moved = false;
         const seek = (x: number) => {
-          const frac = clamp((x - rect.left) / rect.width, 0, 1);
+          // Map the click to time relative to the SAME fixed-px gutter the render
+          // uses (posCss), so the playhead lands exactly where the cursor is.
+          const frac = clamp((x - rect.left - gutterPx) / Math.max(1, rect.width - gutterPx), 0, 1);
           v.currentTime = frac * D;
         };
         // Empty ruler (not on a segment): behave like a plain scrubber — seek
@@ -549,18 +587,30 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
             const i = row ? [...row.querySelectorAll(".va-seg")].indexOf(segEl) : -1;
             const ti = row ? Number(row.dataset.track) : active;
             if (i >= 0) {
-              const sameSeg = (!multi || ti === active) && i === sel;
+              // Selection + edits only ever act on the ACTIVE lane, and WHICH lane
+              // is active (editable) is the host's decision (`activeTrackIndex`) —
+              // the component never switches it on a click, so it stays decoupled
+              // from the app's "which track is editable" business rule. A click in
+              // any OTHER lane is inert for selection: it just seeks, and the
+              // active lane's selection follows the playhead (its highlight + the
+              // host's segment panel track the new time, like a plain scrub).
+              if (multi && !Number.isNaN(ti) && ti !== active) {
+                seek(downX);
+                setCurrentTime(v.currentTime);
+                const idx = segmentIndexAtTime(segs, v.currentTime);
+                if (idx !== sel) onSelectedChange(idx);
+                return;
+              }
+              const sameSeg = i === sel;
               if (sameSeg) {
-                // Bug 3: click within the already-selected segment → seek to the
-                // exact click position (do not jump back to the start).
+                // Click within the already-selected segment → seek to the exact
+                // click position (do not jump back to the start).
                 seek(downX);
                 setCurrentTime(v.currentTime);
               } else {
-                // Click a different segment → select it + seek to its start.
-                // No auto-play: preserve the current play/pause state.
-                if (multi && !Number.isNaN(ti) && ti !== active) setActiveTrack(ti);
-                const tsegs = ti === active ? segs : normalizeSegments(trackList[ti]?.segments ?? [], D);
-                const p = tsegs[i];
+                // Click a different active-lane segment → select it + seek to its
+                // start. No auto-play: preserve the current play/pause state.
+                const p = segs[i];
                 onSelectedChange(i);
                 if (p) {
                   v.currentTime = p.start;
@@ -579,7 +629,7 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
         document.addEventListener("mousemove", onMove);
         document.addEventListener("mouseup", onUp);
       },
-      [D, onSelectedChange, multi, active, sel, segs, trackList, setActiveTrack]
+      [D, onSelectedChange, multi, active, sel, segs, gutterPx]
     );
 
     // ---- imperative handle -------------------------------------------------
@@ -594,9 +644,11 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
         play: playSafe,
         pause: () => videoRef.current?.pause(),
         toggleApprove: approveToggle,
+        addTrack,
+        removeTrack,
         video: videoRef.current,
       }),
-      [doSplit, doMerge, sel, stepFrame, gotoBoundary, goSeg, playSafe, approveToggle]
+      [doSplit, doMerge, sel, stepFrame, gotoBoundary, goSeg, playSafe, approveToggle, addTrack, removeTrack]
     );
 
     // ---- effects: keyboard + hand-pose overlay -----------------------------
@@ -752,21 +804,12 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
           transportExtra={transportExtra}
         />
 
-        <div className={cn("va-tlwrap", multi && "multi")}>
+        <div className="va-tlwrap">
           {/* Zoom capsule floats at the top-center of the timeline (over the
               ruler), matching the viz episode-timeline ZoomBar placement. */}
           <div className="va-zoomfloat">
             <ZoomControl zoom={zoom} minZoom={MIN_ZOOM} maxZoom={MAX_ZOOM} onZoom={setZoomClamped} />
           </div>
-          {multi && (
-            <TrackHeads
-              tracks={trackList}
-              active={active}
-              onActivate={setActiveTrack}
-              onRename={renameTrack}
-              onRemove={removeTrack}
-            />
-          )}
           {/* Horizontal-scroll viewport; the Timeline canvas widens to zoom*100%. */}
           <div className="va-tlscroll" ref={scrollRef}>
             <Timeline
@@ -774,16 +817,58 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
               active={active}
               activeSegs={segs}
               sel={sel}
+              selectedTracks={selTracks}
+              gutterPx={gutterPx}
               D={D}
               zoom={zoom}
-              multi={multi}
-              allowAddTracks={allowAddTracks}
               currentTime={currentTime}
+              allowAddTracks={multi && allowAddTracks}
               onScrubDown={startScrub}
               onBoundaryDown={startBoundaryDrag}
               onAddTrack={addTrack}
             />
           </div>
+          {/* Lane label gutter (multi-track): design .lab-rowlab — a compact
+              stack of selectable lane labels overlaid on the timeline's left
+              gutter. Rendered OUTSIDE the scroll so it stays put while the strip
+              scrolls; vertically aligned with the lanes. Click toggles select. */}
+          {multi && gutterPx > 0 && (
+            <div className="va-rowlabs" style={{ width: gutterPx }}>
+              {trackList.map((tr, ti) => {
+                const on = selTracks.includes(ti);
+                const nm = tr.name || `track ${ti + 1}`;
+                return (
+                  <div key={tr.id || ti} className={cn("va-rowlab", on && "on", ti === active && "focus")}>
+                    <button
+                      type="button"
+                      className="va-rowlab-btn"
+                      aria-pressed={on}
+                      title={on ? `Deselect ${nm}` : `Select ${nm}`}
+                      onClick={() => toggleLane(ti)}
+                    >
+                      <span className="va-rowlab-txt">{nm}</span>
+                    </button>
+                    {/* Remove-track entry — configurable (allowAddTracks), hover-revealed,
+                        never on the last lane. */}
+                    {allowAddTracks && trackList.length > 1 && (
+                      <button
+                        type="button"
+                        className="va-rowlab-x"
+                        aria-label={`Remove ${nm}`}
+                        title={`Remove ${nm}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeTrack(ti);
+                        }}
+                      >
+                        <X />
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {showDescription && (

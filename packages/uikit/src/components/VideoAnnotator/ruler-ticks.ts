@@ -80,8 +80,11 @@ export function computeVaTicks(
 
   // Snap the window start to the micro grid so tick times sit on round numbers
   // (stable React keys + the tier-promotion animation keeps identity as zoom
-  // reselects the major). Index-based `i*micro` avoids float drift.
-  const start = Math.max(0, Math.floor(Math.max(0, visStartT) / micro) * micro);
+  // reselects the major). Index-based `i*micro` avoids float drift. `visStartT`
+  // may be NEGATIVE when a label gutter insets the 0 tick — the window then
+  // reaches left of 0 so the ruler shows negative graduations (bounded by the
+  // caller's visible window, so it can't run away).
+  const start = Math.floor(visStartT / micro) * micro;
   const end = Math.min(D, visEndT);
   const ticks: RulerTick[] = [];
   const eps = micro * 1e-6;
@@ -173,15 +176,18 @@ export function cullMinorLabels(
   minor: number,
   D: number,
   wrapW: number,
+  gutterPx = 0,
 ): Set<number> {
   const keep = new Set<number>();
   if (!wrapW || D <= 0) return keep;
-  const pxOf = (t: number) => (t / D) * wrapW;
+  // Same fixed-px gutter as the render: t=0 sits at x=gutterPx, t=D at wrapW.
+  const innerW = Math.max(1, wrapW - gutterPx);
+  const pxOf = (t: number) => gutterPx + (t / D) * innerW;
 
   const majorBoxes: [number, number][] = [];
   for (const tk of ticks) {
     if (tk.tier !== "major") continue;
-    const pct = (tk.t / D) * 100;
+    const pct = (pxOf(tk.t) / wrapW) * 100;
     const half = (formatMajorLabel(tk.t, major).length * MAJOR_CH) / 2 + 4;
     const x = pxOf(tk.t);
     const l = pct < 6 ? x : pct > 94 ? x - half * 2 : x - half;

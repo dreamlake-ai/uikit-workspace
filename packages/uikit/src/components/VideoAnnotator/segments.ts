@@ -86,10 +86,13 @@ export function splitAt(input: Segment[], t: number, duration: number): SplitRes
   const k = segs.findIndex((s) => t > s.start + 1e-3 && t < s.end - 1e-3);
   if (k < 0) return { error: "A split already exists here" };
   const s = segs[k];
-  // Left half keeps `s`'s id; right half is a brand-new segment → new id.
-  const right: Segment = { id: newSegmentId(), start: t, end: s.end, description: "", verified: false };
+  // Left half keeps `s`'s id; right half is a brand-new segment → new id. Both
+  // halves are flagged `resegmented` so they read as structural edits (green
+  // ring) by default; hosts that track their own edit state overwrite it.
+  const right: Segment = { id: newSegmentId(), start: t, end: s.end, description: "", verified: false, resegmented: true };
   s.end = t;
   s.verified = false;
+  s.resegmented = true;
   segs.splice(k + 1, 0, right);
   return { segments: segs, selected: k + 1 };
 }
@@ -103,6 +106,7 @@ export function mergeInto(input: Segment[], i: number): { segments: Segment[]; s
   prev.end = c.end;
   prev.description = [prev.description, c.description].map((x) => (x || "").trim()).filter(Boolean).join(" ");
   prev.verified = false;
+  prev.resegmented = true; // structural edit → green ring by default (host may override)
   segs.splice(i, 1);
   return { segments: segs, selected: clamp(i - 1, 0, segs.length - 1) };
 }

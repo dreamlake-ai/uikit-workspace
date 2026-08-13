@@ -211,29 +211,46 @@ export const CSS = `
 /* Stacked track lanes below the ruler. Each row hosts its segments (and, for
    the active row, the drag handles); rows flow so the timeline grows with the
    track count. */
-.va-tracks{margin-top:41px;display:flex;flex-direction:column;gap:6px}
+.va-tracks{margin-top:41px;display:flex;flex-direction:column;gap:3px}
 .va-track{position:relative;height:48px}
-.va-track.inactive{opacity:.55}
-.va-track.inactive .va-seg:hover{background:var(--va-panel2);box-shadow:inset 0 0 0 1px var(--va-line)}
-html[data-theme="dark"] .va-track.inactive .va-seg:hover{background:var(--va-panel2)}
-.va-track.inactive .va-seg:hover .va-seglabel{color:var(--va-muted)}
-/* Left gutter of track headers (multi-track only). A 30px spacer aligns the
-   first header with the first lane (below the ruler). */
-.va-track-heads{flex:none;width:104px;display:flex;flex-direction:column;gap:6px}
-.va-th-spacer{height:24px;flex:none}
-.va-th{height:32px;display:flex;align-items:center;gap:4px;padding:0 8px;border-radius:6px;cursor:pointer;
-  color:var(--va-muted);font:11px var(--f-ui, "Inter Tight", ui-sans-serif, system-ui, sans-serif);overflow:hidden}
-.va-th:hover{background:var(--va-panel2)}
-.va-th.active{color:var(--va-text);background:var(--va-panel2)}
-.va-th-name{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.va-root .va-th-input{flex:1;min-width:0;height:20px;padding:0 5px;border-radius:4px;
-  border:1px solid var(--va-accent);background:var(--va-bg);color:var(--va-text);
-  font:11px var(--f-ui, "Inter Tight", ui-sans-serif, system-ui, sans-serif);outline:none}
-.va-root .va-th-x{width:18px;height:18px;padding:0;border:0;background:transparent;color:var(--va-muted);
-  display:none;align-items:center;justify-content:center;border-radius:4px;cursor:pointer;flex:none}
-.va-th:hover .va-th-x{display:inline-flex}
-.va-root .va-th-x:hover{color:var(--va-text);background:transparent}
-.va-th-x svg{width:12px;height:12px}
+/* Unselected lanes (multi-select): NO border at all, a subtle bg-only hover, and
+   dimmed text — visually distinct from selected lanes (which get accent rings).
+   "Selected vs not" is exactly this border/emphasis difference; the host acts on
+   the selected set separately. */
+.va-track.va-unsel .va-seg,
+.va-track.va-unsel .va-seg.sel,
+.va-track.va-unsel .va-seg.edited,
+.va-track.va-unsel .va-seg.reseg{background:color-mix(in srgb, var(--va-text) 3%, var(--va-bg));box-shadow:none}
+.va-track.va-unsel .va-seg:hover{background:color-mix(in srgb, var(--va-text) 6%, var(--va-bg));box-shadow:none}
+.va-track.va-unsel .va-seg-n,.va-track.va-unsel .va-seglabel{color:var(--va-muted);opacity:.7}
+/* An unselected lane still highlights its playhead (current) segment — but in a
+   PALER accent than a selected lane (design: whether a lane is "selected" is only
+   a visual difference in this component). */
+.va-track.va-unsel .va-seg.cur{background:color-mix(in srgb, var(--va-accent) 7%, var(--va-bg));
+  box-shadow:inset 0 0 0 1.5px color-mix(in srgb, var(--va-accent) 40%, transparent)}
+.va-track.va-unsel .va-seg.cur .va-seg-n,.va-track.va-unsel .va-seg.cur .va-seglabel{opacity:.9}
+/* Lane-label gutter (design .lab-rowlabs / .lab-rowlab) — overlaid on the left,
+   outside the horizontal scroll so it stays put; vertically aligned with lanes
+   (top 41 = .va-tracks margin-top; 48px rows + 6 gap match the lanes). */
+/* Opaque gutter background masks segments that scroll left under the labels
+   (design .lab-rowlabs uses the same trick), so a lane never shows through the
+   label column. Sits below the ruler (top 41), so negative ticks stay visible. */
+.va-rowlabs{position:absolute;left:0;top:41px;z-index:5;display:flex;flex-direction:column;gap:3px;
+  background:var(--va-bg)}
+.va-rowlab{position:relative;height:48px;display:flex;align-items:center;background:var(--va-bg)}
+.va-root .va-rowlab-btn{flex:1;min-width:0;height:100%;display:flex;align-items:center;padding:0 6px 0 2px;
+  border:0;border-radius:0;background:none;text-align:left;cursor:pointer;overflow:hidden;
+  font-family:var(--f-mono, ui-monospace, Menlo, monospace);font-size:8px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--va-muted);opacity:.5;transition:opacity 140ms ease, color 140ms ease}
+.va-root .va-rowlab-btn:hover{opacity:1;color:var(--va-text);background:none}
+.va-rowlab.on .va-rowlab-btn{opacity:1;color:var(--va-accent)}
+.va-rowlab-txt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* Remove-track entry — configurable, hover-revealed on the lane label. */
+.va-root .va-rowlab-x{position:absolute;right:0;top:3px;width:14px;height:14px;padding:0;border:0;border-radius:4px;
+  background:transparent;color:var(--va-muted);display:none;align-items:center;justify-content:center;cursor:pointer}
+.va-rowlab:hover .va-rowlab-x{display:inline-flex}
+.va-root .va-rowlab-x:hover{color:var(--va-text);background:color-mix(in srgb, var(--va-text) 8%, transparent)}
+.va-rowlab-x svg{width:11px;height:11px}
 /* Add-track affordance: a thin hover zone below the last lane. On hover a
    highlighted line fades in with a round "+" node at its left end, inviting a
    new lane — no permanent full-width button. */
@@ -260,18 +277,20 @@ html[data-theme="dark"] .va-track.inactive .va-seg:hover{background:var(--va-pan
   transition:background .12s ease, box-shadow .12s ease}
 .va-seg:hover{background:color-mix(in srgb, var(--va-text) 8%, var(--va-bg));
   box-shadow:inset 0 0 0 1.5px color-mix(in srgb, var(--va-accent) 45%, transparent)}
-.va-seg.sel{background:color-mix(in srgb, var(--va-accent) 14%, var(--va-bg));
+/* .sel = the active lane's selected segment; .cur = the segment under the
+   playhead in any other SELECTED lane — same full accent. */
+.va-seg.sel,.va-seg.cur{background:color-mix(in srgb, var(--va-accent) 14%, var(--va-bg));
   box-shadow:inset 0 0 0 1.5px var(--va-accent);z-index:3}
 /* Edited / resegmented both get the green ring, which outranks hover + selection
    (the app's structural-edit "reseg" reads as an edit here, per design). */
-.va-seg.edited,.va-seg.reseg,.va-seg.edited.sel,.va-seg.reseg.sel{box-shadow:inset 0 0 0 1.5px var(--va-edit)}
+.va-seg.edited,.va-seg.reseg,.va-seg.edited.sel,.va-seg.reseg.sel,.va-seg.edited.cur,.va-seg.reseg.cur{box-shadow:inset 0 0 0 1.5px var(--va-edit)}
 .va-seg-line{display:flex;align-items:baseline;gap:4px;min-width:0}
 .va-seg-n{flex:none;font-size:9px;line-height:1.25;opacity:.7;color:var(--va-muted);
   font-family:var(--f-mono, ui-monospace, Menlo, monospace)}
 .va-seg.edited .va-seg-n,.va-seg.reseg .va-seg-n{color:var(--va-edit);opacity:1}
-.va-seglabel{flex:1;min-width:0;font-size:10px;line-height:1.25;color:var(--va-text);opacity:.75;
+.va-seglabel{flex:1;min-width:0;font-size:10px;line-height:1.2;color:var(--va-text);opacity:.75;
   font-family:var(--f-ui, "Inter Tight", ui-sans-serif, system-ui, sans-serif);
-  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;overflow-wrap:break-word}
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;overflow-wrap:break-word}
 /* Segment hover tooltip (design .lab-tip--wide): a fixed chip (portaled to
    <body>, so no lane overflow clips it) — mono muted label, wrapped caption, and
    a struck-through "was:" line for edited cells. */

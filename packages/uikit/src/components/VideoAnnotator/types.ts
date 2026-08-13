@@ -20,12 +20,14 @@ export interface Segment {
   description: string;
   verified: boolean;
   /**
-   * Purely-presentational hints (host-set; the component only reflects them as
-   * timeline-chip borders — it never reads or sets them):
-   *  - `edited`: the caption was edited (with no structural change) → amber border.
-   *  - `resegmented`: a structural split / merge / retime touched it → purple border.
-   * These are meant to be mutually exclusive; a selected chip's accent border
-   * takes precedence over both.
+   * Presentational edit hints, reflected as timeline-chip borders:
+   *  - `edited`: the caption was edited (no structural change).
+   *  - `resegmented`: a structural split / merge / boundary-move touched it.
+   * Both render a green edit ring; a selected chip's accent border wins over
+   * them. Mostly host-set, BUT the component's own split / merge set
+   * `resegmented: true` on the affected segments by default (so they read as
+   * structural edits out of the box) — a host that tracks its own edit state can
+   * overwrite it when it processes `onSegmentsChange` / `onTracksChange`.
    */
   edited?: boolean;
   resegmented?: boolean;
@@ -128,13 +130,36 @@ export interface VideoAnnotatorProps {
    * one active track at a time. Takes precedence over `segments`.
    */
   tracks?: Track[];
-  /** Controlled index of the active track. Default 0. */
+  /** Controlled index of the active (edit-focused) track — the lane that split /
+   *  merge / boundary-drag and segment selection act on. Always one of
+   *  `selectedTracks`. Default 0. */
   activeTrackIndex?: number;
+  /**
+   * Multi-select: which lanes are "selected". Purely a display distinction in
+   * the component — selected lanes show live (accent-capable) segment borders,
+   * unselected lanes render muted; the host decides what to do with the set
+   * (e.g. which lanes' segments to list/edit in a side panel). At least one is
+   * always selected (deselecting the last is a no-op). The active track is
+   * always a member. Controlled; pair with `onSelectedTracksChange`. When
+   * omitted the component self-manages, defaulting to `[activeTrackIndex ?? 0]`.
+   * Ignored in single-track (`segments`) mode.
+   */
+  selectedTracks?: number[];
+  /** Fired when the selected-lane set changes (clicking a lane label, or a
+   *  segment in an unselected lane). Receives the full next set (always ≥1). */
+  onSelectedTracksChange?: (next: number[]) => void;
+  /** Width (px) of the left lane-label gutter in multi-track mode. The ruler's
+   *  0 tick insets to it (ticks run negative to its left, so 0 aligns with the
+   *  first segment). Default 54. 0 disables the gutter. */
+  labelGutter?: number;
   /** Fired after a structural edit in multi-track mode (returns the full track list). */
   onTracksChange?: (next: Track[]) => void;
   /** Fired when the active track changes (click a lane, add/remove). */
   onActiveTrackChange?: (index: number) => void;
-  /** Show the "+ Track" control. Default true in multi-track mode. */
+  /** Show the built-in track-editing ENTRIES in multi-track mode: the "+ add
+   *  track" row and the hover ✕ (remove) on each lane label. Default true — set
+   *  false to hide both entries while keeping add/remove available on the
+   *  imperative handle. (The annotation labeling page sets this false.) */
   allowAddTracks?: boolean;
   /** Add-track handler. If omitted, the component appends a default full-length track via `onTracksChange`. */
   onAddTrack?: () => void;
@@ -249,6 +274,14 @@ export interface VideoAnnotatorHandle {
   play: () => void;
   pause: () => void;
   toggleApprove: () => void;
+  /** Append a new lane (multi-track). Retained as a programmatic capability —
+   *  there's no on-page entry. Honors `onAddTrack` if provided, else appends a
+   *  default full-length empty lane via `onTracksChange`. No-op in single-track. */
+  addTrack: () => void;
+  /** Remove the lane at `index` (multi-track). Programmatic only (no on-page
+   *  entry). Honors `onRemoveTrack` if provided, else drops it via
+   *  `onTracksChange`. No-op when only one lane remains. */
+  removeTrack: (index: number) => void;
   /** The underlying media element, or null before mount. */
   video: HTMLVideoElement | null;
 }

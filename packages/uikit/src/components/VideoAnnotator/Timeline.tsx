@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { Plus } from "lucide-react";
 import { cn } from "../../lib/utils";
 import type { Segment, Track } from "./types";
-import { clamp, fmt, normalizeSegments } from "./segments";
+import { clamp, fmt, normalizeSegments, segmentIndexAtTime } from "./segments";
 import { computeVaTicks, cullMinorLabels, formatMajorLabel, formatMinorLabel } from "./ruler-ticks";
 
 /**
@@ -17,11 +17,12 @@ export function Timeline({
   active,
   activeSegs,
   sel,
+  selectedTracks,
+  gutterPx,
   D,
   zoom,
-  multi,
-  allowAddTracks,
   currentTime,
+  allowAddTracks,
   onScrubDown,
   onBoundaryDown,
   onAddTrack,
@@ -30,13 +31,19 @@ export function Timeline({
   active: number;
   activeSegs: Segment[];
   sel: number;
+  /** Which lane indices are selected (multi-select). Unselected lanes render
+   *  with muted segment borders. */
+  selectedTracks: number[];
+  /** Left label-gutter width in px. The time axis maps t=0 to x=gutterPx, so the
+   *  ruler runs negative to its left. 0 = no gutter (single-track). */
+  gutterPx: number;
   D: number;
   /** Horizontal magnification (1/2/4/8/16). The canvas is widened to
    *  `zoom*100%` inside a scrolling parent; all position math stays `t/D`. */
   zoom: number;
-  multi: boolean;
-  allowAddTracks: boolean;
   currentTime: number;
+  /** Show the built-in "+ add track" row (host-configurable entry). */
+  allowAddTracks: boolean;
   onScrubDown: (e: React.MouseEvent) => void;
   onBoundaryDown: (e: React.MouseEvent, i: number) => void;
   onAddTrack: () => void;
@@ -74,15 +81,22 @@ export function Timeline({
     const compute = () => {
       const fullW = el.getBoundingClientRect().width || 1;
       setWrapW(fullW);
+      // Invert the fixed-px gutter: a canvas pixel x maps to time
+      // ((x - gutterPx)/(fullW - gutterPx))*D, so at scrollLeft 0 the window
+      // starts negative (the gutter's worth of time) and the ruler shows negative
+      // graduations. This only bounds WHICH ticks are generated — exact positions
+      // are CSS calc (posCss), so no wrapW fluctuation reaches the rendered x.
+      const innerW = Math.max(1, fullW - gutterPx);
+      const invX = (xPx: number) => ((xPx - gutterPx) / innerW) * D;
       if (sc) {
         const span = D && zoom ? D / zoom : D;
         const pad = span * 0.25;
         setVis({
-          start: (sc.scrollLeft / fullW) * D - pad,
-          end: ((sc.scrollLeft + sc.clientWidth) / fullW) * D + pad,
+          start: invX(sc.scrollLeft) - pad,
+          end: invX(sc.scrollLeft + sc.clientWidth) + pad,
         });
       } else {
-        setVis({ start: 0, end: D });
+        setVis({ start: invX(0), end: D });
       }
     };
     const update = () => {
@@ -102,15 +116,28 @@ export function Timeline({
       sc?.removeEventListener("scroll", update);
       ro?.disconnect();
     };
-  }, [D, zoom]);
+  }, [D, zoom, gutterPx]);
+
+  // Fixed-pixel gutter: t=0 lands at x=gutterPx, t=D at the right edge, and the
+  // ruler runs negative to the left. Positions are pure CSS calc against the
+  // LIVE width — no JS measurement in the position, so it never jitters as the
+  // strip zooms, and the seek math (VideoAnnotator, same fixed gutterPx) shares
+  // this exact mapping so a click lands where it's drawn. gutterPx=0 (single
+  // lane) reduces `calc(0px + f*(100% - 0px))` to `f*100%` — the old behaviour.
+  const posCss = (t: number) => `calc(${gutterPx}px + ${t / (D || 1)} * (100% - ${gutterPx}px))`;
+  const widCss = (dt: number) => `calc(${dt / (D || 1)} * (100% - ${gutterPx}px))`;
+  // Hover fraction (of the full width) → time, inverting the same fixed-px gutter.
+  // Display-only, so the measured wrapW here is fine (a pixel of slop is invisible).
+  const hoverTime = (frac: number) => ((frac * wrapW - gutterPx) / Math.max(1, wrapW - gutterPx)) * D;
+  const selSet = useMemo(() => new Set(selectedTracks), [selectedTracks]);
 
   const { major, minor, ticks } = useMemo(
     () => computeVaTicks(D, zoom, vis.start, vis.end),
     [D, zoom, vis.start, vis.end],
   );
   const keepMinor = useMemo(
-    () => cullMinorLabels(ticks, major, minor, D, wrapW),
-    [ticks, major, minor, D, wrapW],
+    () => cullMinorLabels(ticks, major, minor, D, wrapW, gutterPx),
+    [ticks, major, minor, D, wrapW, gutterPx],
   );
 
   // Normalized segments per track. The active track reuses the already-normalized
@@ -145,13 +172,24 @@ export function Timeline({
         {trackList.map((tr, ti) => {
           const isActive = ti === active;
           const tsegs = normTracks[ti];
+          // Every lane highlights the segment under the playhead. The active lane
+          // uses the explicit selection (sel, kept in sync with the playhead);
+          // other lanes derive it from currentTime. Selected lanes render it in
+          // full accent (.cur == .sel), unselected lanes in a paler accent.
+          const curIdx = isActive ? sel : segmentIndexAtTime(tsegs, currentTime);
           return (
-            <div key={tr.id || ti} className={cn("va-track", !isActive && "inactive")} data-track={ti}>
+            <div key={tr.id || ti} className={cn("va-track", !selSet.has(ti) && "va-unsel")} data-track={ti}>
               {tsegs.map((p, i) => (
                 <div
                   key={p.id ?? i}
-                  className={cn("va-seg", isActive && i === sel && "sel", p.edited && "edited", p.resegmented && "reseg")}
-                  style={{ left: `${(p.start / (D || 1)) * 100}%`, width: `${((p.end - p.start) / (D || 1)) * 100}%` }}
+                  className={cn(
+                    "va-seg",
+                    isActive && i === sel && "sel",
+                    !isActive && i === curIdx && "cur",
+                    p.edited && "edited",
+                    p.resegmented && "reseg",
+                  )}
+                  style={{ left: posCss(p.start), width: widCss(p.end - p.start) }}
                   onMouseEnter={(e) => {
                     const r = e.currentTarget.getBoundingClientRect();
                     setCellTip({
@@ -176,7 +214,7 @@ export function Timeline({
                     <div
                       key={`h${p.id ?? i}`}
                       className="va-handle"
-                      style={{ left: `${(p.start / (D || 1)) * 100}%` }}
+                      style={{ left: posCss(p.start) }}
                       title="Drag to move"
                       onMouseDown={(e) => onBoundaryDown(e, i)}
                     />
@@ -185,7 +223,7 @@ export function Timeline({
             </div>
           );
         })}
-        {multi && allowAddTracks && (
+        {allowAddTracks && trackList.length >= 1 && (
           <div
             className="va-addrow"
             role="button"
@@ -220,7 +258,7 @@ export function Timeline({
                 i === 0 && "start",
                 i === ticks.length - 1 && "end",
               )}
-              style={{ left: `${(rt.t / (D || 1)) * 100}%` }}
+              style={{ left: posCss(rt.t) }}
             >
               <span className="va-tickmark" />
               {label && (
@@ -230,7 +268,9 @@ export function Timeline({
           );
         })}
       </div>
-      {hoverFrac != null && (
+      {/* Hover line + time bubble — suppressed while the cursor is over the label
+          gutter (where the time would be negative). */}
+      {hoverFrac != null && hoverTime(hoverFrac) >= 0 && (
         <>
           <div className="va-hoverline" style={{ left: `${hoverFrac * 100}%` }} />
           {/* the time bubble is portaled to <body> (fixed-positioned) so it never gets
@@ -242,14 +282,14 @@ export function Timeline({
                 className="va-hovertime va-hovertime--fixed"
                 style={{ position: "fixed", left: hoverPos.x, top: hoverPos.y + 12 }}
               >
-                {fmt(hoverFrac * D)}
+                {fmt(clamp(hoverTime(hoverFrac), 0, D))}
               </div>,
               document.body
             )}
         </>
       )}
       {activeSegs.length > 0 && currentTime > 0.001 && (
-        <div className="va-playhead" style={{ left: `${(clamp(currentTime, 0, D) / (D || 1)) * 100}%` }} />
+        <div className="va-playhead" style={{ left: posCss(clamp(currentTime, 0, D)) }} />
       )}
       {cellTip != null &&
         typeof document !== "undefined" &&
