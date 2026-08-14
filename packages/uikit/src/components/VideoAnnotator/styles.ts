@@ -82,8 +82,9 @@ export const CSS = `
 @media (prefers-reduced-motion: reduce){.va-bufring{animation:none}}
 /* Shared scrub bar — a slim static progress rail that sits BELOW the video
    stage (design .lab-video__scrub): a 3px track, a played fill, and a small
-   round knob that only appears on hover/drag. Full-width, always visible. */
-.va-seek{position:relative;display:flex;align-items:center;height:11px;margin:-6px 2px 0;
+   round knob that only appears on hover/drag. Inset 8px from the left/right
+   edges so the rail clears the video corners (design .lab-video__scrub). */
+.va-seek{position:relative;display:flex;align-items:center;height:11px;margin:-6px 8px 0;
   flex:none;cursor:pointer;touch-action:none}
 .va-seek::before{content:"";position:absolute;left:0;right:0;top:-6px;bottom:-6px}
 .va-seek-track{position:relative;flex:1;height:3px;border-radius:2px;background:var(--va-scrub-track)}
