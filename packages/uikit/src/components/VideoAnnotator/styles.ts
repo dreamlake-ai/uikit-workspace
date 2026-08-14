@@ -219,17 +219,19 @@ export const CSS = `
    "Selected vs not" is exactly this border/emphasis difference; the host acts on
    the selected set separately. */
 .va-track.va-unsel .va-seg,
-.va-track.va-unsel .va-seg.sel,
 .va-track.va-unsel .va-seg.edited,
 .va-track.va-unsel .va-seg.reseg{background:color-mix(in srgb, var(--va-text) 3%, var(--va-bg));box-shadow:none}
 .va-track.va-unsel .va-seg:hover{background:color-mix(in srgb, var(--va-text) 6%, var(--va-bg));box-shadow:none}
 .va-track.va-unsel .va-seg-n,.va-track.va-unsel .va-seglabel{color:var(--va-muted);opacity:.7}
-/* An unselected lane still highlights its playhead (current) segment — but in a
-   PALER accent than a selected lane (design: whether a lane is "selected" is only
-   a visual difference in this component). */
-.va-track.va-unsel .va-seg.cur{background:color-mix(in srgb, var(--va-accent) 7%, var(--va-bg));
+/* An unselected lane still highlights its current segment — the playhead one on
+   a non-active lane (.cur), OR the selected one on a deselected-but-active lane
+   (.sel) — in a PALER accent than a selected lane (design: "selected" is only a
+   visual difference here). */
+.va-track.va-unsel .va-seg.cur,
+.va-track.va-unsel .va-seg.sel{background:color-mix(in srgb, var(--va-accent) 7%, var(--va-bg));
   box-shadow:inset 0 0 0 1.5px color-mix(in srgb, var(--va-accent) 40%, transparent)}
-.va-track.va-unsel .va-seg.cur .va-seg-n,.va-track.va-unsel .va-seg.cur .va-seglabel{opacity:.9}
+.va-track.va-unsel .va-seg.cur .va-seg-n,.va-track.va-unsel .va-seg.cur .va-seglabel,
+.va-track.va-unsel .va-seg.sel .va-seg-n,.va-track.va-unsel .va-seg.sel .va-seglabel{opacity:.9}
 /* Lane-label gutter (design .lab-rowlabs / .lab-rowlab) — overlaid on the left,
    outside the horizontal scroll so it stays put; vertically aligned with lanes
    (top 41 = .va-tracks margin-top; 48px rows + 6 gap match the lanes). */

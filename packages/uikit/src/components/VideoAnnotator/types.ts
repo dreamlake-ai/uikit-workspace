@@ -148,6 +148,11 @@ export interface VideoAnnotatorProps {
   /** Fired when the selected-lane set changes (clicking a lane label, or a
    *  segment in an unselected lane). Receives the full next set (always ≥1). */
   onSelectedTracksChange?: (next: number[]) => void;
+  /** Whether the active (edit-focused) lane is forced into the selected set so
+   *  it always renders "live". Default true. Set false to let the active lane be
+   *  visually deselected (dimmed) while staying editable — e.g. a fixed primary
+   *  lane that anchors a host list but can be toggled off the timeline. */
+  forceActiveSelected?: boolean;
   /** Width (px) of the left lane-label gutter in multi-track mode. The ruler's
    *  0 tick insets to it (ticks run negative to its left, so 0 aligns with the
    *  first segment). Default 54. 0 disables the gutter. */

@@ -79,6 +79,7 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
       activeTrackIndex,
       selectedTracks,
       onSelectedTracksChange,
+      forceActiveSelected = true,
       labelGutter,
       laneLabel,
       onTracksChange,
@@ -183,9 +184,13 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
     const selTracks = useMemo(() => {
       const raw = selectedTracks ?? internalSel;
       const valid = Array.from(new Set(raw.filter((i) => i >= 0 && i < trackList.length)));
-      if (!valid.includes(active)) valid.push(active);
+      // The active lane is normally always "selected" (live). A host can opt out
+      // (forceActiveSelected=false) to keep the active lane editable while letting
+      // it be visually deselected — e.g. a fixed primary lane that stays the list
+      // anchor but can be dimmed on the timeline.
+      if (forceActiveSelected && !valid.includes(active)) valid.push(active);
       return (valid.length ? valid : [active]).sort((a, b) => a - b);
-    }, [selectedTracks, internalSel, trackList.length, active]);
+    }, [selectedTracks, internalSel, trackList.length, active, forceActiveSelected]);
     const commitSelTracks = useCallback(
       (next: number[]) => {
         const uniq = Array.from(new Set(next))
