@@ -1,8 +1,35 @@
 # UIKit Badge
 
-A small two-chip badge that shows the kit's package name and version —
-`[ uikit | v0.1.6 ]` — handy in galleries, footers, and dev tools. The version
-reflects the installed package; when consumed from source it shows as `dev`.
+A small two-segment badge that shows the kit's package name and version —
+`[ uikit | v<version> ]` — handy in galleries, footers, and dev tools. The
+version reflects the installed package (see the live specimen below); when
+consumed from source it shows as `dev`.
+
+## Deliberately neutral
+
+The badge carries **no status**, so it spends no colour. A version string is not
+running, stale, or failing — if the badge were filled with `--uikit-accent` it
+would read as a signal next to components where blue genuinely means something.
+
+Both segments therefore sit inside a single `--faint` hairline frame, and the
+divide between them is another hairline rather than a colour step:
+
+| Part | Treatment |
+| --- | --- |
+| Frame | 1px `--faint`, 4px radius (segments take 3px on their outer corners) |
+| Name segment | no fill, `--uikit-muted` label |
+| Version segment | `bg-uikit-ink-5-solid` fill, `--ink` label, `border-l` hairline |
+| Type | `--f-mono` at 10px, 600 on the segments, `0.02em` tracking, 15px leading |
+
+This matches the version chip in the docs topbar, so the same information reads
+the same way in both places. The divider only renders when there *is* a name
+segment, so a version-only badge shows no orphaned rule.
+
+> **Note:** `bg-uikit-ink-5-solid` is the opaque twin of `bg-uikit-ink-5`: identical 5%
+>   ink, but mixed over `--bg` instead of transparent, so the fill stays constant
+>   instead of picking up the panel behind it. Reach for it on any chip that must
+>   read the same on every surface; keep the translucent `ink-5` for hover washes
+>   that *should* tint what they sit on.
 
 ## Props
 
