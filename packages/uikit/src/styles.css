@@ -254,6 +254,12 @@ html[data-theme="dark"] {
     transparent
   );
 
+  /* Opaque twin of `ink-5`: the same 5% ink, but mixed over `--bg` rather
+     than transparent, so a chip filled with it reads identically on any
+     surface instead of picking up the panel behind it. This is the docs
+     topbar version-chip recipe — `bg-uikit-ink-5-solid`. */
+  --color-uikit-ink-5-solid: color-mix(in srgb, var(--ink) 5%, var(--bg));
+
   /* ── Fonts ────────────────────────────────────────────────────── */
   --font-uikit-ui: var(--f-ui);
   --font-uikit-mono: var(--f-mono);
