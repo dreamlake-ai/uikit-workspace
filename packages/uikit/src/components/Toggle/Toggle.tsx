@@ -4,17 +4,23 @@ import { cn } from "../../lib/utils";
 export type ToggleVariant = "primary" | "secondary";
 export type ToggleSize = "sm" | "base" | "lg";
 
+// Pressed is a *state of this control*, not a status in the domain, so it is
+// rendered with weight rather than hue — `primary` presses harder than
+// `secondary`. Accent stays free to mean running / active / selected elsewhere.
 const VARIANTS: Record<ToggleVariant, string> = {
   primary:
-    "text-uikit-ink hover:bg-uikit-ink-5 data-[state=on]:text-white data-[state=on]:bg-uikit-accent",
+    "text-uikit-ink hover:bg-uikit-ink-5 data-[state=on]:text-uikit-ink data-[state=on]:bg-uikit-ink-8",
   secondary:
     "text-uikit-muted hover:bg-uikit-ink-5 data-[state=on]:text-uikit-ink data-[state=on]:bg-uikit-chip",
 };
 
+// Fixed heights rather than four-sided padding: `p-2` made the base toggle 34px
+// tall for 12px text, and squared it off. These heights mirror `btnSizeClass` in
+// ToggleButtons, so a Toggle and a ToggleButton of the same text size line up.
 const SIZES: Record<ToggleSize, string> = {
-  sm: "text-uikit-11 gap-1 p-1 rounded-[var(--radius)] [&_svg:not([class*='size-'])]:size-3",
-  base: "text-uikit-12 gap-1.5 p-2 rounded-[var(--radius)] [&_svg:not([class*='size-'])]:size-4",
-  lg: "text-uikit-14 gap-1.5 p-3 rounded-[var(--radius)] [&_svg:not([class*='size-'])]:size-5",
+  sm: "text-uikit-11 gap-1 h-6 px-2 rounded-[var(--radius)] [&_svg:not([class*='size-'])]:size-3",
+  base: "text-uikit-12 gap-1.5 h-7 px-3 rounded-[var(--radius)] [&_svg:not([class*='size-'])]:size-4",
+  lg: "text-uikit-14 gap-1.5 h-8 px-4 rounded-[var(--radius)] [&_svg:not([class*='size-'])]:size-5",
 };
 
 export interface ToggleVariantsOptions {
