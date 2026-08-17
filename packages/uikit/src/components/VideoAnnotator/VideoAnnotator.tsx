@@ -84,6 +84,7 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
       speeds = DEFAULT_SPEEDS,
       enableKeyboard = true,
       showSeekBar = false,
+      showBufferingOverlay = true,
       handpose,
       handposeAvailable = false,
       handposeLoading = false,
@@ -701,7 +702,7 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
           {/* Host overlay (e.g. a 3D picture-in-picture) — layered above the video
               + hand-pose but below the seek bar (which follows in DOM at z-index 4). */}
           {stageOverlay}
-          {buffering && (
+          {buffering && showBufferingOverlay && (
             <div className="va-buffering" aria-hidden="true">
               <div className="va-buf">
                 <div className="va-bufring" />

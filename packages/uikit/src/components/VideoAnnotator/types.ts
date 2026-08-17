@@ -197,6 +197,14 @@ export interface VideoAnnotatorProps {
   showSeekBar?: boolean;
 
   /**
+   * Show the centered "Loading ···" buffering overlay while the media waits for
+   * data. Default true. Set false when a full-cover `stageOverlay` (e.g. a media
+   * grid) already renders its own per-surface loading state — otherwise the
+   * video's buffering spinner floats on top of it, centered over the grid.
+   */
+  showBufferingOverlay?: boolean;
+
+  /**
    * Optional hand-pose keypoint overlay (the `handpose_keypoints` standard
    * envelope). When present, a "Hands" toggle appears in the transport and a
    * canvas draws the 21-keypoint hand skeletons over the video, synced to the
