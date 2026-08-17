@@ -56,6 +56,13 @@ export type PortSide = 'left' | 'right' | 'top' | 'bottom'
 const R = 10    // corner radius
 const PAD = 14  // clearance gap from a card or obstacle edge
 const CURVE_THRESHOLD = 30 // |Δy| below this → soft curve instead of orthogonal
+/**
+ * Narrowest empty lane between two vertically-separated cards that a backward
+ * edge's crossing run will thread rather than routing around the outside of the
+ * pair. Sized so the run keeps ~9 px of clear space either side — enough to read
+ * as a lane rather than as a line grazing two card edges.
+ */
+export const MIN_CORRIDOR = 18
 
 /**
  * The standard node card footprint (`NODE_W` × `NODE_H` in `flow.ts`), used ONLY
@@ -258,19 +265,43 @@ export function buildEdgePath(
     const STUB = 28
     const midX = (A.x + B.x) / 2
 
-    // Where the crossing run sits: fully BELOW both cards or fully ABOVE them,
-    // whichever is nearer the chord midpoint. Two properties make this the right
-    // rule rather than merely a safe one. It can never land inside a card by
-    // construction, and — because `my` always lies outside [A.y, B.y] — the
-    // path length is 2·|my − midY| plus a fixed horizontal run, so the two
-    // options are exactly equal in length at the moment the choice flips. The
-    // routing is therefore CONTINUOUS in the node positions. The old
-    // `dy >= 2 * MIN` branch was not: at dy = 59 → 60 it snapped the run 59 px
-    // and the rendered line visibly jumped mid-drag.
+    // Where the crossing run sits. Three candidates, in preference order:
+    // through the CORRIDOR between two vertically-separated cards, else fully
+    // BELOW both or fully ABOVE both — whichever of those two is nearer the
+    // chord midpoint.
+    //
+    // Below/above can never land inside a card by construction, and — because
+    // such a `my` lies outside [A.y, B.y] — the path length is 2·|my − midY|
+    // plus a fixed horizontal run, so those two are exactly equal in length at
+    // the moment the choice flips. That pair is therefore CONTINUOUS in the
+    // node positions, unlike the old `dy >= 2 * MIN` branch which snapped the
+    // run 59 px at dy = 59 → 60 and visibly jumped mid-drag.
+    //
+    // The corridor is the case those two miss. Stack two cards with a gap and
+    // connect them backwards — an ordinary shape, and the one this router kept
+    // getting wrong — and the run had to travel around the OUTSIDE of the pair
+    // even though the lane between them was empty and sat exactly on the chord
+    // midpoint. The result was a ~300 px wrap where a ~60 px S fits, and it
+    // read as a routing failure rather than a routing choice.
+    //
+    // It is gated on the lane being genuinely roomy (`MIN_CORRIDOR`, comfortably
+    // more than a line's own visual weight) so the run keeps real clearance on
+    // both sides instead of hairlining a card edge. Narrower than that and the
+    // corridor is simply not offered, which is a discontinuity — but a bounded
+    // one at a layout that has no good answer anyway, and the alternative is
+    // being wrong at every comfortably-spaced stack to stay smooth at the
+    // degenerate ones.
     const midY = (A.y + B.y) / 2
     const below = Math.max(fromRect.y1, toRect.y1) + PAD
     const above = Math.min(fromRect.y0, toRect.y0) - PAD
-    const my = Math.abs(below - midY) <= Math.abs(midY - above) ? below : above
+    // The empty lane between the cards, when one card clears the other outright.
+    const lane =
+      fromRect.y0 >= toRect.y1 ? { lo: toRect.y1, hi: fromRect.y0 } :
+      toRect.y0 >= fromRect.y1 ? { lo: fromRect.y1, hi: toRect.y0 } :
+      null
+    const outer = Math.abs(below - midY) <= Math.abs(midY - above) ? below : above
+    const my =
+      lane && lane.hi - lane.lo >= MIN_CORRIDOR ? (lane.lo + lane.hi) / 2 : outer
 
     // The turn columns. The right one carries the source leg (A.y → my) plus the
     // horizontal out of the source port; the left one carries the target leg
