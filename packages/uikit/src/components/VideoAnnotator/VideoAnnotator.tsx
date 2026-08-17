@@ -13,7 +13,6 @@ import type { Segment, Track, VideoAnnotatorHandle, VideoAnnotatorProps } from "
 import {
   boundaryTimes,
   clamp,
-  fmt,
   mergeInto,
   moveBoundary,
   normalizeSegments,
@@ -23,7 +22,7 @@ import {
 import { useAnnotatorStyles } from "./styles";
 import { useAnnotatorKeyboard } from "./useAnnotatorKeyboard";
 import { useHandposeOverlay } from "./useHandposeOverlay";
-import { frameAtMediaTime } from "./handpose";
+import { useClipClock } from "./useClipClock";
 import { Transport } from "./Transport";
 import { ZoomControl } from "./ZoomControl";
 import { Timeline } from "./Timeline";
@@ -35,11 +34,6 @@ const DEFAULT_SPEEDS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
 // Timeline zoom bounds (continuous). The transport's drag/step both clamp here.
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 16;
-// requestVideoFrameCallback support — drives the frame-accurate readout when
-// present (falls back to the media clock otherwise).
-const HAS_RVFC =
-  typeof HTMLVideoElement !== "undefined" &&
-  "requestVideoFrameCallback" in HTMLVideoElement.prototype;
 
 /**
  * VideoAnnotator — a video player with an editable, contiguous segment
@@ -103,15 +97,8 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
     const overlayRef = useRef<HTMLCanvasElement>(null);
     const scrollRef = useRef<HTMLDivElement>(null);
 
-    const [currentTime, setCurrentTime] = useState(0);
-    // Authoritative displayed frame — the frame the decoder is actually
-    // presenting (see the rVFC effect), so the readout + frame-stepping match
-    // the picture and the hand-pose overlay, not the media clock (which runs
-    // ahead of the picture during cold-start buffering). `contentStartRef` is
-    // the stream's media-time origin (a CMAF baseMediaDecodeTime can be
-    // non-zero), shared with frame-stepping so both agree on frame N's time.
-    const [currentFrame, setCurrentFrame] = useState(0);
-    const contentStartRef = useRef(Infinity);
+    // Media↔clip time, the presented-frame readout, and all seeking/stepping are
+    // owned by the clip clock (see `useClipClock`, wired up after `D` below).
     const [playing, setPlaying] = useState(false);
     const [rate, setRate] = useState(1);
     const [metaDuration, setMetaDuration] = useState(0);
@@ -233,6 +220,13 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
     const activeSegments = trackList[active]?.segments ?? [];
     const segs = useMemo(() => normalizeSegments(activeSegments, D), [activeSegments, D]);
     const sel = clamp(selectedIndex, 0, Math.max(0, segs.length - 1));
+
+    // The clip clock owns the media↔clip mapping (content-start offset + frame
+    // snapping), the presented-frame readout, and every seek/step. The component
+    // below drives the UI and annotation logic purely in CLIP seconds — it never
+    // touches `± contentStart` or the frame grid itself, so no call site can drift.
+    const { clipTime, readout, clipNow, seekClip, seekMedia, stepFrame: clockStepFrame, syncFromMedia, pinToEnd, measure: measureCS } =
+      useClipClock({ videoRef, D, srcFps, extractFps });
     const curSeg: Segment | null = segs[sel] || null;
 
     // ---- timeline zoom (horizontal magnification) --------------------------
@@ -262,7 +256,7 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
         if (scrollRef.current) scrollRef.current.scrollLeft = 0;
         return;
       }
-      const raf = requestAnimationFrame(() => recenter(currentTime));
+      const raf = requestAnimationFrame(() => recenter(clipTime));
       return () => cancelAnimationFrame(raf);
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [zoom]);
@@ -272,7 +266,7 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
     // follows the playhead instead.
     useEffect(() => {
       if (zoom <= 1 || playing) return;
-      recenter(currentTime);
+      recenter(clipTime);
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [sel]);
 
@@ -330,62 +324,38 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
       // no-op'ing at the final frame.
       const end = v.duration && isFinite(v.duration) ? v.duration : D;
       if (v.ended || (end > 0 && v.currentTime >= end - 0.05)) {
-        v.currentTime = 0;
-        setCurrentTime(0);
+        seekClip(0);
       }
       const pr = v.play();
       if (pr && pr.catch) pr.catch(() => {});
-    }, [D]);
+    }, [D, seekClip]);
 
     const stepFrame = useCallback(
       (dir: number, big?: boolean) => {
-        const v = videoRef.current;
-        if (!v) return;
-        v.pause();
-        // Step by FRAME INDEX and seek to the frame CENTER, not the n/fps
-        // boundary: n/fps*fps often lands a hair below n, so the decoder shows
-        // frame n-1 while the clock reads n — which makes a ←/→ step move the
-        // frame-indexed hand-pose overlay while the picture stays put. +0.5
-        // guarantees the decoder paints `next`. `cs` shifts by the stream's
-        // content start so N maps to the right absolute media time. `cur` uses
-        // floor (the frame interval the playhead sits in) so a prior center-seek
-        // doesn't round up a frame.
-        const fps = srcFps || extractFps || 30;
-        const cs = Number.isFinite(contentStartRef.current)
-          ? contentStartRef.current
-          : v.buffered.length
-            ? v.buffered.start(0)
-            : 0;
-        const stepN = big ? Math.max(1, Math.round(fps)) : 1;
-        const cur = Math.floor((v.currentTime - cs) * fps + 1e-6);
-        const maxFrame = Math.max(0, Math.round(D * fps) - 1);
-        const next = clamp(cur + dir * stepN, 0, maxFrame);
-        v.currentTime = cs + (next + 0.5) / fps;
-        // Frame-step pauses the video, so onTimeUpdate's playing-only selection
-        // sync won't run — follow the active lane's segment under the new playhead
-        // here too, so it highlights like the non-active lanes' .cur (no seek;
-        // onSelectedChange only moves the selected index).
-        const idx = segmentIndexAtTime(segs, v.currentTime);
+        // The clock does the frame-center seek + content-start math and returns
+        // the new CLIP time. Frame-step pauses the video, so onTimeUpdate's
+        // playing-only selection sync won't run — follow the active lane's segment
+        // under the new playhead here too (no seek; just move the selected index).
+        const ct = clockStepFrame(dir, big);
+        const idx = segmentIndexAtTime(segs, ct);
         if (idx !== sel) onSelectedChange(idx);
       },
-      [D, extractFps, srcFps, segs, sel, onSelectedChange]
+      [clockStepFrame, segs, sel, onSelectedChange]
     );
 
     const gotoBoundary = useCallback(
       (dir: number) => {
-        const v = videoRef.current;
-        if (!v) return;
         const bounds = boundaryTimes(segs, D);
-        const now = v.currentTime;
+        const now = clipNow();
         let target = dir > 0 ? D : 0;
         if (dir > 0) {
           for (const b of bounds) if (b > now + 1e-3) { target = b; break; }
         } else {
           for (let k = bounds.length - 1; k >= 0; k--) if (bounds[k] < now - 1e-3) { target = bounds[k]; break; }
         }
-        v.currentTime = clamp(target, 0, D);
+        seekClip(target);
       },
-      [segs, D]
+      [segs, D, seekClip, clipNow]
     );
 
     // Manual selection: select segment `i` in the active track AND seek to its
@@ -399,20 +369,17 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
         const next = clamp(i, 0, segs.length - 1);
         const p = segs[next];
         onSelectedChange(next);
-        if (p && videoRef.current) {
-          videoRef.current.currentTime = p.start;
-          setCurrentTime(p.start);
-        }
+        if (p) seekClip(p.start);
       },
-      [segs, onSelectedChange]
+      [segs, onSelectedChange, seekClip]
     );
 
     const doSplit = useCallback(() => {
-      const res = splitAt(segs, videoRef.current?.currentTime ?? currentTime, D);
+      const res = splitAt(segs, clipNow(), D);
       if ("error" in res) { showToast(res.error); return; }
       commitSegs(res.segments);
       onSelectedChange(res.selected);
-    }, [segs, currentTime, D, commitSegs, onSelectedChange, showToast]);
+    }, [segs, D, commitSegs, onSelectedChange, showToast, clipNow]);
 
     const doMerge = useCallback(
       (i: number) => {
@@ -473,9 +440,8 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
         e.preventDefault();
         const rect = e.currentTarget.getBoundingClientRect();
         const seek = (clientX: number) => {
-          const t = clamp((clientX - rect.left) / rect.width, 0, 1) * D;
-          v.currentTime = t;
-          setCurrentTime(t);
+          const t = clamp((clientX - rect.left) / rect.width, 0, 1) * D; // clip time
+          seekClip(t);
           // Switch the selected segment immediately — don't wait for the video's
           // `timeupdate` (which is delayed while the seeked frame buffers).
           const idx = segmentIndexAtTime(segs, t);
@@ -490,13 +456,14 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
         document.addEventListener("pointermove", onMove);
         document.addEventListener("pointerup", onUp);
       },
-      [D, segs, sel, onSelectedChange]
+      [D, segs, sel, onSelectedChange, seekClip]
     );
 
     // ---- video element events ---------------------------------------------
     const onLoadedMetadata = useCallback(() => {
       const v = videoRef.current;
       if (!v) return;
+      measureCS(); // capture the content-start offset as early as metadata allows
       const md = v.duration || 0;
       setMetaDuration(md);
       // If duration was previously unknown, pin the active track's ends now.
@@ -504,29 +471,29 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
         const norm = normalizeSegments(activeSegments, md);
         if (JSON.stringify(norm) !== JSON.stringify(activeSegments)) commitSegs(norm);
       }
-    }, [duration, activeSegments, commitSegs]);
+    }, [duration, activeSegments, commitSegs, measureCS]);
 
     const onTimeUpdate = useCallback(() => {
       const v = videoRef.current;
       if (!v) return;
-      setCurrentTime(v.currentTime);
+      const ct = syncFromMedia(); // clock reads the media clock → snapped clip time
       // Continuous playback: while actually playing, keep the selection synced
       // to the segment under the playhead — WITHOUT seeking — so playback
       // crosses boundaries and runs straight through to the end (no loop).
       if (!v.paused) {
-        const idx = segmentIndexAtTime(segs, v.currentTime);
+        const idx = segmentIndexAtTime(segs, ct);
         if (idx !== sel) onSelectedChange(idx);
         // When zoomed, follow the playhead with a dead-zone (only re-center once
         // it nears the visible edges) so the scroll doesn't jitter every tick.
         const sc = scrollRef.current;
         if (sc && zoom > 1 && D) {
-          const px = gutterPx + (v.currentTime / D) * Math.max(1, sc.scrollWidth - gutterPx);
+          const px = gutterPx + (ct / D) * Math.max(1, sc.scrollWidth - gutterPx);
           if (px < sc.scrollLeft + 40 || px > sc.scrollLeft + sc.clientWidth - 80) {
             sc.scrollLeft = px - sc.clientWidth / 2;
           }
         }
       }
-    }, [segs, sel, onSelectedChange, zoom, D, gutterPx]);
+    }, [segs, sel, onSelectedChange, zoom, D, gutterPx, syncFromMedia]);
 
     // ---- timeline drag (boundary) + scrub / click-select ------------------
     const startBoundaryDrag = useCallback(
@@ -567,8 +534,9 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
         const seek = (x: number) => {
           // Map the click to time relative to the SAME fixed-px gutter the render
           // uses (posCss), so the playhead lands exactly where the cursor is.
+          // Seek the media only; the commit to state is deferred to mouse-up.
           const frac = clamp((x - rect.left - gutterPx) / Math.max(1, rect.width - gutterPx), 0, 1);
-          v.currentTime = frac * D;
+          seekMedia(frac * D);
         };
         // Empty ruler (not on a segment): behave like a plain scrubber — seek
         // immediately on press. Seeking does NOT change play/pause state (a
@@ -588,10 +556,10 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
           document.removeEventListener("mousemove", onMove);
           document.removeEventListener("mouseup", onUp);
           if (moved) {
-            setCurrentTime(v.currentTime);
             // Selection follows the scrub: highlight the segment now under the
             // playhead (same sync as continuous playback, but for manual scrub).
-            const idx = segmentIndexAtTime(segs, v.currentTime);
+            const ct = syncFromMedia();
+            const idx = segmentIndexAtTime(segs, ct);
             if (idx !== sel) onSelectedChange(idx);
             return; // was a scrub/drag, not a click
           }
@@ -611,8 +579,7 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
               // host's segment panel track the new time, like a plain scrub).
               if (multi && !Number.isNaN(ti) && ti !== active) {
                 seek(downX);
-                setCurrentTime(v.currentTime);
-                const idx = segmentIndexAtTime(segs, v.currentTime);
+                const idx = segmentIndexAtTime(segs, syncFromMedia());
                 if (idx !== sel) onSelectedChange(idx);
                 return;
               }
@@ -621,30 +588,26 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
                 // Click within the already-selected segment → seek to the exact
                 // click position (do not jump back to the start).
                 seek(downX);
-                setCurrentTime(v.currentTime);
+                syncFromMedia();
               } else {
                 // Click a different active-lane segment → select it + seek to its
                 // start. No auto-play: preserve the current play/pause state.
                 const p = segs[i];
                 onSelectedChange(i);
-                if (p) {
-                  v.currentTime = p.start;
-                  setCurrentTime(p.start);
-                }
+                if (p) seekClip(p.start);
               }
             }
           } else {
             // Plain click on the empty ruler: the seek already happened on
             // press — now move the selection to the segment under the playhead.
-            setCurrentTime(v.currentTime);
-            const idx = segmentIndexAtTime(segs, v.currentTime);
+            const idx = segmentIndexAtTime(segs, syncFromMedia());
             if (idx !== sel) onSelectedChange(idx);
           }
         };
         document.addEventListener("mousemove", onMove);
         document.addEventListener("mouseup", onUp);
       },
-      [D, onSelectedChange, multi, active, sel, segs, gutterPx]
+      [D, onSelectedChange, multi, active, sel, segs, gutterPx, seekClip, seekMedia, syncFromMedia]
     );
 
     // ---- imperative handle -------------------------------------------------
@@ -685,45 +648,6 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
     const handsLoading = showHands && handposeLoading && !handposeReady;
     useHandposeOverlay({ enabled: showHands, playing, handpose, videoRef, canvasRef: overlayRef, stageRef });
 
-    // Authoritative displayed-frame tracker. rVFC fires per PRESENTED frame
-    // (playback, and once after a paused seek/step lands) and NOT while the
-    // picture is stalled — so `currentFrame` follows the picture, freezing with
-    // it during cold-start buffering instead of racing ahead like the clock. It
-    // also captures the stream's content start (min buffered.start) into the ref
-    // shared with frame-stepping. setState only on change → no-op while idle.
-    useEffect(() => {
-      const v = videoRef.current;
-      if (!v || typeof v.requestVideoFrameCallback !== "function") return;
-      const fps = srcFps || extractFps || 30;
-      let handle = v.requestVideoFrameCallback(function loop(_now, meta) {
-        if (v.buffered.length)
-          contentStartRef.current = Math.min(contentStartRef.current, v.buffered.start(0));
-        const cs = Number.isFinite(contentStartRef.current) ? contentStartRef.current : 0;
-        const f = frameAtMediaTime(meta.mediaTime, cs, fps);
-        setCurrentFrame((prev) => (prev === f ? prev : f));
-        handle = v.requestVideoFrameCallback(loop);
-      });
-      return () => v.cancelVideoFrameCallback?.(handle);
-    }, [srcFps, extractFps]);
-
-    // ---- derived readout ---------------------------------------------------
-    // Frame readout uses srcFps → extractFps → 30, so its frame number matches
-    // the granularity of ←/→ frame-stepping instead of silently assuming 30.
-    const fps = srcFps || extractFps || 30;
-    // Read out the frame the decoder is actually PRESENTING (currentFrame, from
-    // the rVFC loop) — not the media clock, which runs ahead of the picture
-    // during cold-start buffering. Fall back to the clock where rVFC is absent
-    // (floor + content-start shift so a center-seek reads back the right frame).
-    // Time is derived FROM that frame so the two never disagree; both clamp to D.
-    const rcs = Number.isFinite(contentStartRef.current) ? contentStartRef.current : 0;
-    const maxFrame = D > 0 ? Math.max(0, Math.round(D * fps) - 1) : Number.POSITIVE_INFINITY;
-    const shownFrame = Math.min(
-      HAS_RVFC ? currentFrame : Math.max(0, Math.floor((currentTime - rcs) * fps + 1e-6)),
-      maxFrame
-    );
-    const shownTime = D > 0 ? Math.min(shownFrame / fps, D) : shownFrame / fps;
-    const readout = `${fmt(shownTime)} / ${fmt(D)} · f${shownFrame}`;
-
     const hasHeader = Boolean(videoTitle || videoSubtitle || headerLeading);
 
     return (
@@ -749,7 +673,7 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
             onTimeUpdate={onTimeUpdate}
             onProgress={updateBuffered}
             onSeeked={() => {
-              setCurrentTime(videoRef.current?.currentTime ?? 0);
+              syncFromMedia(); // clock: media → snapped clip time
               hideBuffering();
             }}
             onPlay={() => setPlaying(true)}
@@ -759,6 +683,7 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
               // spinner) — some browsers don't fire `pause` on end.
               setPlaying(false);
               hideBuffering();
+              pinToEnd(); // pin the playhead to the very end (last frame → D)
             }}
             onLoadStart={showBuffering}
             onWaiting={showBuffering}
@@ -793,9 +718,9 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
           <div className="va-seek" onPointerDown={onSeekDown}>
             <div className="va-seek-track">
               <div className="va-seek-buf" style={{ width: `${clamp(buffered / D, 0, 1) * 100}%` }} />
-              <div className="va-seek-fill" style={{ width: `${clamp(currentTime / D, 0, 1) * 100}%` }} />
+              <div className="va-seek-fill" style={{ width: `${clamp(clipTime / D, 0, 1) * 100}%` }} />
             </div>
-            <div className="va-seek-thumb" style={{ left: `${clamp(currentTime / D, 0, 1) * 100}%` }} />
+            <div className="va-seek-thumb" style={{ left: `${clamp(clipTime / D, 0, 1) * 100}%` }} />
           </div>
         )}
 
@@ -836,7 +761,7 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
               gutterPx={gutterPx}
               D={D}
               zoom={zoom}
-              currentTime={currentTime}
+              currentTime={clipTime}
               allowAddTracks={multi && allowAddTracks}
               onScrubDown={startScrub}
               onBoundaryDown={startBoundaryDrag}

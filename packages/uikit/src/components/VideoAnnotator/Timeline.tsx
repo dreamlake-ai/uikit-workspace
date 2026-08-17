@@ -288,7 +288,7 @@ export function Timeline({
             )}
         </>
       )}
-      {activeSegs.length > 0 && currentTime > 0.001 && (
+      {activeSegs.length > 0 && currentTime >= 0 && (
         <div className="va-playhead" style={{ left: posCss(clamp(currentTime, 0, D)) }} />
       )}
       {cellTip != null &&
