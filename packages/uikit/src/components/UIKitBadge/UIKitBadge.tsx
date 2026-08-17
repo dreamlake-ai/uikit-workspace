@@ -31,8 +31,10 @@ export interface PackageBadgeProps {
  * Low-level package chip: `[ name | version ] ⎇ hash`.
  *
  * Ported from the legacy `@vuer-ai/vuer-uikit` badge, restyled to DreamLake
- * tokens (accent name chip + neutral version chip) and pointed at the
- * DreamLake npm/GitHub. Fully prop-driven.
+ * tokens — a hairline-outlined shell with a muted name segment and a faintly
+ * tinted version segment, matching the docs topbar version chip. Neutral by
+ * design: no accent fill, so the badge stays quiet next to real status colour.
+ * Pointed at the DreamLake npm/GitHub. Fully prop-driven.
  */
 export function PackageBadge({
   className,
@@ -52,21 +54,35 @@ export function PackageBadge({
 
   return (
     <span
-      className={cn('inline-flex items-center font-uikit-mono text-uikit-10 leading-none', className)}
+      className={cn(
+        // 15px leading (not `leading-none`) is what gives the chip its vertical
+        // breathing room — the 2px block padding alone reads cramped.
+        'inline-flex items-center font-uikit-mono text-uikit-10 leading-[15px] font-medium tracking-[0.02em]',
+        className,
+      )}
       style={linkable ? { cursor: 'pointer' } : undefined}
     >
       {(packageName || versionText) && (
-        <span className="inline-flex items-center overflow-hidden rounded-uikit-badge">
+        // Outlined shell: one hairline frame holds both segments, so colour is
+        // never load-bearing. Inner radii are 3px against the 4px outer radius —
+        // the border's 1px of inset, which `overflow-hidden` cannot express once
+        // the frame is drawn on this element.
+        <span className="inline-flex items-stretch rounded-[4px] border border-uikit-faint">
           {packageName && (
-            <span className="px-1.5 py-0.5 bg-uikit-accent text-white">{packageName}</span>
+            <span className="px-1.5 py-0.5 rounded-l-[3px] font-semibold text-uikit-muted">
+              {packageName}
+            </span>
           )}
           {versionText && (
             <a
               href={linkable ? npmUrl : undefined}
               onClick={blockLink}
               className={cn(
-                'px-1.5 py-0.5 bg-uikit-chip text-uikit-ink no-underline',
-                linkable && 'hover:text-uikit-accent',
+                'px-1.5 py-0.5 rounded-r-[3px] font-semibold bg-uikit-ink-5-solid text-uikit-ink no-underline',
+                // A hairline, not a colour change, splits the segments — and only
+                // when there is a name segment to split from.
+                packageName && 'border-l border-uikit-faint',
+                linkable && 'hover:bg-uikit-search',
               )}
             >
               {versionText}
