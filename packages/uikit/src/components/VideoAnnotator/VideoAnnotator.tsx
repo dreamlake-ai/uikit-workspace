@@ -361,8 +361,14 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
         const maxFrame = Math.max(0, Math.round(D * fps) - 1);
         const next = clamp(cur + dir * stepN, 0, maxFrame);
         v.currentTime = cs + (next + 0.5) / fps;
+        // Frame-step pauses the video, so onTimeUpdate's playing-only selection
+        // sync won't run — follow the active lane's segment under the new playhead
+        // here too, so it highlights like the non-active lanes' .cur (no seek;
+        // onSelectedChange only moves the selected index).
+        const idx = segmentIndexAtTime(segs, v.currentTime);
+        if (idx !== sel) onSelectedChange(idx);
       },
-      [D, extractFps, srcFps]
+      [D, extractFps, srcFps, segs, sel, onSelectedChange]
     );
 
     const gotoBoundary = useCallback(
