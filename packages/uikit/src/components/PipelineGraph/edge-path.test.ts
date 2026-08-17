@@ -441,3 +441,65 @@ describe('the routed path is continuous in the endpoint positions', () => {
     expect(Math.abs(at(-30) - at(-29))).toBeLessThan(25)
   })
 })
+
+describe('a target barely forward of the source jogs — it does not loop', () => {
+  // Regression: `backwards` was `B.x - A.x <= 8`, so a target whose left face
+  // sat 0–8 px FORWARD of the source's right port was routed as if it were
+  // behind — the full inverted-S excursion below both cards. Two cards stacked
+  // nearly vertically (an ordinary shape after a drag) hit this constantly.
+  const src = card(0, 200)
+  // Target 100 px above, swept across the old threshold.
+  const dstAt = (dx: number) => card(NODE_W + dx, 100)
+  const route = (dx: number) => {
+    const dst = dstAt(dx)
+    return buildEdgePath(port(src, 'right'), port(dst, 'left'), {
+      obstacles: [], fromRect: src, toRect: dst,
+    })
+  }
+
+  it('routes the 0–8 px band as a short jog, not a loop below both cards', () => {
+    // The loop has to reach PAD below the lower card and come back; the jog
+    // only spans the vertical gap. Anything near the loop's length means the
+    // old branch is back.
+    const jog = pathLength(route(24))
+    for (const dx of [0, 1, 4, 8]) {
+      expect(pathLength(route(dx))).toBeLessThan(jog * 1.35)
+    }
+  })
+
+  it('never enters either endpoint card across that band', () => {
+    for (const dx of [0, 1, 4, 8, 9, 12]) {
+      expectClear(route(dx), src, dstAt(dx), `dx=${dx}`)
+    }
+  })
+
+  it('is continuous in dx everywhere the route family does not change', () => {
+    // dx = 0 is the one honest flip: with flow sides the path must arrive
+    // travelling +x into the target's LEFT face, so the instant that face is
+    // behind the source's port a wrap becomes unavoidable. Either side of it
+    // the length must move smoothly.
+    for (const [lo, hi] of [[1, 60], [-60, -1]]) {
+      let prev: number | null = null
+      const jumps: string[] = []
+      for (let dx = lo; dx <= hi; dx++) {
+        const len = pathLength(route(dx))
+        if (prev !== null && Math.abs(len - prev) > 5) jumps.push(`dx ${dx - 1}→${dx}: ${prev.toFixed(0)}→${len.toFixed(0)}`)
+        prev = len
+      }
+      expect(jumps).toEqual([])
+    }
+  })
+
+  it('keeps the tag anchor on the jog instead of flinging it onto a crossing run', () => {
+    // The anchor is what the connector tag rides. Under the old threshold it
+    // jumped ~100 px down onto the loop's crossing run at dx = 8, taking the
+    // tag and its leader off with it.
+    const anchorY = (dx: number) => {
+      const dst = dstAt(dx)
+      const out: { anchor: Pt } = { anchor: { x: 0, y: 0 } }
+      buildEdgePath(port(src, 'right'), port(dst, 'left'), { obstacles: [], fromRect: src, toRect: dst, out })
+      return out.anchor.y
+    }
+    expect(Math.abs(anchorY(8) - anchorY(9))).toBeLessThan(5)
+  })
+})

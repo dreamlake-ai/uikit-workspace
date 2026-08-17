@@ -211,11 +211,29 @@ export function buildEdgePath(
     if (opts.out && worldFrame) opts.out.jog = { y0, y1 }
   }
 
-  // "Backward": the target sits at or behind the source along the primary axis.
-  // Such an edge MUST loop around with the inverted-S below — a soft curve or a
+  // "Backward": the target sits BEHIND the source along the primary axis. Such
+  // an edge MUST loop around with the inverted-S below — a soft curve or a
   // straight line would run straight back through both cards (only the
   // arrowhead would show). So the shallow-edge short-circuits are forward-only.
-  const backwards = B.x - A.x <= 8
+  //
+  // The threshold is exactly 0, not a tolerance. It used to be `<= 8`, which
+  // sent a target sitting 0–8 px FORWARD of the source's port around the full
+  // loop — a ~130-unit excursion below both cards where a ~75-unit vertical jog
+  // fits perfectly well. Two cards stacked nearly vertically (a common shape
+  // after a drag) hit it constantly, and the result was visibly wrong twice
+  // over: the connector dived below both cards for an 8 px difference, and the
+  // tag anchor jumped ~100 px down onto the crossing run, dragging its leader
+  // off with it.
+  //
+  // It was also DISCONTINUOUS in the node positions, the defect this router is
+  // otherwise careful about: at dx = 9 → 8 the rendered line snapped between
+  // the two shapes mid-drag. Zero is where the flip becomes unavoidable rather
+  // than merely early — with `edgeSides='flow'` the path must arrive travelling
+  // +x into the target's LEFT face, so the moment that face sits behind the
+  // source's port, reaching it requires a wrap. At dx = 0 the jog degenerates
+  // to a straight vertical run touching both card edges, which is the correct
+  // limit of the forward family, not a special case.
+  const backwards = B.x - A.x < 0
 
   // Soft curve for shallow FORWARD edges. (opts.bendX is intentionally ignored
   // here — a shallow soft-curve has no vertical jog to pin.)

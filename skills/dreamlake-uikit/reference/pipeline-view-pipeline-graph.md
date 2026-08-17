@@ -80,6 +80,13 @@ The design layout is a canvas with a source **right rail**. The two share one
 selection: click a node and the rail jumps to it; click the background to clear.
 Both components are controlled — you own the `selectedNodeId` state.
 
+The seam between them is **draggable** — grab it and pull to trade canvas width
+for code width (the rail keeps a 180px floor, the canvas 200px). Neither
+component owns that behaviour: the layout is the caller's, and the specimen
+below builds it from `ResizeDivider`, the same drag primitive `ResizableLayout`
+uses. The rail holds a pixel width while the canvas is `flex: 1 1 0`, so the
+**canvas** absorbs viewport changes and the code column stays put.
+
 `PipelineSource` is more than a code viewer — its tabs are **contextual**:
 
 - **Nothing selected** → a single `PIPELINE` tab: the pipeline's status (its
