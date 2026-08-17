@@ -23,7 +23,7 @@
  * is discontinuous in the inputs, so both checks earn their place.
  */
 import { describe, expect, it } from 'vitest'
-import { buildEdgePath, pickSides, type Obstacle, type Pt } from './edge-path'
+import { buildEdgePath, pickSides, MIN_CORRIDOR, type Obstacle, type Pt } from './edge-path'
 import { NODE_H, NODE_W } from './flow'
 
 // ── geometry harness ────────────────────────────────────────────────────────
@@ -386,10 +386,21 @@ describe('vertical-primary routing (the WorkflowCanvas convention)', () => {
 // ── 4. continuity — what would have caught the 59 → 60 snap ─────────────────
 
 describe('the routed path is continuous in the endpoint positions', () => {
-  it('backwards edge: path length never jumps across adjacent dy', () => {
+  it('backwards edge: the only length jump is the corridor opening', () => {
+    // This swept clean before backward edges learned to thread the lane between
+    // two stacked cards. Opening that lane is a genuine change of route
+    // topology — around the outside of the pair, versus between them — so a
+    // step at the threshold is not avoidable by tuning: the two routes are
+    // nowhere near the same length at the moment one becomes available.
+    //
+    // What IS still guaranteed is that the step happens EXACTLY ONCE, at a
+    // predictable place, and is bounded. Everywhere else a pixel of drag still
+    // moves the path a pixel. Asserting the jump's location rather than
+    // widening the tolerance keeps this honest — a second jump, or one that
+    // drifts, still fails.
     const src = card(400, 100)
     let prev: number | null = null
-    const jumps: string[] = []
+    const jumps: { dy: number; from: number; to: number }[] = []
     for (let dy = 0; dy <= 120; dy++) {
       const dst = card(120, 100 + dy)
       const len = pathLength(buildEdgePath(port(src, 'right'), port(dst, 'left'), {
@@ -397,13 +408,33 @@ describe('the routed path is continuous in the endpoint positions', () => {
         fromRect: src,
         toRect: dst,
       }))
-      // One pixel of drag may move the path length by at most a few pixels.
-      if (prev !== null && Math.abs(len - prev) > 5) {
-        jumps.push(`dy ${dy - 1}→${dy}: ${prev.toFixed(0)}→${len.toFixed(0)}`)
-      }
+      if (prev !== null && Math.abs(len - prev) > 5) jumps.push({ dy, from: prev, to: len })
       prev = len
     }
-    expect(jumps).toEqual([])
+    // The lane between the cards is `dy - NODE_H` tall, so it reaches
+    // MIN_CORRIDOR — and the route switches — at exactly this dy.
+    expect(jumps.map((j) => j.dy)).toEqual([NODE_H + MIN_CORRIDOR])
+    // And threading the lane must be the SHORTER route, or it would not be
+    // worth a discontinuity at all.
+    expect(jumps[0].to).toBeLessThan(jumps[0].from)
+    expect(jumps[0].from - jumps[0].to).toBeLessThan(150)
+  })
+
+  it('backwards edge: continuous either side of the corridor threshold', () => {
+    const src = card(400, 100)
+    const lenAt = (dy: number) => pathLength(buildEdgePath(port(src, 'right'), port(card(120, 100 + dy), 'left'), {
+      obstacles: [], fromRect: src, toRect: card(120, 100 + dy),
+    }))
+    for (const [lo, hi] of [[0, NODE_H + MIN_CORRIDOR - 1], [NODE_H + MIN_CORRIDOR, 160]]) {
+      let prev: number | null = null
+      const jumps: string[] = []
+      for (let dy = lo; dy <= hi; dy++) {
+        const len = lenAt(dy)
+        if (prev !== null && Math.abs(len - prev) > 5) jumps.push(`dy ${dy - 1}→${dy}`)
+        prev = len
+      }
+      expect(jumps).toEqual([])
+    }
   })
 
   it('forward edge: path length never jumps within the orthogonal regime', () => {
@@ -501,5 +532,44 @@ describe('a target barely forward of the source jogs — it does not loop', () =
       return out.anchor.y
     }
     expect(Math.abs(anchorY(8) - anchorY(9))).toBeLessThan(5)
+  })
+})
+
+describe('a backward edge threads the lane between two stacked cards', () => {
+  // Reported as "why isn't this an S curve?" — two cards stacked with a clear
+  // gap, connected backwards. The run used to travel around the OUTSIDE of the
+  // pair even though the lane between them was empty and sat on the chord
+  // midpoint, turning a short S into a wrap most of the way around both cards.
+  const src = card(0, 0)                       // lower card, out-port on its right
+  const dst = (gap: number) => card(4, -(NODE_H + gap))   // upper card, in-port on its left
+  const route = (gap: number) => buildEdgePath(
+    port(src, 'right'), port(dst(gap), 'left'),
+    { obstacles: [], fromRect: src, toRect: dst(gap) },
+  )
+
+  it('runs BETWEEN the cards when the lane is roomy', () => {
+    const d = route(21)   // the reported geometry
+    // The crossing run must sit inside the lane, not outside the pair.
+    const ys = samples(d).map((p) => p.y)
+    const lane = { lo: -NODE_H - 21 + NODE_H, hi: 0 }   // [-21, 0]
+    expect(ys.some((y) => y > lane.lo && y < lane.hi)).toBe(true)
+    // and it must never drop below the lower card, which is what the wrap did.
+    expect(Math.max(...ys)).toBeLessThanOrEqual(NODE_H)
+  })
+
+  it('is shorter than the wrap it replaces', () => {
+    expect(pathLength(route(MIN_CORRIDOR))).toBeLessThan(pathLength(route(MIN_CORRIDOR - 1)))
+  })
+
+  it('never enters either card, lane or no lane', () => {
+    for (const gap of [40, 21, MIN_CORRIDOR, MIN_CORRIDOR - 1, 8, 0]) {
+      expectClear(route(gap), src, dst(gap), `gap=${gap}`)
+    }
+  })
+
+  it('leaves narrow lanes alone rather than hairlining two card edges', () => {
+    const ys = samples(route(MIN_CORRIDOR - 1)).map((p) => p.y)
+    // Falls back to the outside route: it must leave the cards' band entirely.
+    expect(Math.max(...ys) > NODE_H || Math.min(...ys) < -(NODE_H + MIN_CORRIDOR - 1)).toBe(true)
   })
 })
