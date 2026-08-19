@@ -1,4 +1,4 @@
-import { ReactNode } from 'react'
+import { ElementType, ReactNode } from 'react'
 import { cn } from '../../lib/utils'
 
 export interface ProfileCardProps {
@@ -25,6 +25,11 @@ export interface ProfileCardProps {
    *  primary inline actions (fork, open, etc). Clicks do not bubble to
    *  `onClick`. */
   hoverActions?: ReactNode
+  /** Destination for the card click. Renders the card as a real `<a>` so
+   *  browser link affordances (⌘/ctrl+click, middle-click, right-click →
+   *  open in new tab) work; same-origin hrefs still client-route under Vike.
+   *  Action-slot clicks preventDefault so they never trigger navigation. */
+  href?: string
   onClick?: () => void
   className?: string
 }
@@ -39,20 +44,24 @@ export function ProfileCard({
   tags,
   topRightActions,
   hoverActions,
+  href,
   onClick,
   className,
 }: ProfileCardProps) {
+  const Root: ElementType = href ? 'a' : 'div'
   return (
-    <div
+    <Root
+      href={href}
       onClick={onClick}
       className={cn(
         'group relative rounded-xl border border-uikit-faint',
         'px-4 py-3.5 min-w-0',
         'font-uikit-ui text-uikit-ink',
+        href && 'block no-underline',
         // Clickable cards get a pointer + a subtle hover fill, so every consumer
         // (Overview / Projects / Datasets / Artifacts / …) reads the same on hover
         // without each having to re-declare it.
-        onClick && 'cursor-pointer transition-colors duration-[120ms] hover:bg-[color-mix(in_srgb,var(--color-uikit-ink)_3%,transparent)]',
+        (onClick || href) && 'cursor-pointer transition-colors duration-[120ms] hover:bg-[color-mix(in_srgb,var(--color-uikit-ink)_3%,transparent)]',
         className,
       )}
     >
@@ -120,6 +129,14 @@ export function ProfileCard({
       {/* top-right hover actions (edit / delete pattern) */}
       {topRightActions && (
         <div
+          // preventDefault must run in the CAPTURE phase: action buttons often
+          // stopPropagation in their own handlers, which would keep a bubble
+          // handler here from ever running — leaving the card <a>'s default
+          // navigation uncancelled. Capture runs before the target's handler
+          // and can't be bypassed.
+          onClickCapture={(e) => {
+            if (href) e.preventDefault()
+          }}
           onClick={(e) => e.stopPropagation()}
           className={cn(
             'absolute right-3 top-3 inline-flex items-center gap-1',
@@ -134,6 +151,9 @@ export function ProfileCard({
       {/* bottom-right hover actions (primary inline action) */}
       {hoverActions && (
         <div
+          onClickCapture={(e) => {
+            if (href) e.preventDefault()
+          }}
           onClick={(e) => e.stopPropagation()}
           className={cn(
             'absolute right-3 bottom-[9px] inline-flex items-center gap-1.5',
@@ -145,6 +165,6 @@ export function ProfileCard({
           {hoverActions}
         </div>
       )}
-    </div>
+    </Root>
   )
 }
