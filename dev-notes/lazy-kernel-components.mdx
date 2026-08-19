@@ -1,0 +1,125 @@
+# Lazy-kernel components
+
+_Written 2026-08-19, from building `CodeBlock`._
+
+Some UI-kit primitives need a heavy runtime engine to do their job —
+a code editor, a chart renderer, a map. Shipping that engine in the
+kit's main entry taxes every consumer, including the ones who only
+imported `Button`. This note records the shape that solved it for
+`CodeBlock`, and the three traps that each silently undo it.
+
+## The shape: one shell, one kernel, one dynamic import
+
+```
+CodeBlock/
+├─ CodeBlock.tsx         # shell — chrome, state, no engine imports
+├─ CodeMirrorKernel.tsx  # kernel — the only module that imports the engine
+├─ metrics.ts            # pure constants shared by both
+├─ theme.ts              # engine-dependent; kernel-only
+└─ languages.ts          # engine-dependent; kernel-only
+```
+
+The shell reaches the kernel through `lazy(() => import('./Kernel'))`
+and nothing else. Everything the shell needs at first paint — fonts,
+padding, sizing — lives in a module with **no engine imports at all**.
+
+`CodeBlock` goes further and uses one engine for both of its modes:
+read-only and editing are the same CodeMirror view reconfigured through
+compartments, not two components swapped. Two engines (a static
+highlighter for reading, an editor for writing) would mean two token
+palettes to keep aligned, and the colors visibly jump on the switch.
+
+## Trap 1: a shared module drags the engine back in
+
+The first version put the type metrics and the theme extensions in the
+same `theme.ts`. The shell imported `fallbackPreStyle` from it; the
+kernel imported `codeTheme` from it. Perfectly reasonable, and it
+quietly defeated the whole design:
+
+```
+dist/index.js         →  chunk-XXXX.js  →  @codemirror/view, /language, …
+```
+
+The bundler hoisted the shared module into a chunk the shell reaches
+**statically**, so every consumer of the kit got CodeMirror in their
+graph. `dist/index.js` itself contained no `@codemirror` string, which
+made it look fine on a cursory grep.
+
+The fix is to split by _dependency_, not by topic: pure constants in
+their own module, engine-touching code in another. Anything the shell
+imports must be provably engine-free.
+
+**Verify it in the build output, never by reading the source:**
+
+```bash
+pnpm build
+grep -c "@codemirror" dist/index.js          # expect 0
+grep -o "from '\./[^']*'" dist/index.js      # every static chunk…
+grep -c "@codemirror" dist/chunk-*.js        # …must also be 0
+```
+
+## Trap 2: `splitting` is an implicit default
+
+tsup only produces separate chunks with `splitting: true`, which it
+defaults to for `format: ['esm']`. The entire design rests on that
+default, so pin it explicitly — a future `format` change shouldn't be
+able to silently inline the kernel back into the entry.
+
+We also checked that `treeshake: true` doesn't undo it: tsup's
+tree-shaking plugin rolls up each chunk _in isolation_, resolving
+everything else as external, so dynamic imports survive.
+
+## Trap 3: Suspense breaks `renderToString`
+
+`React.lazy` suspends. `renderToString` — still what plenty of SSR
+setups use, including this repo's docs site — cannot render a boundary
+that actually suspends. It aborts and de-opts the **whole page** to
+client rendering:
+
+> Switched to client rendering because the server rendering aborted…
+> The server used "renderToString" which does not support Suspense.
+
+So don't mount the lazy boundary until after hydration:
+
+```tsx
+const [mounted, setMounted] = useState(false)
+useEffect(() => setMounted(true), [])
+
+return mounted ? (
+  <Suspense fallback={placeholder}>
+    <Kernel />
+  </Suspense>
+) : (
+  placeholder
+)
+```
+
+Server and first client render both emit the placeholder, hydration
+matches, and the chunk is fetched immediately after. As a bonus the
+placeholder is real server-rendered markup, so the content is in the
+HTML before any JavaScript runs.
+
+## The placeholder is load-bearing
+
+Whatever renders while the kernel is in flight must match the kernel's
+type metrics **exactly** — same family, size, leading, padding. Get
+that right and the engine's arrival is a recolor; get it wrong and
+every block on the page reflows a beat after load. This is why the
+metrics live in their own module: both halves import the same numbers.
+
+## Don't assume the consumer has a provider
+
+`useTheme()` throws outside a `ThemeProvider`. A kit primitive has to
+work in apps that never mounted one, so `CodeBlock` reads
+`<html data-theme>` directly through a `MutationObserver` and mirrors
+the `prefers-color-scheme` fallback from `styles.css`. Same rule
+applies to any primitive tempted to reach for app-level context.
+
+## Checklist for the next one
+
+- [ ] Shell imports nothing that transitively imports the engine
+- [ ] `grep -c "@codemirror" dist/index.js dist/chunk-*.js` → all `0`
+- [ ] `splitting` pinned explicitly in the build config
+- [ ] Lazy boundary gated behind a mount flag (SSR safety)
+- [ ] Placeholder metrics identical to the kernel's
+- [ ] No dependence on app-level context/providers

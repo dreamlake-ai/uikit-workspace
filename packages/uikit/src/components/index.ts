@@ -4,6 +4,7 @@ export * from "./Badge";
 export * from "./BreadcrumbTree";
 export * from "./Button";
 export * from "./Card";
+export * from "./CodeBlock";
 export * from "./Collapsible";
 export * from "./ContextMenu";
 export * from "./Dial";

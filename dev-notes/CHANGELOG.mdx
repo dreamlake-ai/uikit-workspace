@@ -6,6 +6,18 @@ sections. README copy edits and typo fixes are skipped. See
 [`./README.mdx`](./README.mdx) for the folder convention and
 [`../CLAUDE.md`](../CLAUDE.md) for the release-notes policy.
 
+## 2026-08-19 — Lazy-kernel components
+
+- New `lazy-kernel-components.mdx`: the pattern behind `CodeBlock` —
+  a shell plus a dynamically-imported engine kernel, so importing the
+  kit never pulls CodeMirror into a consumer's bundle. Records the
+  three failure modes we actually hit while building it (a shared
+  module hoisting the engine into a statically-reached chunk, tsup's
+  `splitting` being an implicit default, and `React.lazy` de-opting
+  `renderToString` pages to client rendering), each with the check
+  that catches it.
+- `README.mdx`: indexed the new note.
+
 ## 2026-06-29 — Single production deploy: `pnpm run deploy`, no staging
 
 - `migration-patterns.mdx`: rewrote the deploy-workflow section and
@@ -62,7 +74,7 @@ accumulated through three migration passes.
 
 - **Palette centralization.** The six-hue semantic palette now lives in
   `styles.css` as `--tone-blue / -green / -amber / -red / -purple /
-  -warm-gray`, exposed under `@theme` as `--color-uikit-tone-*`. `Tag`'s
+-warm-gray`, exposed under `@theme` as `--color-uikit-tone-*`. `Tag`'s
   inline hex table was replaced with `var(--tone-*)` references; the
   bespoke seventh red `#d93434` for the × hover state and the
   off-palette `#f87171` in `BreadcrumbTree`'s error row are gone — both
@@ -82,19 +94,19 @@ accumulated through three migration passes.
   future hex tweaks ripple automatically.
 
 - **styles.css naming unified.** Three confusions resolved:
-    - **`@theme` aliases:** dropped the duplicate "bare-name" block.
-      Every Tailwind alias now has exactly one canonical name —
-      `--color-uikit-*`. Row-band and tone aliases promoted from bare
-      to `--color-uikit-row-*` / `--color-uikit-tone-*` for symmetry.
-      Added the previously-missing `--color-uikit-faint-dashed`.
-    - **Runtime tokens (`:root`) stay un-prefixed.** They're the
-      consumer's theme-override hook; namespacing them would add
-      friction without security gain. The Tailwind layer handles
-      collision isolation for JSX-facing class names.
-    - **`vdu-*` → `uikit-*`.** `vdu-panel-in`, `vdu-no-scrollbar`, and
-      `vdu-row-in` renamed (last is referenced from BreadcrumbTree's
-      inline animation style). `vdu-live-pulse` deleted — viz ships
-      its own copy.
+  - **`@theme` aliases:** dropped the duplicate "bare-name" block.
+    Every Tailwind alias now has exactly one canonical name —
+    `--color-uikit-*`. Row-band and tone aliases promoted from bare
+    to `--color-uikit-row-*` / `--color-uikit-tone-*` for symmetry.
+    Added the previously-missing `--color-uikit-faint-dashed`.
+  - **Runtime tokens (`:root`) stay un-prefixed.** They're the
+    consumer's theme-override hook; namespacing them would add
+    friction without security gain. The Tailwind layer handles
+    collision isolation for JSX-facing class names.
+  - **`vdu-*` → `uikit-*`.** `vdu-panel-in`, `vdu-no-scrollbar`, and
+    `vdu-row-in` renamed (last is referenced from BreadcrumbTree's
+    inline animation style). `vdu-live-pulse` deleted — viz ships
+    its own copy.
 
 - **Style Guide specimen sweep** (~155 sites): every bare-name color
   utility (`text-ink`, `bg-panel`, `border-faint`, `bg-row-*`,
@@ -197,7 +209,6 @@ Two-phase migration from the sibling `vuer-dashboard-ui` repo:
   follow-up passes, one component at a time, so each component's
   doc can be iterated rather than mass-translated.
 
-
 Per-foundation routes (`/color`, `/typography`, `/spacing-layout`,
 `/iconography`, `/elevation`, `/border-radius`, `/motion`,
 `/zebra-lists`) collapse into a single `/style-guide` route.
@@ -214,9 +225,9 @@ all 8 sections and renders them in order with the page-level Lede +
 Crumbs.
 
 Internal heading hierarchy:
-  H1   Style Guide
-  H2   per foundation (Color, Typography, …)
-  H3   sub-sections within (Surfaces, Ink, Spacing scale, …)
+H1 Style Guide
+H2 per foundation (Color, Typography, …)
+H3 sub-sections within (Surfaces, Ink, Spacing scale, …)
 
 3 routes total now: `/`, `/style-guide`, `/components/button`.
 
@@ -243,6 +254,7 @@ The seven foundations are now flat URLs (`/color`, `/typography`,
 `/motion`) — no `/foundations/` prefix.
 
 Pages renamed/restructured:
+
 - `/foundations/palette` → `/color` (expanded to combine surfaces +
   ink + semantic palette)
 - `/foundations/typography` → `/typography`
@@ -290,28 +302,28 @@ Pulled upstream PRs #6 (`e4c673e`, typecheck script + fix latent type
 errors) and #7 (`0481b5b`, heading copy-link anchor on h1/h2/h3) into
 this repo.
 
-  package.json scripts        — `pnpm typecheck` runs `tsc --noEmit`.
-  package.json dependencies   — `@types/mdx`, `shiki` (typecheck deps;
-                                shiki was a transitive dep of
-                                @shikijs/rehype but tsc needs it
-                                explicit for ShikiTransformer).
-  src/components/prose.tsx    — extracted HeadingAnchor (chain icon +
-                                copy-on-click + checkmark confirmation
-                                via setTimeout). Refactored H2 to use
-                                it; added H1 + H3 with the same
-                                pattern. Each heading wrapper carries
-                                `group` so anchor `group-hover:opacity-
+package.json scripts — `pnpm typecheck` runs `tsc --noEmit`.
+package.json dependencies — `@types/mdx`, `shiki` (typecheck deps;
+shiki was a transitive dep of
+@shikijs/rehype but tsc needs it
+explicit for ShikiTransformer).
+src/components/prose.tsx — extracted HeadingAnchor (chain icon +
+copy-on-click + checkmark confirmation
+via setTimeout). Refactored H2 to use
+it; added H1 + H3 with the same
+pattern. Each heading wrapper carries
+`group` so anchor `group-hover:opacity-
                                 100` reveals on heading hover (CSS-
-                                only, no JS mount/unmount). Anchor's
-                                aria-label flips between 'Copy link to
-                                {heading text}' and 'Link copied to
-                                clipboard'.
-  src/mdx-components.tsx      — explicit prop types via React's
-                                `ComponentPropsWithoutRef<'pre'>` and
-                                `<'h2'>` augmented with the data-* the
-                                build pipeline stamps. Drops the
-                                `as { ... }` cast pattern. Maps h1/h2/
-                                h3 to the prose primitives.
+only, no JS mount/unmount). Anchor's
+aria-label flips between 'Copy link to
+{heading text}' and 'Link copied to
+clipboard'.
+src/mdx-components.tsx — explicit prop types via React's
+`ComponentPropsWithoutRef<'pre'>` and
+`<'h2'>` augmented with the data-\* the
+build pipeline stamps. Drops the
+`as { ... }` cast pattern. Maps h1/h2/
+h3 to the prose primitives.
 
 Verified: `pnpm typecheck` exits 0; `pnpm build` clean (~345ms,
 20 HTML pre-rendered); rendered HTML on /foundations/surfaces shows
@@ -337,7 +349,7 @@ Final Phase 3 content batch. Two reference pages landed in parallel:
 Two follow-ups to flag:
 
 - `lucide-react` was added at `^1.14.0` — that's what `npm latest`
-  resolves to, but it's the *legacy* lineage. The active development
+  resolves to, but it's the _legacy_ lineage. The active development
   line is `0.x` (current ~`0.460+`), tagged `dev` on npm. The
   design-guide explicitly calls for `v0.460`. The current install
   works (1.14.0 still renders icons cleanly) and matches the spirit
@@ -362,6 +374,7 @@ Third parallel-agent batch. Six new components, all reusable atoms
 graduating to `@dreamlake/uikit`:
 
 **Chrome:**
+
 - **`/components/inspector-panel`** (PR #23) — `<Panel />` with
   3 shadow tiers (resting / lifted / hairline) + eyebrow + title +
   body slot.
@@ -374,10 +387,11 @@ graduating to `@dreamlake/uikit`:
   comment on the underline implementation).
 
 **Lists:**
+
 - **`/components/zebra-row`** (PR #24) — `<ZebraRow />` reusable atom.
   4 states (rest/hover/selected/focus), 5 status buckets, 2 parities.
-  The foundations `/zebra-lists` page documents the *pattern*; this
-  page documents the *component*. The agent picked `data-parity` for
+  The foundations `/zebra-lists` page documents the _pattern_; this
+  page documents the _component_. The agent picked `data-parity` for
   the prop instead of carrying over the foundations specimens'
   `data-zebra` attribute — different naming for the new component is
   fine since the foundations specimens were left untouched per the
@@ -438,7 +452,7 @@ to match the source verbatim:
   source (transparent wrapper with `::after` accent border around the
   contiguous run; rows inside keep their zebra parity) instead of the
   fill-style alternative the agent picked. Updated `sections/multi-
-  row.mdx` prose to describe the ring vs. fill choice and clarify
+row.mdx` prose to describe the ring vs. fill choice and clarify
   that the specimen is the ring form.
 
 Also reverted `src/components/TopBar.tsx` to the original static
@@ -473,6 +487,7 @@ isolated git worktrees, each on its own `feat/agent-*` branch:
   4-variant suggestion). `<Button />` at `src/components/Button.tsx`.
 
 Orchestration pattern (worth keeping for future batches):
+
 - Pre-create 4 git worktrees on `main` with branches `feat/agent-*`.
 - Spawn 4 background `general-purpose` agents in parallel, each with
   a self-contained prompt that includes the source spec, file
@@ -549,18 +564,18 @@ This PR (`chore/wire-agent-pages`) is that consolidation.
 
 ## 2026-05-09 — Sync from viz-workspace: Prose-as-MDX + shiki
 
-- Pulled the *Prose as MDX, components as imports* section into
+- Pulled the _Prose as MDX, components as imports_ section into
   `migration-patterns.mdx` from `dreamlake-ai/viz-workspace`. Adds the
   one-time MDX wiring (compiler + components map + wrapper), the
   components-map vs inline-import decision rule, the second/third-page
   tipping-point heuristic, and the "pin the TOC to slugs, not magic
   strings" warning.
-- Pulled the *Land syntax highlighting in the same milestone* sub-
+- Pulled the _Land syntax highlighting in the same milestone_ sub-
   section: the three-knob shiki wiring (defaultColor:false +
   parseMetaString + custom data-language transformer) that lets fenced
   code blocks slot into `<CodeBlock>` chrome without the page knowing
   shiki exists.
-- Updated step 4 of the *Small reviewable PRs* sequence and added
+- Updated step 4 of the _Small reviewable PRs_ sequence and added
   step 8 (MDX conversion) so the order matches what the upstream now
   recommends.
 - This repo's matching infrastructure landed in PR — same shiki + MDX

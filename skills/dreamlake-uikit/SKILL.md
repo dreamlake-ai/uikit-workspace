@@ -1,6 +1,6 @@
 ---
 name: dreamlake-uikit
-description: DreamLake uikit is the React component library and design contract — surfaces, ink, semantic color, type, geometry, and the zebra-list patterns shared by every DreamLake page. Use when answering questions about DreamLake (Overview, Avatar, Style guide, BreadcrumbTree, LLM-Readable Docs, Button, Dialog, Field, FilterBar, Menu, ProfileCard, ProfileLayout, ResizableLayout, Select, SideNav, Tabs, Tag, TextField, VirtualList, VirtualListFlow, VideoAnnotator, Spinner, Skeleton, Switch, Badge, Collapsible, Card, Alert Dialog, Drawer, Toast, UIKit Badge, Pipeline Graph, Anatomy, Pipeline Graph JSON, Architecture & Roadmap, useIsMobile, Subtask Annotation, Label, Toggle, Workflow Canvas, Node Types, Toolbar, Modal, Form Layout, Input, Mouse Cursor Icons, Tooltip, Popover, Dropdown Menu, Theme, Tree View, Context Menu, Dial, Waterfall, Slider, Number Inputs, Layout, Sync Scroll).
+description: DreamLake uikit is the React component library and design contract — surfaces, ink, semantic color, type, geometry, and the zebra-list patterns shared by every DreamLake page. Use when answering questions about DreamLake (Overview, Avatar, Style guide, BreadcrumbTree, LLM-Readable Docs, Button, CodeBlock, Dialog, Field, FilterBar, Menu, ProfileCard, ProfileLayout, ResizableLayout, Select, SideNav, Tabs, Tag, TextField, VirtualList, VirtualListFlow, VideoAnnotator, Spinner, Skeleton, Switch, Badge, Collapsible, Card, Alert Dialog, Drawer, Toast, UIKit Badge, Pipeline Graph, Anatomy, Pipeline Graph JSON, Architecture & Roadmap, useIsMobile, Subtask Annotation, Label, Toggle, Workflow Canvas, Node Types, Toolbar, Modal, Form Layout, Input, Mouse Cursor Icons, Tooltip, Popover, Dropdown Menu, Theme, Tree View, Context Menu, Dial, Waterfall, Slider, Number Inputs, Layout, Sync Scroll).
 ---
 # DreamLake
 
@@ -22,6 +22,7 @@ file that matches the question; each is a self-contained markdown page.
 - `reference/components-avatar.md` — Avatar: Image-or-initials avatar with adjustable size and corner radius.
 - `reference/components-breadcrumb-tree.md` — BreadcrumbTree: Breadcrumb selector with a Miller-column drop-down for navigating deep hierarchies.
 - `reference/components-button.md` — Button: Action button with primary, secondary, ghost and danger variants.
+- `reference/components-code-block.md` — CodeBlock: Syntax-highlighted code surface that can switch into an editor.
 - `reference/components-dialog.md` — Dialog: Modal dialog with backdrop, Escape-to-dismiss, and a footer action row.
 - `reference/components-field.md` — Field: Form-field wrapper — label, required marker, hint and error.
 - `reference/components-filter-bar.md` — FilterBar: Filter chips + search input + sort dropdown for list/table toolbars.
