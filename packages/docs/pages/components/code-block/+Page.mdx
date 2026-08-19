@@ -51,8 +51,14 @@ when the user left the editor if you want to save at that point instead.
 
 ## Bare surface
 
-`header={false}` drops the chrome entirely. `maxHeight` caps the block and
-scrolls inside it; `wrap` soft-wraps instead of scrolling sideways.
+Not everything you show is a file. A traceback pasted into a log viewer has no
+filename worth labelling, no language to highlight, and lines far too long to
+scroll sideways through — so `header={false}` drops the chrome, `wrap`
+soft-wraps rather than scrolling horizontally, and `maxHeight` caps the block
+and scrolls inside it.
+
+Omitting `lang` is a legitimate choice here rather than a missing prop: plain
+text is what this content is.
 
 <Preview source={plainSrc} filename="PlainSpec.tsx">
   <PlainSpec />
