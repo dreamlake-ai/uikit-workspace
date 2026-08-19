@@ -17,7 +17,7 @@ export const EditableSpec = () => {
       editable="toggle"
       lang="json"
       filename="dataset.json"
-      lineNumbers
+      defaultLineNumbers
     />
   )
 }

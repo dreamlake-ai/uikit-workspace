@@ -117,6 +117,11 @@ export function CodeBlock({
 
   const [innerLineNumbers, setInnerLineNumbers] = useState(defaultLineNumbers)
   const showLineNumbers = lineNumbers ?? innerLineNumbers
+  // A pinned `lineNumbers` with nowhere to report a change means the toggle
+  // could never do anything — a control that visibly reads as on but ignores
+  // clicks. Consumers who pin it are saying they don't want it toggled, so
+  // drop the button rather than render a dead one.
+  const canToggleLineNumbers = lineNumbers === undefined || onLineNumbersChange !== undefined
 
   const [copied, setCopied] = useState(false)
   const dark = useHtmlTheme(theme) === 'dark'
@@ -201,16 +206,18 @@ export function CodeBlock({
           )}
           <span className="flex-1" />
           {actions}
-          <button
-            type="button"
-            aria-pressed={showLineNumbers}
-            aria-label={showLineNumbers ? 'Hide line numbers' : 'Show line numbers'}
-            title={showLineNumbers ? 'Hide line numbers' : 'Show line numbers'}
-            onClick={toggleLineNumbers}
-            className={headerButton(showLineNumbers)}
-          >
-            <Hash size={10} />
-          </button>
+          {canToggleLineNumbers && (
+            <button
+              type="button"
+              aria-pressed={showLineNumbers}
+              aria-label={showLineNumbers ? 'Hide line numbers' : 'Show line numbers'}
+              title={showLineNumbers ? 'Hide line numbers' : 'Show line numbers'}
+              onClick={toggleLineNumbers}
+              className={headerButton(showLineNumbers)}
+            >
+              <Hash size={10} />
+            </button>
+          )}
           {copyable && (
             <button type="button" onClick={copy} className={headerButton(copied)}>
               {copied ? 'Copied' : 'Copy'}
