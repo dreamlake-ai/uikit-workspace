@@ -37,6 +37,7 @@ import { Button, cn } from '@dreamlake/uikit'
 
 - **Avatar** — User/entity avatar with fallback initials
 - **BreadcrumbTree** — Hierarchical breadcrumb navigation
+- **CodeBlock** — Syntax-highlighted code surface that can switch into an editor
 - **Dialog** — Modal dialog with overlay
 - **FilterBar** — Composable filter controls
 - **Menu** — Dropdown and context menus
