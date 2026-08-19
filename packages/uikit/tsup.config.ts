@@ -22,6 +22,11 @@ export default defineConfig({
   dts: true,
   clean: true,
   treeshake: true,
+  // Load-bearing: CodeBlock reaches CodeMirror only through a dynamic
+  // import so consumers that never render code don't pay for it. tsup
+  // defaults `splitting` to true for esm, but the whole lazy-kernel
+  // design rests on it, so pin it explicitly rather than inherit it.
+  splitting: true,
   external: ['react', 'react-dom', 'react/jsx-runtime', 'lucide-react'],
   define: {
     __UIKIT_NAME__: JSON.stringify(pkg.name),

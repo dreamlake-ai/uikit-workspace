@@ -48,5 +48,10 @@ entry so reviewers see the running history.
   taking an HTML/CSS/JS design prototype to a pre-rendered, token-
   driven React app. Stack choices, CSS migration in stages, JS-to-
   React patterns, deploy workflow, common gotchas.
+- [`lazy-kernel-components.mdx`](./lazy-kernel-components.mdx) — How
+  to give a UI-kit primitive a heavy runtime engine without taxing
+  every consumer: one shell, one lazily-imported kernel, and the three
+  traps (shared modules, implicit `splitting`, Suspense under
+  `renderToString`) that silently undo it.
 - [`CHANGELOG.mdx`](./CHANGELOG.mdx) — Running history of dev-notes
   changes. New entry per substantive PR.

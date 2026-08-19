@@ -1,0 +1,102 @@
+---
+title: CodeBlock
+section: Components
+order: 27
+description: Syntax-highlighted code surface that can switch into an editor.
+---
+
+import { PreviewSpec } from '../../../components/specimens/components/code-block/PreviewSpec'
+import { EditableSpec } from '../../../components/specimens/components/code-block/EditableSpec'
+import { PlainSpec } from '../../../components/specimens/components/code-block/PlainSpec'
+import previewSrc from '../../../components/specimens/components/code-block/PreviewSpec.tsx?raw'
+import editableSrc from '../../../components/specimens/components/code-block/EditableSpec.tsx?raw'
+import plainSrc from '../../../components/specimens/components/code-block/PlainSpec.tsx?raw'
+
+# CodeBlock
+
+A self-contained code surface. Hand it a string and it highlights the string —
+no build-time pipeline, no pre-rendered markup to pass in. Set `editable` and
+the same surface becomes an editor.
+
+Read-only and editing are one CodeMirror view reconfigured, not two components
+swapped, so toggling between them keeps the syntax colors, the layout and the
+scroll position exactly where they were.
+
+## Read-only
+
+The default. `lang` accepts a language name, alias or extension and is resolved
+against CodeMirror's 143-language registry; each grammar loads on demand, so a
+JSON block never downloads the Rust parser. Anything the registry doesn't
+recognise renders as plain text rather than throwing — which is what you want
+for a viewer pointed at arbitrary user files.
+
+<Preview source={previewSrc} filename="PreviewSpec.tsx">
+  <PreviewSpec />
+</Preview>
+
+## Editable
+
+`editable` takes three values: `false` (read-only), `true` (always editable),
+and `'toggle'` — read-only with an **Edit** button in the header. Escape leaves
+editing, which doubles as the escape hatch from `Tab`-to-indent for keyboard
+users.
+
+`value`/`onChange` are controlled the same way as `Input`. There is no separate
+commit callback: `onChange` fires per keystroke, and `onEditingChange` tells you
+when the user left the editor if you want to save at that point instead.
+
+<Preview source={editableSrc} filename="EditableSpec.tsx">
+  <EditableSpec />
+</Preview>
+
+## Bare surface
+
+`header={false}` drops the chrome entirely. `maxHeight` caps the block and
+scrolls inside it; `wrap` soft-wraps instead of scrolling sideways.
+
+<Preview source={plainSrc} filename="PlainSpec.tsx">
+  <PlainSpec />
+</Preview>
+
+## Loading and bundle cost
+
+CodeMirror sits behind a dynamic import, so it never reaches the initial bundle
+— importing `Button` from the kit costs nothing, and an app that renders no code
+never downloads the editor. While that chunk is in flight the block renders a
+plain `<pre>` with the same font, size, leading and padding, so its arrival is a
+recolor rather than a reflow. That fallback is real server-rendered markup, so
+the code is present in the HTML before any JavaScript runs.
+
+## Theming
+
+Colors come from CodeMirror's stock highlight styles — `defaultHighlightStyle`
+in light, one-dark's highlight style in dark — while everything around the
+tokens (surface, gutter, caret, selection) points at uikit tokens.
+
+The block follows `<html data-theme>` on its own, so it tracks the app's theme
+whether or not a `ThemeProvider` is mounted above it. Pass `theme` to pin it.
+
+## Props
+
+| Prop                  | Type                         | Default | Description                                                                                                   |
+| --------------------- | ---------------------------- | ------- | ------------------------------------------------------------------------------------------------------------- |
+| `value`               | `string`                     | —       | Code to show. Controlled; pair with `onChange`.                                                               |
+| `defaultValue`        | `string`                     | `''`    | Initial code when uncontrolled.                                                                               |
+| `onChange`            | `(value: string) => void`    | —       | Fires per keystroke while editing.                                                                            |
+| `lang`                | `string`                     | —       | Language name, alias or extension. Falls back to `filename`'s extension. Unknown values render as plain text. |
+| `editable`            | `boolean \| 'toggle'`        | `false` | `'toggle'` shows an Edit/Done button in the header.                                                           |
+| `editing`             | `boolean`                    | —       | Controlled editing state for `editable="toggle"`.                                                             |
+| `onEditingChange`     | `(editing: boolean) => void` | —       | Called when the editing state flips.                                                                          |
+| `header`              | `boolean`                    | `true`  | Render the header bar.                                                                                        |
+| `filename`            | `string`                     | —       | Shown in the header; also seeds language detection.                                                           |
+| `showLang`            | `boolean`                    | `true`  | Show the language chip.                                                                                       |
+| `copyable`            | `boolean`                    | `true`  | Show the Copy button.                                                                                         |
+| `actions`             | `ReactNode`                  | —       | Extra header controls, before the built-in buttons.                                                           |
+| `lineNumbers`         | `boolean`                    | —       | Controlled line-number gutter.                                                                                |
+| `defaultLineNumbers`  | `boolean`                    | `false` | Initial gutter state when uncontrolled.                                                                       |
+| `onLineNumbersChange` | `(on: boolean) => void`      | —       | Called when the gutter is toggled.                                                                            |
+| `maxHeight`           | `number \| string`           | —       | Caps the block; content scrolls inside.                                                                       |
+| `minHeight`           | `number \| string`           | —       | Floor for the code area.                                                                                      |
+| `wrap`                | `boolean`                    | `false` | Soft-wrap instead of scrolling horizontally.                                                                  |
+| `theme`               | `'light' \| 'dark'`          | —       | Pin the theme instead of following `<html data-theme>`.                                                       |
+| `className`           | `string`                     | —       | Extra classes on the outer frame.                                                                             |
