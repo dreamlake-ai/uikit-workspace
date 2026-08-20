@@ -13,4 +13,4 @@ const traceback = `Traceback (most recent call last):
 requests.exceptions.ConnectTimeout: HTTPSConnectionPool(host='s3.us-west-2.amazonaws.com', port=443): Max retries exceeded with url: /dreamlake-chunks/9f2c41e8b7.ts (Caused by ConnectTimeoutError(<urllib3.connection.HTTPSConnection object at 0x7f3a2c1d8e50>, 'Connection to s3.us-west-2.amazonaws.com timed out. (connect timeout=15)'))
 `
 
-export const PlainSpec = () => <CodeBlock value={traceback} header={false} maxHeight={200} wrap />
+export const PlainSpec = () => <CodeBlock value={traceback} lang="python" maxHeight={200} wrap />
