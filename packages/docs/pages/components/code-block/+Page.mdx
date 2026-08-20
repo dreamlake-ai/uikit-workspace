@@ -49,16 +49,19 @@ when the user left the editor if you want to save at that point instead.
   <EditableSpec />
 </Preview>
 
-## Bare surface
+## Unnamed content
 
 Not everything you show is a file. A traceback pasted into a log viewer has no
-filename worth labelling, no language to highlight, and lines far too long to
-scroll sideways through — so `header={false}` drops the chrome, `wrap`
-soft-wraps rather than scrolling horizontally, and `maxHeight` caps the block
-and scrolls inside it.
+filename worth labelling and no language to highlight, so this one passes
+neither.
+
+With no `filename` there is no header bar — hover the block and Copy fades in
+over the top-right corner instead, which is what you want for a traceback
+someone is about to paste into an issue. `wrap` soft-wraps rather than
+scrolling sideways, and `maxHeight` caps the block and scrolls inside it.
 
 Omitting `lang` is a legitimate choice here rather than a missing prop: plain
-text is what this content is.
+text is what this content is. To drop the tools as well, pass `header={false}`.
 
 <Preview source={plainSrc} filename="PlainSpec.tsx">
   <PlainSpec />
