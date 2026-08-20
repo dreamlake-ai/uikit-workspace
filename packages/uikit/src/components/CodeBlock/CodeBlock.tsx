@@ -185,54 +185,79 @@ export function CodeBlock({
     </pre>
   )
 
+  // Tools stay out of the way until the pointer — or keyboard focus — is on
+  // the block. A code surface is read far more often than it's acted on, so at
+  // rest it should be code and (if named) a filename, nothing else.
+  //
+  // The exception is editing: hiding the way out of edit mode would strand
+  // anyone who reached it, so the controls stay put for as long as it lasts.
+  const revealed = cn(
+    'inline-flex items-center gap-2 transition-opacity duration-150',
+    isEditing ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 focus-within:opacity-100'
+  )
+
+  const langChip = showLang && lang && (
+    <span className="font-uikit-mono text-uikit-10 font-semibold uppercase tracking-uikit-wide text-uikit-muted">
+      {lang}
+    </span>
+  )
+
+  const tools = (
+    <>
+      {actions}
+      {canToggleLineNumbers && (
+        <button
+          type="button"
+          aria-pressed={showLineNumbers}
+          aria-label={showLineNumbers ? 'Hide line numbers' : 'Show line numbers'}
+          title={showLineNumbers ? 'Hide line numbers' : 'Show line numbers'}
+          onClick={toggleLineNumbers}
+          className={headerButton(showLineNumbers)}
+        >
+          <Hash size={10} />
+        </button>
+      )}
+      {copyable && (
+        <button type="button" onClick={copy} className={headerButton(copied)}>
+          {copied ? 'Copied' : 'Copy'}
+        </button>
+      )}
+      {isToggle && (
+        <button
+          type="button"
+          aria-pressed={isEditing}
+          onClick={() => setEditing(!isEditing)}
+          className={headerButton(isEditing)}
+        >
+          {isEditing ? 'Done' : 'Edit'}
+        </button>
+      )}
+    </>
+  )
+
   return (
     <div
       className={cn(
-        'overflow-hidden rounded-[var(--radius-uikit-card)] border border-uikit-faint bg-uikit-code',
+        'group relative overflow-hidden rounded-[var(--radius-uikit-card)] border border-uikit-faint bg-uikit-code',
         className
       )}
     >
-      {header && (
+      {/* A filename earns a bar; without one the block gets no bar at all and
+          the tools float over the corner, so an unnamed snippet is just code. */}
+      {header && filename && (
         <div className="flex items-center gap-3 border-b border-uikit-faint bg-uikit-ink-4 px-3 py-1.5">
-          {filename && (
-            <span className="truncate font-uikit-mono text-uikit-10 font-semibold text-uikit-muted">
-              {filename}
-            </span>
-          )}
-          {showLang && lang && (
-            <span className="font-uikit-mono text-uikit-10 font-semibold uppercase tracking-uikit-wide text-uikit-muted">
-              {lang}
-            </span>
-          )}
+          <span className="truncate font-uikit-mono text-uikit-10 font-semibold text-uikit-muted">
+            {filename}
+          </span>
+          <span className={revealed}>{langChip}</span>
           <span className="flex-1" />
-          {actions}
-          {canToggleLineNumbers && (
-            <button
-              type="button"
-              aria-pressed={showLineNumbers}
-              aria-label={showLineNumbers ? 'Hide line numbers' : 'Show line numbers'}
-              title={showLineNumbers ? 'Hide line numbers' : 'Show line numbers'}
-              onClick={toggleLineNumbers}
-              className={headerButton(showLineNumbers)}
-            >
-              <Hash size={10} />
-            </button>
-          )}
-          {copyable && (
-            <button type="button" onClick={copy} className={headerButton(copied)}>
-              {copied ? 'Copied' : 'Copy'}
-            </button>
-          )}
-          {isToggle && (
-            <button
-              type="button"
-              aria-pressed={isEditing}
-              onClick={() => setEditing(!isEditing)}
-              className={headerButton(isEditing)}
-            >
-              {isEditing ? 'Done' : 'Edit'}
-            </button>
-          )}
+          <span className={revealed}>{tools}</span>
+        </div>
+      )}
+      {header && !filename && (
+        <div className={cn('absolute right-0 top-0 z-10 gap-2 p-2', revealed)}>
+          {langChip}
+          {tools}
         </div>
       )}
 

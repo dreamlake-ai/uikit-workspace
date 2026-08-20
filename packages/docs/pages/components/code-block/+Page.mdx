@@ -8,9 +8,11 @@ description: Syntax-highlighted code surface that can switch into an editor.
 import { PreviewSpec } from '../../../components/specimens/components/code-block/PreviewSpec'
 import { EditableSpec } from '../../../components/specimens/components/code-block/EditableSpec'
 import { PlainSpec } from '../../../components/specimens/components/code-block/PlainSpec'
+import { UnnamedSpec } from '../../../components/specimens/components/code-block/UnnamedSpec'
 import previewSrc from '../../../components/specimens/components/code-block/PreviewSpec.tsx?raw'
 import editableSrc from '../../../components/specimens/components/code-block/EditableSpec.tsx?raw'
 import plainSrc from '../../../components/specimens/components/code-block/PlainSpec.tsx?raw'
+import unnamedSrc from '../../../components/specimens/components/code-block/UnnamedSpec.tsx?raw'
 
 # CodeBlock
 
@@ -48,6 +50,23 @@ when the user left the editor if you want to save at that point instead.
 <Preview source={editableSrc} filename="EditableSpec.tsx">
   <EditableSpec />
 </Preview>
+
+## Chrome
+
+A code surface is read far more often than it is acted on, so at rest it shows
+code and — if you named it — a filename. The language chip, the line-number
+toggle, Copy and Edit fade in on hover, and on keyboard focus so they stay
+reachable without a pointer.
+
+Without a `filename` there is no bar at all: the tools float over the top-right
+corner and appear on the same hover, leaving an unnamed snippet as just code.
+
+<Preview source={unnamedSrc} filename="UnnamedSpec.tsx">
+  <UnnamedSpec />
+</Preview>
+
+Editing is the exception — while the editor is open the controls stay put,
+since hiding the way out would strand anyone who got there.
 
 ## Bare surface
 

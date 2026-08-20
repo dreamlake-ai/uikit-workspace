@@ -27,6 +27,19 @@ users.
 commit callback: `onChange` fires per keystroke, and `onEditingChange` tells you
 when the user left the editor if you want to save at that point instead.
 
+## Chrome
+
+A code surface is read far more often than it is acted on, so at rest it shows
+code and — if you named it — a filename. The language chip, the line-number
+toggle, Copy and Edit fade in on hover, and on keyboard focus so they stay
+reachable without a pointer.
+
+Without a `filename` there is no bar at all: the tools float over the top-right
+corner and appear on the same hover, leaving an unnamed snippet as just code.
+
+Editing is the exception — while the editor is open the controls stay put,
+since hiding the way out would strand anyone who got there.
+
 ## Bare surface
 
 Not everything you show is a file. A traceback pasted into a log viewer has no
