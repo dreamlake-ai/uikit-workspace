@@ -8,11 +8,9 @@ description: Syntax-highlighted code surface that can switch into an editor.
 import { PreviewSpec } from '../../../components/specimens/components/code-block/PreviewSpec'
 import { EditableSpec } from '../../../components/specimens/components/code-block/EditableSpec'
 import { PlainSpec } from '../../../components/specimens/components/code-block/PlainSpec'
-import { UnnamedSpec } from '../../../components/specimens/components/code-block/UnnamedSpec'
 import previewSrc from '../../../components/specimens/components/code-block/PreviewSpec.tsx?raw'
 import editableSrc from '../../../components/specimens/components/code-block/EditableSpec.tsx?raw'
 import plainSrc from '../../../components/specimens/components/code-block/PlainSpec.tsx?raw'
-import unnamedSrc from '../../../components/specimens/components/code-block/UnnamedSpec.tsx?raw'
 
 # CodeBlock
 
@@ -51,23 +49,6 @@ when the user left the editor if you want to save at that point instead.
   <EditableSpec />
 </Preview>
 
-## Chrome
-
-A code surface is read far more often than it is acted on, so at rest it shows
-code and — if you named it — a filename. The language chip, the line-number
-toggle, Copy and Edit fade in on hover, and on keyboard focus so they stay
-reachable without a pointer.
-
-Without a `filename` there is no bar at all: the tools float over the top-right
-corner and appear on the same hover, leaving an unnamed snippet as just code.
-
-<Preview source={unnamedSrc} filename="UnnamedSpec.tsx">
-  <UnnamedSpec />
-</Preview>
-
-Editing is the exception — while the editor is open the controls stay put,
-since hiding the way out would strand anyone who got there.
-
 ## Bare surface
 
 Not everything you show is a file. A traceback pasted into a log viewer has no
@@ -103,25 +84,25 @@ whether or not a `ThemeProvider` is mounted above it. Pass `theme` to pin it.
 
 ## Props
 
-| Prop                  | Type                         | Default | Description                                                                                                                        |
-| --------------------- | ---------------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `value`               | `string`                     | —       | Code to show. Controlled; pair with `onChange`.                                                                                    |
-| `defaultValue`        | `string`                     | `''`    | Initial code when uncontrolled.                                                                                                    |
-| `onChange`            | `(value: string) => void`    | —       | Fires per keystroke while editing.                                                                                                 |
-| `lang`                | `string`                     | —       | Language name, alias or extension. Falls back to `filename`'s extension. Unknown values render as plain text.                      |
-| `editable`            | `boolean \| 'toggle'`        | `false` | `'toggle'` shows an Edit/Done button in the header.                                                                                |
-| `editing`             | `boolean`                    | —       | Controlled editing state for `editable="toggle"`.                                                                                  |
-| `onEditingChange`     | `(editing: boolean) => void` | —       | Called when the editing state flips.                                                                                               |
-| `header`              | `boolean`                    | `true`  | Render the header bar.                                                                                                             |
-| `filename`            | `string`                     | —       | Shown in the header; also seeds language detection.                                                                                |
-| `showLang`            | `boolean`                    | `true`  | Show the language chip.                                                                                                            |
-| `copyable`            | `boolean`                    | `true`  | Show the Copy button.                                                                                                              |
-| `actions`             | `ReactNode`                  | —       | Extra header controls, before the built-in buttons.                                                                                |
-| `lineNumbers`         | `boolean`                    | —       | Controlled line-number gutter. Pinning it without `onLineNumbersChange` hides the toggle button, since it could never do anything. |
-| `defaultLineNumbers`  | `boolean`                    | `false` | Initial gutter state when uncontrolled.                                                                                            |
-| `onLineNumbersChange` | `(on: boolean) => void`      | —       | Called when the gutter is toggled.                                                                                                 |
-| `maxHeight`           | `number \| string`           | —       | Caps the block; content scrolls inside.                                                                                            |
-| `minHeight`           | `number \| string`           | —       | Floor for the code area.                                                                                                           |
-| `wrap`                | `boolean`                    | `false` | Soft-wrap instead of scrolling horizontally.                                                                                       |
-| `theme`               | `'light' \| 'dark'`          | —       | Pin the theme instead of following `<html data-theme>`.                                                                            |
-| `className`           | `string`                     | —       | Extra classes on the outer frame.                                                                                                  |
+| Prop                  | Type                         | Default | Description                                                                                                                                       |
+| --------------------- | ---------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `value`               | `string`                     | —       | Code to show. Controlled; pair with `onChange`.                                                                                                   |
+| `defaultValue`        | `string`                     | `''`    | Initial code when uncontrolled.                                                                                                                   |
+| `onChange`            | `(value: string) => void`    | —       | Fires per keystroke while editing.                                                                                                                |
+| `lang`                | `string`                     | —       | Language name, alias or extension. Falls back to `filename`'s extension. Unknown values render as plain text.                                     |
+| `editable`            | `boolean \| 'toggle'`        | `false` | `'toggle'` shows an Edit/Done button in the header.                                                                                               |
+| `editing`             | `boolean`                    | —       | Controlled editing state for `editable="toggle"`.                                                                                                 |
+| `onEditingChange`     | `(editing: boolean) => void` | —       | Called when the editing state flips.                                                                                                              |
+| `header`              | `boolean`                    | `true`  | Render the header bar.                                                                                                                            |
+| `filename`            | `string`                     | —       | Shown in the header, and seeds language detection. Without one there is no header bar at all — the tools float over the top-right corner instead. |
+| `showLang`            | `boolean`                    | `true`  | Show the language chip.                                                                                                                           |
+| `copyable`            | `boolean`                    | `true`  | Show the Copy button.                                                                                                                             |
+| `actions`             | `ReactNode`                  | —       | Extra header controls, before the built-in buttons.                                                                                               |
+| `lineNumbers`         | `boolean`                    | —       | Controlled line-number gutter. Pinning it without `onLineNumbersChange` hides the toggle button, since it could never do anything.                |
+| `defaultLineNumbers`  | `boolean`                    | `false` | Initial gutter state when uncontrolled.                                                                                                           |
+| `onLineNumbersChange` | `(on: boolean) => void`      | —       | Called when the gutter is toggled.                                                                                                                |
+| `maxHeight`           | `number \| string`           | —       | Caps the block; content scrolls inside.                                                                                                           |
+| `minHeight`           | `number \| string`           | —       | Floor for the code area.                                                                                                                          |
+| `wrap`                | `boolean`                    | `false` | Soft-wrap instead of scrolling horizontally.                                                                                                      |
+| `theme`               | `'light' \| 'dark'`          | —       | Pin the theme instead of following `<html data-theme>`.                                                                                           |
+| `className`           | `string`                     | —       | Extra classes on the outer frame.                                                                                                                 |
