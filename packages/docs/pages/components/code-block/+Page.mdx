@@ -52,16 +52,17 @@ when the user left the editor if you want to save at that point instead.
 ## Unnamed content
 
 Not everything you show is a file. A traceback pasted into a log viewer has no
-filename worth labelling and no language to highlight, so this one passes
-neither.
+filename worth labelling, so this one passes none — and with no `filename`
+there is no header bar. Hover the block and Copy fades in over the top-right
+corner instead, which is what you want for a traceback someone is about to
+paste into an issue.
 
-With no `filename` there is no header bar — hover the block and Copy fades in
-over the top-right corner instead, which is what you want for a traceback
-someone is about to paste into an issue. `wrap` soft-wraps rather than
-scrolling sideways, and `maxHeight` caps the block and scrolls inside it.
+`lang` is still worth setting even when the content isn't source: a Python
+traceback is close enough to Python that the grammar colors its paths, line
+numbers and keywords usefully. `wrap` soft-wraps rather than scrolling
+sideways, and `maxHeight` caps the block and scrolls inside it.
 
-Omitting `lang` is a legitimate choice here rather than a missing prop: plain
-text is what this content is. To drop the tools as well, pass `header={false}`.
+To drop the tools as well, pass `header={false}`.
 
 <Preview source={plainSrc} filename="PlainSpec.tsx">
   <PlainSpec />
