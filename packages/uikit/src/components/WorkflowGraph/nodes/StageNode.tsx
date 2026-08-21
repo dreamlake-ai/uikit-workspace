@@ -9,6 +9,7 @@ import {
   WF_KIND_ICON, cardStyle, metaStyle, titleRowStyle, titleStyle,
 } from './chrome'
 import { NodeKindIcon } from './MemberCards'
+import { CardTooltip } from './CardTooltip'
 
 export interface StageNodeProps {
   stage: WorkflowStage
@@ -29,21 +30,24 @@ export function StageNode({
   const bits: string[] = ['stage']
   if (memberCount != null) bits.push(`${memberCount} member${memberCount === 1 ? '' : 's'}`)
   return (
-    <div
-      data-node={stage.id}
-      title={stage.detail ?? stage.title}
-      style={cardStyle({ pos, selected, dimmed })}
+    <CardTooltip
+      label={stage.detail ?? stage.title}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
     >
-      <div style={titleRowStyle}>
-        <NodeKindIcon icon={WF_KIND_ICON.stage} />
-        <span style={titleStyle}>{stage.title}</span>
+      <div
+        data-node={stage.id}
+        style={cardStyle({ pos, selected, dimmed })}
+      >
+        <div style={titleRowStyle}>
+          <NodeKindIcon icon={WF_KIND_ICON.stage} />
+          <span style={titleStyle}>{stage.title}</span>
+        </div>
+        <span style={metaStyle}>{bits.join(' · ')}</span>
+        {/* Run-time done count on its own line below the meta. */}
+        {doneCount != null && <span style={metaStyle}>{doneCount} done</span>}
       </div>
-      <span style={metaStyle}>{bits.join(' · ')}</span>
-      {/* Run-time done count on its own line below the meta. */}
-      {doneCount != null && <span style={metaStyle}>{doneCount} done</span>}
-    </div>
+    </CardTooltip>
   )
 }

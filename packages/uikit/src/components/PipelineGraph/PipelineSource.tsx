@@ -14,6 +14,7 @@
  */
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { cn } from '../../lib/utils'
+import { Tooltip, TooltipContent, TooltipTrigger } from '../Tooltip'
 import { STATUS } from './flow'
 import type { GraphNode, NodePreview, NodeStatus, PipelineGraphData, StatusOverlay } from './types'
 
@@ -161,7 +162,13 @@ function CodeBlock({ code, ariaLabel }: { code: string; ariaLabel?: string }) {
           style={{
             position: 'sticky', left: 0, zIndex: 1, flexShrink: 0,
             padding: '8px 8px 8px 12px', textAlign: 'right',
-            color: 'var(--color-uikit-muted)', opacity: 0.5, userSelect: 'none',
+            // The gutter is STICKY, so the code scrolls underneath it — its fill
+            // has to be fully opaque or the code shows through the numbers. The
+            // numbers are dimmed by mixing the muted token toward the panel, NOT
+            // by `opacity` on this element: element opacity applies to the
+            // background too, which is exactly how the fill went translucent.
+            color: 'color-mix(in srgb, var(--color-uikit-muted) 55%, var(--color-uikit-panel))',
+            userSelect: 'none',
             background: 'var(--color-uikit-panel)',
             borderRight: '1px solid var(--color-uikit-faint)',
           }}
@@ -594,20 +601,29 @@ function RunButton({ onClick, running, disabled }: { onClick: () => void; runnin
 // Clicking runs the pipeline again.
 function DoneButton({ onClick }: { onClick: () => void }) {
   return (
-    <button
-      type="button"
-      onClick={(e) => { e.stopPropagation(); onClick() }}
-      title="Run again"
-      className="cursor-pointer border-0"
-      style={{
-        fontFamily: 'var(--font-uikit-mono)', fontSize: 11, fontWeight: 600,
-        color: 'var(--color-uikit-panel)', background: 'var(--color-uikit-tone-green)',
-        padding: '4px 10px', borderRadius: 4, letterSpacing: '.04em', textTransform: 'uppercase',
-        flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 6,
-      }}
-    >
-      ✓ done
-    </button>
+    // Themed tooltip rather than the native `title` — this button sits right
+    // beside the canvas, where an OS-grey bubble was the one un-themed surface
+    // in the view (and invisible-by-mismatch in dark mode).
+    <Tooltip>
+      <TooltipTrigger
+        asChild
+        onClick={(e) => { e.stopPropagation(); onClick() }}
+      >
+        <button
+          type="button"
+          className="cursor-pointer border-0"
+          style={{
+            fontFamily: 'var(--font-uikit-mono)', fontSize: 11, fontWeight: 600,
+            color: 'var(--color-uikit-panel)', background: 'var(--color-uikit-tone-green)',
+            padding: '4px 10px', borderRadius: 4, letterSpacing: '.04em', textTransform: 'uppercase',
+            flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 6,
+          }}
+        >
+          ✓ done
+        </button>
+      </TooltipTrigger>
+      <TooltipContent>Run again</TooltipContent>
+    </Tooltip>
   )
 }
 

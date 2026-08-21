@@ -41,6 +41,7 @@ import {
   type AgentInstance, type WorkflowNodeRunStateValue, type WorkflowSpec,
 } from './spec'
 import { WF_KIND_ICON, WF_STATE_COLOR } from './nodes/chrome'
+import { Tooltip, TooltipContent, TooltipTrigger } from '../Tooltip'
 import { StageNode } from './nodes/StageNode'
 import {
   AgentInstanceCard, ComputeNodeCard, ControlNodeCard, NodeKindIcon, SamplerNodeCard, UdaNodeCard,
@@ -1376,12 +1377,16 @@ function CanvasControls({ orientation, onOrientationChange, canReset, onReset }:
     >
       {canReset && (
         <>
+          {/* Kit Tooltip, not `title` — one tooltip look across the canvas and
+              the rest of the kit. aria-label stays: the tooltip is the visual
+              affordance, the label is what a screen reader reads. */}
+          <Tooltip>
+          <TooltipTrigger asChild>
           <button
             type="button"
             onClick={onReset}
             onMouseEnter={() => setResetHov(true)}
             onMouseLeave={() => setResetHov(false)}
-            title="Reset layout — restore the default node & tag positions"
             aria-label="Reset layout"
             style={{
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
@@ -1396,6 +1401,9 @@ function CanvasControls({ orientation, onOrientationChange, canReset, onReset }:
               <path d="M3 3v5h5" />
             </svg>
           </button>
+          </TooltipTrigger>
+          <TooltipContent>Reset layout — restore the default node &amp; tag positions</TooltipContent>
+          </Tooltip>
           <span aria-hidden style={{ width: 1, height: 13, background: 'color-mix(in oklab, var(--color-uikit-faint) 70%, transparent)', margin: '0 1px' }} />
         </>
       )}
@@ -1403,11 +1411,11 @@ function CanvasControls({ orientation, onOrientationChange, canReset, onReset }:
         const active = o === orientation
         const label = o === 'vertical' ? 'Vertical layout (top → bottom)' : 'Horizontal layout (left → right)'
         return (
+          <Tooltip key={o}>
+          <TooltipTrigger asChild>
           <button
-            key={o}
             type="button"
             onClick={() => onOrientationChange(o)}
-            title={label}
             aria-label={label}
             aria-pressed={active}
             style={{
@@ -1421,6 +1429,9 @@ function CanvasControls({ orientation, onOrientationChange, canReset, onReset }:
           >
             <OrientIcon o={o} />
           </button>
+          </TooltipTrigger>
+          <TooltipContent>{label}</TooltipContent>
+          </Tooltip>
         )
       })}
     </div>

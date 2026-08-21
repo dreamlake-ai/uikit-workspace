@@ -73,7 +73,7 @@ def detect_objects(images: Tensor["N", "H", "W", 3]) -> Tuple["boxes", "classes"
 
 **② The node you see, ③ the JSON in between** — flip between the rendered card
 (**Preview**), the render call (**Source**), and the tracer's node JSON
-(**Data**). The card *is* the JSON: the kind dot ← `kind`, the title ← `title`,
+(**Data**). The card *is* the JSON: the kind glyph ← `kind`, the title ← `title`,
 the `1→1` meta ← `inputs`/`outputs` lengths, and a single input / output dot on
 each edge (every parameter shares the one input dot).
 
@@ -214,7 +214,7 @@ parameters and return columns produced those ports:
 | `statusById` | `StatusOverlay` | — | Live per-node `{ status, progress, ... }`, merged onto the graph. |
 | `selectedNodeId` | `string \| null` | — | Controlled selection. Omit for uncontrolled. |
 | `onSelectNode` | `(id: string \| null) => void` | — | Selection change (also fires on background click). |
-| `showControls` | `boolean` | `true` | Show the overlay chrome — the edge-flow legend (top-right) and the keyboard-hint strip (bottom). Pass `false` for tiny embeds. |
+| `showControls` | `boolean` | `true` | Show the overlay chrome — the legend (top-right: node-kind glyphs + edge-flow swatches) and the keyboard-hint strip (bottom). Pass `false` for tiny embeds. |
 | `className` | `string` | — | Extra classes on the canvas. |
 
 ### `PipelineSource`

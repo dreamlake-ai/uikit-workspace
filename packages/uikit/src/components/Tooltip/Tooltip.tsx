@@ -201,7 +201,16 @@ export function TooltipContent({
         style={{ ...ctx.floatingStyles, ...style }}
         className={cn(
           "z-[200] max-w-[260px] rounded-md px-2 py-1 font-uikit-ui text-uikit-11 leading-uikit-snug",
-          "bg-uikit-ink text-uikit-bg shadow-uikit-soft pointer-events-none",
+          // The kit's floating-overlay surface — the SAME one Popover and
+          // DropdownMenu use. This used to be an inverted chip
+          // (`bg-uikit-ink text-uikit-bg`), which left the tooltip as the only
+          // overlay in the kit that didn't wear the theme's own surface: a hard
+          // black block on a warm light page, a hard white one in dark. It read
+          // as foreign on every DreamLake surface, worst of all on the graph
+          // canvases. `shadow-uikit-soft` carries a 1px faint ring, which is
+          // what lifts the panel off the page in dark mode, where panel and bg
+          // are the same colour.
+          "bg-uikit-panel text-uikit-ink border border-uikit-faint shadow-uikit-soft pointer-events-none",
           className,
         )}
         {...ctx.getFloatingProps(props)}

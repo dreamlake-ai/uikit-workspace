@@ -15,6 +15,7 @@ import {
   cardStyle, chipFlexStyle, chipRowStyle, chipStyle, metaStyle,
   titleRowStyle, titleStyle,
 } from './chrome'
+import { CardTooltip } from './CardTooltip'
 
 interface MemberCardCommon {
   pos?: { x: number; y: number }
@@ -73,29 +74,32 @@ export function ComputeNodeCard({ node, dispatchMeta, ...p }: ComputeNodeCardPro
   const dispatch = node.compute.dispatch ?? node.compute.provider?.dispatch
   const dispatchInfo = dispatch ? dispatchMeta?.[dispatch] : undefined
   return (
-    <div
-      data-node={node.id}
-      title={node.detail ?? node.compute.udf}
-      style={{ ...cardStyle(p), ...pulseStyle(p.state) }}
+    <CardTooltip
+      label={node.detail ?? node.compute.udf}
       {...handlers(p)}
     >
-      <div style={titleRowStyle}>
-        <NodeKindIcon icon={WF_KIND_ICON.compute} state={p.state} />
-        <span style={titleStyle}>{node.title}</span>
+      <div
+        data-node={node.id}
+        style={{ ...cardStyle(p), ...pulseStyle(p.state) }}
+      >
+        <div style={titleRowStyle}>
+          <NodeKindIcon icon={WF_KIND_ICON.compute} state={p.state} />
+          <span style={titleStyle}>{node.title}</span>
+        </div>
+        <span style={metaStyle}>{WF_KIND_LABEL.compute}</span>
+        <div style={chipRowStyle}>
+          {prov && <span style={chipFlexStyle}>{prov}</span>}
+          {dispatch && (
+            // Dispatch mode as a soft pill. The icon + label come from the injected
+            // dispatchMeta (business config), not from any mode logic in here.
+            <span style={{ ...chipStyle, gap: 4 }}>
+              {dispatchInfo?.icon}
+              {dispatchInfo?.label ?? dispatch}
+            </span>
+          )}
+        </div>
       </div>
-      <span style={metaStyle}>{WF_KIND_LABEL.compute}</span>
-      <div style={chipRowStyle}>
-        {prov && <span style={chipFlexStyle}>{prov}</span>}
-        {dispatch && (
-          // Dispatch mode as a soft pill. The icon + label come from the injected
-          // dispatchMeta (business config), not from any mode logic in here.
-          <span style={{ ...chipStyle, gap: 4 }}>
-            {dispatchInfo?.icon}
-            {dispatchInfo?.label ?? dispatch}
-          </span>
-        )}
-      </div>
-    </div>
+    </CardTooltip>
   )
 }
 
@@ -109,24 +113,27 @@ export function UdaNodeCard({ node, ...p }: UdaNodeCardProps) {
     : providerSummary(node.uda.provider)
   const perms = node.uda.permissions.length
   return (
-    <div
-      data-node={node.id}
-      title={node.uda.description ?? node.uda.instructions}
-      style={{ ...cardStyle(p), ...pulseStyle(p.state) }}
+    <CardTooltip
+      label={node.uda.description ?? node.uda.instructions}
       {...handlers(p)}
     >
-      <div style={titleRowStyle}>
-        <NodeKindIcon icon={WF_KIND_ICON.uda} state={p.state} />
-        <span style={titleStyle}>{node.title}</span>
+      <div
+        data-node={node.id}
+        style={{ ...cardStyle(p), ...pulseStyle(p.state) }}
+      >
+        <div style={titleRowStyle}>
+          <NodeKindIcon icon={WF_KIND_ICON.uda} state={p.state} />
+          <span style={titleStyle}>{node.title}</span>
+        </div>
+        <span style={metaStyle}>{WF_KIND_LABEL.uda}</span>
+        <div style={chipRowStyle}>
+          {/* perms count is short and always visible; model + target truncate */}
+          <span style={chipStyle}>{perms} perm{perms === 1 ? '' : 's'}</span>
+          {node.uda.model && <span style={chipFlexStyle}>{node.uda.model}</span>}
+          {target && <span style={chipFlexStyle}>{target}</span>}
+        </div>
       </div>
-      <span style={metaStyle}>{WF_KIND_LABEL.uda}</span>
-      <div style={chipRowStyle}>
-        {/* perms count is short and always visible; model + target truncate */}
-        <span style={chipStyle}>{perms} perm{perms === 1 ? '' : 's'}</span>
-        {node.uda.model && <span style={chipFlexStyle}>{node.uda.model}</span>}
-        {target && <span style={chipFlexStyle}>{target}</span>}
-      </div>
-    </div>
+    </CardTooltip>
   )
 }
 
@@ -136,18 +143,21 @@ export interface SamplerNodeCardProps extends MemberCardCommon { node: SamplerNo
 
 export function SamplerNodeCard({ node, ...p }: SamplerNodeCardProps) {
   return (
-    <div
-      data-node={node.id}
-      title={node.detail ?? node.title}
-      style={{ ...cardStyle(p), ...pulseStyle(p.state) }}
+    <CardTooltip
+      label={node.detail ?? node.title}
       {...handlers(p)}
     >
-      <div style={titleRowStyle}>
-        <NodeKindIcon icon={WF_KIND_ICON.sampler} state={p.state} />
-        <span style={titleStyle}>{node.title}</span>
+      <div
+        data-node={node.id}
+        style={{ ...cardStyle(p), ...pulseStyle(p.state) }}
+      >
+        <div style={titleRowStyle}>
+          <NodeKindIcon icon={WF_KIND_ICON.sampler} state={p.state} />
+          <span style={titleStyle}>{node.title}</span>
+        </div>
+        <span style={metaStyle}>{WF_KIND_LABEL.sampler} · {samplerSummary(node.sampler)}</span>
       </div>
-      <span style={metaStyle}>{WF_KIND_LABEL.sampler} · {samplerSummary(node.sampler)}</span>
-    </div>
+    </CardTooltip>
   )
 }
 
@@ -176,23 +186,26 @@ export function ControlNodeCard({ node, ...p }: ControlNodeCardProps) {
         : `while · until ${c.until ?? `× ${c.max_iterations ?? '∞'}`}`
     : (c.message ?? 'human approval')
   return (
-    <div
-      data-node={node.id}
-      title={node.detail ?? detail}
-      style={{ ...cardStyle(p), ...pulseStyle(p.state) }}
+    <CardTooltip
+      label={node.detail ?? detail}
       {...handlers(p)}
     >
-      <div style={titleRowStyle}>
-        {/* Control nodes keep a per-SUBTYPE icon (condition / switch / loop /
-            approval) — its shape is the type; the colour tracks run status. */}
-        <NodeKindIcon icon={CONTROL_ICON[c.type]} state={p.state} />
-        <span style={titleStyle}>{node.title}</span>
+      <div
+        data-node={node.id}
+        style={{ ...cardStyle(p), ...pulseStyle(p.state) }}
+      >
+        <div style={titleRowStyle}>
+          {/* Control nodes keep a per-SUBTYPE icon (condition / switch / loop /
+              approval) — its shape is the type; the colour tracks run status. */}
+          <NodeKindIcon icon={CONTROL_ICON[c.type]} state={p.state} />
+          <span style={titleStyle}>{node.title}</span>
+        </div>
+        <span style={metaStyle}>{WF_KIND_LABEL.control} · {c.type}</span>
+        {/* detail (expression / loop bounds / approval message) on its own line
+            below the meta — normal-case so expressions stay readable. */}
+        <span style={{ ...metaStyle, textTransform: 'none', letterSpacing: 0, fontSize: 9.5 }}>{detail}</span>
       </div>
-      <span style={metaStyle}>{WF_KIND_LABEL.control} · {c.type}</span>
-      {/* detail (expression / loop bounds / approval message) on its own line
-          below the meta — normal-case so expressions stay readable. */}
-      <span style={{ ...metaStyle, textTransform: 'none', letterSpacing: 0, fontSize: 9.5 }}>{detail}</span>
-    </div>
+    </CardTooltip>
   )
 }
 
@@ -214,19 +227,22 @@ export function AgentInstanceCard({ agent, pos, dimmed }: AgentInstanceCardProps
   if (agent.tokens != null) bits.push(`${agent.tokens >= 1000 ? `${(agent.tokens / 1000).toFixed(1)}k` : agent.tokens} tok`)
   if (agent.durationMs != null) bits.push(`${(agent.durationMs / 1000).toFixed(0)}s`)
   return (
-    <div
-      data-agent={agent.agentId}
-      title={agent.label ?? agent.agentId}
-      style={{ ...base, padding: '5px 8px', gap: 2, justifyContent: 'center', cursor: 'default', ...pulseStyle(agent.state) }}
+    <CardTooltip
+      label={agent.label ?? agent.agentId}
     >
-      <div style={titleRowStyle}>
-        <span style={{
-          width: 6, height: 6, borderRadius: 3, flexShrink: 0,
-          background: WF_STATE_COLOR[agent.state],
-        }} />
-        <span style={{ ...titleStyle, fontSize: 10.5 }}>{agent.label ?? agent.agentId}</span>
+      <div
+        data-agent={agent.agentId}
+        style={{ ...base, padding: '5px 8px', gap: 2, justifyContent: 'center', cursor: 'default', ...pulseStyle(agent.state) }}
+      >
+        <div style={titleRowStyle}>
+          <span style={{
+            width: 6, height: 6, borderRadius: 3, flexShrink: 0,
+            background: WF_STATE_COLOR[agent.state],
+          }} />
+          <span style={{ ...titleStyle, fontSize: 10.5 }}>{agent.label ?? agent.agentId}</span>
+        </div>
+        {bits.length > 0 && <span style={{ ...metaStyle, fontSize: 8 }}>{bits.join(' · ')}</span>}
       </div>
-      {bits.length > 0 && <span style={{ ...metaStyle, fontSize: 8 }}>{bits.join(' · ')}</span>}
-    </div>
+    </CardTooltip>
   )
 }

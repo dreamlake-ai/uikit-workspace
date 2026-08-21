@@ -76,7 +76,9 @@ Two groups of fields:
 - **Runtime** — optional, filled while (or after) the pipeline runs. The card
   renders them when present (progress %, duration) and ignores them when absent.
 
-`kind` tints the card's kind dot and is declared by the udf's decorator
+`kind` picks the card's leading lucide glyph (see
+[Anatomy](reference/pipeline-view-anatomy.md) for the full icon map) and is declared by the
+udf's decorator
 (`@ls.udf(kind="source")`, `kind="sink"`, `kind="review"`) or inferred. There
 are **no synthetic nodes** — the `source` and `sink` nodes are real udfs the
 pipeline calls (a `kind="source"` loader and `kind="sink"` writers), so they

@@ -9,6 +9,10 @@ import type { PipelineGraphData } from './types'
 // kind-coloured square dot and the node name, joined by the SAME
 // orthogonally-routed idle-grey edges. Nodes, names, and edges only — no ports,
 // no param tags, no status chrome.
+//
+// The dot is deliberate: the live card leads with the kind's lucide glyph, but
+// a 13px icon is mush at thumbnail scale, so the shrunk card keeps the coloured
+// square (`kindColor`) as its type mark. WorkflowThumb does the same.
 
 const PAD = 30       // world-space padding around the graph bounds
 const FONT = 12      // world-space node title size — matches PipeNode (156×72)
