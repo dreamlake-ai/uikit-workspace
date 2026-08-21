@@ -74,10 +74,14 @@ interface SegmentSizeConfig {
   iconSize: number;
 }
 
+// `containerR` tracks `pillR` instead of sitting a pixel wider than it:
+// the frame tint is faint enough that a mathematically-nested outer arc
+// read as too round beside the pill, so the outer corner is 1px tighter
+// than the reference at every size.
 const segmentConfig: Record<TabsSize, SegmentSizeConfig> = {
   xs: {
     inset: 1,
-    containerR: 4,
+    containerR: 3,
     pillR: 3,
     buttonR: 3,
     padV: 1,
@@ -86,7 +90,7 @@ const segmentConfig: Record<TabsSize, SegmentSizeConfig> = {
   },
   sm: {
     inset: 1,
-    containerR: 5,
+    containerR: 4,
     pillR: 4,
     buttonR: 4,
     padV: 2,
@@ -95,7 +99,7 @@ const segmentConfig: Record<TabsSize, SegmentSizeConfig> = {
   },
   md: {
     inset: 2,
-    containerR: 6,
+    containerR: 5,
     pillR: 5,
     buttonR: 5,
     padV: 4,
@@ -104,7 +108,7 @@ const segmentConfig: Record<TabsSize, SegmentSizeConfig> = {
   },
   lg: {
     inset: 3,
-    containerR: 7,
+    containerR: 6,
     pillR: 6,
     buttonR: 6,
     padV: 5,
