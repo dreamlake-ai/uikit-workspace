@@ -263,7 +263,6 @@ export function buildEdgePath(
     // and both guesses were smaller than half a card, so the loop reliably
     // landed inside the very cards it connected.
     const STUB = 28
-    const midX = (A.x + B.x) / 2
 
     // Where the crossing run sits. Three candidates, in preference order:
     // through the CORRIDOR between two vertically-separated cards, else fully

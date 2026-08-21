@@ -291,10 +291,6 @@ export function TreeEntryItem<T extends TreeDataItem>({
       : getAdjacentSelectionState(item.id, visualIds, dataWithMeta);
 
   const isLeaf = !hasDescendants(item.id);
-  // Non-selectable rows (e.g. the top-level Scene/Staging groups) don't react
-  // to selection.
-  const isSelectableRow = isSelectable && item.selectable !== false;
-
   // Hover is independent of selection: any non-disabled, non-group-header row
   // reacts to hover — so read-only trees like the Waterfall (which don't enable
   // selection) still get row hover + the row↔bar hover link.
