@@ -16,7 +16,6 @@ export function Timeline({
   trackList,
   active,
   activeSegs,
-  sel,
   selectedTracks,
   gutterPx,
   D,
@@ -30,7 +29,6 @@ export function Timeline({
   trackList: Track[];
   active: number;
   activeSegs: Segment[];
-  sel: number;
   /** Which lane indices are selected (multi-select). Unselected lanes render
    *  with muted segment borders. */
   selectedTracks: number[];
@@ -172,11 +170,23 @@ export function Timeline({
         {trackList.map((tr, ti) => {
           const isActive = ti === active;
           const tsegs = normTracks[ti];
-          // Every lane highlights the segment under the playhead. The active lane
-          // uses the explicit selection (sel, kept in sync with the playhead);
-          // other lanes derive it from currentTime. Selected lanes render it in
-          // full accent (.cur == .sel), unselected lanes in a paler accent.
-          const curIdx = isActive ? sel : segmentIndexAtTime(tsegs, currentTime);
+          // Every lane highlights the segment under the PLAYHEAD, derived from
+          // currentTime — so the highlight tracks a scrub / timeline-drag in real
+          // time on ALL lanes, the active one included.
+          //
+          // The active lane used to read the host's `sel` instead. `sel` is
+          // committed only on mouse-UP (a drag's per-move `onSelectedChange`
+          // would fire the host's expensive review + auto-scroll side-effects and
+          // wrongly mark every passed-over segment reviewed), so its highlight
+          // lagged a drag until release while the other lanes moved live — the
+          // "middle track looks stuck" report. Visual highlight and committed
+          // selection are separate concerns: this is the visual one; `sel` still
+          // drives selection + review, synced on release. In steady state the two
+          // agree (every seek/select keeps the playhead in the selected segment),
+          // so this only changes the transient-drag frames.
+          // Selected lanes render it in full accent (.sel), unselected in a paler
+          // accent (.cur).
+          const curIdx = segmentIndexAtTime(tsegs, currentTime);
           return (
             <div key={tr.id || ti} className={cn("va-track", !selSet.has(ti) && "va-unsel")} data-track={ti}>
               {tsegs.map((p, i) => (
@@ -184,7 +194,7 @@ export function Timeline({
                   key={p.id ?? i}
                   className={cn(
                     "va-seg",
-                    isActive && i === sel && "sel",
+                    isActive && i === curIdx && "sel",
                     !isActive && i === curIdx && "cur",
                     p.edited && "edited",
                     p.resegmented && "reseg",
