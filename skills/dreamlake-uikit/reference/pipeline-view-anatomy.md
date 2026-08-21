@@ -15,7 +15,7 @@ straight from the node JSON; nothing is styled by hand.
 
 | On the card | JSON field | Notes |
 | --- | --- | --- |
-| Kind dot (top-left square) | `kind` | Tints by category — `source` green, `transform` blue, `model`/`review` purple, `filter` amber, `merge` grey, `sink` red. |
+| Kind glyph (leading icon) | `kind` | A [lucide](https://lucide.dev) icon per category — `source` database, `transform` square-function, `model` sparkles, `filter` funnel, `merge` git-merge, `sink` archive, `review` eye; an unrecognised kind gets a generic box. Shape carries the **type**; the glyph's colour is the node's `status`, so a fresh graph reads neutral grey and colour only appears once something runs. Same convention as [Workflow Canvas](reference/workflow-view-workflow-canvas.md). |
 | Title | `title` | The UDF name. `id` is the stable key (may differ on fan-out: `semantic_match_2`). |
 | Meta line `transform · 1→1` | `kind` · `inputs.length`→`outputs.length` | The `→` is port **counts**, not columns. |
 | Left dot | `inputs` | A **single** input dot at the left-centre — every parameter shares it. The per-parameter names surface in the floating [param tag](reference/pipeline-view-pipeline-graph.md#ports--param-tags), not beside the dot. Absent when `inputs` is empty (a `source`). |

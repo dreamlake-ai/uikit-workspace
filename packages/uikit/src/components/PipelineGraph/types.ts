@@ -15,7 +15,9 @@
  * graph while a pipeline runs.
  */
 
-/** Cosmetic node category — drives the card's kind dot colour. */
+/** Cosmetic node category — drives the card's leading lucide glyph (and the
+ *  thumbnail's kind dot colour). Open-ended: an unknown kind falls back to a
+ *  generic glyph, so a udf may declare its own category. */
 export type NodeKind =
   | 'source'
   | 'transform'

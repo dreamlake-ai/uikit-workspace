@@ -4,6 +4,10 @@
  * prototype (pipelines-canvas.jsx). Colours use uikit tone tokens so they
  * adapt to light/dark automatically.
  */
+import {
+  Archive, Box, Database, Eye, Filter, GitMerge, Sparkles, SquareFunction,
+  type LucideIcon,
+} from 'lucide-react'
 import type { PortSide } from './edge-path'
 import type { NodeKind, NodeStatus } from './types'
 
@@ -13,7 +17,10 @@ export const NODE_H = 72
 // Fixed spacing between adjacent port dots, clustered at the node's centre.
 export const PORT_GAP = 15
 
-/** Kind → CSS colour (uikit tone token, theme-aware). */
+/** Kind → CSS colour (uikit tone token, theme-aware). Still what the THUMB
+ *  (PipelineThumb) tints its 7px kind square with — a glyph is illegible at
+ *  thumbnail scale, so the shrunk card keeps the dot. The live canvas card no
+ *  longer uses it; see KIND_ICON. */
 const KIND_TOKEN: Record<string, string> = {
   source: 'var(--color-uikit-tone-green)',
   transform: 'var(--color-uikit-tone-blue)',
@@ -25,6 +32,44 @@ const KIND_TOKEN: Record<string, string> = {
 }
 export const kindColor = (k: NodeKind): string =>
   KIND_TOKEN[k] ?? 'var(--color-uikit-muted)'
+
+/** Kind → lucide icon (WorkflowCanvas's WF_KIND_ICON convention). TYPE is
+ *  carried by the icon SHAPE, so colour stays free to mean run STATUS — the
+ *  card's leading glyph is this icon tinted by `status` rather than a
+ *  kind-coloured dot that collides with the status palette.
+ *
+ *  Every glyph here is distinct from WorkflowCanvas's set (Layers / Cpu / Bot /
+ *  Shuffle / GitBranch, plus the control subtypes Diamond / Pause / RotateCcw /
+ *  Split) — the two views share one canvas vocabulary, so a repeated glyph would
+ *  claim two different node types.
+ *
+ *  `transform` is SquareFunction — the boxed `f`. It started as Cpu, which was an
+ *  exact duplicate of `compute`, and the arrow pair (ArrowRightLeft) that read
+ *  cleanest at 13px lands in the same two-arrows family as `sampler`'s Shuffle.
+ *  The boxed `f` says what the node IS (a `@ls.udf` stage is a function), sits in
+ *  the boxed-glyph family with Database / Archive, and collides with nothing in
+ *  either view. It is the most detailed glyph in the set, so if the card glyph
+ *  size ever drops below 13px this is the one to re-check first. */
+const KIND_ICON: Record<string, LucideIcon> = {
+  source: Database,
+  transform: SquareFunction,
+  model: Sparkles,
+  filter: Filter,
+  merge: GitMerge,
+  sink: Archive,
+  review: Eye,
+}
+/** `NodeKind` is open (`string & {}`) — a udf can declare any category — so an
+ *  unrecognised kind falls back to the neutral generic-node glyph rather than
+ *  rendering nothing. */
+export const kindIcon = (k: NodeKind): LucideIcon => KIND_ICON[k] ?? Box
+
+/** The canonical kinds, in the order the canvas legend lists them (source →
+ *  sink, review last). Kinds outside this list are appended by the legend in
+ *  first-seen order. */
+export const KIND_ORDER: readonly string[] = [
+  'source', 'transform', 'model', 'filter', 'merge', 'sink', 'review',
+]
 
 /** Node status → dot colour + label. */
 export const STATUS: Record<NodeStatus, { label: string; color: string }> = {

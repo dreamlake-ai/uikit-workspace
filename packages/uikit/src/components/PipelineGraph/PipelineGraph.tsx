@@ -21,9 +21,12 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
 } from 'react'
+import type { LucideIcon } from 'lucide-react'
 import { cn } from '../../lib/utils'
+import { useTooltipPress } from '../../lib/tooltip-press'
+import { Tooltip, TooltipContent, TooltipTrigger } from '../Tooltip'
 import type { GraphNode, GraphEdge, PipelineGraphData, StatusOverlay } from './types'
-import { FLOW, NODE_H, NODE_W, STATUS, edgeFlow, kindColor, portPos } from './flow'
+import { FLOW, KIND_ORDER, NODE_H, NODE_W, STATUS, edgeFlow, kindIcon, portPos } from './flow'
 import { buildEdgePath, pickSides, type Obstacle, type PortSide, type Pt } from './edge-path'
 import { restingOffsets, type Rect, type TagProbe } from './tag-place'
 
@@ -218,6 +221,19 @@ export function PipelineGraph({
 
   const byId = useMemo(() => Object.fromEntries(nodes.map(n => [n.id, n])), [nodes])
 
+  // The kinds the legend keys — only those actually on this canvas, canonical
+  // order first (source → sink), then any custom kind in first-seen order.
+  // `NodeKind` is open, so a fixed list would either miss a graph's kinds or
+  // pad the legend with rows the reader can't see on the canvas.
+  const kindsPresent = useMemo(() => {
+    const seen: string[] = []
+    for (const n of nodes) if (!seen.includes(n.kind)) seen.push(n.kind)
+    return [
+      ...KIND_ORDER.filter(k => seen.includes(k)),
+      ...seen.filter(k => !KIND_ORDER.includes(k)),
+    ]
+  }, [nodes])
+
   // LIVE card-avoidance: the resting perpendicular LIFT for each tag, refreshed
   // whenever the nodes move. A tag defaults to sitting ON its connector and
   // lifts clear only while a card is close enough to touch it — so pulling two
@@ -257,7 +273,12 @@ export function PipelineGraph({
         fromSide: ends.fromSide, toSide: ends.toSide,
       })
       const longest = g.params.reduce((m, p) => Math.max(m, p.length), 0)
-      probes.push({ key, anchor: probe.anchor, boxW: longest * 5.6 + 22, boxH: g.params.length * 12 + 2 })
+      // Estimated pill box for card-avoidance: widest param at ~5.6px/char in
+      // mono 9, plus 12px of chrome (6px padding each side). This was +22 while
+      // the rows carried a leading bullet (3px dot + 5px gap + 7px padding); it
+      // has to track the pill's real padding or the tags avoid a box that isn't
+      // there and sit further from their edge than they need to.
+      probes.push({ key, anchor: probe.anchor, boxW: longest * 5.6 + 12, boxH: g.params.length * 12 + 2 })
     }
     const offs = restingOffsets(probes, cards, labelOffsets, prevRest.current, 'y', TAG_CARD_GAP)
     prevRest.current = offs
@@ -660,13 +681,16 @@ export function PipelineGraph({
           })}
         </svg>
 
-        {/* Param tags — one per node-pair, listing the params it transfers (each
-            with a small leading dot, stacked). Styled to match the design's edge
-            label: panel fill, 1px flow-colour border, rx3, a faint drop shadow,
-            mono 9/600/.04em text in the flow colour. Auto-placed clear of nodes /
-            other tags; drag to pin. Rendered BEFORE the nodes so a tag sits BELOW
-            them in z-order (never covers a node). HTML so it's pointer-interactive
-            (the svg is pointer-events:none). */}
+        {/* Param tags — one per node-pair, listing the params it transfers,
+            stacked one per line. Styled to match WorkflowCanvas's connector tag:
+            panel fill, 1px flow-colour border, rx3, a faint drop shadow, mono
+            9/600/.04em text in the flow colour, and bare names — no leading
+            bullet. (The bullet used to mark each row of a multi-param tag; the
+            row gap already does that, and a pill of one param read as a stray
+            dot next to a word.) Auto-placed clear of nodes / other tags; drag to
+            pin. Rendered BEFORE the nodes so a tag sits BELOW them in z-order
+            (never covers a node). HTML so it's pointer-interactive (the svg is
+            pointer-events:none). */}
         {pairTags.map(t => {
           const dim = !!selected && t.from !== selected && t.to !== selected
           const active = activeTag === t.key
@@ -686,7 +710,7 @@ export function PipelineGraph({
                 display: 'flex', flexDirection: 'column', gap: TAG_ROWGAP,
                 fontFamily: 'var(--font-uikit-mono)', fontSize: 9, fontWeight: 600,
                 letterSpacing: '.04em', lineHeight: 1,
-                padding: '2px 7px', borderRadius: 3,
+                padding: '2px 6px', borderRadius: 3,
                 background: 'var(--color-uikit-panel, #fcfbf7)',
                 // Held → emphasise in the edge's OWN flow colour (matching its
                 // node-edge), with a colour ring — not the fixed accent.
@@ -699,10 +723,7 @@ export function PipelineGraph({
               }}
             >
               {t.params.map((p, i) => (
-                <span key={`${p}-${i}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap' }}>
-                  <span style={{ width: 3, height: 3, borderRadius: 2, background: t.color, flexShrink: 0 }} />
-                  {p}
-                </span>
+                <span key={`${p}-${i}`} style={{ whiteSpace: 'nowrap' }}>{p}</span>
               ))}
             </div>
           )
@@ -736,7 +757,7 @@ export function PipelineGraph({
         })}
       </div>
 
-      {showControls && <Legend />}
+      {showControls && <Legend kinds={kindsPresent} />}
       {showControls && <KeyHint zoom={view.k} />}
     </div>
   )
@@ -754,9 +775,13 @@ function PipeNode({ node, selected, dimmed, onPointerDown, onPointerMove, onPoin
   onPointerMove: (e: ReactPointerEvent) => void
   onPointerUp: (e: ReactPointerEvent) => void
 }) {
-  const kc = kindColor(node.kind)
+  const Icon = kindIcon(node.kind)
   const st = STATUS[node.status] ?? STATUS.idle
   const idle = node.status === 'idle'
+
+  // Tooltip state for a draggable trigger — see useTooltipPress. Without it the
+  // label reappears over a card you are dragging or have just clicked.
+  const tip = useTooltipPress()
 
   const panel = 'var(--color-uikit-panel)'
   const bg = idle
@@ -773,47 +798,92 @@ function PipeNode({ node, selected, dimmed, onPointerDown, onPointerMove, onPoin
       : `color-mix(in srgb, var(--color-uikit-faint) 55%, ${st.color})`
 
   return (
-    <div
-      data-node={node.id}
-      onPointerDown={onPointerDown}
-      onPointerMove={onPointerMove}
-      onPointerUp={onPointerUp}
-      title={node.title}
-      style={{
-        position: 'absolute',
-        left: node.pos.x, top: node.pos.y,
-        width: NODE_W, height: NODE_H,
-        background: bg,
-        // A touch heavier than the edge lines (~1.4px) so card outline and
-        // connectors read at one consistent weight (WorkflowCanvas parity).
-        border: `1.5px solid ${border}`,
-        borderRadius: 7,
-        padding: '8px 10px',
-        display: 'flex', flexDirection: 'column', gap: 4,
-        cursor: 'grab',
-        boxShadow: selected ? '0 1px 0 rgba(0,0,0,.05), 0 6px 18px rgba(0,0,0,.10)' : '0 1px 0 rgba(0,0,0,.04)',
-        opacity: dimmed ? 0.4 : 1,
-        transition: 'opacity 160ms ease, border-color 120ms ease, background 120ms ease',
-        fontFamily: 'var(--font-uikit-mono)',
-      }}
+    // The kit's Tooltip, not the browser's `title`: a native tooltip is painted
+    // by the OS in its own light-grey chrome, so it ignored both the warm canvas
+    // and dark mode entirely. This one is a themed surface (ink-on-bg, inverting
+    // with the theme) and it portals out of the pan/zoom transform, so the label
+    // stays at a fixed size however far the canvas is zoomed.
+    //
+    // The pointer handlers hang off the TRIGGER, not the card: getReferenceProps
+    // composes them with the hover/focus handlers, so node dragging and the
+    // tooltip share the same element without either clobbering the other.
+    <Tooltip
+      {...tip.tooltip}
+      // Slower than the kit's 200ms default: cards sit shoulder to shoulder on a
+      // canvas, and at 200ms crossing the graph fires a trail of labels.
+      delayDuration={500}
+      sideOffset={8}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 7, minWidth: 0 }}>
-        <span style={{ width: 7, height: 7, borderRadius: 2, background: kc, flexShrink: 0 }} />
-        <span style={{
-          fontSize: 12, fontWeight: 600, color: 'var(--color-uikit-ink)', letterSpacing: '-.005em',
-          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0, flex: 1,
-        }}>{node.title}</span>
-      </div>
+      <TooltipTrigger
+        asChild
+        {...tip.press}
+        onPointerDown={(e: ReactPointerEvent) => { tip.press.onPointerDown(); onPointerDown(e) }}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+      >
+        <div
+          data-node={node.id}
+          style={{
+            position: 'absolute',
+            left: node.pos.x, top: node.pos.y,
+            width: NODE_W, height: NODE_H,
+            background: bg,
+            // A touch heavier than the edge lines (~1.4px) so card outline and
+            // connectors read at one consistent weight (WorkflowCanvas parity).
+            border: `1.5px solid ${border}`,
+            borderRadius: 7,
+            padding: '8px 10px',
+            display: 'flex', flexDirection: 'column', gap: 4,
+            cursor: 'grab',
+            boxShadow: selected ? '0 1px 0 rgba(0,0,0,.05), 0 6px 18px rgba(0,0,0,.10)' : '0 1px 0 rgba(0,0,0,.04)',
+            opacity: dimmed ? 0.4 : 1,
+            transition: 'opacity 160ms ease, border-color 120ms ease, background 120ms ease',
+            fontFamily: 'var(--font-uikit-mono)',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7, minWidth: 0 }}>
+            {/* Leading glyph: the KIND's lucide icon (shape = type) tinted by
+                STATUS (colour = state) — WorkflowCanvas's convention. An idle
+                node's status colour is the neutral muted, so a freshly-traced
+                graph reads as a set of grey glyphs and colour only appears once
+                something runs. */}
+            <KindGlyph icon={Icon} color={st.color} />
+            <span style={{
+              fontSize: 12, fontWeight: 600, color: 'var(--color-uikit-ink)', letterSpacing: '-.005em',
+              whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0, flex: 1,
+            }}>{node.title}</span>
+          </div>
 
-      <div style={{
-        fontSize: 9, fontWeight: 500, color: 'var(--color-uikit-muted)', opacity: 0.7,
-        letterSpacing: '.06em', textTransform: 'uppercase',
-      }}>
-        {node.kind} · {node.inputs.length}→{node.outputs.length}
-      </div>
-      {/* Port dots are drawn separately, in world coords (see PortDot), so they
-          land on the exact edge endpoints — the card only holds the text. */}
-    </div>
+          <div style={{
+            fontSize: 9, fontWeight: 500, color: 'var(--color-uikit-muted)', opacity: 0.7,
+            letterSpacing: '.06em', textTransform: 'uppercase',
+          }}>
+            {node.kind} · {node.inputs.length}→{node.outputs.length}
+          </div>
+          {/* Port dots are drawn separately, in world coords (see PortDot), so they
+              land on the exact edge endpoints — the card only holds the text. */}
+        </div>
+      </TooltipTrigger>
+      <TooltipContent>{node.title}</TooltipContent>
+    </Tooltip>
+  )
+}
+
+/** A node's leading kind glyph — sized to the title's visual height and
+ *  vertically centred with it by the title row's `alignItems: center`.
+ *  `color` is the caller's choice so the legend can render the same glyph
+ *  neutral (type key) while a card renders it status-tinted. */
+function KindGlyph({ icon: Icon, color, size = 13 }: {
+  icon: LucideIcon
+  color: string
+  size?: number
+}) {
+  return (
+    <span style={{
+      flexShrink: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color,
+    }}>
+      <Icon size={size} strokeWidth={2} />
+    </span>
   )
 }
 
@@ -853,12 +923,28 @@ const GLASS = {
   zIndex: 6,
 } satisfies React.CSSProperties
 
-// Edge legend — top-left, a compact column of flow swatches.
+// Edge legend — top-right, a compact column of flow swatches, headed by the
+// node-kind glyph key (WorkflowCanvas's two-section legend).
 const LEGEND: { key: keyof typeof FLOW }[] = [
   { key: 'running' }, { key: 'queued' }, { key: 'stalled' }, { key: 'error' }, { key: 'ok' },
 ]
 
-function Legend() {
+/** Section rule + uppercase caption, shared by the nodes / edges groups. */
+function LegendHead({ children, first }: { children: React.ReactNode; first?: boolean }) {
+  return (
+    <span
+      style={{
+        fontSize: 9.5, letterSpacing: '.12em', textTransform: 'uppercase',
+        opacity: 0.7, padding: first ? '0 0 2px' : '4px 0 2px', marginBottom: 2, width: '100%',
+        borderBottom: '1px solid color-mix(in oklab, var(--color-uikit-faint) 80%, transparent)',
+      }}
+    >
+      {children}
+    </span>
+  )
+}
+
+function Legend({ kinds }: { kinds: readonly string[] }) {
   return (
     <div
       className="hidden sm:flex"
@@ -870,15 +956,16 @@ function Legend() {
         letterSpacing: '.04em', whiteSpace: 'nowrap',
       }}
     >
-      <span
-        style={{
-          fontSize: 9.5, letterSpacing: '.12em', textTransform: 'uppercase',
-          opacity: 0.7, paddingBottom: 2, marginBottom: 2, width: '100%',
-          borderBottom: '1px solid color-mix(in oklab, var(--color-uikit-faint) 80%, transparent)',
-        }}
-      >
-        edges
-      </span>
+      {kinds.length > 0 && <LegendHead first>nodes</LegendHead>}
+      {kinds.map((k) => (
+        <span key={k} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+          {/* Neutral glyph: this section keys TYPE (shape). The edges section
+              below is the colour key, so tinting these would say "running". */}
+          <KindGlyph icon={kindIcon(k)} color="var(--color-uikit-muted)" size={12} />
+          <span style={{ fontSize: 10.5, letterSpacing: '.04em', opacity: 0.9 }}>{k}</span>
+        </span>
+      ))}
+      <LegendHead first={kinds.length === 0}>edges</LegendHead>
       {LEGEND.map(({ key }) => {
         const s = FLOW[key]
         return (
