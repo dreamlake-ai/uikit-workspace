@@ -757,7 +757,6 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
               trackList={trackList}
               active={active}
               activeSegs={segs}
-              sel={sel}
               selectedTracks={selTracks}
               gutterPx={gutterPx}
               D={D}
