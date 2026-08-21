@@ -24,14 +24,17 @@ const CONTAINER: Record<ToggleButtonsVariant, string> = {
   ghost: "bg-transparent",
 };
 
+// The highlight marks *which segment you are on*, not a status, so it reads as
+// a raised neutral surface — the segment lifts off the track instead of being
+// flooded with accent. Colour stays available for genuine status elsewhere.
 const HIGHLIGHT: Record<ToggleButtonsVariant, string> = {
-  primary: "bg-uikit-accent shadow-uikit-sm rounded-[var(--radius)]",
+  primary: "bg-uikit-bg shadow-uikit-sm rounded-[var(--radius)]",
   secondary: "bg-uikit-bg shadow-uikit-sm rounded-[var(--radius)]",
   ghost: "bg-uikit-chip shadow-uikit-sm rounded-[var(--radius)]",
 };
 
 const BTN_VARIANT: Record<ToggleButtonsVariant, string> = {
-  primary: "text-uikit-ink data-[selected=true]:text-white",
+  primary: "text-uikit-ink data-[selected=true]:text-uikit-ink",
   secondary: "text-uikit-ink data-[selected=true]:text-uikit-ink",
   ghost:
     "text-uikit-muted hover:text-uikit-ink data-[selected=true]:text-uikit-ink",
