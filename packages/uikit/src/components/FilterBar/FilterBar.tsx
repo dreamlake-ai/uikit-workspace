@@ -20,7 +20,9 @@ export interface FilterOption {
    *  `var(--tone-red)` for failed). Style Guide §Color §"Never invent
    *  a near-miss hex." */
   accent?: string
-  /** Rendered in place, but inert: no click, no hover, never becomes active.
+  /** Rendered in place, but inert: no click, no hover, and never active — not
+   *  as ink, and not as the underline, even if the controlled `filterValue`
+   *  names it.
    *  For an option the UI is committed to and the backend cannot answer yet —
    *  showing it greyed states the intent, where hiding it would make the
    *  eventual arrival look like a new feature. Pair with `hint`, or the chip
@@ -129,7 +131,24 @@ function FilterChipRow({
   const itemRefs = useRef<Record<string, HTMLSpanElement | null>>({})
   const [bar, setBar] = useState({ left: 0, width: 0, ready: false })
 
+  // Whether the CONTROLLED value happens to name an inert option. `disabled`
+  // only stops this row from producing that value; nothing stops a caller from
+  // passing it in, and the underline reads the value directly.
+  const activeIsDisabled = options.some((o) => o.value === value && o.disabled)
+
   useLayoutEffect(() => {
+    // An inert option is never underlined. Suppressing the chip's `data-active`
+    // is not enough on its own: with the ink colour gone, the bar is the only
+    // remaining signal of "active", so leaving it there says selected in the
+    // one way still visible.
+    //
+    // Retired rather than merely left alone — an early `return` would strand it
+    // under whichever chip was selected before, which is the same lie about a
+    // different option.
+    if (activeIsDisabled) {
+      setBar((b) => (b.ready ? { ...b, ready: false } : b))
+      return
+    }
     const el = itemRefs.current[value]
     const container = containerRef.current
     if (!el || !container) return
@@ -140,7 +159,7 @@ function FilterChipRow({
       width: elRect.width,
       ready: true,
     })
-  }, [value, options.length])
+  }, [value, options.length, activeIsDisabled])
 
   return (
     <div ref={containerRef} className="flex items-center gap-2 pr-2 relative">
