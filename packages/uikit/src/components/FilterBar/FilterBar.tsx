@@ -20,6 +20,15 @@ export interface FilterOption {
    *  `var(--tone-red)` for failed). Style Guide §Color §"Never invent
    *  a near-miss hex." */
   accent?: string
+  /** Rendered in place, but inert: no click, no hover, never becomes active.
+   *  For an option the UI is committed to and the backend cannot answer yet —
+   *  showing it greyed states the intent, where hiding it would make the
+   *  eventual arrival look like a new feature. Pair with `hint`, or the chip
+   *  is simply dim with no reason given. */
+  disabled?: boolean
+  /** Short superscript replacing `count` (e.g. "coming soon"), and the chip's
+   *  native tooltip. Use for a state a number cannot express. */
+  hint?: string
 }
 
 export interface FilterBarProps {
@@ -47,9 +56,11 @@ const FilterChip = forwardRef<
   HTMLSpanElement,
   { option: FilterOption; active: boolean; onClick: () => void }
 >(function FilterChip({ option, active, onClick }, ref) {
-  const { label, count, accent } = option
-  const isHot = !!accent && (count ?? 0) > 0
-  const showCount = count !== undefined && count !== 0
+  const { label, count, accent, disabled, hint } = option
+  const isHot = !disabled && !!accent && (count ?? 0) > 0
+  // `hint` outranks `count`: an option that cannot be queried has no honest
+  // number to show, so the slot states why instead of standing empty.
+  const showCount = !hint && count !== undefined && count !== 0
 
   // Hot chips force their accent color (status palette); inject it as a CSS var
   // so the Tailwind `text-[color:var(--chip-accent)]` arbitrary can pick it up.
@@ -60,9 +71,12 @@ const FilterChip = forwardRef<
   return (
     <span
       ref={ref}
-      onClick={onClick}
-      data-active={active || undefined}
+      onClick={disabled ? undefined : onClick}
+      aria-disabled={disabled || undefined}
+      title={hint}
+      data-active={(active && !disabled) || undefined}
       data-hot={isHot || undefined}
+      data-disabled={disabled || undefined}
       style={cssVars}
       className={cn(
         'group/chip inline-flex items-start gap-px cursor-pointer pb-[3px] font-uikit-mono tracking-uikit-snug',
@@ -75,9 +89,17 @@ const FilterChip = forwardRef<
         // Opacity: rest 0.7 (hot 0.95) → hover 0.9 → active 1.
         'opacity-70 hover:opacity-90 data-[active]:opacity-100',
         'data-[hot]:opacity-95',
+        // Disabled keeps its place and its type — only the affordance goes.
+        // Listed last so it wins over the hover/active opacities above.
+        'data-[disabled]:!cursor-default data-[disabled]:!opacity-40',
       )}
     >
       <span className="text-uikit-11">{label}</span>
+      {hint && (
+        <sup className="text-[8px] font-medium leading-none align-top mt-1 ml-px tracking-uikit-snug whitespace-nowrap">
+          {hint}
+        </sup>
+      )}
       {showCount && (
         <sup
           className={cn(
@@ -130,7 +152,10 @@ function FilterChipRow({
           }}
           option={opt}
           active={opt.value === value}
-          onClick={() => onChange(opt.value)}
+          onClick={() => {
+            if (opt.disabled) return
+            onChange(opt.value)
+          }}
         />
       ))}
       {/* Sliding underline — travels between chips */}
