@@ -105,6 +105,10 @@ export function ProfileCard({
   return (
     <div
       data-uikit-card=""
+      // The bottom-right corner is occupied, so the content slots above it
+      // must keep out of its way. Declared here rather than measured, because
+      // CSS cannot ask how wide the cluster is — see `styles.css`.
+      data-uikit-bottom-actions={bottomRightActions ? '' : undefined}
       onClick={onClick}
       className={cn(
         'group relative rounded-xl border border-uikit-faint',
@@ -120,7 +124,7 @@ export function ProfileCard({
       {/* header — title + tag share a shrinkable flex column on the left so
           long titles truncate with ellipsis instead of pushing titleRight
           (or worse, the card boundary) out. */}
-      <div className="flex items-baseline gap-2.5">
+      <div data-uikit-header="" className="flex items-baseline gap-2.5">
         <div className="flex items-baseline gap-2.5 flex-1 min-w-0">
           {href ? (
             /* The overlay lives on the anchor, not on a wrapper, so the
@@ -152,6 +156,7 @@ export function ProfileCard({
         </div>
         {titleRight && (
           <span
+            data-uikit-title-right=""
             className={cn(
               'font-uikit-mono text-uikit-11 text-uikit-muted opacity-65 tracking-uikit-snug whitespace-nowrap shrink-0',
               // Above the stretched overlay. Consumers put `title`/`<time>`
@@ -172,14 +177,20 @@ export function ProfileCard({
       {/* description — `break-words` keeps unbroken strings (URLs, tokens)
           from spilling past the card edge. */}
       {description && (
-        <div className="mt-1.5 text-uikit-13 font-normal opacity-75 leading-normal tracking-uikit-snug break-words">
+        <div
+          data-uikit-description=""
+          className="mt-1.5 text-uikit-13 font-normal opacity-75 leading-normal tracking-uikit-snug break-words"
+        >
           {description}
         </div>
       )}
 
       {/* footer (+ optional right-aligned cluster) */}
       {(footer || footerRight) && (
-        <div className="mt-1.5 flex items-center gap-3 min-w-0 font-uikit-mono text-uikit-11 tracking-uikit-snug">
+        <div
+          data-uikit-footer=""
+          className="mt-1.5 flex items-center gap-3 min-w-0 font-uikit-mono text-uikit-11 tracking-uikit-snug"
+        >
           {footer ? (
             <div className="flex-1 min-w-0 truncate opacity-75">{footer}</div>
           ) : (
@@ -196,7 +207,10 @@ export function ProfileCard({
       {/* tags row — `<Tag>` chips by convention. Wraps onto multiple lines
           when they don't fit; `min-w-0` lets the row shrink inside grid cells. */}
       {tags && (
-        <div className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1 min-w-0">
+        <div
+          data-uikit-tags=""
+          className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1 min-w-0"
+        >
           {tags}
         </div>
       )}
