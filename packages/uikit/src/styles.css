@@ -444,3 +444,83 @@ html[data-theme="dark"] {
     background: var(--faint);
   }
 }
+
+/* ── ProfileCard layout ─────────────────────────────────────────── */
+
+/*
+ * The card answers to its OWN width, not the viewport's.
+ *
+ * The same card renders full-bleed in a one-column list and half-width in a
+ * two-column grid, at the identical viewport — so a media query cannot tell
+ * those apart, and the narrow case is exactly where the header runs out of
+ * room. `container-type: inline-size` makes the card the query subject.
+ */
+[data-uikit-card] {
+  container-type: inline-size;
+}
+
+/*
+ * Narrow card: the title line keeps the identity, and the meta drops beneath.
+ *
+ * 22rem (352px) sits between the two grid widths this app actually renders:
+ * a two-column card is ~394px at 1440 and ~270px at 900. The first has room
+ * for the name and its meta on one line and must keep it; only the second is
+ * genuinely out of room. A higher threshold reads as "narrow" and is not —
+ * 26rem caught the 1440 grid too, and rewrapped a layout that had no problem.
+ *
+ * `titleRight` is `shrink-0`, so on one line it takes what it needs and the
+ * title absorbs every shortfall — a 30-character name was rendering as one
+ * letter and an ellipsis in a 900px two-column grid. Nothing is hidden to fix
+ * it: the provider and the timestamp move to a second line, right-aligned,
+ * and the name gets the first line to itself.
+ *
+ * `white-space: normal` because the meta no longer has to fit beside a title
+ * — once it owns a line, wrapping is better than overflowing it.
+ */
+@container (max-width: 22rem) {
+  [data-uikit-header] {
+    flex-wrap: wrap;
+  }
+
+  [data-uikit-title-right] {
+    flex-basis: 100%;
+    display: flex;
+    justify-content: flex-end;
+    white-space: normal;
+    margin-top: 2px;
+  }
+
+  /*
+   * The wrapped meta is right-aligned, so it ends exactly where the action
+   * sits — and on a card with no description it lands in the same horizontal
+   * band. The header is above the action on a tall card and beside it on a
+   * short one, which is why this cannot be left to the slot gutters below:
+   * only the narrow layout puts the meta within reach of the corner.
+   */
+  [data-uikit-card][data-uikit-bottom-actions] [data-uikit-title-right] {
+    padding-right: var(--uikit-card-action-gutter);
+  }
+}
+
+/*
+ * Keep the content slots clear of the bottom-right action cluster.
+ *
+ * The cluster is absolutely positioned, so it is outside the flow that lays
+ * these out and nothing stops a description's last line from running under it.
+ * Reserved rather than measured — CSS cannot ask how wide the cluster is — and
+ * exposed as a custom property so a consumer with a wider cluster can raise it
+ * without patching each slot itself.
+ *
+ * The default clears one 22px control at `right: 0.75rem` with room to spare.
+ * Applied to every slot below the header, because which one renders last
+ * depends on what the caller passed.
+ */
+[data-uikit-card][data-uikit-bottom-actions] {
+  --uikit-card-action-gutter: 3rem;
+}
+
+[data-uikit-card][data-uikit-bottom-actions] [data-uikit-description],
+[data-uikit-card][data-uikit-bottom-actions] [data-uikit-footer],
+[data-uikit-card][data-uikit-bottom-actions] [data-uikit-tags] {
+  padding-right: var(--uikit-card-action-gutter);
+}
