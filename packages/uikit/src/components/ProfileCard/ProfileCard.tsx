@@ -1,4 +1,4 @@
-import { ElementType, ReactNode } from 'react'
+import { ReactNode } from 'react'
 import { cn } from '../../lib/utils'
 
 export interface ProfileCardProps {
@@ -25,6 +25,17 @@ export interface ProfileCardProps {
    *  primary inline actions (fork, open, etc). Clicks do not bubble to
    *  `onClick`. */
   hoverActions?: ReactNode
+  /** Always-visible actions in that same bottom-right corner.
+   *
+   *  The slot to reach for when the control must be FOUND, not just used:
+   *  hover-revealed actions are invisible until a pointer is over the card, so
+   *  a reader scanning a list cannot tell which rows offer the action, and a
+   *  row's only affordance can go unnoticed entirely. This slot renders at
+   *  rest — visibility is the caller's own styling, not a reveal.
+   *
+   *  Shares the corner with `hoverActions`; when both are given they sit on one
+   *  line, revealed first, persistent last. */
+  bottomRightActions?: ReactNode
   /** Destination for the card click. Renders the card as a real `<a>` so
    *  browser link affordances (⌘/ctrl+click, middle-click, right-click →
    *  open in new tab) work; same-origin hrefs still client-route under Vike.
@@ -44,20 +55,61 @@ export function ProfileCard({
   tags,
   topRightActions,
   hoverActions,
+  bottomRightActions,
   href,
   onClick,
   className,
 }: ProfileCardProps) {
-  const Root: ElementType = href ? 'a' : 'div'
+  /*
+   * The card is a container, and the link is INSIDE it — never the other way
+   * round.
+   *
+   * A card that is itself the `<a>` has nowhere legal to put an action: a
+   * `<button>` nested in an anchor is invalid content, and the browsers that
+   * tolerate it still hand the anchor the click. Cancelling that navigation in
+   * a capture-phase `preventDefault` — which is what this component used to do
+   * — treats the symptom. The structure stays wrong, and everything downstream
+   * of it (AT announcing one control, not two; a nested button that cannot be
+   * activated by keyboard the way a button should) stays wrong with it.
+   *
+   * So: a `<a>` around the title, stretched over the whole card by an
+   * `::after` overlay. The card is clickable edge to edge and it is a REAL
+   * link — middle-click, ⌘-click, "copy link address" and "open in new tab"
+   * all work, because they are the anchor's own behaviours rather than a
+   * handler's imitation of them. Actions are siblings of that anchor, lifted
+   * above the overlay, so a click on one reaches the button and nothing else.
+   *
+   * `data-uikit-card` is the handle for "the card" now that it is no longer
+   * "the anchor" — consumers' tests need something stable to address.
+   */
+  // Revealed on hover, and NOT only on hover.
+  //
+  // `opacity-0` alone leaves a control that is invisible but still focusable
+  // and still hit-testable — a keyboard user tabs into something they cannot
+  // see, and `pointer-events-none` then makes it unclickable rather than
+  // hidden, which is two bugs wearing one class. So:
+  //
+  //   focus-within — a keyboard user sees what they have landed on.
+  //   (hover: none) — a touch device has no hover state to enter, so the
+  //   control is simply present. Without it the action is unreachable on a
+  //   phone, silently, since the pointer that would reveal it does not exist.
+  //
+  // The pointer-device appearance is unchanged: hidden at rest, shown on hover.
+  const revealOnHover = cn(
+    'opacity-0 pointer-events-none transition-opacity duration-[120ms]',
+    'group-hover:opacity-100 group-hover:pointer-events-auto',
+    'group-focus-within:opacity-100 group-focus-within:pointer-events-auto',
+    '[@media(hover:none)]:opacity-100 [@media(hover:none)]:pointer-events-auto',
+  )
+
   return (
-    <Root
-      href={href}
+    <div
+      data-uikit-card=""
       onClick={onClick}
       className={cn(
         'group relative rounded-xl border border-uikit-faint',
         'px-4 py-3.5 min-w-0',
         'font-uikit-ui text-uikit-ink',
-        href && 'block no-underline',
         // Clickable cards get a pointer + a subtle hover fill, so every consumer
         // (Overview / Projects / Datasets / Artifacts / …) reads the same on hover
         // without each having to re-declare it.
@@ -70,9 +122,28 @@ export function ProfileCard({
           (or worse, the card boundary) out. */}
       <div className="flex items-baseline gap-2.5">
         <div className="flex items-baseline gap-2.5 flex-1 min-w-0">
-          <span className="text-uikit-14 font-medium tracking-uikit-tight leading-uikit-snug truncate min-w-0">
-            {title}
-          </span>
+          {href ? (
+            /* The overlay lives on the anchor, not on a wrapper, so the
+               accessible name of the link is the title itself.
+               `overflow` stays OFF this element — `truncate` here would clip
+               the `::after` to the title's own box and the card would stop
+               being clickable. The inner span does the truncating instead. */
+            <a
+              href={href}
+              className={cn(
+                'min-w-0 no-underline text-uikit-ink',
+                "after:absolute after:inset-0 after:rounded-xl after:content-['']",
+              )}
+            >
+              <span className="block text-uikit-14 font-medium tracking-uikit-tight leading-uikit-snug truncate">
+                {title}
+              </span>
+            </a>
+          ) : (
+            <span className="text-uikit-14 font-medium tracking-uikit-tight leading-uikit-snug truncate min-w-0">
+              {title}
+            </span>
+          )}
           {tag && (
             <span className="font-uikit-mono text-[10.5px] opacity-80 whitespace-nowrap shrink-0">
               {tag}
@@ -83,6 +154,10 @@ export function ProfileCard({
           <span
             className={cn(
               'font-uikit-mono text-uikit-11 text-uikit-muted opacity-65 tracking-uikit-snug whitespace-nowrap shrink-0',
+              // Above the stretched overlay. Consumers put `title`/`<time>`
+              // meta here, and a pseudo-element covering it would swallow the
+              // tooltip. The trade is that this small strip does not navigate.
+              'relative z-10',
               // When topRightActions are also present, fade titleRight on
               // hover so the hover-revealed cluster doesn't collide with
               // the meta (e.g. timestamp behind edit/delete buttons).
@@ -126,45 +201,48 @@ export function ProfileCard({
         </div>
       )}
 
-      {/* top-right hover actions (edit / delete pattern) */}
+      {/*
+        Action slots — siblings of the card's link, never inside it.
+        `z-10` lifts them above the anchor's stretched `::after`, so a click
+        lands on the button. No `preventDefault` anywhere: the click never
+        reaches the anchor to begin with, which is the difference between a
+        structure that is right and one corrected after the fact.
+        `stopPropagation` stays, for the `onClick`-only (hrefless) card whose
+        container handler would otherwise also fire.
+      */}
       {topRightActions && (
         <div
-          // preventDefault must run in the CAPTURE phase: action buttons often
-          // stopPropagation in their own handlers, which would keep a bubble
-          // handler here from ever running — leaving the card <a>'s default
-          // navigation uncancelled. Capture runs before the target's handler
-          // and can't be bypassed.
-          onClickCapture={(e) => {
-            if (href) e.preventDefault()
-          }}
           onClick={(e) => e.stopPropagation()}
           className={cn(
-            'absolute right-3 top-3 inline-flex items-center gap-1',
-            'opacity-0 pointer-events-none transition-opacity duration-[120ms]',
-            'group-hover:opacity-100 group-hover:pointer-events-auto',
+            'absolute right-3 top-3 z-10 inline-flex items-center gap-1',
+            revealOnHover,
           )}
         >
           {topRightActions}
         </div>
       )}
 
-      {/* bottom-right hover actions (primary inline action) */}
-      {hoverActions && (
+      {/*
+        One corner, two reveal policies. The container is positioned and
+        persistent; only the `hoverActions` group inside it fades, so adding a
+        persistent action never changes when the hover-revealed ones appear.
+      */}
+      {(hoverActions || bottomRightActions) && (
         <div
-          onClickCapture={(e) => {
-            if (href) e.preventDefault()
-          }}
           onClick={(e) => e.stopPropagation()}
           className={cn(
-            'absolute right-3 bottom-[9px] inline-flex items-center gap-1.5',
+            'absolute right-3 bottom-[9px] z-10 inline-flex items-center gap-1.5',
             'font-uikit-mono text-uikit-11 font-medium tracking-uikit-snug',
-            'opacity-0 pointer-events-none transition-opacity duration-[120ms]',
-            'group-hover:opacity-100 group-hover:pointer-events-auto',
           )}
         >
-          {hoverActions}
+          {hoverActions && (
+            <span className={cn('inline-flex items-center gap-1.5', revealOnHover)}>
+              {hoverActions}
+            </span>
+          )}
+          {bottomRightActions}
         </div>
       )}
-    </Root>
+    </div>
   )
 }
