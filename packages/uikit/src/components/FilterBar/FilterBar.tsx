@@ -5,6 +5,7 @@ import {
   useRef,
   useState,
   type CSSProperties,
+  type ReactNode,
 } from 'react'
 import { cn } from '../../lib/utils'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../Select/Select'
@@ -34,6 +35,18 @@ export interface FilterOption {
 }
 
 export interface FilterBarProps {
+  /**
+   * Extra controls on the right, before sort.
+   *
+   * They belong INSIDE the bar because the bar's own row is what establishes
+   * the baseline: it is `items-center`, while the bar's outer box adds bottom
+   * padding for the rule beneath it. A control placed beside the whole
+   * component centres against that padding too and sits visibly lower than the
+   * search line — which is what a consumer discovers only after it ships, and
+   * then patches with a negative margin. This slot is the alternative to that
+   * patch.
+   */
+  rightControls?: ReactNode
   /** Filter chips rendered on the left. First option is treated as "all". Omit to hide chips. */
   filters?: FilterOption[]
   filterValue?: string
@@ -62,7 +75,13 @@ const FilterChip = forwardRef<
   const isHot = !disabled && !!accent && (count ?? 0) > 0
   // `hint` outranks `count`: an option that cannot be queried has no honest
   // number to show, so the slot states why instead of standing empty.
-  const showCount = !hint && count !== undefined && count !== 0
+  //
+  // `0` IS shown. Absent and zero are different answers — "no number is
+  // available" versus "there are none" — and a consumer whose counts come from
+  // a server has no way to express the second if this collapses it into the
+  // first. Callers that would rather hide a zero can pass `undefined`; a caller
+  // that wants to show one had no way to say so.
+  const showCount = !hint && count !== undefined
 
   // Hot chips force their accent color (status palette); inject it as a CSS var
   // so the Tailwind `text-[color:var(--chip-accent)]` arbitrary can pick it up.
@@ -296,6 +315,7 @@ function FilterSearchLine({
 // ── FilterBar ──────────────────────────────────────────────────────────────
 
 export function FilterBar({
+  rightControls,
   filters,
   filterValue,
   onFilterChange,
@@ -339,7 +359,9 @@ export function FilterBar({
           />
         </div>
 
-        {/* Right: sort */}
+        {/* Right: consumer controls, then sort — same row, same baseline. */}
+        {rightControls}
+
         {sortOptions && sortOptions.length > 0 && (
           <Select
             value={sortValue ?? sortOptions[0].value}
