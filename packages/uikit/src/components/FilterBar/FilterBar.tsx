@@ -52,6 +52,26 @@ export interface FilterBarProps {
   filterValue?: string
   onFilterChange?: (value: string) => void
 
+  /**
+   * Keep the chip row visible while the search box has a query.
+   *
+   * By default a query replaces the chips with a compact token, which suits a
+   * bar whose chips are only a way to narrow the same list. It does not suit
+   * one whose chips carry COUNTS: those numbers answer "how much of this
+   * search is active / disabled", so hiding them exactly when a search is
+   * typed removes the answer at the moment it changes — and it also removes
+   * the only way to switch filter without first clearing the query.
+   *
+   * Opt-in rather than the default, because the token is the right behaviour
+   * for the bars that already have it and this is a per-consumer decision, not
+   * a correction to make everywhere at once.
+   *
+   * With this on, the token is NOT rendered: the chip row already shows which
+   * filter is selected, and drawing both would state the same fact twice with
+   * two different controls for undoing it.
+   */
+  keepFiltersWhileSearching?: boolean
+
   query: string
   onQueryChange: (q: string) => void
   placeholder?: string
@@ -319,6 +339,7 @@ export function FilterBar({
   filters,
   filterValue,
   onFilterChange,
+  keepFiltersWhileSearching = false,
   query,
   onQueryChange,
   placeholder = 'search',
@@ -330,8 +351,15 @@ export function FilterBar({
 }: FilterBarProps) {
   const allValue = filters?.[0]?.value
   const searching = query.length > 0
+  // The chips step aside for the token, unless the consumer says they carry
+  // something the token cannot: see `keepFiltersWhileSearching`.
+  const showChips = !!filters && (keepFiltersWhileSearching || !searching)
   const showToken =
-    !!filters && searching && !!filterValue && filterValue !== allValue
+    !!filters &&
+    searching &&
+    !keepFiltersWhileSearching &&
+    !!filterValue &&
+    filterValue !== allValue
   const activeFilter = filters?.find((f) => f.value === filterValue)
   const tokenLabel = showToken
     ? (activeFilter?.label ?? filterValue ?? null)
@@ -342,7 +370,7 @@ export function FilterBar({
       <div className="flex items-center gap-4">
         {/* Left: chips (resting state) + search line */}
         <div className="flex items-center flex-1 min-w-0 relative">
-          {filters && !searching && (
+          {showChips && (
             <FilterChipRow
               options={filters}
               value={filterValue ?? allValue ?? ''}
