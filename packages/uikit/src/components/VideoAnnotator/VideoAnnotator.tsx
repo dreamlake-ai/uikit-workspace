@@ -31,9 +31,11 @@ import { DescriptionBox } from "./DescriptionBox";
 // Match the browser's native playback-rate menu so the custom menu shows the
 // same set (and any rate picked in native controls maps to a listed option).
 const DEFAULT_SPEEDS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
-// Timeline zoom bounds (continuous). The transport's drag/step both clamp here.
+// Timeline zoom bounds (continuous). MIN keeps the whole clip in view; there's
+// no upper cap — zoom is unbounded (drag / ‹›-step just keep multiplying). The
+// ruler already redraws only the visible window, so deep zoom stays cheap.
 const MIN_ZOOM = 1;
-const MAX_ZOOM = 16;
+const MAX_ZOOM = Infinity;
 
 /**
  * VideoAnnotator — a video player with an editable, contiguous segment
@@ -105,8 +107,8 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
     const [metaDuration, setMetaDuration] = useState(0);
     // Buffered seconds for the custom seek bar's buffered fill (from video.buffered).
     const [buffered, setBuffered] = useState(0);
-    // Timeline horizontal magnification (1/2/4/8/16). The timeline canvas widens
-    // to `zoom*100%` inside `scrollRef`'s overflow-x container; view is kept
+    // Timeline horizontal magnification (continuous, ≥1, unbounded). The canvas
+    // widens to `zoom*100%` inside `scrollRef`'s overflow-x container; view is kept
     // centered via scrollLeft.
     const [zoom, setZoom] = useState(1);
     // Hand-pose overlay: OFF by default (a "Hands" toggle in the transport

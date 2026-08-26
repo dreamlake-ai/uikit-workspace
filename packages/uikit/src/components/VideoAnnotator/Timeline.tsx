@@ -36,8 +36,8 @@ export function Timeline({
    *  ruler runs negative to its left. 0 = no gutter (single-track). */
   gutterPx: number;
   D: number;
-  /** Horizontal magnification (1/2/4/8/16). The canvas is widened to
-   *  `zoom*100%` inside a scrolling parent; all position math stays `t/D`. */
+  /** Horizontal magnification (continuous, ≥1, unbounded). The canvas is widened
+   *  to `zoom*100%` inside a scrolling parent; all position math stays `t/D`. */
   zoom: number;
   currentTime: number;
   /** Show the built-in "+ add track" row (host-configurable entry). */
