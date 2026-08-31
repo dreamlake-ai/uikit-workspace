@@ -345,7 +345,7 @@ function TabsData({
             data-active={active || undefined}
             onClick={() => handleTabClick(tab.value)}
             className={cn(
-              "relative z-[1] inline-flex items-center justify-center cursor-pointer",
+              "relative z-[1] inline-flex items-center justify-center cursor-pointer select-none",
               "appearance-none border-0 bg-transparent outline-none",
               "text-uikit-muted data-[active]:text-uikit-ink",
               "transition-colors duration-[160ms]",
