@@ -47,16 +47,26 @@ function CloseButton({ onClose }: { onClose: () => void }) {
       onMouseEnter={() => setHov(true)}
       onMouseLeave={() => setHov(false)}
       style={{
-        appearance: 'none', border: 0, padding: 0, cursor: 'pointer',
-        width: 22, height: 22, borderRadius: 5, alignSelf: 'center',
-        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-        background: hov ? 'color-mix(in srgb, var(--ink) 8%, transparent)' : 'transparent',
+        appearance: 'none',
+        border: 0,
+        padding: 0,
+        cursor: 'pointer',
+        width: 22,
+        height: 22,
+        borderRadius: 5,
+        alignSelf: 'center',
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        // Colour-only hover (muted → ink), no fill — matches the design's close
+        // affordance. (Previously painted an ink-tinted chip on hover.)
+        background: 'transparent',
         color: hov ? 'var(--ink)' : 'var(--uikit-muted)',
         opacity: hov ? 1 : 0.65,
-        transition: 'background 120ms ease, color 120ms ease, opacity 120ms ease',
+        transition: 'color 120ms ease, opacity 120ms ease',
       }}
     >
-      <X size={14} strokeWidth={2} />
+      <X size={15} strokeWidth={2} />
     </button>
   )
 }
@@ -102,7 +112,7 @@ export function Dialog({
       onClick={dismissOnBackdropClick ? onClose : undefined}
       className={cn(
         'fixed inset-0 z-[100] flex items-center justify-center font-uikit-ui',
-        'bg-[rgba(0,0,0,0.55)]',
+        'bg-[rgba(0,0,0,0.55)]'
       )}
     >
       <div
@@ -113,19 +123,27 @@ export function Dialog({
           'p-6 rounded-[14px] flex flex-col gap-4',
           'max-h-[85vh] overflow-y-auto',
           'bg-uikit-bg text-uikit-ink shadow-uikit-deep',
-          className,
+          className
         )}
-        style={{ width }}
+        // `lineHeight: normal` resets the app's ambient Tailwind-preflight 1.5 for
+        // all dialog content, so fields/chips/buttons match the design's compact
+        // vertical rhythm (the design inherits the browser default). One rule at
+        // the panel root — no per-element height/padding overrides.
+        style={{ width, lineHeight: 'normal' }}
       >
         {(title || eyebrow || showEscHint) && (
           <div className="flex items-baseline gap-2.5">
             {title && (
-              <h3 className="m-0 font-uikit-ui text-uikit-17 font-semibold leading-[1.2] tracking-uikit-tight text-uikit-ink">
+              // Truncate a long title (ellipsis) rather than wrapping; `min-w-0`
+              // lets it shrink so the eyebrow keeps its room instead of being
+              // pushed out of the panel.
+              <h3 className="m-0 min-w-0 truncate font-uikit-ui text-uikit-17 font-semibold leading-[1.2] tracking-uikit-tight text-uikit-ink">
                 {title}
               </h3>
             )}
             {eyebrow && (
-              <span className="font-uikit-mono text-uikit-10 leading-uikit-snug text-uikit-muted opacity-60 tracking-uikit-wide uppercase">
+              // Never wrap or shrink below its own width — the title yields first.
+              <span className="shrink-0 whitespace-nowrap font-uikit-mono text-uikit-10 leading-uikit-snug text-uikit-muted opacity-60 tracking-uikit-wide uppercase">
                 {eyebrow}
               </span>
             )}
@@ -136,11 +154,9 @@ export function Dialog({
 
         {children}
 
-        {footer && (
-          <div className="flex items-center gap-3 justify-end">{footer}</div>
-        )}
+        {footer && <div className="flex items-center gap-3 justify-end">{footer}</div>}
       </div>
     </div>,
-    document.body,
+    document.body
   )
 }
