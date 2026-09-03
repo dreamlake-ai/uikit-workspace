@@ -74,11 +74,13 @@ interface SegmentSizeConfig {
   iconSize: number;
 }
 
-// `containerR` tracks `pillR` at xs/sm/md instead of sitting a pixel wider:
-// the frame tint is faint enough that a mathematically-nested outer arc
-// read as too round beside the pill, so those outer corners are 1px
-// tighter than the reference. `lg` is the exception — at that scale the
-// matched arcs read as flat, so its container runs 2px wider than its pill.
+// The reference sized `containerR` a pixel wider than `pillR` at every size;
+// #156 tightened all four to match the pill, reading a mathematically-nested
+// outer arc as too round beside a frame tint this faint. That still holds at
+// xs/sm, where a pixel is most of the corner — but not at the larger two,
+// where matched arcs read as flat beside the pill instead of wrapping it. So
+// `md` is back at the reference (pill + 1) and `lg` runs 2px wider than its
+// pill.
 const segmentConfig: Record<TabsSize, SegmentSizeConfig> = {
   xs: {
     inset: 1,
@@ -100,7 +102,7 @@ const segmentConfig: Record<TabsSize, SegmentSizeConfig> = {
   },
   md: {
     inset: 2,
-    containerR: 5,
+    containerR: 6,
     pillR: 5,
     buttonR: 5,
     padV: 4,
@@ -345,7 +347,7 @@ function TabsData({
             data-active={active || undefined}
             onClick={() => handleTabClick(tab.value)}
             className={cn(
-              "relative z-[1] inline-flex items-center justify-center cursor-pointer",
+              "relative z-[1] inline-flex items-center justify-center cursor-pointer select-none",
               "appearance-none border-0 bg-transparent outline-none",
               "text-uikit-muted data-[active]:text-uikit-ink",
               "transition-colors duration-[160ms]",
