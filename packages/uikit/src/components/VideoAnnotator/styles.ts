@@ -106,11 +106,11 @@ export const CSS = `
 .va-tp-left,.va-tp-right{display:flex;align-items:center;gap:8px;min-width:0}
 .va-tp-right{justify-content:flex-end}
 .va-tp-center{display:flex;align-items:center;gap:8px;flex:none}
-/* Transport controls are quiet round buttons (design .lab-round): fully round,
-   transparent, resting at .75 opacity → ink on hover with a soft ink wash;
-   active (toggles) turn accent. Scoped under .va-transport to beat the base
-   .va-root button rules. */
-.va-transport .va-icon{width:30px;height:30px;padding:0;justify-content:center;border-radius:999px;
+/* Transport controls are quiet square-ish buttons: a 6px rounded rectangle
+   matching the kit's small radius, transparent, resting at .75 opacity → ink
+   on hover with a soft ink wash; active (toggles) turn accent. Scoped under
+   .va-transport to beat the base .va-root button rules. */
+.va-transport .va-icon{width:30px;height:30px;padding:0;justify-content:center;border-radius:6px;
   background:transparent;border:0;color:var(--va-text);opacity:.75;
   transition:opacity .12s ease, background .12s ease, color .12s ease}
 .va-transport .va-icon:hover{opacity:1;color:var(--va-text);
