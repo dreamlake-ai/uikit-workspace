@@ -114,7 +114,14 @@ export function Tooltip({
     whileElementsMounted: autoUpdate,
     middleware: [
       offset(sideOffset),
-      flip({ fallbackAxisSideDirection: "start" }),
+      // `crossAxis: false` so flip judges only the axis the placement is ON.
+      // With the default (true) a wide tooltip on a control near a viewport
+      // edge was rejected for sticking out SIDEWAYS, and flip — running before
+      // shift — bounced it onto the perpendicular axis: a top-bar button's
+      // tooltip landed beside the button instead of under it, and `side` looked
+      // like it did nothing. Keeping horizontal overflow out of flip's decision
+      // lets `shift()` do the job it is there for and slide it back into view.
+      flip({ fallbackAxisSideDirection: "start", crossAxis: false }),
       shift({ padding: 6 }),
     ],
   });
