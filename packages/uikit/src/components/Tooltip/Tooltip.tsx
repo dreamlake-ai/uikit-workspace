@@ -170,7 +170,27 @@ export function TooltipTrigger({
 
   if (asChild && isValidElement(children)) {
     const child = children as ReactElement<Record<string, unknown>>;
-    return cloneElement(child, { ref: ctx.refs.setReference, ...refProps });
+    // COMPOSE the child's own event handlers with floating-ui's rather than
+    // replacing them. `cloneElement` lets the passed props win, so any handler
+    // the trigger already had for an event the interaction hooks also listen
+    // to was silently dropped. `useHover` enters on `onPointerEnter` (no
+    // clash) but leaves on `onMouseLeave` (clash) — so a trigger that painted
+    // itself on enter and reset on leave applied the paint and never undid it.
+    // Measured on a topbar icon button: background went to `ink 4%` on hover
+    // and stayed there after the pointer left, for the life of the page.
+    const merged: Record<string, unknown> = { ...refProps };
+    for (const key of Object.keys(refProps)) {
+      if (!/^on[A-Z]/.test(key)) continue;
+      const own = child.props[key];
+      const theirs = refProps[key];
+      if (typeof own === "function" && typeof theirs === "function") {
+        merged[key] = (...args: unknown[]) => {
+          (own as (...a: unknown[]) => unknown)(...args);
+          (theirs as (...a: unknown[]) => unknown)(...args);
+        };
+      }
+    }
+    return cloneElement(child, { ref: ctx.refs.setReference, ...merged });
   }
   return (
     <button ref={ctx.refs.setReference as never} type="button" {...refProps}>
