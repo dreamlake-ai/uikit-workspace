@@ -10,7 +10,12 @@ import { createPortal } from 'react-dom'
 import { Folder, ChevronRight, ChevronDown, Loader } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { useBreadcrumbTree } from './useBreadcrumbTree'
-import type { BreadcrumbNode, FetchChildrenResult } from './types'
+import type {
+  BreadcrumbNode,
+  FetchChildrenResult,
+  BreadcrumbDragAndDrop,
+  BreadcrumbDropTarget,
+} from './types'
 
 export interface BreadcrumbTreeProps {
   /** Controlled navigation path, root → leaf. Empty array = nothing selected. */
@@ -50,6 +55,14 @@ export interface BreadcrumbTreeProps {
   refreshToken?: number
   /** Placeholder shown in the breadcrumb when path is empty and rootPath is not set. */
   placeholder?: string
+  /**
+   * Opt in to dragging rows between columns. Omit and the tree behaves
+   * exactly as before — no drag handles, no drop targets, no listeners.
+   * While a drag is held, dwelling on a row springs its column open, so a
+   * node can be walked across to a sibling branch that the breadcrumb
+   * could never show at the same time.
+   */
+  dnd?: BreadcrumbDragAndDrop
   className?: string
 }
 
@@ -129,18 +142,52 @@ function TreeRow({
   colIdx,
   rowIdx,
   onClick,
+  draggable = false,
+  isSource = false,
+  dropState = 'none',
+  dragActive = false,
+  onDragStart,
+  onDragEnd,
+  onDragOver,
+  onDragLeave,
+  onDrop,
 }: {
   node: BreadcrumbNode
   selected: boolean
   colIdx: number
   rowIdx: number
   onClick: () => void
+  draggable?: boolean
+  /** This row is the one being dragged — fades so the cursor reads as the item. */
+  isSource?: boolean
+  /** 'into' marks this row as the destination; 'blocked' refuses it. */
+  dropState?: 'none' | 'into' | 'blocked'
+  /** A drag is in flight somewhere in the tree. Selection steps back while it
+   *  is, so the only loud thing on screen is the row you would drop into. */
+  dragActive?: boolean
+  onDragStart?: (e: React.DragEvent) => void
+  onDragEnd?: (e: React.DragEvent) => void
+  onDragOver?: (e: React.DragEvent) => void
+  onDragLeave?: (e: React.DragEvent) => void
+  onDrop?: (e: React.DragEvent) => void
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
+      draggable={draggable || undefined}
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
+      onDragOver={onDragOver}
+      onDragLeave={onDragLeave}
+      onDrop={onDrop}
       data-selected={selected || undefined}
+      data-source={isSource || undefined}
+      data-drop={dropState !== 'none' ? dropState : undefined}
+      // Spring-loading navigates, so every row walked through turns
+      // "selected". At full strength that trail competes with the one row
+      // that actually matters, so it steps back while a drag is in flight.
+      data-trail={(dragActive && selected && dropState === 'none') || undefined}
       className={cn(
         'group/row appearance-none border-0 outline-none w-full text-left',
         'flex items-center gap-2 px-2 py-[5px] rounded-[var(--radius)]',
@@ -154,14 +201,39 @@ function TreeRow({
         'text-uikit-ink bg-transparent font-normal',
         // Hover: ink-6 background.
         'hover:bg-uikit-ink-6',
-        // Selected (wins over hover): accent text, accent-12 background, weight 500.
-        'data-[selected]:!bg-uikit-accent-12 data-[selected]:text-uikit-accent data-[selected]:font-medium',
+        // Selected (wins over hover): accent-12 background, weight 500 — but the
+        // LABEL stays ink. Accent text on an accent ground repeated down every
+        // column reads as a wash of blue on blue; the tint and the weight carry
+        // the state, and the folder glyph keeps the accent as the colour cue.
+        'data-[selected]:!bg-uikit-accent-12 data-[selected]:text-uikit-ink data-[selected]:font-medium',
+        // Drop destination is drawn inline below: a hairline accent ring over a
+        // barely-there tint. What separates it from a selected row is the RING,
+        // not more colour — so the text stays ink and stays readable, and the
+        // panel never picks up a second heavy blue block mid-drag.
+        // Refused: say so on the row rather than only via the cursor.
+        'data-[drop=blocked]:!bg-transparent data-[drop=blocked]:!opacity-40',
+        'data-[drop=blocked]:cursor-no-drop',
+        // The row being dragged.
+        'data-[source]:!opacity-55',
+        // A selected row passed through mid-drag.
+        'data-[trail]:!opacity-45',
       )}
       style={{
         // Stagger animation depends on column + row index (runtime).
         animation: `uikit-row-in 240ms ${
           colIdx * 45 + rowIdx * 20
         }ms cubic-bezier(0.2, 0.8, 0.2, 1) both`,
+        // Inline, not Tailwind: the arbitrary `shadow-[inset_…]` utility
+        // resolved to `box-shadow: none` here, and there is no accent tint
+        // below 12% in the token set — too heavy for something that follows
+        // the cursor across every row it passes.
+        ...(dropState === 'into'
+          ? {
+              background: 'color-mix(in srgb, var(--uikit-accent) 7%, transparent)',
+              boxShadow: 'inset 0 0 0 1.5px var(--uikit-accent)',
+              color: 'var(--ink)',
+            }
+          : null),
       }}
     >
       <Folder
@@ -169,7 +241,17 @@ function TreeRow({
         strokeWidth={1.5}
         className={cn(
           'shrink-0 text-uikit-muted',
+          // The glyph keeps the accent on a selected row. What made the panel
+          // read blue-on-blue was the LABEL — full-width text repeating down
+          // every row of every column. A 14px glyph on the one selected row
+          // per column is a different quantity of the same colour, and it is
+          // the only thing left that marks the row without shouting.
+          //
+          // It does not fight the drop target: during a drag the selected row
+          // dims to 45% as the spring trail, and the target carries a ring the
+          // selected row never has.
           'group-data-[selected]/row:text-uikit-accent',
+          'group-data-[drop=into]/row:!text-uikit-accent',
         )}
       />
       <span className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap tracking-uikit-snug">
@@ -179,7 +261,10 @@ function TreeRow({
         <ChevronRight
           size={11}
           strokeWidth={1.5}
-          className="shrink-0 text-uikit-muted opacity-50"
+          className={cn(
+            'shrink-0 text-uikit-muted opacity-50',
+            'group-data-[drop=into]/row:!text-uikit-accent group-data-[drop=into]/row:opacity-70',
+          )}
         />
       )}
     </button>
@@ -197,6 +282,7 @@ export function BreadcrumbTree({
   refreshKey = 0,
   refreshToken = 0,
   placeholder = 'Select folder',
+  dnd,
   className,
 }: BreadcrumbTreeProps) {
   const [open, setOpen] = useState(false)
@@ -375,6 +461,120 @@ export function BreadcrumbTree({
     [path, onNavigate],
   )
 
+  // ── Drag to re-parent ──────────────────────────────────────────────────────
+  // A breadcrumb encodes exactly ONE root→leaf path, so the source branch and
+  // the destination branch can never be on screen together. Spring-loading is
+  // what buys that back: hold the drag over a row and its column opens, so the
+  // user walks across to the other branch mid-drag and drops there.
+  //
+  // Column `depth` lists the children of `path[depth - 1]` (root when depth is
+  // 0), so a row's parent is always `path[depth - 1] ?? null`. Every target
+  // below is derived from that one fact.
+
+  const [dragSource, setDragSource] = useState<{
+    node: BreadcrumbNode
+    depth: number
+    /** The parent it started under, captured at dragstart. Spring-loading
+     *  rewrites `path` mid-drag, so this cannot be re-derived at drop time. */
+    from: BreadcrumbNode | null
+  } | null>(null)
+  const [dropAt, setDropAt] = useState<
+    { kind: 'into'; depth: number; id: string } | { kind: 'level'; depth: number } | null
+  >(null)
+
+  // Kept in a ref too: a spring-open re-renders columns and can unmount the
+  // source row, and `dragend` may then never reach it.
+  const dragSourceRef = useRef<{
+    node: BreadcrumbNode
+    depth: number
+    from: BreadcrumbNode | null
+  } | null>(null)
+  const springRef = useRef<{ key: string; timer: ReturnType<typeof setTimeout> } | null>(null)
+
+  const cancelSpring = useCallback(() => {
+    if (springRef.current) {
+      clearTimeout(springRef.current.timer)
+      springRef.current = null
+    }
+  }, [])
+
+  const endDrag = useCallback(() => {
+    cancelSpring()
+    dragSourceRef.current = null
+    setDragSource(null)
+    setDropAt(null)
+  }, [cancelSpring])
+
+  const targetFor = useCallback(
+    (depth: number, node: BreadcrumbNode | null): BreadcrumbDropTarget =>
+      node
+        ? { parent: node, parentPath: [...path.slice(0, depth), node], kind: 'into' }
+        : {
+            parent: path[depth - 1] ?? null,
+            parentPath: path.slice(0, depth),
+            kind: 'level',
+          },
+    [path],
+  )
+
+  // Self, own-subtree, and no-op moves are refused here so every consumer gets
+  // them for free; `canDrop` is the host's extra say on top.
+  const dropAllowed = useCallback(
+    (depth: number, node: BreadcrumbNode | null): boolean => {
+      const src = dragSourceRef.current
+      if (!src || !dnd) return false
+      const target = targetFor(depth, node)
+      if (node) {
+        if (node.id === src.node.id) return false
+        // Dropping into anything under the dragged node would detach the subtree.
+        if (path.slice(0, depth).some((a) => a.id === src.node.id)) return false
+      }
+      // Already a child of that parent — nothing to do. Uses the captured
+      // origin, not `path`, which a spring-open may have moved on from.
+      const currentParentId = src.from?.id ?? null
+      if ((target.parent?.id ?? null) === currentParentId) return false
+      return dnd.canDrop ? dnd.canDrop(src.node, target) : true
+    },
+    [dnd, path, targetFor],
+  )
+
+  const handleRowDragOver = useCallback(
+    (e: React.DragEvent, node: BreadcrumbNode, depth: number) => {
+      if (!dragSourceRef.current) return
+      e.preventDefault()
+      e.stopPropagation()
+      const ok = dropAllowed(depth, node)
+      e.dataTransfer.dropEffect = ok ? 'move' : 'none'
+      setDropAt({ kind: 'into', depth, id: node.id })
+
+      // Spring the column open after a dwell — but never for a row that can't
+      // be entered, and never re-arm for the row already being dwelt on.
+      const key = `${depth}:${node.id}`
+      if (springRef.current?.key === key) return
+      cancelSpring()
+      if (node.hasChildren === false) return
+      if (node.id === dragSourceRef.current.node.id) return
+      const timer = setTimeout(() => {
+        springRef.current = null
+        handleRowClick(node, depth)
+      }, dnd?.springDelayMs ?? 500)
+      springRef.current = { key, timer }
+    },
+    [dropAllowed, cancelSpring, handleRowClick, dnd],
+  )
+
+  const commitMove = useCallback(
+    (depth: number, node: BreadcrumbNode | null) => {
+      const src = dragSourceRef.current
+      const ok = src && dropAllowed(depth, node)
+      const target = ok ? targetFor(depth, node) : null
+      const from = src ? src.from : null
+      endDrag()
+      if (src && target && dnd) void dnd.onMove({ source: src.node, from, to: target })
+    },
+    [dropAllowed, targetFor, endDrag, dnd],
+  )
+
   const columns = Array.from({ length: path.length + 1 }, (_, i) => i)
 
   return (
@@ -502,6 +702,27 @@ export function BreadcrumbTree({
 
                     {/* Column body */}
                     <div
+                      onDragOver={
+                        dnd && dragSource
+                          ? (e) => {
+                              e.preventDefault()
+                              const ok = dropAllowed(depth, null)
+                              e.dataTransfer.dropEffect = ok ? 'move' : 'none'
+                              // Left a row for bare column space: the target is
+                              // now this column's own parent, so drop the dwell.
+                              cancelSpring()
+                              setDropAt({ kind: 'level', depth })
+                            }
+                          : undefined
+                      }
+                      onDrop={
+                        dnd && dragSource
+                          ? (e) => {
+                              e.preventDefault()
+                              commitMove(depth, null)
+                            }
+                          : undefined
+                      }
                       className={cn(
                         // `scroll-auto-hide` is the app-side opt-in for the
                         // auto-hiding scrollbar (paints `var(--faint)` thumb
@@ -511,6 +732,29 @@ export function BreadcrumbTree({
                         'scroll-auto-hide flex-1 overflow-auto flex flex-col gap-0.5',
                         headerLabel ? 'pt-0.5 px-1.5 pb-2' : 'py-2 px-1.5',
                       )}
+                      style={
+                        // "Drop at this level" — a ring around the column body,
+                        // not an insertion line between rows: siblings here have
+                        // no order to insert into. Inline because the Tailwind
+                        // arbitrary-shadow utility resolved to `none`.
+                        //
+                        // `outline` with a NEGATIVE offset rather than an inset
+                        // shadow: the shadow paints on the scroll container's
+                        // border box, which runs flush to the column header and
+                        // to the first row. Pulling the outline 5px inward gives
+                        // it room to read as a frame around the list instead of
+                        // a box welded to the header, and costs no layout — so
+                        // nothing shifts when it appears under the cursor.
+                        dropAt?.kind === 'level' &&
+                        dropAt.depth === depth &&
+                        dropAllowed(depth, null)
+                          ? {
+                              borderRadius: 'calc(var(--radius) + 3px)',
+                              outline: '1.5px solid var(--uikit-accent)',
+                              outlineOffset: '-5px',
+                            }
+                          : undefined
+                      }
                     >
                       {items.map((node, rowIdx) => (
                         <TreeRow
@@ -520,6 +764,47 @@ export function BreadcrumbTree({
                           colIdx={depth}
                           rowIdx={rowIdx}
                           onClick={() => handleRowClick(node, depth)}
+                          draggable={!!dnd}
+                          isSource={dragSource?.node.id === node.id}
+                          dragActive={!!dragSource}
+                          dropState={
+                            dnd &&
+                            dragSource &&
+                            dropAt?.kind === 'into' &&
+                            dropAt.depth === depth &&
+                            dropAt.id === node.id
+                              ? dropAllowed(depth, node)
+                                ? 'into'
+                                : 'blocked'
+                              : 'none'
+                          }
+                          onDragStart={
+                            dnd
+                              ? (e) => {
+                                  const origin = path[depth - 1] ?? null
+                                  dragSourceRef.current = { node, depth, from: origin }
+                                  setDragSource({ node, depth, from: origin })
+                                  e.dataTransfer.effectAllowed = 'move'
+                                  // Firefox refuses to start a drag without payload.
+                                  e.dataTransfer.setData('text/plain', node.id)
+                                }
+                              : undefined
+                          }
+                          onDragEnd={dnd ? () => endDrag() : undefined}
+                          onDragOver={
+                            dnd && dragSource
+                              ? (e) => handleRowDragOver(e, node, depth)
+                              : undefined
+                          }
+                          onDrop={
+                            dnd && dragSource
+                              ? (e) => {
+                                  e.preventDefault()
+                                  e.stopPropagation()
+                                  commitMove(depth, node)
+                                }
+                              : undefined
+                          }
                         />
                       ))}
 
