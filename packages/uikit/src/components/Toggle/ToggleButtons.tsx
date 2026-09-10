@@ -157,10 +157,27 @@ export function ToggleButtons({
       >
         <div
           className={cn(
-            "pointer-events-none absolute transition-all duration-200 ease-out",
+            "pointer-events-none absolute",
             HIGHLIGHT[variant],
           )}
-          style={highlight}
+          style={{
+            // Same motion as Tabs' segment pill and the app's theme toggle:
+            // the thumb springs into place, the box it draws does not. An
+            // overshoot on width/height is the pill's far edge lunging past
+            // the label it should sit under, so those decelerate instead and
+            // land on the same beat.
+            //
+            // Inline rather than `transition-all`, which also caught the
+            // opacity fade that hides the thumb before its first measurement
+            // and made it drift in over 200ms.
+            transition: [
+              "transform var(--uikit-dur-thumb, 420ms) var(--uikit-ease-thumb, cubic-bezier(.34,1.45,.55,1))",
+              "width var(--uikit-dur-thumb, 420ms) cubic-bezier(.32,.72,0,1)",
+              "height var(--uikit-dur-thumb, 420ms) cubic-bezier(.32,.72,0,1)",
+              "opacity 120ms linear",
+            ].join(", "),
+            ...highlight,
+          }}
         />
         {children}
       </div>

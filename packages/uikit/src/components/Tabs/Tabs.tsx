@@ -308,8 +308,15 @@ function TabsData({
             transform: `translateX(${bar.left}px)`,
             borderRadius: segCfg.pillR,
             opacity: bar.ready ? 1 : 0,
+            // Position springs (--uikit-ease-thumb, the theme toggle's curve);
+            // width does NOT. An overshoot is a thumb arriving with weight when
+            // it only slides, but a width that overshoots is the pill's far
+            // edge lunging past the label it is meant to sit under — two
+            // segments of different widths made that obvious. So width rides
+            // the same duration on a curve that only decelerates, and the two
+            // land together.
             transition: bar.ready
-              ? "transform 220ms cubic-bezier(.32,.72,0,1), width 220ms cubic-bezier(.32,.72,0,1)"
+              ? "transform var(--uikit-dur-thumb, 420ms) var(--uikit-ease-thumb, cubic-bezier(.34,1.45,.55,1)), width var(--uikit-dur-thumb, 420ms) cubic-bezier(.32,.72,0,1)"
               : "none",
           }}
         />

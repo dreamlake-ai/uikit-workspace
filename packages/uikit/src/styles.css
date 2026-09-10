@@ -323,8 +323,24 @@ html[data-theme="dark"] {
      `deep` for modal panels (Dialog).
      soft/deep include the inset 1px var(--faint) ring. */
   --shadow-uikit-sm: 0 1px 2px var(--shadow-tint-1);
+  /* Carries its OWN 1px hairline in the last layer — floating surfaces take
+     this and nothing else. Adding `border border-uikit-faint` beside it stacks
+     two 1px lines of the same colour hard against each other, which reads as a
+     2px border and composites darker than either.
+
+     TINT-2, not tint-3. `soft` and `deep` both used to pull the deepest tint
+     and differed only in geometry, so a four-row dropdown hanging off an 11px
+     trigger cast the same darkness as a full-screen modal — which is what made
+     every menu in the app read heavy. The ladder means depth now: sm → tint-1,
+     soft → tint-2, deep → tint-3.
+
+     Two layers rather than one long blur: a 1px contact shadow sets the panel
+     ON the page, and a short ambient pool gives it height. The single
+     `0 8px 28px -8px` pool did neither — it floated the panel with nothing
+     holding its edge down, so the blur had to be large to register at all. */
   --shadow-uikit-soft:
-    0 8px 28px -8px var(--shadow-tint-3), 0 0 0 1px var(--faint);
+    0 1px 2px var(--shadow-tint-1), 0 6px 16px -6px var(--shadow-tint-2),
+    0 0 0 1px var(--faint);
   --shadow-uikit-deep:
     0 1px 2px var(--shadow-tint-1), 0 24px 60px var(--shadow-tint-3),
     inset 0 0 0 1px var(--faint);
@@ -332,10 +348,21 @@ html[data-theme="dark"] {
 
 /* ── Animations ─────────────────────────────────────────────────── */
 
+/* ── Motion ─────────────────────────────────────────────────────
+   The segmented controls' sliding thumb. Slightly past its mark and back
+   (the >1 second control point) — the same curve and duration the app's
+   theme toggle has always used, which is the motion the segmented pills are
+   being matched to. Two of them side by side moving on different curves is
+   what read as "one of these is the real one". */
+:root {
+  --uikit-ease-thumb: cubic-bezier(0.34, 1.45, 0.55, 1);
+  --uikit-dur-thumb: 420ms;
+}
+
 @keyframes uikit-panel-in {
   from {
     opacity: 0;
-    transform: scale(0.985) translateY(-4px);
+    transform: scale(0.96) translateY(-6px);
   }
   to {
     opacity: 1;
@@ -343,7 +370,16 @@ html[data-theme="dark"] {
   }
 }
 .uikit-panel-in {
-  animation: uikit-panel-in 280ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  /* Grow from the edge the panel is anchored to, not from its own middle. With
+     the default `center` origin the top of the list slid DOWN while the bottom
+     slid up, which is what made a 280ms animation read as a jump: nothing in
+     the panel travelled with the trigger. `top` pins the anchored edge, so the
+     list unrolls away from the control the way it is positioned.
+
+     Overridable per-panel: a menu that opens upward sets --uikit-panel-origin
+     to `bottom` and gets the same motion mirrored. */
+  transform-origin: var(--uikit-panel-origin, top center);
+  animation: uikit-panel-in 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 /* Row-cascade entry used by BreadcrumbTree's column-fill animation —
