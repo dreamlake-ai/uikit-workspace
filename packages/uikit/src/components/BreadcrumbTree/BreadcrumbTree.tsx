@@ -241,10 +241,11 @@ function TreeRow({
         strokeWidth={1.5}
         className={cn(
           'shrink-0 text-uikit-muted',
-          // Deliberately NOT accent on a selected row. The tint and the weight
-          // already say "selected", so an accent glyph is a third telling of
-          // the same thing — and a third piece of blue on a blue ground. That
-          // leaves accent to mean one thing only: the row a drop would land in.
+          // On a selected row the glyph steps up to ink WITH the label rather
+          // than to accent: the pair should read as one object, and accent is
+          // reserved for the row a drop would land in. Muted glyph beside an
+          // ink label was the two halves of the row disagreeing.
+          'group-data-[selected]/row:text-uikit-ink',
           'group-data-[drop=into]/row:!text-uikit-accent',
         )}
       />
