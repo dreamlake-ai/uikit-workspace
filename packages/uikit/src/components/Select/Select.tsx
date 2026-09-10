@@ -36,6 +36,7 @@ import {
   type LegacyOverlayContentProps,
   stripLegacyOverlayProps,
 } from "../../lib/legacy-overlay-props";
+import { ChevronDown } from "lucide-react";
 
 function mergeRefs<T>(
   ...refs: (Ref<T> | undefined | ((n: T | null) => void))[]
@@ -251,9 +252,17 @@ export const SelectTrigger = forwardRef<HTMLButtonElement, SelectTriggerProps>(
         ref={setRef}
         type="button"
         className={cn(
-          "inline-flex w-fit items-center gap-1 cursor-pointer outline-none",
+          "group inline-flex w-fit items-center gap-1 cursor-pointer outline-none",
           "font-uikit-mono text-uikit-11 font-medium tracking-uikit-snug",
-          "text-uikit-ink opacity-85 data-[state=open]:opacity-100",
+          // Muted at rest, ink on hover and while open. A dropdown trigger is
+          // a secondary control — a sort order, an account menu — and full ink
+          // put the sort value at nearly the weight of the row titles under
+          // it. The darkening is also the only hover this trigger has ever
+          // had: an opacity nudge alone was not visible on a muted colour.
+          "text-uikit-muted opacity-85",
+          "hover:text-uikit-ink hover:opacity-100",
+          "data-[state=open]:text-uikit-ink data-[state=open]:opacity-100",
+          "transition-[color,opacity] duration-[140ms]",
           className,
         )}
         {...refProps}
@@ -262,7 +271,25 @@ export const SelectTrigger = forwardRef<HTMLButtonElement, SelectTriggerProps>(
           <span className="inline-flex shrink-0 opacity-65">{icon}</span>
         )}
         {children}
-        <span className="ml-0.5 text-uikit-9 opacity-55">▾</span>
+        {/* lucide's chevron, not a "▾" glyph: every other dropdown affordance in
+            consuming apps is the icon at this size, and a text caret sits on
+            the font's baseline rather than optically centred with the label.
+
+            It turns over while the panel is open, and the turn is ANIMATED
+            from an inline style rather than a utility class. This was a hard
+            flip for a reason worth writing down: neither `transition-transform`
+            nor `transition-[rotate]` reaches this element in a consuming app's
+            Tailwind build, so `group-data-[state=open]:rotate-180` snapped.
+            An inline `transform` + `transition` needs no build step to reach
+            it, and `ctx.open` is already the state the class was reading. */}
+        <ChevronDown
+          size={13}
+          className="ml-0.5 shrink-0 opacity-55"
+          style={{
+            transform: ctx.open ? "rotate(180deg)" : "rotate(0deg)",
+            transition: "transform 220ms cubic-bezier(.32, .72, 0, 1)",
+          }}
+        />
       </button>
     );
   },
@@ -302,8 +329,12 @@ export function SelectContent({
           ref={ctx.refs.setFloating as never}
           style={{ ...ctx.floatingStyles, ...style }}
           className={cn(
+            // A flex column so the rows do not touch. Each row paints its own rounded
+            // fill on hover and when selected, and two of those meeting edge to edge
+            // read as one shape rather than two rows.
             "uikit-panel-in z-[200] min-w-[140px] max-h-[min(60vh,320px)] overflow-y-auto rounded-[var(--radius)] p-1 font-uikit-ui",
-            "bg-uikit-bg border border-uikit-faint shadow-uikit-soft outline-none",
+            "flex flex-col gap-px",
+            "bg-uikit-bg shadow-uikit-soft outline-none",
             className,
           )}
           {...ctx.getFloatingProps(rest)}
@@ -355,12 +386,22 @@ export function SelectItem({
       data-active={active}
       data-selected={selected}
       className={cn(
-        "cursor-pointer rounded-[var(--radius)] px-3.5 py-[7px] leading-[15px] outline-none select-none",
-        "font-uikit-mono text-[12.5px] font-medium tracking-uikit-snug",
+        // rounded-uikit-badge, like every other menu row in the kit (MenuItem,
+        // DropdownMenuItem, ContextMenuItem). This was the one row at
+        // var(--radius) — the PANEL radius — so its fill read as a pill.
+        // Row metrics follow the type, and the type follows the TRIGGER:
+        // text-uikit-11, the size SelectTrigger sets. The panel used to run at
+        // 12.5px, so the open list read a size larger than the control that
+        // opened it — the one place in a picker where the two must agree.
+        "cursor-pointer rounded-uikit-badge px-2.5 py-[6px] leading-[14px] outline-none select-none",
+        "font-uikit-mono text-uikit-11 font-medium tracking-uikit-snug",
         "transition-[background-color,color] duration-[120ms]",
         "bg-transparent text-uikit-muted opacity-85 hover:bg-uikit-ink-4",
         "data-[active=true]:bg-uikit-ink-4",
-        "data-[selected=true]:bg-uikit-ink-5 data-[selected=true]:text-uikit-ink data-[selected=true]:opacity-100",
+        // The selected row is accent-tinted, the treatment consuming apps already
+        // use for "this is the one you are on" (the account switcher and the
+        // version/run pickers that mirror it). ink-5 read as another hover.
+        "data-[selected=true]:bg-uikit-accent-soft data-[selected=true]:text-uikit-ink data-[selected=true]:opacity-100",
         "aria-disabled:opacity-50 aria-disabled:pointer-events-none",
         className,
       )}
