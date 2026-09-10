@@ -123,8 +123,17 @@ export function ProfileCard({
     >
       {/* header — title + tag share a shrinkable flex column on the left so
           long titles truncate with ellipsis instead of pushing titleRight
-          (or worse, the card boundary) out. */}
-      <div data-uikit-header="" className="flex items-baseline gap-2.5">
+          (or worse, the card boundary) out.
+
+          The OUTER row centres, the inner one keeps its baseline. Those are
+          two different jobs: title and tag are words on one line and must sit
+          on a shared baseline, but `titleRight` is a separate 11px block set
+          against a 14px one at the other end of the card. Sharing a baseline
+          across that gap put the small text visibly low — a baseline only
+          reads as alignment when the two runs are near enough to be read as
+          one line, and these are a card's width apart. Centred, the two
+          blocks balance. */}
+      <div data-uikit-header="" className="flex items-center gap-2.5">
         <div className="flex items-baseline gap-2.5 flex-1 min-w-0">
           {href ? (
             /* The overlay lives on the anchor, not on a wrapper, so the

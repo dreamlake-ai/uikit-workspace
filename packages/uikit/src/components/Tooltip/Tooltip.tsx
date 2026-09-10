@@ -237,7 +237,7 @@ export function TooltipContent({
           // canvases. `shadow-uikit-soft` carries a 1px faint ring, which is
           // what lifts the panel off the page in dark mode, where panel and bg
           // are the same colour.
-          "bg-uikit-panel text-uikit-ink border border-uikit-faint shadow-uikit-soft pointer-events-none",
+          "bg-uikit-panel text-uikit-ink shadow-uikit-soft pointer-events-none",
           className,
         )}
         {...ctx.getFloatingProps(props)}
