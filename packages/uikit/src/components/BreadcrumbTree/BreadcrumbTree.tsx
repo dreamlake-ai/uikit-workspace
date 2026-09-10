@@ -201,8 +201,11 @@ function TreeRow({
         'text-uikit-ink bg-transparent font-normal',
         // Hover: ink-6 background.
         'hover:bg-uikit-ink-6',
-        // Selected (wins over hover): accent text, accent-12 background, weight 500.
-        'data-[selected]:!bg-uikit-accent-12 data-[selected]:text-uikit-accent data-[selected]:font-medium',
+        // Selected (wins over hover): accent-12 background, weight 500 — but the
+        // LABEL stays ink. Accent text on an accent ground repeated down every
+        // column reads as a wash of blue on blue; the tint and the weight carry
+        // the state, and the folder glyph keeps the accent as the colour cue.
+        'data-[selected]:!bg-uikit-accent-12 data-[selected]:text-uikit-ink data-[selected]:font-medium',
         // Drop destination is drawn inline below: a hairline accent ring over a
         // barely-there tint. What separates it from a selected row is the RING,
         // not more colour — so the text stays ink and stays readable, and the
