@@ -649,14 +649,21 @@ export function BreadcrumbTree({
               top: anchorRect.top + anchorRect.height + 6,
               left: anchorRect.left - 14,
               height: 360,
-              // Two-layer drop shadow only — no outset 1px ring. The shared
-              // `--shadow-uikit-soft` token bakes in a `0 0 0 1px var(--faint)`
-              // ring meant for menus/dropdowns; the BreadcrumbTree panel in
-              // the design renders without that ring (a softer, borderless
-              // popover). Theme-aware via `--shadow-tint-*` so dark mode
-              // deepens the cast.
+              // `--shadow-uikit-soft` WITHOUT its third layer. That token is
+              // the kit's floating-panel elevation, but it ends in a
+              // `0 0 0 1px var(--faint)` ring meant for menus and dropdowns,
+              // and this panel renders borderless by design — so its two drop
+              // layers are reproduced here rather than the token taken whole.
+              // Theme-aware via `--shadow-tint-*`, as the token is.
+              //
+              // The numbers are the token's, and the one that matters is the
+              // NEGATIVE SPREAD. This panel used to cast `0 10px 28px` with no
+              // spread pull-in: a wide undiminished pool, which at dark mode's
+              // 60%-black tint-2 read as a slab under the panel rather than
+              // lift behind it. A short blur reined in by -6px does the same
+              // job with a fraction of the ink.
               boxShadow:
-                '0 2px 6px var(--shadow-tint-1), 0 10px 28px var(--shadow-tint-2)',
+                '0 1px 2px var(--shadow-tint-1), 0 6px 16px -6px var(--shadow-tint-2)',
             }}
           >
             <div ref={columnsRef} className="flex h-full overflow-x-auto">
