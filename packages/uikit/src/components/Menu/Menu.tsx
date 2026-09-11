@@ -22,6 +22,9 @@ const PANEL_RING = 1
  * off the panel's `rounded-lg` corners, where its base would hang in the air.
  */
 const ARROW_MIN_INSET = 16
+/** Keep the panel this far from the viewport edge when shifting to reach an
+ *  anchor. Below this the wedge gives up and parks at ARROW_MIN_INSET. */
+const VIEWPORT_MARGIN = 8
 
 export interface MenuProps {
   /**
@@ -103,13 +106,17 @@ export function Menu({
       // the right offset by the scrollbar width when classic scrollbars are
       // present, shifting the panel leftward by that amount.
       const viewportContentWidth = document.documentElement.clientWidth
-      setCoords({
-        top: r.bottom + 6,
-        left: r.left,
-        right: viewportContentWidth - r.right,
-      })
+      const top = r.bottom + 6
 
-      if (!arrow) return
+      if (!arrow) {
+        setCoords({
+          top,
+          left: r.left,
+          right: viewportContentWidth - r.right,
+        })
+        return
+      }
+
       // Aim the wedge at the trigger's chevron when one is tagged, else at the
       // trigger's midpoint. `align` decides which panel edge the offset is
       // measured from: 'left' pins the panel's left edge to r.left, 'right'
@@ -125,7 +132,34 @@ export function Menu({
       // Keep the wedge clear of the panel's rounded corners at both ends.
       const panelWidth = panelRef.current?.offsetWidth ?? width
       const far = Math.max(ARROW_MIN_INSET, panelWidth - ARROW_MIN_INSET)
-      setArrowInset(Math.min(Math.max(raw, ARROW_MIN_INSET), far))
+
+      // When the anchor sits closer to the panel's edge than the wedge is
+      // allowed to come, move the PANEL rather than letting the wedge fall
+      // short. A wedge that does not point at the control that opened the menu
+      // has lost its only job; a few px of overhang past that control is
+      // invisible. This is what `shift` + `arrow` do together in floating-ui,
+      // and what a bare clamp here could not: it had nothing to give.
+      //
+      // It surfaced on a borderless trigger whose chevron is its last element —
+      // the chevron's centre lands ~6px from the trigger's right edge, well
+      // inside ARROW_MIN_INSET, so the wedge parked at the minimum and pointed
+      // at the label instead.
+      const wanted = Math.max(0, ARROW_MIN_INSET - raw)
+      // Never push the panel off-screen: the shift is only as much as the
+      // viewport can spare, and the wedge follows whatever was actually
+      // applied rather than assuming it got what it asked for.
+      const room =
+        align === 'left'
+          ? Math.max(0, r.left - VIEWPORT_MARGIN)
+          : Math.max(0, viewportContentWidth - r.right - VIEWPORT_MARGIN)
+      const shift = Math.min(wanted, room)
+
+      setCoords({
+        top,
+        left: r.left - shift,
+        right: viewportContentWidth - r.right - shift,
+      })
+      setArrowInset(Math.min(Math.max(raw + shift, ARROW_MIN_INSET), far))
     }
     update()
     window.addEventListener('scroll', update, true)
