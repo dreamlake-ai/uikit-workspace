@@ -656,14 +656,19 @@ export function BreadcrumbTree({
               // layers are reproduced here rather than the token taken whole.
               // Theme-aware via `--shadow-tint-*`, as the token is.
               //
-              // The numbers are the token's, and the one that matters is the
-              // NEGATIVE SPREAD. This panel used to cast `0 10px 28px` with no
-              // spread pull-in: a wide undiminished pool, which at dark mode's
-              // 60%-black tint-2 read as a slab under the panel rather than
-              // lift behind it. A short blur reined in by -6px does the same
-              // job with a fraction of the ink.
+              // The negative spread came first: this panel used to cast
+              // `0 10px 28px` with no pull-in, a wide undiminished pool that at
+              // dark mode's 60%-black tint-2 read as a slab under the panel.
+              //
+              // What was left after that was the FIRST layer — 45% black at
+              // 1px, a tight dark rim hugging the bottom edge. `--shadow-tint-*`
+              // is tuned for surfaces that also carry a hairline ring; this
+              // panel is borderless by design, so its cast is the only edge it
+              // gets, and at that weight the edge reads as a drawn line rather
+              // than as lift. `--shadow-panel-*` is the same elevation with the
+              // dark values pulled back (16%/28%); light is unchanged.
               boxShadow:
-                '0 1px 2px var(--shadow-tint-1), 0 6px 16px -6px var(--shadow-tint-2)',
+                '0 1px 3px var(--shadow-panel-1), 0 8px 20px -10px var(--shadow-panel-2)',
             }}
           >
             <div ref={columnsRef} className="flex h-full overflow-x-auto">
