@@ -83,6 +83,14 @@
   --shadow-tint-3: rgba(0, 0, 0, 0.16);
   --shadow-inset: rgba(0, 0, 0, 0.08);
 
+  /* Borderless-popover elevation — the BreadcrumbTree column panel. Lighter
+     than `--shadow-tint-*`, which is tuned for surfaces that also carry a
+     hairline ring: this panel has none, so its cast is the only edge it gets
+     and a heavy one reads as a dark band welded under it. In LIGHT these match
+     the general tints; it is dark mode where the two part company. */
+  --shadow-panel-1: rgba(0, 0, 0, 0.06);
+  --shadow-panel-2: rgba(0, 0, 0, 0.1);
+
   /* Modal/drawer backdrop. Theme-aware so it dims correctly in both modes. */
   --scrim: rgba(0, 0, 0, 0.5);
 
@@ -142,6 +150,10 @@ html[data-theme="dark"] {
   --shadow-tint-2: rgba(0, 0, 0, 0.6);
   --shadow-tint-3: rgba(0, 0, 0, 0.75);
   --shadow-inset: rgba(0, 0, 0, 0.5);
+  /* Dark parts company with --shadow-tint-*: 45%/60% black under a borderless
+     panel is a visible band, not lift. */
+  --shadow-panel-1: rgba(0, 0, 0, 0.16);
+  --shadow-panel-2: rgba(0, 0, 0, 0.28);
   --scrim: rgba(0, 0, 0, 0.62);
 
   /* Stage group box — subtle faint-white on the dark canvas. */
@@ -183,6 +195,8 @@ html[data-theme="dark"] {
     --shadow-tint-2: rgba(0, 0, 0, 0.6);
     --shadow-tint-3: rgba(0, 0, 0, 0.75);
     --shadow-inset: rgba(0, 0, 0, 0.5);
+    --shadow-panel-1: rgba(0, 0, 0, 0.16);
+    --shadow-panel-2: rgba(0, 0, 0, 0.28);
     --scrim: rgba(0, 0, 0, 0.62);
 
     /* Stage group box — subtle faint-white on the dark canvas. */
