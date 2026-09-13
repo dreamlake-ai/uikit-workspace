@@ -90,7 +90,7 @@ A row is either an instant event (`time`) or a duration bar
 | `hasStripes`    | `boolean`                                                                    | Render the bar with a striped fill.                             |
 | `isHaltedStep`  | `boolean`                                                                    | Mark a row as a halted step (e.g. error / rate-limit stop).     |
 
-## Release note — unreleased
+## Release note — 0.1.14
 
 - The initial viewport fits the input events instead of the fixed demo window.
 

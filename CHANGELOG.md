@@ -1,6 +1,6 @@
 # Release notes
 
-## Unreleased — Waterfall
+## 0.1.14 — 2026-09-13
 
 - The initial viewport fits the full input event span with padding, respecting explicit zoom limits. Search, expansion, and data rerenders preserve navigation. Empty input retains a finite fallback.
 
