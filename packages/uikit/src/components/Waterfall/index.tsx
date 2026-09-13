@@ -1,5 +1,6 @@
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, useEffect, useState, useRef, useId } from "react";
 
+import { ResizeDivider } from "../ResizableLayout/ResizeDivider";
 import { cn } from "../../lib/utils";
 import { TooltipProvider } from "../Tooltip";
 import { CursorOverlay } from "./CursorOverlay";
@@ -33,8 +34,16 @@ export * from "./utils";
 export interface WaterfallProps {
   logData: LogItemType[];
   temporalCursor?: number;
-  /** Width of the list view */
+  /** Initial list width in pixels; changing this prop resets the requested width. */
   panelWidth?: number;
+  /** Enable the draggable/keyboard list divider (default: true). */
+  resizable?: boolean;
+  /** Preferred minimum list width in pixels (default: 160; relaxed on narrow containers). */
+  minPanelWidth?: number;
+  /** Maximum list width in pixels (default: Infinity; timeline space is always reserved). */
+  maxPanelWidth?: number;
+  /** Called with the new pixel width after a user resize. */
+  onPanelWidthChange?: (width: number) => void;
   onTemporalCursorChange?: (time: number) => void;
   getIcon: (item: LogItemType) => ReactNode;
   /** External hover state (optional - will use internal state if not provided) */
@@ -68,6 +77,10 @@ export function Waterfall({
   onTemporalCursorChange,
   getIcon,
   panelWidth = 300,
+  resizable = true,
+  minPanelWidth = 160,
+  maxPanelWidth = Infinity,
+  onPanelWidthChange,
   className,
   hoveredId: externalHoveredId,
   onItemHover: externalOnItemHover,
@@ -77,6 +90,34 @@ export function Waterfall({
   enabled = true,
   children,
 }: WaterfallProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const panelId = useId();
+  const [containerWidth, setContainerWidth] = useState<number | null>(null);
+  const [requestedWidth, setRequestedWidth] = useState(panelWidth);
+  useEffect(() => setRequestedWidth(panelWidth), [panelWidth]);
+  useEffect(() => {
+    const element = containerRef.current;
+    if (!element) return;
+    setContainerWidth(element.clientWidth);
+    const observer = new ResizeObserver(([entry]) => {
+      setContainerWidth(entry.contentRect.width);
+    });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+  // Keep 120px for the timeline, or half the container on very small screens.
+  const available =
+    containerWidth === null
+      ? Infinity
+      : Math.max(0, containerWidth - Math.min(120, containerWidth / 2));
+  const maximum = Math.max(0, Math.min(maxPanelWidth, available));
+  const minimum = Math.max(0, Math.min(minPanelWidth, maximum));
+  const effectiveWidth = Math.max(minimum, Math.min(maximum, requestedWidth));
+  const resizePanel = (width: number) => {
+    const next = Math.max(minimum, Math.min(maximum, width));
+    setRequestedWidth(next);
+    if (next !== effectiveWidth) onPanelWidthChange?.(next);
+  };
   const [visibleLogData, setVisibleLogData] = useState<LogItemWithMeta[]>([]);
   const [temporalMarkers, setTemporalMarkers] = useState<number[]>([]);
 
@@ -156,17 +197,19 @@ export function Waterfall({
     <TooltipProvider>
       <SyncScrollProvider>
         <div
+          ref={containerRef}
           className={cn(
-            "bg-uikit-panel text-uikit-ink rounded-[var(--radius)] mx-auto flex w-full flex-col overflow-hidden font-uikit-ui shadow-uikit-soft",
+            "bg-uikit-panel text-uikit-ink rounded-[var(--radius)] mx-auto flex h-full min-h-0 w-full flex-col overflow-hidden font-uikit-ui shadow-uikit-soft",
             className,
           )}
         >
           {/* Header Section with Search and Timeline Ruler */}
-          <div className="relative flex h-full flex-row items-stretch">
+          <div className="relative flex h-full min-h-0 flex-row items-stretch">
             {/* Search Bar and Tree View */}
             <div
-              className="border-uikit-faint/50 relative flex h-full flex-none flex-col border-r"
-              style={{ width: panelWidth }}
+              id={panelId}
+              className="border-uikit-faint/50 relative flex h-full min-w-0 flex-none flex-col overflow-hidden border-r"
+              style={{ width: effectiveWidth }}
             >
               <TreeSearchBar
                 className="p-1"
@@ -199,9 +242,42 @@ export function Waterfall({
                 />
               </SyncScroll>
             </div>
+            {resizable && (
+              <div
+                role="separator"
+                tabIndex={0}
+                aria-label="Resize entry pane"
+                aria-orientation="vertical"
+                aria-controls={panelId}
+                aria-valuemin={minimum}
+                aria-valuemax={Number.isFinite(maximum) ? maximum : undefined}
+                aria-valuenow={effectiveWidth}
+                className="absolute inset-y-0 z-30 w-3 cursor-col-resize focus-visible:outline-2 focus-visible:outline-uikit-tone-blue"
+                style={{ left: effectiveWidth - 6 }}
+                onKeyDown={(event) => {
+                  const step = event.shiftKey ? 50 : 10;
+                  let next: number;
+                  if (event.key === "ArrowLeft") next = effectiveWidth - step;
+                  else if (event.key === "ArrowRight")
+                    next = effectiveWidth + step;
+                  else if (event.key === "Home") next = minimum;
+                  else if (event.key === "End" && Number.isFinite(maximum))
+                    next = maximum;
+                  else return;
+                  event.preventDefault();
+                  resizePanel(next);
+                }}
+              >
+                <ResizeDivider
+                  axis="x"
+                  size={12}
+                  onResize={(delta) => resizePanel(effectiveWidth + delta)}
+                />
+              </div>
+            )}
             <div
               ref={timelineContainerRef}
-              className="overflow-y-none scrollbar-hide relative flex h-full w-full flex-auto cursor-crosshair flex-col overflow-x-hidden pl-px active:cursor-grabbing"
+              className="overflow-y-none scrollbar-hide relative flex h-full min-w-0 flex-1 cursor-crosshair flex-col overflow-x-hidden pl-px active:cursor-grabbing"
             >
               {/* Timeline Ruler */}
               <div className="sticky top-0">

@@ -1,5 +1,10 @@
 # Release notes
 
+## 0.1.15 — 2026-09-13
+
+- Waterfall entry panes resize through the shared drag divider or keyboard arrows/Home/End. Public width bounds, resize callback, and a disable toggle support embedded views.
+- Responsive limits retain timeline space on narrow containers, with requested widths restored when space returns.
+
 ## 0.1.14 — 2026-09-13
 
 - The initial viewport fits the full input event span with padding, respecting explicit zoom limits. Search, expansion, and data rerenders preserve navigation. Empty input retains a finite fallback.

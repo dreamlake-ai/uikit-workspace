@@ -37,6 +37,9 @@ without any external state:
   `minWindow` / `maxWindow`. Zoom-out is unlimited by default. The bottom
   duration drag control uses the same limits. Pass a finite `maxWindow`,
   such as `maxWindow={3600}`, to cap the visible window at one hour.
+- **Resize** — drag the divider to resize the entry pane. Focus it and press
+  Left/Right to move by 10px, Shift+Left/Right by 50px, or Home/End to reach
+  its bounds. `resizable={false}` hides the divider.
 - **Pan** — drag horizontally (or use the navigation controls at the bottom)
   to scroll through time while staying at the current zoom.
 - **Mark** — click anywhere on a bar or the axis to drop a temporal marker
@@ -49,6 +52,12 @@ The initial window fits the complete `logData` time span with 5% padding on each
 side, subject to `minWindow` and `maxWindow`. A single instant event starts in a
 one-second window; empty data uses a 33-second fallback. Fitting happens on mount,
 so search, expansion, and subsequent data rerenders preserve your pan and zoom.
+
+`panelWidth` sets the initial requested width; changing it resets that request.
+User resizing is managed internally and calls `onPanelWidthChange`. Container
+resizing clamps the visible width without discarding the request: the timeline
+keeps 120px, or half the width in containers narrower than 240px. The preferred
+minimum is relaxed when necessary.
 
 ## Example
 
@@ -70,7 +79,11 @@ The `<Waterfall>` fills its container, so wrap it in a fixed-height element
 | ------------------------ | ---------------------------------- | --------------- | ------------------------------------------------------------------- |
 | `logData`                | `LogItemType[]`                    | —               | Rows to render. Hierarchy comes from each row's `parentId`.         |
 | `getIcon`                | `(item: LogItemType) => ReactNode` | —               | Returns the icon shown for a row in the tree.                       |
-| `panelWidth`             | `number`                           | `300`           | Width of the left list/tree pane, in px.                            |
+| `panelWidth`             | `number`                           | `300`           | Initial requested pane width in px; changing it resets the request.                            |
+| `resizable` | `boolean` | `true` | Enable mouse and keyboard resizing of the entry pane. |
+| `minPanelWidth` | `number` | `160` | Preferred minimum entry width in pixels, relaxed on narrow containers. |
+| `maxPanelWidth` | `number` | `Infinity` | Maximum entry width in pixels; timeline space is also reserved. |
+| `onPanelWidthChange` | `(width: number) => void` | — | Called after a user resize with the clamped pixel width. |
 | `temporalCursor`         | `number`                           | —               | Controlled time position of the interactive cursor.                 |
 | `onTemporalCursorChange` | `(time: number) => void`           | —               | Called as the cursor moves over the axis.                           |
 | `hoveredId`              | `string \| null`                   | —               | Controlled hovered row id. Falls back to internal state if omitted. |
@@ -103,6 +116,11 @@ A row is either an instant event (`time`) or a duration bar
 | `isCollapsible` | `boolean`                                                                    | Whether the row can be collapsed in the tree.                   |
 | `hasStripes`    | `boolean`                                                                    | Render the bar with a striped fill.                             |
 | `isHaltedStep`  | `boolean`                                                                    | Mark a row as a halted step (e.g. error / rate-limit stop).     |
+
+## Release note — 0.1.15
+
+- The entry-pane divider supports dragging and accessible keyboard resizing.
+- Responsive width limits retain usable timeline space and preserve the requested width.
 
 ## Release note — 0.1.14
 
