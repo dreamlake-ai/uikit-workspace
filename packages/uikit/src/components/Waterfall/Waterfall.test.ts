@@ -247,3 +247,110 @@ it("Waterfall initializes from its logData rather than the built-in demo span", 
   render();
   expect(duration()).toBe(11);
 });
+
+function renderResizable(props: Partial<Parameters<typeof Waterfall>[0]> = {}) {
+  act(() =>
+    root.render(
+      createElement(Waterfall, { logData: [], getIcon: () => null, ...props }),
+    ),
+  );
+}
+function separator() {
+  return container.querySelector('[role="separator"]') as HTMLElement;
+}
+function panelSize() {
+  return Number(separator().getAttribute("aria-valuenow"));
+}
+function resizeKey(key: string, shiftKey = false) {
+  act(() =>
+    separator().dispatchEvent(
+      new KeyboardEvent("keydown", { key, shiftKey, bubbles: true }),
+    ),
+  );
+}
+it("resizes through the real divider and keyboard within public bounds", () => {
+  vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(800);
+  const onPanelWidthChange = vi.fn();
+  renderResizable({
+    panelWidth: 300,
+    minPanelWidth: 200,
+    maxPanelWidth: 500,
+    onPanelWidthChange,
+  });
+  expect(panelSize()).toBe(300);
+  expect(separator().getAttribute("aria-controls")).toBeTruthy();
+  act(() =>
+    separator().firstElementChild!.dispatchEvent(
+      new MouseEvent("mousedown", { bubbles: true, clientX: 300 }),
+    ),
+  );
+  act(() =>
+    document.dispatchEvent(new MouseEvent("mousemove", { clientX: 350 })),
+  );
+  act(() => document.dispatchEvent(new MouseEvent("mouseup")));
+  expect(panelSize()).toBe(350);
+  expect(onPanelWidthChange).toHaveBeenLastCalledWith(350);
+  resizeKey("ArrowRight");
+  expect(panelSize()).toBe(360);
+  resizeKey("ArrowLeft", true);
+  expect(panelSize()).toBe(310);
+  resizeKey("End");
+  expect(panelSize()).toBe(500);
+  resizeKey("ArrowRight");
+  expect(panelSize()).toBe(500);
+  resizeKey("Home");
+  expect(panelSize()).toBe(200);
+  resizeKey("ArrowLeft");
+  expect(panelSize()).toBe(200);
+});
+it("reserves timeline space as its container shrinks and restores the requested width", () => {
+  vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(800);
+  const observers: { callback: ResizeObserverCallback; element?: Element }[] =
+    [];
+  vi.stubGlobal(
+    "ResizeObserver",
+    class {
+      record: (typeof observers)[number];
+      constructor(callback: ResizeObserverCallback) {
+        this.record = { callback };
+        observers.push(this.record);
+      }
+      observe(element: Element) {
+        this.record.element = element;
+      }
+      unobserve() {}
+      disconnect() {}
+    },
+  );
+  renderResizable({ panelWidth: 600 });
+  const observer = observers.find(
+    ({ element }) => element === separator().parentElement?.parentElement,
+  )!;
+  expect(observer).toBeTruthy();
+  const shrink = (width: number) =>
+    act(() =>
+      observer.callback(
+        [{ contentRect: { width } } as ResizeObserverEntry],
+        {} as ResizeObserver,
+      ),
+    );
+  expect(panelSize()).toBe(600);
+  shrink(400);
+  expect(panelSize()).toBe(280);
+  expect(separator().getAttribute("aria-valuemax")).toBe("280");
+  shrink(200);
+  expect(panelSize()).toBe(100);
+  expect(separator().getAttribute("aria-valuemin")).toBe("100");
+  shrink(800);
+  expect(panelSize()).toBe(600);
+});
+it("can disable resizing and can reset width through panelWidth", () => {
+  vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(800);
+  renderResizable({ panelWidth: 250 });
+  resizeKey("ArrowRight");
+  expect(panelSize()).toBe(260);
+  renderResizable({ panelWidth: 400 });
+  expect(panelSize()).toBe(400);
+  renderResizable({ panelWidth: 400, resizable: false });
+  expect(separator()).toBeNull();
+});
