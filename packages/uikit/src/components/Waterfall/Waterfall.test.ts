@@ -153,3 +153,97 @@ it("duration drag respects the minimum and ignores numeric overflow", () => {
   stop();
   expect(duration()).toBe(0.01);
 });
+
+it("fits the complete nonzero data span once and preserves later navigation", () => {
+  let viewport!: ReturnType<typeof useViewport>;
+  let data = [
+    {
+      id: "a",
+      parentId: null,
+      etype: "task" as const,
+      label: "A",
+      startTime: 38,
+      duration: 20,
+    },
+    {
+      id: "b",
+      parentId: "a",
+      etype: "task" as const,
+      label: "B",
+      startTime: 2300,
+      duration: 27,
+    },
+  ];
+  function Harness() {
+    viewport = useViewport({ visibleLogData: [], initialLogData: data });
+    return null;
+  }
+  act(() => root.render(createElement(Harness)));
+  expect(viewport.viewStart).toBeLessThan(38);
+  expect(viewport.viewStart + viewport.viewDuration).toBeGreaterThan(2327);
+  expect(viewport.viewDuration).toBeCloseTo((2327 - 38) * 1.1);
+  act(() => {
+    viewport.setViewStart(100);
+    viewport.setViewDuration(50);
+  });
+  data = [...data];
+  act(() => root.render(createElement(Harness)));
+  expect(viewport.viewStart).toBe(100);
+  expect(viewport.viewDuration).toBe(50);
+});
+
+it.each([
+  [[], 0.01, Infinity, TOTAL_DURATION * 1.5],
+  [[], 0.01, 10, 10],
+  [
+    [
+      {
+        id: "event",
+        parentId: null,
+        etype: "info" as const,
+        label: "Event",
+        time: 5000,
+      },
+    ],
+    5,
+    Infinity,
+    5,
+  ],
+  [
+    [
+      {
+        id: "task",
+        parentId: null,
+        etype: "task" as const,
+        label: "Task",
+        startTime: 100,
+        duration: 5000,
+      },
+    ],
+    0.01,
+    100,
+    100,
+  ],
+])(
+  "initial window handles empty/single-event data and limits (%j)",
+  (data, minWindow, maxWindow, expected) => {
+    let viewport!: ReturnType<typeof useViewport>;
+    function Harness() {
+      viewport = useViewport({
+        visibleLogData: [],
+        initialLogData: data,
+        minWindow,
+        maxWindow,
+      });
+      return null;
+    }
+    act(() => root.render(createElement(Harness)));
+    expect(viewport.viewDuration).toBe(expected);
+    expect(Number.isFinite(viewport.viewStart)).toBe(true);
+  },
+);
+
+it("Waterfall initializes from its logData rather than the built-in demo span", () => {
+  render();
+  expect(duration()).toBe(11);
+});

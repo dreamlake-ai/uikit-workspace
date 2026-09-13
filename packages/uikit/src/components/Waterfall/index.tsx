@@ -144,6 +144,7 @@ export function Waterfall({
     cursorLabel,
     showMagnet,
   } = useViewport({
+    initialLogData: logData,
     visibleLogData,
     minWindow,
     maxWindow,

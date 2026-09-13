@@ -1,10 +1,11 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 
-import { type LogItemWithMeta } from "../types";
+import { type LogItemType, type LogItemWithMeta } from "../types";
 import { formatDuration, TOTAL_DURATION } from "../utils";
 
 interface UseViewportProps {
   visibleLogData: LogItemWithMeta[];
+  initialLogData?: LogItemType[];
   onTemporalCursorChange?: (time: number) => void;
   temporalCursor?: number;
   minWindow?: number;
@@ -13,13 +14,43 @@ interface UseViewportProps {
 
 export function useViewport({
   visibleLogData,
+  initialLogData = [],
   minWindow = 0.01,
   maxWindow = Infinity,
   onTemporalCursorChange,
   temporalCursor,
 }: UseViewportProps) {
-  const [viewStart, setViewStart] = useState(-TOTAL_DURATION * 0.25);
-  const [viewDuration, setViewDuration] = useState(TOTAL_DURATION * 1.5);
+  // Fit once from the complete input, never from search/expansion visibility.
+  const [initialWindow] = useState(() => {
+    let first = Infinity;
+    let last = -Infinity;
+    const include = (value: number | undefined) => {
+      if (value !== undefined && Number.isFinite(value)) {
+        first = Math.min(first, value);
+        last = Math.max(last, value);
+      }
+    };
+    for (const item of initialLogData) {
+      include(item.time);
+      include(item.createTime);
+      include(item.startTime);
+      if (item.startTime !== undefined && item.duration !== undefined)
+        include(item.startTime + item.duration);
+    }
+    const hasData = Number.isFinite(first) && Number.isFinite(last);
+    const span = hasData ? last - first : TOTAL_DURATION;
+    const duration = Math.max(
+      minWindow,
+      Math.min(
+        maxWindow,
+        hasData ? Math.max(span * 1.1, 1) : TOTAL_DURATION * 1.5,
+      ),
+    );
+    const center = hasData ? first + span / 2 : TOTAL_DURATION / 2;
+    return { start: center - duration / 2, duration };
+  });
+  const [viewStart, setViewStart] = useState(initialWindow.start);
+  const [viewDuration, setViewDuration] = useState(initialWindow.duration);
   const [isDragging, setIsDragging] = useState(false);
   const [internalTemporalCursor, setInternalTemporalCursor] = useState<
     number | null

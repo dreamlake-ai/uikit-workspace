@@ -45,6 +45,11 @@ without any external state:
   other. The highlight is continuous across the divider: only the outside
   corners are rounded, including when hovering a whole subtree.
 
+The initial window fits the complete `logData` time span with 5% padding on each
+side, subject to `minWindow` and `maxWindow`. A single instant event starts in a
+one-second window; empty data uses a 33-second fallback. Fitting happens on mount,
+so search, expansion, and subsequent data rerenders preserve your pan and zoom.
+
 ## Example
 
 A small agent run trace: a root task, two attempts, and the steps inside each.
@@ -100,6 +105,8 @@ A row is either an instant event (`time`) or a duration bar
 | `isHaltedStep`  | `boolean`                                                                    | Mark a row as a halted step (e.g. error / rate-limit stop).     |
 
 ## Release note — unreleased
+
+- The initial viewport fits the input events instead of the fixed demo window.
 
 - Hovered rows now join squarely at the pane divider; outer corners remain rounded.
 - `maxWindow` defaults to `Infinity` instead of ten times the built-in timeline duration.
