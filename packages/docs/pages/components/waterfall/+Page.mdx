@@ -34,13 +34,21 @@ without any external state:
 
 - **Zoom** — `Shift`/`Alt` + mouse wheel zooms the time axis in and out around
   the cursor. Tune the feel with `zoomFactor`, and clamp the range with
-  `minWindow` / `maxWindow`.
+  `minWindow` / `maxWindow`. Zoom-out is unlimited by default. The bottom
+  duration drag control uses the same limits. Pass a finite `maxWindow`,
+  such as `maxWindow={3600}`, to cap the visible window at one hour.
 - **Pan** — drag horizontally (or use the navigation controls at the bottom)
   to scroll through time while staying at the current zoom.
 - **Mark** — click anywhere on a bar or the axis to drop a temporal marker
   (`T1`, `T2`, …) for measuring against. Click a marker again to remove it.
 - **Hover** — hovering a row in either pane highlights its counterpart in the
-  other.
+  other. The highlight is continuous across the divider: only the outside
+  corners are rounded, including when hovering a whole subtree.
+
+The initial window fits the complete `logData` time span with 5% padding on each
+side, subject to `minWindow` and `maxWindow`. A single instant event starts in a
+one-second window; empty data uses a 33-second fallback. Fitting happens on mount,
+so search, expansion, and subsequent data rerenders preserve your pan and zoom.
 
 ## Example
 
@@ -68,7 +76,7 @@ The `<Waterfall>` fills its container, so wrap it in a fixed-height element
 | `hoveredId`              | `string \| null`                   | —               | Controlled hovered row id. Falls back to internal state if omitted. |
 | `onItemHover`            | `(id: string \| null) => void`     | —               | Called when the hovered row changes.                                |
 | `minWindow`              | `number`                           | `0.01`          | Minimum zoom window duration, in seconds.                           |
-| `maxWindow`              | `number`                           | `duration * 10` | Maximum zoom window duration, in seconds.                           |
+| `maxWindow`              | `number`                           | `Infinity` | Maximum zoom window duration, in seconds.                           |
 | `zoomFactor`             | `number`                           | `1.1`           | Multiplier applied per wheel-zoom step.                             |
 | `enabled`                | `boolean`                          | `true`          | Enable wheel pan/zoom handling.                                     |
 | `children`               | `ReactNode`                        | —               | Extra content rendered inside the timeline (e.g. custom overlays).  |
@@ -95,3 +103,11 @@ A row is either an instant event (`time`) or a duration bar
 | `isCollapsible` | `boolean`                                                                    | Whether the row can be collapsed in the tree.                   |
 | `hasStripes`    | `boolean`                                                                    | Render the bar with a striped fill.                             |
 | `isHaltedStep`  | `boolean`                                                                    | Mark a row as a halted step (e.g. error / rate-limit stop).     |
+
+## Release note — 0.1.14
+
+- The initial viewport fits the input events instead of the fixed demo window.
+
+- Hovered rows now join squarely at the pane divider; outer corners remain rounded.
+- `maxWindow` defaults to `Infinity` instead of ten times the built-in timeline duration.
+- Wheel and duration-drag zoom both respect explicit `minWindow` and `maxWindow` values.

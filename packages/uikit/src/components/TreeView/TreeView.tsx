@@ -375,6 +375,7 @@ export function TreeEntryItem<T extends TreeDataItem>({
 
   const treeItemContent = (
     <div
+      data-tree-row=""
       className={cn(
         "group relative flex h-[32px] items-center",
         getBorderRadiusClass(),

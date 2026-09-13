@@ -1,21 +1,56 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 
-import { type LogItemWithMeta } from "../types";
+import { type LogItemType, type LogItemWithMeta } from "../types";
 import { formatDuration, TOTAL_DURATION } from "../utils";
 
 interface UseViewportProps {
   visibleLogData: LogItemWithMeta[];
+  initialLogData?: LogItemType[];
   onTemporalCursorChange?: (time: number) => void;
   temporalCursor?: number;
+  minWindow?: number;
+  maxWindow?: number;
 }
 
 export function useViewport({
   visibleLogData,
+  initialLogData = [],
+  minWindow = 0.01,
+  maxWindow = Infinity,
   onTemporalCursorChange,
   temporalCursor,
 }: UseViewportProps) {
-  const [viewStart, setViewStart] = useState(-TOTAL_DURATION * 0.25);
-  const [viewDuration, setViewDuration] = useState(TOTAL_DURATION * 1.5);
+  // Fit once from the complete input, never from search/expansion visibility.
+  const [initialWindow] = useState(() => {
+    let first = Infinity;
+    let last = -Infinity;
+    const include = (value: number | undefined) => {
+      if (value !== undefined && Number.isFinite(value)) {
+        first = Math.min(first, value);
+        last = Math.max(last, value);
+      }
+    };
+    for (const item of initialLogData) {
+      include(item.time);
+      include(item.createTime);
+      include(item.startTime);
+      if (item.startTime !== undefined && item.duration !== undefined)
+        include(item.startTime + item.duration);
+    }
+    const hasData = Number.isFinite(first) && Number.isFinite(last);
+    const span = hasData ? last - first : TOTAL_DURATION;
+    const duration = Math.max(
+      minWindow,
+      Math.min(
+        maxWindow,
+        hasData ? Math.max(span * 1.1, 1) : TOTAL_DURATION * 1.5,
+      ),
+    );
+    const center = hasData ? first + span / 2 : TOTAL_DURATION / 2;
+    return { start: center - duration / 2, duration };
+  });
+  const [viewStart, setViewStart] = useState(initialWindow.start);
+  const [viewDuration, setViewDuration] = useState(initialWindow.duration);
   const [isDragging, setIsDragging] = useState(false);
   const [internalTemporalCursor, setInternalTemporalCursor] = useState<
     number | null
@@ -41,15 +76,11 @@ export function useViewport({
 
   const ticks = useMemo(() => {
     const markers: { time: number; label: string }[] = [];
-    const niceIntervals = [
-      0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50,
-      100,
-    ];
-    const targetMarkerCount = 10;
-    const rawInterval = viewDuration / targetMarkerCount;
+    // Keep the ruler bounded at every zoom scale, including hours and years.
+    const rawInterval = viewDuration / 10;
+    const magnitude = 10 ** Math.floor(Math.log10(rawInterval));
     const interval =
-      niceIntervals.find((i) => i > rawInterval) ||
-      niceIntervals[niceIntervals.length - 1];
+      [1, 2, 5, 10].find((n) => n * magnitude >= rawInterval)! * magnitude;
 
     const viewEnd = viewStart + viewDuration;
     const shownSeconds = new Set<number>();
@@ -86,7 +117,12 @@ export function useViewport({
     const firstMarkerTime = Math.floor(viewStart / interval) * interval;
     const lastMarkerTime = Math.ceil(viewEnd / interval) * interval;
 
-    for (let time = firstMarkerTime; time <= lastMarkerTime; time += interval) {
+    const count = Math.min(
+      12,
+      Math.round((lastMarkerTime - firstMarkerTime) / interval),
+    );
+    for (let index = 0; index <= count; index++) {
+      const time = firstMarkerTime + index * interval;
       const roundedTime = Number.parseFloat(time.toPrecision(15));
       const label = formatTickLabel(roundedTime);
       if (label) {
@@ -181,12 +217,12 @@ export function useViewport({
       const deltaX = e.clientX - startX;
       const sensitivity = 0.05;
       const zoomFactor = Math.pow(1.1, deltaX * sensitivity);
-      const newDuration = startDuration * zoomFactor;
+      const newDuration = Math.max(
+        minWindow,
+        Math.min(maxWindow, startDuration * zoomFactor),
+      );
 
-      const minDuration = 0.01;
-      const maxDuration = TOTAL_DURATION * 10;
-
-      if (newDuration >= minDuration && newDuration <= maxDuration) {
+      if (Number.isFinite(newDuration)) {
         const newViewStart = centerTime - newDuration / 2;
         setViewDuration(newDuration);
         setViewStart(newViewStart);

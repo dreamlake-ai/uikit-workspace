@@ -11,7 +11,7 @@ import { TimelineEvent } from "./TimelineEvent";
 import { TimelineProcessBar } from "./TimelineProcessBar";
 import { TimeRuleEventDot } from "./TimeRuleEventDot";
 import { type LogItemType, type LogItemWithMeta } from "./types";
-import { leftWedgeClasses, rightWedgeClasses, TOTAL_DURATION } from "./utils";
+import { leftWedgeClasses, rightWedgeClasses } from "./utils";
 import { LeftWedge, RightWedge } from "./Wedges";
 import { WheelZoomContext } from "./WheelZoomContext";
 import {
@@ -43,7 +43,7 @@ export interface WaterfallProps {
   onItemHover?: (id: string | null) => void;
   /** Minimum zoom viewWindow duration in seconds (default: 0.01) */
   minWindow?: number;
-  /** Maximum zoom viewWindow duration in seconds (default: event duration * 10) */
+  /** Maximum zoom viewWindow duration in seconds (default: Infinity; no zoom-out limit) */
   maxWindow?: number;
   /** Zoom factor for mouse wheel zoom (default: 1.1) */
   zoomFactor?: number;
@@ -72,7 +72,7 @@ export function Waterfall({
   hoveredId: externalHoveredId,
   onItemHover: externalOnItemHover,
   minWindow = 0.01,
-  maxWindow,
+  maxWindow = Infinity,
   zoomFactor = 1.1,
   enabled = true,
   children,
@@ -144,7 +144,10 @@ export function Waterfall({
     cursorLabel,
     showMagnet,
   } = useViewport({
+    initialLogData: logData,
     visibleLogData,
+    minWindow,
+    maxWindow,
     onTemporalCursorChange,
     temporalCursor,
   });
@@ -178,6 +181,7 @@ export function Waterfall({
               />
               <SyncScroll className="flex-1 overflow-y-auto">
                 <TreeView
+                  className="[&_[data-tree-row]]:rounded-r-none"
                   data={
                     hasActiveSearch
                       ? dataWithMeta.filter((item) =>
@@ -229,7 +233,7 @@ export function Waterfall({
                 onViewStartChange={setViewStart}
                 onWindowChange={setViewDuration}
                 minWindow={minWindow}
-                maxWindow={maxWindow ?? TOTAL_DURATION * 10}
+                maxWindow={maxWindow}
                 zoomFactor={zoomFactor}
                 enabled={enabled}
               >
@@ -254,10 +258,10 @@ export function Waterfall({
                       : prevHov && nextHov
                         ? ""
                         : prevHov
-                          ? "rounded-b-[var(--radius)]"
+                          ? "rounded-br-[var(--radius)]"
                           : nextHov
-                            ? "rounded-t-[var(--radius)]"
-                            : "rounded-[var(--radius)]";
+                            ? "rounded-tr-[var(--radius)]"
+                            : "rounded-r-[var(--radius)]";
                     return item.time === undefined ? (
                       // Render TimelineProcessBar for duration events
                       <TimelineProcessBar

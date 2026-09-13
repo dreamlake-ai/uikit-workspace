@@ -91,7 +91,7 @@ export function WheelZoomContext({
           Math.min(maxWindow, viewDuration * scaleFactor),
         );
 
-        if (newDuration === viewDuration) return;
+        if (!Number.isFinite(newDuration) || newDuration === viewDuration) return;
 
         // Adjust view start to keep cursor position stable
         const newViewStart = timeAtCursor - cursorRatio * newDuration;
