@@ -14,10 +14,29 @@ Wrap your app once in `ThemeProvider`, and import the kit's stylesheet at the
 root so the tokens are present:
 
 ```tsx
+import { ThemeProvider } from '@dreamlake/uikit'
+import '@dreamlake/uikit/styles.css'
+
+export function App() {
+  return (
+    <ThemeProvider defaultBaseTheme="system">
+      {/* …app… */}
+    </ThemeProvider>
+  )
+}
+```
+
+## Toggles
+
+`ThemeColorToggle` cycles `light → dark → system`; `LiquidToggle` flips the
+liquid flag. Both must be inside a `ThemeProvider`.
+
+```tsx
+import { ThemeColorToggle, LiquidToggle } from '@dreamlake/uikit'
 
 <header>
-  
-  
+  <ThemeColorToggle />
+  <LiquidToggle />
 </header>
 ```
 
@@ -26,6 +45,7 @@ root so the tokens are present:
 Read or drive the theme from anywhere under the provider:
 
 ```tsx
+import { useTheme } from '@dreamlake/uikit'
 
 function Example() {
   const { baseTheme, setBaseTheme, isLiquid, toggleLiquid, computedTheme } = useTheme()

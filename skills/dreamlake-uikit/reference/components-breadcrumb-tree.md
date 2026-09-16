@@ -48,7 +48,7 @@ resizes.
 | --- | --- | --- | --- |
 | `path` | `BreadcrumbNode[]` | — | Controlled path from root to the selected node. Empty array = root. |
 | `onNavigate` | `(node, newPath) => void` | — | Fires on row click (panel stays open) and breadcrumb click (panel closes). Update `path` here. |
-| `fetchChildren` | `(path, page, limit) => Promise` | — | Async loader. `path` is slash-separated. Prepended with `rootPath` when set. |
+| `fetchChildren` | `(path, page, limit) => Promise<FetchChildrenResult>` | — | Async loader. `path` is slash-separated. Prepended with `rootPath` when set. |
 | `rootPath` | `string` | — | Root prefix shown as the first breadcrumb item. |
 | `renderEmpty` | `(parentNode) => ReactNode` | `"No items"` | Custom empty-state per column. Receives the parent node (`null` at root). |
 | `refreshKey` | `number` | `0` | Increment to re-fetch the deepest visible column. |

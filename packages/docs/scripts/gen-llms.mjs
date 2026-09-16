@@ -34,7 +34,10 @@ const DIST_DIR = join(DOCS_DIR, 'dist', 'client')
 // Repo root = git toplevel (robust across root / docs / packages/docs layouts).
 const REPO_ROOT = (() => {
   try {
-    return execFileSync('git', ['rev-parse', '--show-toplevel'], { cwd: DOCS_DIR, encoding: 'utf-8' }).trim()
+    return execFileSync('git', ['rev-parse', '--show-toplevel'], {
+      cwd: DOCS_DIR,
+      encoding: 'utf-8',
+    }).trim()
   } catch {
     return join(DOCS_DIR, '..')
   }
@@ -82,7 +85,18 @@ function pathFromFile(filePath) {
 
 /** Strip ESM imports and degrade custom MDX components to plain markdown. */
 function toMarkdown(body) {
+  // Code is CONTENT, not markup. The component-degrading rules below match any
+  // `<Capitalized …>`, which inside a fence is a JSX example rather than a
+  // component to unwrap — every such example used to come out stripped to its
+  // text nodes, so a documented `<Tabs>` snippet reached an agent as a few bare
+  // words. Hold code aside, transform the prose, put it back. Fences first:
+  // they can contain backticks, so protecting inline spans first would cut one
+  // in half.
+  const held = []
+  const hold = (m) => `\u0000HOLD${held.push(m) - 1}\u0000`
   let s = body
+  s = s.replace(/^[ \t]*(`{3,}|~{3,})[^\n]*\n[\s\S]*?^[ \t]*\1[ \t]*$/gm, hold)
+  s = s.replace(/`[^`\n]+`/g, hold)
   s = s.replace(/^[ \t]*import[\s\S]*?from\s+['"][^'"]+['"]\s*;?\s*$/gm, '')
   s = s.replace(
     /<Callout(?:\s+(?:variant|type)=["'](\w+)["'])?[^>]*>([\s\S]*?)<\/Callout>/g,
@@ -90,11 +104,12 @@ function toMarkdown(body) {
       const label = { warn: 'Warning', info: 'Note' }[variant] ?? 'Note'
       const text = inner.trim().replace(/\n/g, '\n> ')
       return `> **${label}:** ${text}`
-    },
+    }
   )
   s = s.replace(/<Preview[^>]*>([\s\S]*?)<\/Preview>/g, (_m, inner) => inner.trim())
   s = s.replace(/<\/?[A-Z][\w]*(?:\s[^>]*)?\/?>/g, '')
   s = s.replace(/\n{3,}/g, '\n\n')
+  s = s.replace(/\u0000HOLD(\d+)\u0000/g, (_m, i) => held[Number(i)])
   return s.trim() + '\n'
 }
 
@@ -113,7 +128,7 @@ const pagesRaw = await Promise.all(
       noindex: fm.noindex === true,
       markdown: toMarkdown(body),
     }
-  }),
+  })
 )
 pagesRaw.sort((a, b) => a.order - b.order)
 
@@ -164,7 +179,8 @@ function buildLlmsTxt() {
   const lines = [`# ${siteConfig.brand}`, '', `> ${siteConfig.summary}`, '']
   for (const { label, items } of bySection(pages)) {
     lines.push(`## ${label || 'Docs'}`, '')
-    for (const p of items) lines.push(`- [${p.title}](${mdUrl(p.path)})${blurb(p) ? `: ${blurb(p)}` : ''}`)
+    for (const p of items)
+      lines.push(`- [${p.title}](${mdUrl(p.path)})${blurb(p) ? `: ${blurb(p)}` : ''}`)
     lines.push('')
   }
   return lines.join('\n').trim() + '\n'
@@ -180,12 +196,20 @@ function buildLlmsFullTxt() {
     '',
   ]
   for (const p of pages) {
-    parts.push('---', '', `Source: ${siteConfig.url}${p.path === '/' ? '' : p.path}`, '', rewriteLinks(p.markdown, 'web').trim(), '')
+    parts.push(
+      '---',
+      '',
+      `Source: ${siteConfig.url}${p.path === '/' ? '' : p.path}`,
+      '',
+      rewriteLinks(p.markdown, 'web').trim(),
+      ''
+    )
   }
   return parts.join('\n').trim() + '\n'
 }
 
-const refFile = (p) => (p.path === '/' ? 'overview.md' : `${p.path.slice(1).replace(/\//g, '-')}.md`)
+const refFile = (p) =>
+  p.path === '/' ? 'overview.md' : `${p.path.slice(1).replace(/\//g, '-')}.md`
 
 function buildSkillMd() {
   const titles = pages.map((p) => p.title).join(', ')
@@ -209,7 +233,8 @@ function buildSkillMd() {
   ]
   for (const { label, items } of bySection(pages)) {
     body.push(`**${label || 'Docs'}**`, '')
-    for (const p of items) body.push(`- \`reference/${refFile(p)}\` — ${p.title}${blurb(p) ? `: ${blurb(p)}` : ''}`)
+    for (const p of items)
+      body.push(`- \`reference/${refFile(p)}\` — ${p.title}${blurb(p) ? `: ${blurb(p)}` : ''}`)
     body.push('')
   }
   body.push(
@@ -217,7 +242,7 @@ function buildSkillMd() {
     '',
     `These docs live at ${siteConfig.url}. Each page is also fetchable as markdown`,
     `at \`<page-url>.md\`, and the full corpus at ${siteConfig.url}/llms-full.txt.`,
-    '',
+    ''
   )
   return fm.join('\n') + body.join('\n').trim() + '\n'
 }
@@ -277,7 +302,8 @@ async function main() {
     return
   }
 
-  for (const p of pages) await writeFileMk(join(DIST_DIR, mdFile(p.path)), rewriteLinks(p.markdown, 'web'))
+  for (const p of pages)
+    await writeFileMk(join(DIST_DIR, mdFile(p.path)), rewriteLinks(p.markdown, 'web'))
   console.log(`✓ pages   ${pages.length} .md files in dist/client`)
 
   await writeFile(join(DIST_DIR, 'llms.txt'), buildLlmsTxt())
@@ -301,7 +327,11 @@ async function loadSiteConfig() {
   const brand = pick('brand')
   // Origin: Netlify injects URL at build; fall back to site.config `url`.
   const url = (process.env.URL || process.env.DEPLOY_PRIME_URL || pick('url')).replace(/\/$/, '')
-  const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+  const slug = (s) =>
+    s
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '')
   return {
     brand,
     url,

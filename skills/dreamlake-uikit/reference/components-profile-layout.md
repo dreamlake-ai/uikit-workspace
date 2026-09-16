@@ -96,7 +96,7 @@ without opening a menu.
 ```tsx
 const profile: ProfileLayoutProfile = {
   // …
-  nameAccessory: ,
+  nameAccessory: <ThemeTogglePill value={theme} onChange={setTheme} />,
 }
 ```
 
@@ -112,7 +112,12 @@ function MyProfilePage() {
   const [tab, setTab] = useState('overview')
 
   return (
-    
+    <ProfileLayout
+      profile={profile}
+      tabs={tabs}
+      tab={tab}
+      onTabChange={setTab}
+    />
   )
 }
 ```
@@ -130,7 +135,7 @@ function MyProfilePage() {
 | `onTabChange` | `(tab: string) => void` | — | Fires when a tab change is requested. Required when using `tab`. |
 | `logo` | `ReactNode` | — | Slot rendered top-left. Animates vertical position on scroll. |
 | `actions` | `ReactNode` | — | Slot rendered top-right (e.g. account switcher). |
-| `scrollContainerRef` | `RefObject` | `window` | Override scroll source. Pass a ref when embedding inside a bounded div. |
+| `scrollContainerRef` | `RefObject<HTMLElement>` | `window` | Override scroll source. Pass a ref when embedding inside a bounded div. |
 | `className` | `string` | — | Extra classes on the root element. |
 
 ### ProfileLayoutProfile

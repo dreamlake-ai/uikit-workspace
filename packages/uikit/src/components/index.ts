@@ -21,6 +21,7 @@ export * from "./Inputs";
 export * from "./Label";
 export * from "./Menu";
 export * from "./Modal";
+export * from "./PanelLayout";
 export * from "./PipelineGraph";
 export * from "./Popover";
 export * from "./ProfileCard";

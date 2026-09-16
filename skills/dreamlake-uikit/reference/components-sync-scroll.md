@@ -50,4 +50,4 @@ The hooks accept an options object:
 | --------- | -------------------------------------- | ------------ | --------------------------------------------------------- |
 | `enabled` | `boolean`                              | `true`       | Toggle registration and listeners off without unmounting. |
 | `axis`    | `'vertical' \| 'horizontal' \| 'both'` | `'vertical'` | Which scroll axes are tracked and synced.                 |
-| `ref`     | `RefObject`            | —            | Provide your own element ref instead of the internal one. |
+| `ref`     | `RefObject<HTMLDivElement>`            | —            | Provide your own element ref instead of the internal one. |
