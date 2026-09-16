@@ -220,7 +220,12 @@ export function wrapLayout(root: PanelNode): { v: number; root: PanelNode } {
  *  the target leaf lives INSIDE a group, it is first extracted out of that group
  *  (a split can't live under a group), then split at the group's slot. */
 export function applySplit(node: PanelNode, targetId: string, dir: Dir, seed?: LeafNode, before = false, newFraction = 0.5): { node: PanelNode; newId: string | null } {
-  const f = Math.max(0.1, Math.min(0.9, newFraction))
+  // A clamp does not SANITIZE: `Math.max(0.1, Math.min(0.9, NaN))` is NaN, and
+  // that NaN goes straight into `sizes`, poisoning every size in the new split.
+  // `splitWith` guards its own measurement against a zero-width target, but this
+  // is public API — a caller doing its own `px / width` arithmetic has the same
+  // zero to divide by, so the guard belongs here as well.
+  const f = Number.isFinite(newFraction) ? Math.max(0.1, Math.min(0.9, newFraction)) : 0.5
   if (node.kind === 'leaf') {
     if (node.id !== targetId) return { node, newId: null }
     const fresh = seed ?? makeLeaf()

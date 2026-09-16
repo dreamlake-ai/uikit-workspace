@@ -55,6 +55,25 @@ it('[panel-tree] applySplit appends in-place when axis matches', () => {
   expect(node.children.map(c => c.id)).toStrictEqual(['a', seed.id, 'b'])
 })
 
+it('[panel-tree] applySplit survives a non-finite fraction instead of writing NaN sizes', () => {
+  // A clamp is not a sanitizer — `Math.max(0.1, Math.min(0.9, NaN))` is NaN. A
+  // caller measuring its own target divides by a width that can be zero, so a
+  // NaN reaches this argument the same way it once reached `splitWith`. Every
+  // size in the tree has to stay a real number.
+  for (const bad of [NaN, Infinity, -Infinity]) {
+    const { node } = applySplit(leaf('a'), 'a', 'row', makeLeaf(), false, bad)
+    if (node.kind !== 'split') throw new Error('expected split')
+    expect(node.sizes.every(Number.isFinite), `fraction ${bad}`).toBe(true)
+    expect(node.sizes.reduce((x, y) => x + y, 0)).toBeCloseTo(100)
+  }
+
+  // The in-place-append branch writes sizes too, and reaches them by a
+  // different route (scaling the target's existing size rather than 100).
+  const { node: appended } = applySplit(split('row', [leaf('a'), leaf('b')]), 'a', 'row', makeLeaf(), false, NaN)
+  if (appended.kind !== 'split') throw new Error('expected split')
+  expect(appended.sizes.every(Number.isFinite)).toBe(true)
+})
+
 it('[panel-tree] applyClose collapses a single-child split to the survivor', () => {
   const tree = split('row', [leaf('a'), leaf('b')])
   const next = applyClose(tree, 'b')

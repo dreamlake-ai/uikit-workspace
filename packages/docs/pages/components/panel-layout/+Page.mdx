@@ -295,7 +295,12 @@ independent — a drag in one can never dock into another.
 ## Tree model
 
 `panel-tree` is importable on its own — pure, DOM-free, and unit-testable. Every
-mutator returns a new tree and leaves untouched subtrees referentially equal.
+mutator returns a new tree and never mutates the one it was handed.
+
+Don't memoize on node identity, though. A mutator rebuilds every node along the
+path it walks, so a subtree it changed nothing in still comes back as a new
+object — and a split that lost no children is rebuilt all the same. Compare by
+`id`, which survives a mutation, rather than by reference.
 
 | Export | Description |
 | --- | --- |
