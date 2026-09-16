@@ -9,7 +9,17 @@ Adjust the row width and tab limits below. Open more tabs with **+**, select a t
 ## Usage
 
 ```tsx
+import { TabRow } from '@dreamlake/uikit'
 
+<TabRow
+  tabs={[{ value: 'plan', label: 'Implementation plan' }]}
+  value={activeId}
+  onValueChange={setActiveId}
+  onClose={closeTab}
+  minTabWidth={80}
+  preferredTabWidth={170}
+  aria-label="Open notes"
+/>
 ```
 
 The caller owns the tab list, selection, and content. When closing the active tab, choose its replacement in `onClose`. Omit `onClose` for a row without close controls.
