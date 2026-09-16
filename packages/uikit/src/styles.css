@@ -34,6 +34,20 @@
   --chip-bg: rgba(0, 0, 0, 0.04);
   --search-bg: #f5f4f0;
 
+  /* ── Drag affordances (PanelLayout dividers + dock handles) ────
+     A grabber pill rests faint and goes SOLID the moment it is
+     grabbed, so "I have hold of this" reads without a color change.
+     The active value therefore moves AWAY from the surface in both
+     themes — darker than the resting grey in light, brighter in dark —
+     rather than being one fixed hex. `--uikit-rail-stroke` is the
+     visible 1px edge of a control that sits on a panel (a hairline,
+     unlike `--faint`, that must stay legible against `--panel-bg`).
+     Prefixed like `--uikit-accent` / `--uikit-muted`: the bare words
+     are too generic to claim in a consumer's cascade. */
+  --uikit-rail-stroke: #d8d4c8;
+  --uikit-handle: #8a8a8a;
+  --uikit-handle-active: #4a4a4a;
+
   /* ── Selection / accent ──────────────────────────────────────── */
   --selected-bg: #d9e6f7;
   /* Scene-graph tree row states (ml-dash design): warm-amber hover, neutral-grey
@@ -127,6 +141,10 @@ html[data-theme="dark"] {
   --chip-bg: rgba(255, 255, 255, 0.05);
   --search-bg: #36363c;
 
+  --uikit-rail-stroke: #45454d;
+  --uikit-handle: #e2e2e2;
+  --uikit-handle-active: #ffffff;
+
   --selected-bg: #3d4856;
   --tree-hover: #3d4856;
   --tree-sel: #45454a;
@@ -177,6 +195,10 @@ html[data-theme="dark"] {
     --faint-dashed: rgba(255, 255, 255, 0.22);
     --chip-bg: rgba(255, 255, 255, 0.05);
     --search-bg: #36363c;
+
+    --uikit-rail-stroke: #45454d;
+    --uikit-handle: #e2e2e2;
+    --uikit-handle-active: #ffffff;
 
     --selected-bg: #3d4856;
     --tree-hover: #3d4856;
@@ -236,6 +258,9 @@ html[data-theme="dark"] {
   --color-uikit-chip: var(--chip-bg);
   --color-uikit-search: var(--search-bg);
   --color-uikit-selected: var(--selected-bg);
+  --color-uikit-rail-stroke: var(--uikit-rail-stroke);
+  --color-uikit-handle: var(--uikit-handle);
+  --color-uikit-handle-active: var(--uikit-handle-active);
   --color-uikit-tree-hover: var(--tree-hover);
   --color-uikit-tree-sel: var(--tree-sel);
   --color-uikit-tree-sel-hover: var(--tree-sel-hover);
