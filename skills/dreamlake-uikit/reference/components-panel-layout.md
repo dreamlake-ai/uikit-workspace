@@ -72,6 +72,7 @@ const persisted = usePersistedPanelLayout({
   validate: (root) => hasView(root, 'chat'), // reject a saved tree missing the primary panel
 })
 
+<PanelLayout initial={persisted.initial} onChange={persisted.onChange} />
 ```
 
 > **Warning:** Saved layouts are wrapped in a `{ v, root }` envelope, which has no top-level

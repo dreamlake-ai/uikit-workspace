@@ -5,10 +5,11 @@ updates as the viewport changes and is SSR-safe (returns `false` until mounted,
 so the server and first client render agree).
 
 ```tsx
+import { useIsMobile } from '@dreamlake/uikit'
 
 function Nav() {
   const isMobile = useIsMobile()
-  return isMobile ?  : 
+  return isMobile ? <DrawerNav /> : <SideNav />
 }
 ```
 

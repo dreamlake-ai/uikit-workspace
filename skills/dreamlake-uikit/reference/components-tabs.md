@@ -58,14 +58,14 @@ panels from sub-components. Pass `value` / `defaultValue` and
 when its `value` matches the active tab.
 
 ```tsx
-
-  
-    Overview
-    Activity
-  
-  …
-  …
-
+<Tabs defaultValue="overview" onValueChange={setTab}>
+  <TabsList>
+    <TabsTrigger value="overview">Overview</TabsTrigger>
+    <TabsTrigger value="activity">Activity</TabsTrigger>
+  </TabsList>
+  <TabsContent value="overview">…</TabsContent>
+  <TabsContent value="activity">…</TabsContent>
+</Tabs>
 ```
 
 ### `TabsList`

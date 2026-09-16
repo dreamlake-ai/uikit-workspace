@@ -49,7 +49,7 @@ a ring around its whole subtree.
 
 | Prop                 | Type                                           | Default       | Description                                                                                      |
 | -------------------- | ---------------------------------------------- | ------------- | ------------------------------------------------------------------------------------------------ |
-| `data`               | `TreeDataItemWithMeta[]`                    | —             | Flattened rows with metadata — pass `visibleData` from `useTreeState`.                           |
+| `data`               | `TreeDataItemWithMeta<T>[]`                    | —             | Flattened rows with metadata — pass `visibleData` from `useTreeState`.                           |
 | `getIcon`            | `(item: T, expanded?: boolean) => ReactNode`   | —             | Icon for each node. Receives the expanded flag for folder-open states.                           |
 | `expandedItems`      | `Set<string>`                                  | —             | IDs of expanded collapsible nodes.                                                               |
 | `onToggleItem`       | `(id: string) => void`                         | —             | Called when a chevron is clicked.                                                                |
@@ -101,8 +101,8 @@ a ring around its whole subtree.
 
 | Returns          | Type                        | Description                                                                      |
 | ---------------- | --------------------------- | -------------------------------------------------------------------------------- |
-| `visibleData`    | `TreeDataItemWithMeta[]` | Flattened, metadata-tagged rows with collapsed subtrees hidden — pass to `data`. |
-| `dataWithMeta`   | `TreeDataItemWithMeta[]` | All rows with metadata, ignoring collapse state.                                 |
+| `visibleData`    | `TreeDataItemWithMeta<T>[]` | Flattened, metadata-tagged rows with collapsed subtrees hidden — pass to `data`. |
+| `dataWithMeta`   | `TreeDataItemWithMeta<T>[]` | All rows with metadata, ignoring collapse state.                                 |
 | `expandedItems`  | `Set<string>`               | Currently expanded node ids.                                                     |
 | `toggleItem`     | `(id: string) => void`      | Toggle one node's expanded state.                                                |
 | `expandAll`      | `() => void`                | Expand every collapsible node.                                                   |
