@@ -48,3 +48,5 @@ export * from "./VirtualList";
 export * from "./VirtualListFlow";
 export * from "./Waterfall";
 export * from "./WorkflowGraph";
+
+export * from "./TabRow";
