@@ -10,6 +10,7 @@ import { createPortal } from 'react-dom'
 import { Folder, ChevronRight, ChevronDown, Loader } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { useBreadcrumbTree } from './useBreadcrumbTree'
+import { segmentAction, ROOT_SEGMENT } from './segmentAction'
 import type {
   BreadcrumbNode,
   FetchChildrenResult,
@@ -432,10 +433,19 @@ export function BreadcrumbTree({
     [path, buildKey, onNavigate, getColumnData, fetchPath],
   )
 
+  // Both handlers defer to `segmentAction`: clicking where you already are
+  // opens the tree, anything else navigates. They disagreed before, and the
+  // root segment was the one that lost — inert at a project's top level, where
+  // it is the only segment there is.
   const handleBreadcrumbClick = useCallback(
     (node: BreadcrumbNode, idx: number, e: React.MouseEvent) => {
       e.stopPropagation()
-      onNavigate(node, path.slice(0, idx + 1))
+      const action = segmentAction(idx, path.length)
+      if (action.kind === 'toggle') {
+        setOpen((v) => !v)
+        return
+      }
+      onNavigate(node, path.slice(0, action.depth))
       setOpen(false)
     },
     [path, onNavigate],
@@ -444,7 +454,11 @@ export function BreadcrumbTree({
   const handleRootPathClick = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation()
-      if (path.length === 0) return
+      const action = segmentAction(ROOT_SEGMENT, path.length)
+      if (action.kind === 'toggle') {
+        setOpen((v) => !v)
+        return
+      }
       onNavigate({ id: rootPath!, name: rootPath! }, [])
       setOpen(false)
     },
