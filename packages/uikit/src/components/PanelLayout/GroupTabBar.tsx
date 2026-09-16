@@ -1,6 +1,10 @@
-import { useRef, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent } from 'react'
+import {
+  useRef,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type PointerEvent as ReactPointerEvent,
+} from 'react'
 import { cn } from '../../lib/utils'
-import { TAB_DRAG_THRESHOLD_PX } from './config'
+import { TAB_DRAG_THRESHOLD_PX, usePanelConfig } from './config'
 import { CloseIcon } from './PanelLeaf'
 import type { LeafNode, PanelNode } from './panel-tree'
 
@@ -39,6 +43,10 @@ export function GroupTabBar({
   onHandleDown: (leaf: LeafNode, e: ReactPointerEvent, thresholdPx?: number) => void
 }) {
   const barRef = useRef<HTMLDivElement>(null)
+  // Affordances only — see the Delete case below for why the strip does not
+  // enforce this itself.
+  const { closable } = usePanelConfig()
+  const canClose = (leaf: LeafNode) => closable?.(leaf) ?? true
 
   const moveFocus = (from: number, to: number) => {
     const tabs = barRef.current?.querySelectorAll<HTMLButtonElement>('[role="tab"]')
@@ -72,6 +80,10 @@ export function GroupTabBar({
       case 'Delete':
       case 'Backspace':
         e.preventDefault()
+        // Not guarded by `closable` here. This strip decides what to SHOW; the
+        // layout decides what may actually go, in one place, so the two cannot
+        // drift into disagreeing. Sending the request either way is what keeps
+        // that single point of enforcement load-bearing.
         onCloseTab(group.children[index].id)
         break
     }
@@ -114,27 +126,29 @@ export function GroupTabBar({
               'font-uikit-ui text-[12px] whitespace-nowrap [transition:background_120ms_ease,color_120ms_ease]',
               active
                 ? 'bg-uikit-chip text-uikit-ink'
-                : 'bg-transparent text-uikit-muted hover:text-uikit-ink hover:bg-uikit-chip/60',
+                : 'bg-transparent text-uikit-muted hover:text-uikit-ink hover:bg-uikit-chip/60'
             )}
           >
             <span className="truncate max-w-[160px]">{label}</span>
-            <span
-              role="button"
-              tabIndex={-1}
-              aria-label={`Close ${label}`}
-              onClick={(e) => {
-                e.stopPropagation()
-                onCloseTab(leaf.id)
-              }}
-              onPointerDown={(e) => e.stopPropagation()}
-              // A <button> inside a <button> is invalid HTML — browsers drop the
-              // inner one — so this close affordance carries button semantics on
-              // a span. It stays OUT of the tab order on purpose: the keyboard
-              // route to closing a tab is Delete on the tab itself.
-              className="inline-flex items-center justify-center w-[15px] h-[15px] rounded-[4px] opacity-0 group-hover/tab:opacity-70 hover:opacity-100 hover:bg-uikit-panel"
-            >
-              <CloseIcon />
-            </span>
+            {canClose(leaf) && (
+              <span
+                role="button"
+                tabIndex={-1}
+                aria-label={`Close ${label}`}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onCloseTab(leaf.id)
+                }}
+                onPointerDown={(e) => e.stopPropagation()}
+                // A <button> inside a <button> is invalid HTML — browsers drop the
+                // inner one — so this close affordance carries button semantics on
+                // a span. It stays OUT of the tab order on purpose: the keyboard
+                // route to closing a tab is Delete on the tab itself.
+                className="inline-flex items-center justify-center w-[15px] h-[15px] rounded-[4px] opacity-0 group-hover/tab:opacity-70 hover:opacity-100 hover:bg-uikit-panel"
+              >
+                <CloseIcon />
+              </span>
+            )}
           </button>
         )
       })}

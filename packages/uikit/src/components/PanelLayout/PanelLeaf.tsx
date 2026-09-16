@@ -50,7 +50,7 @@ function HeaderBtn({
       className={cn(
         'inline-flex items-center justify-center w-6 h-6 rounded-[6px] border-none cursor-pointer bg-transparent',
         'text-uikit-muted [transition:background_120ms_ease,color_120ms_ease] hover:bg-uikit-chip hover:text-uikit-ink',
-        className,
+        className
       )}
     >
       {children}
@@ -89,10 +89,16 @@ export function PanelLeaf({
     headerClassName,
     headerContentClassName,
     contentColumnHeaderClass,
+    closable,
     palette,
   } = usePanelConfig()
 
   const tint = tintFor(leaf.n, palette)
+  // A panel the host will not let go of shows no close button. This is the
+  // affordance half only: the refusal itself lives in one place, next to the
+  // close handler, so a path that never touches a button (Delete on a tab) is
+  // covered by the same rule — see ClosablePredicate.
+  const canClose = closable?.(leaf) ?? true
   const customHeader = renderHeader?.(leaf)
   const [headerHovered, setHeaderHovered] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
@@ -165,71 +171,76 @@ export function PanelLeaf({
         'relative flex flex-col w-full h-full min-w-0 min-h-0 rounded-[12px] overflow-hidden',
         'bg-uikit-bg border-none shadow-none [transition:opacity_120ms_ease]',
         dragging ? 'opacity-40' : 'opacity-100',
-        leafClassName?.(leaf),
+        leafClassName?.(leaf)
       )}
       style={boxStyle}
     >
       {showHeader && (
-      <header
-        onMouseEnter={() => setHeaderHovered(true)}
-        onMouseLeave={() => setHeaderHovered(false)}
-        className={cn(
-          'relative flex items-center gap-[6px] h-[26px] shrink-0 select-none cursor-default pr-[6px] bg-uikit-bg',
-          // When a panel opts into the centered content column, pad the left edge
-          // to the SAME gutter the body uses, so header text lines up on the
-          // x-axis with the content below even when side panels shift the column
-          // off the panel's own center.
-          headerOnColumn ? contentColumnHeaderClass : 'pl-[12px]',
-          headerClassName?.(leaf),
-        )}
-      >
-        {/* Centered grab handle — drag to dock. `data-dock-handle` gives a host's
+        <header
+          onMouseEnter={() => setHeaderHovered(true)}
+          onMouseLeave={() => setHeaderHovered(false)}
+          className={cn(
+            'relative flex items-center gap-[6px] h-[26px] shrink-0 select-none cursor-default pr-[6px] bg-uikit-bg',
+            // When a panel opts into the centered content column, pad the left edge
+            // to the SAME gutter the body uses, so header text lines up on the
+            // x-axis with the content below even when side panels shift the column
+            // off the panel's own center.
+            headerOnColumn ? contentColumnHeaderClass : 'pl-[12px]',
+            headerClassName?.(leaf)
+          )}
+        >
+          {/* Centered grab handle — drag to dock. `data-dock-handle` gives a host's
             gesture guards a stable selector, so a horizontal DRAG of this handle
             can be told apart from a swipe on the panel body. */}
-        <span
-          onPointerDown={onHandleDown}
-          data-dock-handle
-          title="Drag to dock this panel beside another"
-          className="absolute left-1/2 top-[2px] -translate-x-1/2 inline-flex items-center justify-center w-16 h-[10px] cursor-grab z-[1] touch-none"
-        >
           <span
-            className={cn(
-              'w-7 h-[3px] rounded-full pointer-events-none [transition:opacity_280ms_ease,background_140ms_ease]',
-              dragging
-                ? 'bg-uikit-handle-active opacity-100'
-                : cn('bg-uikit-handle', headerHovered ? 'opacity-60' : 'opacity-0'),
-            )}
-          />
-        </span>
-        {customHeader ? (
-          // A custom header can pack many controls. Keep it in a constrained,
-          // clipping flex row so a long header can never push the close button off
-          // the right edge — it must always stay visible, exactly like the default
-          // header below. `headerContentClassName` REPLACES the overflow policy
-          // (rather than adding to it) for a header that must let something
-          // escape vertically — a tab strip whose active tab notches the border,
-          // for instance.
-          <div
-            className={cn(
-              'flex items-center gap-[6px] flex-1 min-w-0',
-              headerContentClassName?.(leaf) ?? 'overflow-hidden',
-            )}
+            onPointerDown={onHandleDown}
+            data-dock-handle
+            title="Drag to dock this panel beside another"
+            className="absolute left-1/2 top-[2px] -translate-x-1/2 inline-flex items-center justify-center w-16 h-[10px] cursor-grab z-[1] touch-none"
           >
-            {customHeader}
-          </div>
-        ) : (
-          <>
-            {/* Runtime tint color stays inline. */}
-            <span className="w-[7px] h-[7px] rounded-full shrink-0" style={{ background: tint }} />
-            <span className="text-uikit-ink font-uikit-ui text-[12.5px] font-semibold tracking-[-0.005em] truncate flex-1 min-w-0">
-              {leaf.title ?? `Panel ${leaf.n}`}
-            </span>
-          </>
-        )}
-        <HeaderBtn label="Close panel" onClick={onClose} className="ml-auto shrink-0">
-          <CloseIcon />
-        </HeaderBtn>
-      </header>
+            <span
+              className={cn(
+                'w-7 h-[3px] rounded-full pointer-events-none [transition:opacity_280ms_ease,background_140ms_ease]',
+                dragging
+                  ? 'bg-uikit-handle-active opacity-100'
+                  : cn('bg-uikit-handle', headerHovered ? 'opacity-60' : 'opacity-0')
+              )}
+            />
+          </span>
+          {customHeader ? (
+            // A custom header can pack many controls. Keep it in a constrained,
+            // clipping flex row so a long header can never push the close button off
+            // the right edge — it must always stay visible, exactly like the default
+            // header below. `headerContentClassName` REPLACES the overflow policy
+            // (rather than adding to it) for a header that must let something
+            // escape vertically — a tab strip whose active tab notches the border,
+            // for instance.
+            <div
+              className={cn(
+                'flex items-center gap-[6px] flex-1 min-w-0',
+                headerContentClassName?.(leaf) ?? 'overflow-hidden'
+              )}
+            >
+              {customHeader}
+            </div>
+          ) : (
+            <>
+              {/* Runtime tint color stays inline. */}
+              <span
+                className="w-[7px] h-[7px] rounded-full shrink-0"
+                style={{ background: tint }}
+              />
+              <span className="text-uikit-ink font-uikit-ui text-[12.5px] font-semibold tracking-[-0.005em] truncate flex-1 min-w-0">
+                {leaf.title ?? `Panel ${leaf.n}`}
+              </span>
+            </>
+          )}
+          {canClose && (
+            <HeaderBtn label="Close panel" onClick={onClose} className="ml-auto shrink-0">
+              <CloseIcon />
+            </HeaderBtn>
+          )}
+        </header>
       )}
 
       {/* Body — the host's content, or a placeholder for an unfilled panel. */}
@@ -239,7 +250,10 @@ export function PanelLeaf({
         ) : (
           <div className="flex-1 min-h-0 flex flex-col items-center justify-center gap-2 p-4">
             {/* Runtime tint color stays inline. */}
-            <span className="font-uikit-mono text-[26px] font-bold tracking-[-0.02em]" style={{ color: tint }}>
+            <span
+              className="font-uikit-mono text-[26px] font-bold tracking-[-0.02em]"
+              style={{ color: tint }}
+            >
               {leaf.n}
             </span>
             <span className="text-uikit-muted font-uikit-ui text-[12.5px]">Placeholder panel</span>

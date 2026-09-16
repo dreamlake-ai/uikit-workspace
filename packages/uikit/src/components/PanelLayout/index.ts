@@ -12,7 +12,7 @@
 
 export { PanelLayout } from './PanelLayout'
 export type { PanelLayoutHandle, PanelLayoutProps, PanelLeafInfo } from './PanelLayout'
-export type { LeafClassName, LeafRenderer, TabbablePredicate } from './types'
+export type { ClosablePredicate, LeafClassName, LeafRenderer, TabbablePredicate } from './types'
 
 // ── the tiling tree: node shape, builders, migration, pure mutators ──────────
 export {

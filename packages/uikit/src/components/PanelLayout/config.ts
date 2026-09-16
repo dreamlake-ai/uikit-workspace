@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react'
-import type { LeafClassName, LeafRenderer } from './types'
+import type { ClosablePredicate, LeafClassName, LeafRenderer } from './types'
 
 /**
  * The STATIC per-layout configuration — everything a leaf needs that does not
@@ -16,6 +16,7 @@ export interface PanelConfig {
   headerClassName?: LeafClassName
   headerContentClassName?: LeafClassName
   contentColumnHeaderClass?: string
+  closable?: ClosablePredicate
   palette: readonly string[]
 }
 
