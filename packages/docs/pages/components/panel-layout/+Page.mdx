@@ -32,11 +32,11 @@ through props rather than inferred.
 
 Three layers ship separately, and the lower two are useful on their own:
 
-| Layer | What it is |
-| --- | --- |
-| `panel-tree` | The pure tree — nodes, migration, mutators. No React, no DOM. |
-| `panel-box` | Panel geometry as CSS math, published as `--panel-x` / `--panel-w`. |
-| `PanelLayout` | The renderer plus the pointer and keyboard wiring. |
+| Layer         | What it is                                                          |
+| ------------- | ------------------------------------------------------------------- |
+| `panel-tree`  | The pure tree — nodes, migration, mutators. No React, no DOM.       |
+| `panel-box`   | Panel geometry as CSS math, published as `--panel-x` / `--panel-w`. |
+| `PanelLayout` | The renderer plus the pointer and keyboard wiring.                  |
 
 ## Demo
 
@@ -50,8 +50,8 @@ Escape cancels a drag in flight.
 </Preview>
 
 <Callout variant="info" title="Give it a height">
-  `PanelLayout` fills its container. Without an ancestor that has a real height
-  it collapses to nothing — the demos here sit in a fixed-height box.
+  `PanelLayout` fills its container. Without an ancestor that has a real height it collapses to
+  nothing — the demos here sit in a fixed-height box.
 </Callout>
 
 ## Tab groups
@@ -79,6 +79,25 @@ of merging. Drag Editor and Terminal onto each other and they tab.
 <Preview source={singletonSrc} filename="SingletonSpec.tsx">
   <SingletonSpec />
 </Preview>
+
+## Panels that stay
+
+A panel can be the SUBJECT of a screen rather than an auxiliary view — the note
+you are reading, with reference panels beside it. Closing that one would leave
+a window of satellites with nothing to orbit.
+
+`closable` refuses it. The header's close button goes, a tab's × goes, and
+Delete on that tab does nothing. It is a policy rather than a class hook
+precisely because hiding the button is not enough: Delete never touches one, so
+the refusal lives next to the close handler and the affordances just reflect it.
+
+```tsx
+<PanelLayout initial={initial} closable={(leaf) => leaf.view !== 'subject'} primaryView="subject" />
+```
+
+The imperative `closeLeaf` is deliberately NOT gated — a host taking a panel
+away itself already knows its own policy, and would otherwise have to flip the
+predicate first just to clean up after a route change.
 
 ## Filling the panels
 
@@ -129,23 +148,22 @@ const persisted = usePersistedPanelLayout({
   existed; `normalizeTree` migrates whatever comes out.
 </Callout>
 
-| Option | Type | Default | Description |
-| --- | --- | --- | --- |
-| `key` | `string` | — | Storage key. Namespace it per user or workspace. |
-| `fallback` | `() => PanelNode` | — | Tree to use when nothing usable is saved. |
-| `storage` | `Storage` | `localStorage` | Any `Storage` — e.g. `sessionStorage`. |
-| `validate` | `(root) => boolean` | — | Last word on a restored tree, run *after* migration. |
-| `transform` | `(root) => PanelNode \| null` | — | Narrow what gets saved — pair with `scopeSubtree`. |
-| `debounceMs` | `number` | `150` | Write coalescing window. `0` writes immediately. |
+| Option       | Type                          | Default        | Description                                          |
+| ------------ | ----------------------------- | -------------- | ---------------------------------------------------- |
+| `key`        | `string`                      | —              | Storage key. Namespace it per user or workspace.     |
+| `fallback`   | `() => PanelNode`             | —              | Tree to use when nothing usable is saved.            |
+| `storage`    | `Storage`                     | `localStorage` | Any `Storage` — e.g. `sessionStorage`.               |
+| `validate`   | `(root) => boolean`           | —              | Last word on a restored tree, run _after_ migration. |
+| `transform`  | `(root) => PanelNode \| null` | —              | Narrow what gets saved — pair with `scopeSubtree`.   |
+| `debounceMs` | `number`                      | `150`          | Write coalescing window. `0` writes immediately.     |
 
 Returns `{ initial, onChange, clear, reset }`. A pending write is flushed on
 unmount and on `pagehide`, so the last drag of a session isn't lost.
 
 <Callout variant="warn" title="Reset is not the same door as restore">
-  `initial` RESTORES a layout, so wiring the toolbar's Reset to it hands back
-  the very layout the user is clearing. `reset()` is the other half — it forgets
-  the saved layout and returns the fallback. Pass it as `resetTo`, or call it
-  yourself and give the result to `replaceRoot`.
+  `initial` RESTORES a layout, so wiring the toolbar's Reset to it hands back the very layout the
+  user is clearing. `reset()` is the other half — it forgets the saved layout and returns the
+  fallback. Pass it as `resetTo`, or call it yourself and give the result to `replaceRoot`.
 </Callout>
 
 ## Scoped layouts
@@ -187,9 +205,9 @@ open that re-runs after the panel exists is a no-op rather than a second copy.
 const plan = resolveViewSplit({
   root: panelRef.current?.getRoot() ?? null,
   view: 'diff',
-  anchorView: 'editor',       // open alongside the primary panel
+  anchorView: 'editor', // open alongside the primary panel
   fallbackLeafId: firstLeafId,
-  prefs,                      // remembered { dir, before, px } per view
+  prefs, // remembered { dir, before, px } per view
   widthOf: (id) => measure(id),
 })
 if (!('skip' in plan)) {
@@ -197,18 +215,18 @@ if (!('skip' in plan)) {
 }
 ```
 
-A remembered pixel width is converted to a fraction of the target's *current*
+A remembered pixel width is converted to a fraction of the target's _current_
 width, so a restored width behaves at any window size; an unmeasurable target
 drops the fraction instead of dividing by zero.
 
 ## Keyboard and accessibility
 
-| Where | Keys |
-| --- | --- |
-| Any panel | `⌘/Ctrl D` split right · `⌘/Ctrl ⇧D` split down (see `splitShortcut`) |
-| Tab bar | `←` `→` move between tabs (selection follows focus) · `Home` `End` first/last · `Delete` close |
-| Divider | `←` `→` (or `↑` `↓`) nudge · `PageUp` `PageDown` coarse · `Home` `End` to the minimum either side |
-| Drag in flight | `Escape` cancels |
+| Where          | Keys                                                                                              |
+| -------------- | ------------------------------------------------------------------------------------------------- |
+| Any panel      | `⌘/Ctrl D` split right · `⌘/Ctrl ⇧D` split down (see `splitShortcut`)                             |
+| Tab bar        | `←` `→` move between tabs (selection follows focus) · `Home` `End` first/last · `Delete` close    |
+| Divider        | `←` `→` (or `↑` `↓`) nudge · `PageUp` `PageDown` coarse · `Home` `End` to the minimum either side |
+| Drag in flight | `Escape` cancels                                                                                  |
 
 The tab bar is a real `tablist`: tabs are `<button>`s carrying `aria-selected`
 and `aria-controls`, the panel they control is the matching `tabpanel`, and the
@@ -218,14 +236,14 @@ through the same clamp as the pointer, so no key can push a panel below its
 minimum.
 
 <Callout variant="info" title="Docking is pointer-only">
-  Dragging a panel onto another's edge — or a tab out of its group — has no
-  keyboard equivalent. The split shortcut and the imperative handle cover
-  creating and closing panels; rearranging them needs a pointer.
+  Dragging a panel onto another's edge — or a tab out of its group — has no keyboard equivalent. The
+  split shortcut and the imperative handle cover creating and closing panels; rearranging them needs
+  a pointer.
 </Callout>
 
 ## Panel geometry without measuring
 
-Content inside a panel sometimes needs to know where that panel *is* — a column
+Content inside a panel sometimes needs to know where that panel _is_ — a column
 centered on the viewport rather than on its panel, a header that must line up
 with the body beneath it. Measuring with a `ResizeObserver` is the obvious way
 and the wrong one: the callback fires after layout and commits a frame late, so
@@ -256,41 +274,42 @@ independent — a drag in one can never dock into another.
 
 ## Props
 
-| Prop | Type | Default | Description |
-| --- | --- | --- | --- |
-| `initial` | `() => PanelNode` | 3-panel demo | Builds the initial tree. Called once, on mount. |
-| `initialSingle` | `boolean` | `false` | Without `initial`: `true` starts with one panel. |
-| `root` | `PanelNode` | — | Controlled mode. The layout renders this and never mutates its own state; every change arrives via `onChange`. |
-| `onChange` | `(root: PanelNode) => void` | — | Fires on every tree mutation — split, close, resize, dock, reset. The hook for persistence. |
-| `onResize` | `(root: PanelNode) => void` | — | Fires *only* on a divider drag — the one signal that expresses "I want this panel at this size". |
-| `renderBody` | `(leaf: LeafNode) => ReactNode` | placeholder | Renders a panel's content. Dispatch on `leaf.view`. |
-| `renderHeader` | `(leaf: LeafNode) => ReactNode` | dot + title | Replaces the header's centre content. |
-| `isTabbable` | `(view?: string) => boolean` | every view | Return `false` to make a view a singleton that can never be tab-merged. |
-| `primaryView` | `string` | — | The view that absorbs a freed slot when a sibling closes. Default: every sibling grows proportionally. |
-| `leafClassName` | `(leaf: LeafNode) => string \| undefined` | — | Extra classes on a panel root. Appended, so `bg-transparent` overrides the default opaque fill. |
-| `headerClassName` | `(leaf: LeafNode) => string \| undefined` | — | Extra classes on a panel header band. Appended. |
-| `headerContentClassName` | `(leaf: LeafNode) => string \| undefined` | `overflow-hidden` | **Replaces** the overflow policy on the custom-header wrapper. |
-| `rootBox` | `PanelBox` | `--panel-area-x/-w` | The box the tree's root occupies, as CSS math. |
-| `contentColumnHeaderClass` | `string` | — | Class for the header of a panel that has both a custom header and a `contentMax` — the hook for a viewport-centered content column. |
-| `palette` | `readonly string[]` | 8 tints | Tints for placeholder panels and the drag surrogate. |
-| `splitShortcut` | `false \| { key?: string }` | `{ key: 'd' }` | `⌘/Ctrl + key` splits the focused panel (`⇧` = vertical). `false` removes the binding. |
-| `showToolbar` | `boolean` | `false` | Show the built-in toolbar (title, hints, Reset). |
-| `toolbar` | `ReactNode` | — | Replace the toolbar's contents. Implies `showToolbar`. |
-| `resetTo` | `() => PanelNode` | `initial` | What the toolbar's Reset builds. Point it at a *fresh* tree whenever `initial` restores one. |
-| `className` | `string` | — | Extra classes on the root element. |
+| Prop                       | Type                                      | Default             | Description                                                                                                                         |
+| -------------------------- | ----------------------------------------- | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `initial`                  | `() => PanelNode`                         | 3-panel demo        | Builds the initial tree. Called once, on mount.                                                                                     |
+| `initialSingle`            | `boolean`                                 | `false`             | Without `initial`: `true` starts with one panel.                                                                                    |
+| `root`                     | `PanelNode`                               | —                   | Controlled mode. The layout renders this and never mutates its own state; every change arrives via `onChange`.                      |
+| `onChange`                 | `(root: PanelNode) => void`               | —                   | Fires on every tree mutation — split, close, resize, dock, reset. The hook for persistence.                                         |
+| `onResize`                 | `(root: PanelNode) => void`               | —                   | Fires _only_ on a divider drag — the one signal that expresses "I want this panel at this size".                                    |
+| `renderBody`               | `(leaf: LeafNode) => ReactNode`           | placeholder         | Renders a panel's content. Dispatch on `leaf.view`.                                                                                 |
+| `renderHeader`             | `(leaf: LeafNode) => ReactNode`           | dot + title         | Replaces the header's centre content.                                                                                               |
+| `isTabbable`               | `(view?: string) => boolean`              | every view          | Return `false` to make a view a singleton that can never be tab-merged.                                                             |
+| `closable`                 | `(leaf: LeafNode) => boolean`             | every panel         | Return `false` to withhold a panel's close affordances _and_ refuse those closes. The handle's `closeLeaf` is not gated by it.      |
+| `primaryView`              | `string`                                  | —                   | The view that absorbs a freed slot when a sibling closes. Default: every sibling grows proportionally.                              |
+| `leafClassName`            | `(leaf: LeafNode) => string \| undefined` | —                   | Extra classes on a panel root. Appended, so `bg-transparent` overrides the default opaque fill.                                     |
+| `headerClassName`          | `(leaf: LeafNode) => string \| undefined` | —                   | Extra classes on a panel header band. Appended.                                                                                     |
+| `headerContentClassName`   | `(leaf: LeafNode) => string \| undefined` | `overflow-hidden`   | **Replaces** the overflow policy on the custom-header wrapper.                                                                      |
+| `rootBox`                  | `PanelBox`                                | `--panel-area-x/-w` | The box the tree's root occupies, as CSS math.                                                                                      |
+| `contentColumnHeaderClass` | `string`                                  | —                   | Class for the header of a panel that has both a custom header and a `contentMax` — the hook for a viewport-centered content column. |
+| `palette`                  | `readonly string[]`                       | 8 tints             | Tints for placeholder panels and the drag surrogate.                                                                                |
+| `splitShortcut`            | `false \| { key?: string }`               | `{ key: 'd' }`      | `⌘/Ctrl + key` splits the focused panel (`⇧` = vertical). `false` removes the binding.                                              |
+| `showToolbar`              | `boolean`                                 | `false`             | Show the built-in toolbar (title, hints, Reset).                                                                                    |
+| `toolbar`                  | `ReactNode`                               | —                   | Replace the toolbar's contents. Implies `showToolbar`.                                                                              |
+| `resetTo`                  | `() => PanelNode`                         | `initial`           | What the toolbar's Reset builds. Point it at a _fresh_ tree whenever `initial` restores one.                                        |
+| `className`                | `string`                                  | —                   | Extra classes on the root element.                                                                                                  |
 
 ## Handle
 
 `ref` exposes the imperative API.
 
-| Method | Description |
-| --- | --- |
+| Method                                                               | Description                                                                              |
+| -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
 | `splitWith(leafId, dir, view?, title?, before?, size?, contentMax?)` | Split a panel, seeding the new one. `size` is auto-computed for row splits when omitted. |
-| `getRoot()` | The current tree. |
-| `replaceRoot(tree)` | Swap the whole layout. Migrates the incoming tree and reseeds the id counters past it. |
-| `inspect()` | Every panel with its live pixel rect, walked from the DOM. |
-| `closeLeaf(id)` | Close a panel. Closing the last one leaves a fresh blank panel. |
-| `focusLeaf(id)` | Target keyboard splits at a panel. No-op for a dead id. |
+| `getRoot()`                                                          | The current tree.                                                                        |
+| `replaceRoot(tree)`                                                  | Swap the whole layout. Migrates the incoming tree and reseeds the id counters past it.   |
+| `inspect()`                                                          | Every panel with its live pixel rect, walked from the DOM.                               |
+| `closeLeaf(id)`                                                      | Close a panel. Closing the last one leaves a fresh blank panel.                          |
+| `focusLeaf(id)`                                                      | Target keyboard splits at a panel. No-op for a dead id.                                  |
 
 ## Tree model
 
@@ -302,12 +321,12 @@ path it walks, so a subtree it changed nothing in still comes back as a new
 object — and a split that lost no children is rebuilt all the same. Compare by
 `id`, which survives a mutation, rather than by reference.
 
-| Export | Description |
-| --- | --- |
-| `panelLeaf` · `panelSplit` · `panelGroup` | Builders for composing a tree. |
-| `applySplit` · `applyClose` · `applyResize` · `applyDock` · `applyAddTab` · `applyActivateTab` | The mutators the UI drives. |
-| `extractLeaf` · `insertBeside` | Pull a panel out and put it back — what a dock is made of. |
-| `findLeaf` · `findLeafByView` · `firstLeafId` | Queries. |
-| `normalizeTree` · `normalizeGroup` · `wrapLayout` · `unwrapLayout` | Migration and the persistence envelope. |
-| `dockSideFromPoint` · `dockRect` | Drag geometry: which edge a cursor is nearest, and the rect a drop would produce. |
-| `reseedCounters` | Lift the id counters past a restored tree so new nodes cannot collide. |
+| Export                                                                                         | Description                                                                       |
+| ---------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| `panelLeaf` · `panelSplit` · `panelGroup`                                                      | Builders for composing a tree.                                                    |
+| `applySplit` · `applyClose` · `applyResize` · `applyDock` · `applyAddTab` · `applyActivateTab` | The mutators the UI drives.                                                       |
+| `extractLeaf` · `insertBeside`                                                                 | Pull a panel out and put it back — what a dock is made of.                        |
+| `findLeaf` · `findLeafByView` · `firstLeafId`                                                  | Queries.                                                                          |
+| `normalizeTree` · `normalizeGroup` · `wrapLayout` · `unwrapLayout`                             | Migration and the persistence envelope.                                           |
+| `dockSideFromPoint` · `dockRect`                                                               | Drag geometry: which edge a cursor is nearest, and the rect a drop would produce. |
+| `reseedCounters`                                                                               | Lift the id counters past a restored tree so new nodes cannot collide.            |

@@ -56,7 +56,7 @@ Duration bars use varied `color` tones; the halt, checkpoint, and completion
 rows are instant `time` events. `getIcon` returns a small
 [lucide](https://lucide.dev) icon per row based on its `etype`.
 
-The `` fills its container, so wrap it in a fixed-height element
+The `<Waterfall>` fills its container, so wrap it in a fixed-height element
 (here `360px`).
 
 ## Props — `WaterfallProps`

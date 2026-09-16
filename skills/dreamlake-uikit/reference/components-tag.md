@@ -38,12 +38,12 @@ hairline ring.
 
 | Props | Static text | Hover / active |
 | --- | --- | --- |
-| `` | `var(--ink)` | `var(--uikit-accent)` |
-| `` | `var(--ink)` | `green` tone |
-| `` | `var(--ink)` | `#abc123` |
-| `` | `red` tone | `red` tone |
-| `` | `red` tone | `amber` tone |
-| `` | `red` tone | `#abc123` |
+| `<Tag name="x" />` | `var(--ink)` | `var(--uikit-accent)` |
+| `<Tag name="x" accent="green" />` | `var(--ink)` | `green` tone |
+| `<Tag name="x" accent="#abc123" />` | `var(--ink)` | `#abc123` |
+| `<Tag name="x" tone="red" />` | `red` tone | `red` tone |
+| `<Tag name="x" tone="red" accent="amber" />` | `red` tone | `amber` tone |
+| `<Tag name="x" tone="red" accent="#abc123" />` | `red` tone | `#abc123` |
 
 > **Confirmation flows** — `Tag` fires `onRemove` immediately on × click. If
 > you want a "are you sure?" step or a "don't ask for the next 10 minutes"

@@ -29,7 +29,7 @@ Omit `filters` and `sortOptions` to render just the search input.
 | `filterValue` | `string` | — | Active filter value (controlled). |
 | `onFilterChange` | `(value: string) => void` | — | Called when a chip is clicked or the token is dismissed. |
 | `placeholder` | `string` | `'search'` | Placeholder text for the search input. |
-| `searchRef` | `RefObject` | — | Forward ref to the underlying input element. |
+| `searchRef` | `RefObject<HTMLInputElement>` | — | Forward ref to the underlying input element. |
 | `sortOptions` | `{ value: string; label: string }[]` | — | Options for the sort dropdown. Omit to hide the dropdown. |
 | `sortValue` | `string` | — | Active sort value (controlled). |
 | `onSortChange` | `(value: string) => void` | — | Called when the sort selection changes. |

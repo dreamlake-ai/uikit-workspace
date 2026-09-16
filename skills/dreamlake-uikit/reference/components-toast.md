@@ -1,11 +1,13 @@
 # Toast
 
-Transient, non-blocking notifications. Mount `` **once** near the app
+Transient, non-blocking notifications. Mount `<Toaster />` **once** near the app
 root, then call the imperative `toast()` API from anywhere.
 
 ```tsx
+import { toast, Toaster } from '@dreamlake/uikit'
 
 // at the app root:
+<Toaster position="bottom-right" />
 
 // anywhere:
 toast('Saved')

@@ -39,7 +39,7 @@ import {
   type PanelNode,
   type PanelRect,
 } from './panel-tree'
-import type { LeafClassName, LeafRenderer, TabbablePredicate } from './types'
+import type { ClosablePredicate, LeafClassName, LeafRenderer, TabbablePredicate } from './types'
 
 // ---------------------------------------------------------------------------
 // PanelLayout — a recursive tiling panel workspace.
@@ -104,7 +104,7 @@ export interface PanelLayoutHandle {
     title?: string,
     before?: boolean,
     size?: number,
-    contentMax?: number,
+    contentMax?: number
   ) => void
   getRoot: () => PanelNode
   /** Replace the entire layout at runtime (e.g. switching workspaces). */
@@ -163,6 +163,11 @@ export interface PanelLayoutProps {
    *  makes a view a SINGLETON — the centre/tab drop zone is suppressed for it, in
    *  both the live drag preview and the drop itself. */
   isTabbable?: TabbablePredicate
+  /** Which panels may be dismissed. Default: every panel may. Returning false
+   *  withholds that leaf's close affordances AND refuses those closes — see
+   *  `ClosablePredicate`. The imperative handle's `closeLeaf` is not gated by
+   *  it, so a host can still take a panel away on its own terms. */
+  closable?: ClosablePredicate
   /** The app's PRIMARY view. When a panel closes next to a leaf carrying it, that
    *  leaf absorbs the whole freed slot, so the primary column recovers its width
    *  as auxiliary panels are dismissed. Default: every sibling grows
@@ -206,6 +211,7 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
     resetTo,
     className,
     isTabbable,
+    closable,
     primaryView,
     leafClassName,
     headerClassName,
@@ -215,7 +221,7 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
     palette = DEFAULT_PALETTE,
     splitShortcut = { key: 'd' },
   }: PanelLayoutProps,
-  ref: ForwardedRef<PanelLayoutHandle>,
+  ref: ForwardedRef<PanelLayoutHandle>
 ) {
   const controlled = rootProp !== undefined
   const [internalRoot, setInternalRoot] = useState<PanelNode>(() => {
@@ -261,6 +267,8 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
   onResizeRef.current = onResize
   const isTabbableRef = useRef(isTabbable)
   isTabbableRef.current = isTabbable
+  const closableRef = useRef(closable)
+  closableRef.current = closable
   const primaryViewRef = useRef(primaryView)
   primaryViewRef.current = primaryView
 
@@ -289,6 +297,18 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
     const next = applyClose(rootRef.current, id, primaryViewRef.current) ?? makeLeaf()
     commit(next)
     focus(findLeaf(next, focusRef.current) ? focusRef.current : firstLeafId(next))
+  }
+
+  /** The close every USER affordance goes through — a header's close button, a
+   *  tab's ×, Delete on a focused tab. `closable` is enforced here rather than
+   *  only by hiding those buttons, because Delete never touches a button; a
+   *  hidden button on its own would be a suggestion. `closeLeaf` above stays
+   *  ungated on purpose: it is the host's own tool, and a host closing a panel
+   *  itself already knows its policy. */
+  const requestClose = (id: string) => {
+    const leaf = findLeaf(rootRef.current, id)
+    if (leaf && closableRef.current?.(leaf) === false) return
+    closeLeaf(id)
   }
 
   const doSplit = (id: string, dir: Dir) => {
@@ -339,7 +359,7 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
         title?: string,
         before?: boolean,
         size?: number,
-        contentMax?: number,
+        contentMax?: number
       ) => {
         let fraction = size
         if (fraction == null && dir === 'row') {
@@ -411,7 +431,7 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
       },
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+    []
   )
 
   // Keyboard splits. Capture phase + stopPropagation so a page-global binding on
@@ -446,7 +466,8 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
     // is also the only correct source rect for an inactive tab, whose leaf is
     // not mounted at all.
     const from = e.currentTarget as HTMLElement
-    const panelEl = (from.closest('[data-leaf-id]') ?? from.closest('[data-panel-region]')) as HTMLElement | null
+    const panelEl = (from.closest('[data-leaf-id]') ??
+      from.closest('[data-panel-region]')) as HTMLElement | null
     if (!panelEl) return
     const r = panelEl.getBoundingClientRect()
     focus(leaf.id)
@@ -514,7 +535,13 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
       if (d?.armed && d.target) {
         // Belt-and-suspenders: even though the side was already gated during the
         // drag, pass the predicate so a `center` can never group a singleton.
-        const next = applyDock(rootRef.current, d.srcId, d.target.id, d.target.side, isTabbableRef.current)
+        const next = applyDock(
+          rootRef.current,
+          d.srcId,
+          d.target.id,
+          d.target.side,
+          isTabbableRef.current
+        )
         // `applyDock` hands back the identical reference when it declines the
         // move (a vanished source, or a drop onto itself) — don't report that.
         if (next !== rootRef.current) commit(next)
@@ -566,6 +593,7 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
     headerClassName,
     headerContentClassName,
     contentColumnHeaderClass,
+    closable,
     palette,
   }
 
@@ -574,13 +602,19 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
   return (
     <div
       ref={containerRef}
-      className={cn('flex flex-col h-full min-h-0', withToolbar ? 'gap-[10px]' : 'gap-0', className)}
+      className={cn(
+        'flex flex-col h-full min-h-0',
+        withToolbar ? 'gap-[10px]' : 'gap-0',
+        className
+      )}
     >
       {withToolbar && (
         <div className="flex items-center gap-3 shrink-0">
           {toolbar ?? (
             <>
-              <span className="text-uikit-ink font-uikit-ui text-[15px] font-bold tracking-[-0.01em]">Panels</span>
+              <span className="text-uikit-ink font-uikit-ui text-[15px] font-bold tracking-[-0.01em]">
+                Panels
+              </span>
               <span className="text-uikit-muted font-uikit-mono text-[10.5px] opacity-80 tracking-[0.02em]">
                 ⌘D split → · ⌘⇧D split ↓ · drag the handle to dock
               </span>
@@ -605,7 +639,7 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
             box={rootBox}
             draggingId={drag?.armed ? drag.srcId : null}
             onFocus={focus}
-            onClose={closeLeaf}
+            onClose={requestClose}
             onResize={doResize}
             onActivateTab={doActivateTab}
             onHandleDown={onHandleDown}
@@ -619,13 +653,18 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
         (() => {
           const box = drag.target
             ? dockRect(drag.target.rect, drag.target.side)
-            : { left: drag.x - drag.grabDX, top: drag.y - drag.grabDY, width: drag.srcW, height: drag.srcH }
+            : {
+                left: drag.x - drag.grabDX,
+                top: drag.y - drag.grabDY,
+                width: drag.srcW,
+                height: drag.srcH,
+              }
           return (
             <div
               className={cn(
                 'fixed z-[9999] pointer-events-none rounded-[12px] opacity-[0.94] flex items-center justify-center gap-2',
                 'bg-[color-mix(in_srgb,var(--uikit-accent)_10%,var(--panel-bg))]',
-                'border-[1.5px] border-[color-mix(in_srgb,var(--uikit-accent)_35%,transparent)]',
+                'border-[1.5px] border-[color-mix(in_srgb,var(--uikit-accent)_35%,transparent)]'
               )}
               // left/top/width/height are runtime (dockRect or cursor coords);
               // the transition is runtime-conditional on drag.target — both inline.
@@ -641,7 +680,9 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
               }}
             >
               <span className="w-2 h-2 rounded-full" style={{ background: drag.tint }} />
-              <span className="text-uikit-ink font-uikit-ui text-[13px] font-semibold">{drag.label}</span>
+              <span className="text-uikit-ink font-uikit-ui text-[13px] font-semibold">
+                {drag.label}
+              </span>
             </div>
           )
         })()}

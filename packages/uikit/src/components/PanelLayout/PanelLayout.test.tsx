@@ -38,7 +38,8 @@ function render(ui: React.ReactNode) {
   act(() => root.render(ui))
 }
 
-const leafIds = () => [...container.querySelectorAll('[data-leaf-id]')].map((el) => el.getAttribute('data-leaf-id'))
+const leafIds = () =>
+  [...container.querySelectorAll('[data-leaf-id]')].map((el) => el.getAttribute('data-leaf-id'))
 const sizesOf = (n: PanelNode) => (n.kind === 'split' ? n.sizes : null)
 
 /** A two-panel row: a `chat` leaf and an auxiliary one, 50/50. */
@@ -60,7 +61,7 @@ it('renderBody and renderHeader receive the leaf and render into the panel', () 
       initial={twoPane}
       renderBody={(l) => <div data-testid={`body-${l.view}`}>{l.view}</div>}
       renderHeader={(l) => <span data-testid={`head-${l.view}`}>{l.title}</span>}
-    />,
+    />
   )
   expect(container.querySelector('[data-testid="body-chat"]')).toBeTruthy()
   expect(container.querySelector('[data-testid="body-files"]')).toBeTruthy()
@@ -74,7 +75,7 @@ it('primaryView reaches applyClose: the named view absorbs the freed slot', () =
   const tree = panelSplit(
     'row',
     [panelLeaf({ view: 'chat' }), panelLeaf({ view: 'files' }), panelLeaf({ view: 'diff' })],
-    [50, 25, 25],
+    [50, 25, 25]
   )
   render(<PanelLayout ref={ref} initial={() => tree} primaryView="chat" />)
   const diffId = (tree as Extract<PanelNode, { kind: 'split' }>).children[2].id
@@ -88,7 +89,7 @@ it('WITHOUT primaryView the same close renormalizes proportionally', () => {
   const tree = panelSplit(
     'row',
     [panelLeaf({ view: 'chat' }), panelLeaf({ view: 'files' }), panelLeaf({ view: 'diff' })],
-    [50, 25, 25],
+    [50, 25, 25]
   )
   render(<PanelLayout ref={ref} initial={() => tree} />)
   const diffId = (tree as Extract<PanelNode, { kind: 'split' }>).children[2].id
@@ -106,6 +107,57 @@ it('closing the header button routes through the same path as closeLeaf', () => 
   expect(leafIds()).toHaveLength(1)
 })
 
+// ── closable ─────────────────────────────────────────────────────────────────
+
+it('closable withholds the close button from the panel it refuses, and only that one', () => {
+  const tree = twoPane() as Extract<PanelNode, { kind: 'split' }>
+  const [chat, files] = tree.children
+  render(<PanelLayout initial={() => tree} closable={(l) => l.view !== 'chat'} />)
+
+  const buttons = [
+    ...container.querySelectorAll<HTMLButtonElement>('button[aria-label="Close panel"]'),
+  ]
+  expect(buttons).toHaveLength(1)
+  // And it is the auxiliary panel's, not the subject's.
+  expect(buttons[0].closest('[data-leaf-id]')?.getAttribute('data-leaf-id')).toBe(files.id)
+  expect(leafIds()).toStrictEqual([chat.id, files.id])
+})
+
+it('closable refuses the close itself, not just the button — Delete never touches one', () => {
+  const pinned = panelLeaf({ view: 'chat', title: 'Chat' })
+  const spare = panelLeaf({ view: 'files', title: 'Files' })
+  const ref = createRef<PanelLayoutHandle>()
+  const tree: PanelNode = { kind: 'group', id: 'g', children: [pinned, spare], activeId: pinned.id }
+  render(<PanelLayout ref={ref} initial={() => tree} closable={(l) => l.view !== 'chat'} />)
+
+  const tabs = () => [...container.querySelectorAll<HTMLButtonElement>('[role="tab"]')]
+  expect(tabs()).toHaveLength(2)
+  // The refused tab carries no × either.
+  expect(container.querySelectorAll('[aria-label="Close Chat"]')).toHaveLength(0)
+  expect(container.querySelectorAll('[aria-label="Close Files"]')).toHaveLength(1)
+
+  act(() => {
+    tabs()[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'Delete', bubbles: true }))
+  })
+  expect(tabs(), 'Delete on a panel that may not close does nothing').toHaveLength(2)
+
+  act(() => {
+    tabs()[1].dispatchEvent(new KeyboardEvent('keydown', { key: 'Delete', bubbles: true }))
+  })
+  expect(tabs(), 'Delete on one that may still closes it').toHaveLength(0)
+  expect(ref.current!.getRoot().kind, 'a group of one is just its child').toBe('leaf')
+})
+
+it('the handle can still close a panel the user may not — the host owns that call', () => {
+  const ref = createRef<PanelLayoutHandle>()
+  const tree = twoPane()
+  render(<PanelLayout ref={ref} initial={() => tree} closable={() => false} />)
+  expect(container.querySelectorAll('button[aria-label="Close panel"]')).toHaveLength(0)
+
+  act(() => ref.current!.closeLeaf(leafIds()[1]!))
+  expect(leafIds(), 'closeLeaf is deliberately ungated').toHaveLength(1)
+})
+
 // ── class seams ──────────────────────────────────────────────────────────────
 
 it('leafClassName overrides the default opaque fill (tailwind-merge resolves it)', () => {
@@ -114,7 +166,7 @@ it('leafClassName overrides the default opaque fill (tailwind-merge resolves it)
       initial={twoPane}
       renderBody={(l) => <div>{l.view}</div>}
       leafClassName={(l) => (l.view === 'chat' ? 'bg-transparent' : undefined)}
-    />,
+    />
   )
   const [chat, files] = [...container.querySelectorAll('[data-leaf-id]')] as HTMLElement[]
   expect(chat.className).toContain('bg-transparent')
@@ -128,7 +180,7 @@ it('headerContentClassName REPLACES the default overflow policy', () => {
       initial={twoPane}
       renderHeader={(l) => <span>{l.view}</span>}
       headerContentClassName={(l) => (l.view === 'files' ? 'overflow-y-visible' : undefined)}
-    />,
+    />
   )
   const wrappers = [...container.querySelectorAll('header > div')] as HTMLElement[]
   expect(wrappers[0].className).toContain('overflow-hidden')
@@ -146,7 +198,7 @@ it('contentColumnHeaderClass applies only to a custom header with a contentMax',
       initial={() => tree}
       renderHeader={(l) => <span>{l.view}</span>}
       contentColumnHeaderClass="on-column"
-    />,
+    />
   )
   const headers = [...container.querySelectorAll('header')] as HTMLElement[]
   expect(headers[0].className).toContain('on-column')
@@ -162,7 +214,12 @@ it('a leaf with contentMax publishes --content-max alongside the box vars', () =
 })
 
 it('rootBox replaces the default panel-area variable names', () => {
-  render(<PanelLayout initial={() => panelLeaf({ view: 'chat' })} rootBox={{ x: 'var(--my-x)', w: 'var(--my-w)' }} />)
+  render(
+    <PanelLayout
+      initial={() => panelLeaf({ view: 'chat' })}
+      rootBox={{ x: 'var(--my-x)', w: 'var(--my-w)' }}
+    />
+  )
   const el = container.querySelector('[data-leaf-id]') as HTMLElement
   expect(el.style.getPropertyValue('--panel-w')).toContain('--my-w')
 })
@@ -244,7 +301,9 @@ it('uncontrolled: the same close DOES update the render', () => {
 
 function pressSplit(shift = false) {
   act(() => {
-    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'd', metaKey: true, shiftKey: shift, bubbles: true }))
+    window.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'd', metaKey: true, shiftKey: shift, bubbles: true })
+    )
   })
 }
 
@@ -263,7 +322,9 @@ it('⌘D splits the focused panel horizontally, ⌘⇧D vertically', () => {
 
 it('splitShortcut={false} removes the binding', () => {
   const ref = createRef<PanelLayoutHandle>()
-  render(<PanelLayout ref={ref} initial={() => panelLeaf({ view: 'chat' })} splitShortcut={false} />)
+  render(
+    <PanelLayout ref={ref} initial={() => panelLeaf({ view: 'chat' })} splitShortcut={false} />
+  )
   pressSplit()
   expect(ref.current!.getRoot().kind).toBe('leaf')
 })
@@ -341,7 +402,7 @@ it('two layouts on a page do not see each other through the DOM', () => {
     <>
       <PanelLayout ref={a} initial={() => panelLeaf({ view: 'a-only' })} />
       <PanelLayout ref={b} initial={twoPane} />
-    </>,
+    </>
   )
   // `data-leaf-id` is unique per tree, not per document, and every DOM lookup is
   // scoped to the layout's own root — so neither instance can measure, inspect,
@@ -363,7 +424,7 @@ it('a grouped panel does not repeat its title and close button under the tab', (
   expect(container.querySelectorAll('button[aria-label="Close panel"]')).toHaveLength(0)
   expect(
     container.querySelectorAll('[role="button"][aria-label^="Close "]'),
-    'the tab still closes it',
+    'the tab still closes it'
   ).toHaveLength(2)
 
   // A CUSTOM header carries controls the tab cannot, so it still renders.
@@ -395,16 +456,20 @@ it('a TAB can be dragged out of its group (the tab bar is not inside the leaf)',
   expect(tab.closest('[data-leaf-id]'), 'a tab really is outside every leaf').toBeNull()
   expect(
     container.querySelector(`[data-leaf-id="${b.id}"]`),
-    'and an inactive tab has no leaf element to measure',
+    'and an inactive tab has no leaf element to measure'
   ).toBeNull()
 
   act(() => {
-    tab.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, button: 0, clientX: 5, clientY: 5 }))
+    tab.dispatchEvent(
+      new PointerEvent('pointerdown', { bubbles: true, button: 0, clientX: 5, clientY: 5 })
+    )
   })
   expect(document.body.style.cursor, 'not a drag yet — the pointer has not moved').toBe('')
 
   act(() => {
-    window.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, clientX: 40, clientY: 5 }))
+    window.dispatchEvent(
+      new PointerEvent('pointermove', { bubbles: true, clientX: 40, clientY: 5 })
+    )
   })
   expect(document.body.style.cursor, 'past the threshold, the drag is live').toBe('grabbing')
   expect(container.textContent, 'the floating surrogate shows the dragged tab').toContain('B')
@@ -426,9 +491,13 @@ it('a plain tab CLICK switches tabs without ever starting a drag', () => {
 
   const tab = container.querySelector(`[data-tab-id="${b.id}"]`) as HTMLElement
   act(() => {
-    tab.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, button: 0, clientX: 10, clientY: 10 }))
+    tab.dispatchEvent(
+      new PointerEvent('pointerdown', { bubbles: true, button: 0, clientX: 10, clientY: 10 })
+    )
     // A hand is never perfectly still — a pixel of jitter is still a click.
-    window.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, clientX: 11, clientY: 10 }))
+    window.dispatchEvent(
+      new PointerEvent('pointermove', { bubbles: true, clientX: 11, clientY: 10 })
+    )
   })
   expect(document.body.style.cursor, 'jitter under the threshold is not a drag').toBe('')
   expect(container.querySelector('div.fixed'), 'no surrogate flashed').toBeNull()
@@ -451,7 +520,10 @@ it('the tab bar is a real tablist: roving focus, arrow keys, linked panel', () =
 
   expect(container.querySelector('[role="tablist"]')).toBeTruthy()
   const tabs = [...container.querySelectorAll<HTMLButtonElement>('[role="tab"]')]
-  expect(tabs.map((t) => t.tagName), 'buttons, not bare divs').toStrictEqual(['BUTTON', 'BUTTON'])
+  expect(
+    tabs.map((t) => t.tagName),
+    'buttons, not bare divs'
+  ).toStrictEqual(['BUTTON', 'BUTTON'])
   // Roving tabindex: the strip is one tab stop.
   expect(tabs.map((t) => t.tabIndex)).toStrictEqual([0, -1])
 
@@ -480,7 +552,9 @@ it('the divider is a keyboard-operable splitter', () => {
   // jsdom reports a 0px container, so the shared clamp declines to move rather
   // than writing NaN — what matters here is that the key is handled at all.
   act(() => {
-    sep.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true }))
+    sep.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true })
+    )
   })
   const sizes = sizesOf(ref.current!.getRoot())!
   expect(sizes.every(Number.isFinite), 'no NaN from a zero-width container').toBe(true)
@@ -501,7 +575,8 @@ it('a tree handed to `initial` is migrated and reseeds the id counters', () => {
   } as unknown as PanelNode
   render(<PanelLayout ref={ref} initial={() => restored} />)
 
-  const first = (ref.current!.getRoot() as Extract<PanelNode, { kind: 'split' }>).children[0] as LeafNode
+  const first = (ref.current!.getRoot() as Extract<PanelNode, { kind: 'split' }>)
+    .children[0] as LeafNode
   expect(first.instanceId, 'migrated on the way in, like replaceRoot does').toBe('n-800001')
 
   act(() => ref.current!.splitWith('n-800002', 'row', 'fresh'))
@@ -519,9 +594,13 @@ it('resetTo overrides what Reset rebuilds; without it Reset still uses initial',
   const startOver = () => panelLeaf({ view: 'blank' })
 
   render(<PanelLayout key="with" ref={ref} initial={restored} resetTo={startOver} showToolbar />)
-  const reset = () => [...container.querySelectorAll('button')].find((b) => b.textContent === 'Reset')!
+  const reset = () =>
+    [...container.querySelectorAll('button')].find((b) => b.textContent === 'Reset')!
   act(() => reset().click())
-  expect(ref.current!.inspect().map((i) => i.view), 'Reset starts over, not restores').toStrictEqual(['blank'])
+  expect(
+    ref.current!.inspect().map((i) => i.view),
+    'Reset starts over, not restores'
+  ).toStrictEqual(['blank'])
 
   // Unchanged when resetTo is absent. A fresh `key` forces a real remount —
   // re-rendering the same element position would just reconcile onto the

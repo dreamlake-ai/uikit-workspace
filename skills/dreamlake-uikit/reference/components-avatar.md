@@ -23,7 +23,7 @@ initials — so `name` is always required as the fallback.
 
 ## Composed form
 
-You can also compose `` and `` as children. The
+You can also compose `<AvatarImage>` and `<AvatarFallback>` as children. The
 image is hidden until it loads; if it's missing or errors, the fallback
 (usually initials) shows instead. This form defaults to a circle — pass
 `radius` to change it.
@@ -42,5 +42,5 @@ image is hidden until it loads; if it's missing or errors, the fallback
 
 | Component | Props | Description |
 | --- | --- | --- |
-| `AvatarImage` | native `<img>` attributes (`src`, `alt`, …) | Image inside a composed ``. Hidden until it loads; on error the sibling `` takes over. |
+| `AvatarImage` | native `<img>` attributes (`src`, `alt`, …) | Image inside a composed `<Avatar>`. Hidden until it loads; on error the sibling `<AvatarFallback>` takes over. |
 | `AvatarFallback` | native `<span>` attributes | Fallback content (usually initials) shown until the image loads. |

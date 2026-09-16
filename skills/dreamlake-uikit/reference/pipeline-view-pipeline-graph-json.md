@@ -186,7 +186,7 @@ every edge's flow. A remote runner streams these (over SSE / WebSocket) as jobs
 progress:
 
 ```tsx
-
+<PipelineGraph graph={tracedGraph} statusById={liveStatusFromRunner} />
 ```
 
 Structure stays static; status streams live; edges animate — with no re-tracing.
