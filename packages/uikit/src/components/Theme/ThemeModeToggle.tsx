@@ -192,9 +192,7 @@ export function ThemeModeToggle({
       <span
         aria-hidden
         className={cn(
-          // `shadow-uikit-sm` is what makes it read as a thumb sitting IN the
-          // frame rather than a hole cut out of it.
-          "absolute left-0.5 top-0.5 z-0 rounded-full bg-uikit-bg shadow-uikit-sm",
+          "absolute left-0.5 top-0.5 z-0 rounded-full bg-uikit-bg",
           "transition-transform ease-[var(--uikit-ease-thumb)] duration-[var(--uikit-dur-thumb)]",
           "motion-reduce:transition-none",
         )}

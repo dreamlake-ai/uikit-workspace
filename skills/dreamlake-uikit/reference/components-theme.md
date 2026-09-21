@@ -56,11 +56,11 @@ control" at the moment someone is about to use it; a permanent tinted slab in a
 quiet navbar is a box drawn around three icons that were reading fine without
 one.
 
-What makes that safe is the thumb's `shadow-uikit-sm`. A `--bg` thumb on a
-transparent strip over a `--bg` page is invisible, and the control falls apart
-into three loose icons — the elevation is what lets it read on its own ground,
-so the frame doesn't have to carry it. It shares its curve with `ToggleButtons`
-and `Tabs`' segment pill through `--uikit-ease-thumb` / `--uikit-dur-thumb`. Unselected glyphs differ only in
+The thumb carries no elevation. It reads because it covers the ground behind it
+and because the glyph sitting on it is inked while its neighbours are muted —
+measured on a bare `--bg` surface in both themes, which is the case the shadow
+was there to insure against. It shares its curve with `ToggleButtons` and
+`Tabs`' segment pill through `--uikit-ease-thumb` / `--uikit-dur-thumb`. Unselected glyphs differ only in
 opacity: they used to shrink and counter-rotate, which meant every switch shoved
 all three icons around while the thumb travelled underneath, competing with the
 one piece of motion the control has.
