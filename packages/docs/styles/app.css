@@ -57,9 +57,10 @@
    fifty rows each lighting on their own. It is the rail's own
    ::before — not a child element, which React would take back on the
    next render — so it is out of flow and cannot move the geometry. */
-.doc-sidebar {
-  position: relative;
-}
+/* NOTE: do NOT set `position: relative` here. The rail is `sticky`, which is
+   already a positioned element, so `::before` resolves against it — and a
+   `relative` override silently beat Tailwind's `sticky` and sent the whole
+   rail scrolling off with the page. */
 .doc-sidebar::before {
   content: "";
   position: absolute;
