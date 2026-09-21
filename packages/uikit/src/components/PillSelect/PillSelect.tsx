@@ -15,27 +15,32 @@ const PILL = [
   "font-uikit-mono text-uikit-11 leading-[14.5px] tracking-uikit-snug",
   "px-2.5 py-[5px] rounded-uikit-badge",
   "transition-[background-color,box-shadow,opacity,color] duration-[120ms]",
-  // Rest: a hairline, no fill. Hover only raises the label — the app drew no
-  // hover at all here, which left a clickable control with nothing to say it
-  // was one.
-  "bg-transparent text-uikit-ink shadow-[inset_0_0_0_1px_var(--faint)] opacity-85 hover:opacity-100",
+  // Rest is MUTED text on a hairline, no fill. The line marks where the
+  // targets are; it is the one place this row departs from `Toggle`, which
+  // outlines nothing — without a box the options read as loose words under the
+  // field label rather than a control you pick from.
+  "bg-transparent text-uikit-muted shadow-[inset_0_0_0_1px_var(--faint)] opacity-85",
+  "hover:bg-uikit-ink-5 hover:opacity-100",
   // Inset, matching TabRow — an offset ring around a 24px pill in a wrapping
   // row collides with its neighbours.
   "outline-none focus-visible:outline-2 focus-visible:outline-uikit-accent focus-visible:-outline-offset-2",
   "disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:opacity-40",
 ].join(" ");
 
-// The two controls part company only here — see the note on each.
+// Selected: ink text on a `--chip-bg` fill, and the hairline DROPS. The fill
+// says which one is taken; a line around that fill would only thicken its edge.
 //
-// Single-select fills: one of these is THE answer, and a solid slab says so.
-const SELECTED_INK = "bg-uikit-ink text-uikit-bg shadow-none opacity-100";
-// Multi-select does NOT fill. The hairline it already carries turns accent and
-// the ground takes the faintest accent wash, so a set of four selected chips
-// reads as four marked pills rather than a bar of solid colour — and the label
-// stays ink, which a white-on-accent fill could not manage in light mode
-// (#fffefa on #23aaff is 2.5:1, under AA).
-const SELECTED_ACCENT =
-  "bg-uikit-accent-soft text-uikit-ink shadow-[inset_0_0_0_1px_var(--uikit-accent)] opacity-100";
+// Three louder treatments were tried in the app and rejected, and the reasons
+// are worth keeping: a 1.5px ink ring made the selected option the heaviest ink
+// in a form whose other fields are bare text, so it read as flagged rather than
+// chosen and outshouted the submit button; an accent tint put a second blue in
+// a form that already has one, on the button that submits it; and a solid
+// accent fill with the label knocked out in `--bg` is the ink ring's problem in
+// another colour (and 2.5:1 in light mode besides).
+//
+// Single- and multi-select share it. What differs is how many are on at once,
+// which the control already shows.
+const SELECTED = "bg-uikit-chip text-uikit-ink shadow-none opacity-100";
 
 export interface PillRadioProps extends Omit<
   ComponentProps<"div">,
@@ -121,7 +126,7 @@ export function PillRadio({
             // within it. With nothing selected yet, the first option holds it.
             tabIndex={selected || (!value && option === options[0]) ? 0 : -1}
             onClick={() => onValueChange(option.value)}
-            className={cn(PILL, selected && SELECTED_INK)}
+            className={cn(PILL, selected && SELECTED)}
           >
             {option.label}
           </button>
@@ -173,7 +178,7 @@ export function ChipMulti({
             aria-pressed={selected}
             disabled={option.disabled}
             onClick={() => toggle(option.value)}
-            className={cn(PILL, selected && SELECTED_ACCENT)}
+            className={cn(PILL, selected && SELECTED)}
           >
             {option.label}
           </button>

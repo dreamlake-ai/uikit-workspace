@@ -29,15 +29,22 @@ status. These are a **control for choosing**, so they carry the app's mono
 form-field type at the 6px badge radius rather than the Tag's UI type at 12px.
 They look adjacent on purpose and are not interchangeable.
 
-`PillRadio` fills the selected pill with **ink**: picking one role out of four
-is a choice among peers, and a solid slab says "this one".
+A selected pill takes **ink text on a `--chip-bg` fill, and drops its
+hairline**. The line marks where the targets are; the fill says which one is
+taken, and a line around that fill would only thicken its edge. Rest is muted
+text, hover an ink-5% wash.
 
-`ChipMulti` does not fill. The hairline it already carries turns **accent** and
-the ground takes the faintest accent wash, because several selected chips at
-once is the normal state for a multi-select — four solid accent slabs in a row
-read as a bar of colour rather than as four marked pills. Keeping the label in
-ink also keeps it legible: white on `--uikit-accent` is 2.5:1 in light mode,
-under WCAG AA.
+Single- and multi-select share that treatment. What differs between them is how
+many are on at once, which the control already shows — it does not need a second
+colour to say it.
+
+Three louder options were tried in the app and rejected, and the reasons are
+worth keeping. A **1.5px ink ring** made the selected option the heaviest ink in
+a form whose other fields are bare text, so it read as flagged rather than
+chosen and outshouted the submit button. An **accent tint** put a second blue in
+a form that already has one — on the button that submits it. A **solid accent
+fill** with the label knocked out in `--bg` is the ink ring's problem in another
+colour, and 2.5:1 against white besides.
 
 `PillRadio` is a `radiogroup` of real `role="radio"` buttons: one tab stop for
 the group, arrow keys to move within it, and selection follows focus.
