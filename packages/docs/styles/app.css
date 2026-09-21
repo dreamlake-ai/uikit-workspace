@@ -67,3 +67,46 @@
   font-family: var(--f-ui) !important;
   text-transform: none !important;
 }
+
+/* ── Sidebar hover glide ─────────────────────────────────────────
+   See lib/sidebarGlide.ts. One block travels between rows instead of
+   fifty rows each lighting on their own. It is the rail's own
+   ::before — not a child element, which React would take back on the
+   next render — so it is out of flow and cannot move the geometry. */
+/* NOTE: do NOT set `position: relative` here. The rail is `sticky`, which is
+   already a positioned element, so `::before` resolves against it — and a
+   `relative` override silently beat Tailwind's `sticky` and sent the whole
+   rail scrolling off with the page. */
+.doc-sidebar::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 0;
+  width: var(--glide-w, 0px);
+  height: var(--glide-h, 0px);
+  transform: translate(var(--glide-x, 0px), var(--glide-y, 0px));
+  opacity: var(--glide-o, 0);
+  border-radius: 8px;
+  background: var(--chip-bg);
+  pointer-events: none;
+  will-change: transform;
+  transition-property: var(
+    --glide-transition,
+    transform,
+    width,
+    height,
+    opacity
+  );
+  transition-duration: 220ms;
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+.doc-sidebar .sidebar-link {
+  position: relative;
+  z-index: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .doc-sidebar::before {
+    transition-duration: 0ms;
+  }
+}
