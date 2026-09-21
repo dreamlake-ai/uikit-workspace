@@ -17,6 +17,36 @@ empty input removes the token. Filter chips can carry a state color via
 
 Omit `filters` and `sortOptions` to render just the search input.
 
+## Marking the match — `HighlightedText`
+
+The bar produces a query; the rows underneath have to show why they matched.
+`HighlightedText` wraps every occurrence of the query in a soft accent-tinted
+mark — documented here because a query with no marked results is half a search.
+
+It renders a real `<mark>`, not a tinted `<span>`: the element exists for
+exactly this, and assistive tech can announce it. The browser's default yellow
+is overridden by the kit's wash, `--color-uikit-accent-22` — mixed in oklab
+rather than sRGB because it sits *under* text that has to stay readable in both
+themes.
+
+Matching is case-insensitive by default; a reader typing `lake` expects to see
+`Lakeshore` marked. Pass `caseSensitive` for a literal match. Every occurrence
+is marked, not just the first; overlapping matches are not, since `"aa"` inside
+`"aaa"` is one highlight to a reader. A query that doesn't appear — or an empty
+one — renders the text untouched, so it is safe to wrap around a label
+unconditionally.
+
+### `HighlightedText` props
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `text` | `string` | — | The full string to render. |
+| `query` | `string` | — | The substring to mark. Empty or absent leaves `text` untouched. |
+| `caseSensitive` | `boolean` | `false` | Match case. |
+| `markClassName` | `string` | — | Classes on each `<mark>`, for a different wash in a dense list. |
+
+Native `<span>` attributes are forwarded to the wrapper.
+
 ## Props
 
 ### FilterBarProps
