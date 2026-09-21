@@ -51,3 +51,19 @@
 .doc-content.overflow-auto [data-toc-anchor] {
   scroll-margin-top: 0 !important;
 }
+
+/* ── Page TOC ────────────────────────────────────────────────────
+   Dockit sets nested ("on this page") entries in lowercase mono, the
+   same dress as the VIEW AS MARKDOWN / EDIT THIS PAGE chrome beneath
+   them. In a list whose top-level entries are UI type, that puts two
+   typefaces in adjacent rows and reads as one of them being a
+   different KIND of thing — which a sub-heading is not; it is the same
+   outline, one level down. Indentation already says that.
+
+   Scoped to `.toc-link` so the chrome links below the list keep their
+   own voice. */
+.toc-link,
+.toc-link * {
+  font-family: var(--f-ui) !important;
+  text-transform: none !important;
+}
