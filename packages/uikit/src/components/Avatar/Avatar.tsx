@@ -4,42 +4,51 @@ import {
   createContext,
   useContext,
   useState,
-} from 'react'
-import { cn } from '../../lib/utils'
+} from "react";
+import { Pencil } from "lucide-react";
+import { cn } from "../../lib/utils";
 
-export interface AvatarProps extends Omit<ComponentProps<'span'>, 'children'> {
+export interface AvatarProps extends Omit<ComponentProps<"span">, "children"> {
   /** Display name. Initials are derived automatically (first letter of the
    *  first two whitespace-separated words). Used by the simple `name`/`image`
    *  form; optional when composing with `<AvatarImage>` / `<AvatarFallback>`. */
-  name?: string
+  name?: string;
   /** Avatar image URL. Falls back to initials when absent or it fails to load. */
-  image?: string
+  image?: string;
   /** Avatar size in px. Default 32 for the simple form, 24 for the composed form. */
-  size?: number
-  /** Border radius in px. Default 3 (rounded-square) for the simple form; the
+  size?: number;
+  /** Border radius in px. Default 4 (rounded-square) for the simple form; the
    *  composed form is a circle unless you pass a value. */
-  radius?: number
+  radius?: number;
   /** Composed form: `<AvatarImage>` + `<AvatarFallback>` children (drop-in with
    *  the legacy Radix-based Avatar). When omitted, the simple `name`/`image`
    *  form renders instead. */
-  children?: ReactNode
-  className?: string
+  children?: ReactNode;
+  className?: string;
 }
 
-function getInitials(name: string) {
-  return name
-    .split(/\s+/)
-    .map((s) => s[0] ?? '')
-    .slice(0, 2)
-    .join('')
-    .toUpperCase()
+/**
+ * Initials for a display name.
+ *
+ * Two words or more → the first letter of the first two. A SINGLE word → its
+ * first two letters, not its first one: a lone letter in a 32px square reads as
+ * a placeholder rather than as a person, and single-word names are the common
+ * case here (a handle, an org, a team). This is the app's `monogram()`; the kit
+ * used to take one letter per word unconditionally and so rendered "D" where
+ * the app rendered "DR".
+ */
+export function getInitials(name: string) {
+  const words = name.trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return "";
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+  return (words[0][0] + words[1][0]).toUpperCase();
 }
 
-type ImageStatus = 'idle' | 'loaded' | 'error'
+type ImageStatus = "idle" | "loaded" | "error";
 const AvatarContext = createContext<{
-  status: ImageStatus
-  setStatus: (s: ImageStatus) => void
-} | null>(null)
+  status: ImageStatus;
+  setStatus: (s: ImageStatus) => void;
+} | null>(null);
 
 /**
  * User avatar.
@@ -62,11 +71,11 @@ export function Avatar({
   ...rest
 }: AvatarProps) {
   // Declared unconditionally (Rules of Hooks). Only used by the simple form.
-  const [failedSrc, setFailedSrc] = useState<string | null>(null)
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
 
   // Composed form: render children and coordinate image/fallback via context.
   if (children !== undefined) {
-    const px = size ?? 24
+    const px = size ?? 24;
     return (
       <AvatarComposed
         size={px}
@@ -77,28 +86,34 @@ export function Avatar({
       >
         {children}
       </AvatarComposed>
-    )
+    );
   }
 
   // Simple form (unchanged behavior): initials with optional image.
-  const px = size ?? 32
-  const showImage = !!image && failedSrc !== image
-  const label = name ?? ''
+  const px = size ?? 32;
+  const showImage = !!image && failedSrc !== image;
+  const label = name ?? "";
 
   return (
     <span
       className={cn(
-        'inline-flex items-center justify-center shrink-0 select-none overflow-hidden',
+        "inline-flex items-center justify-center shrink-0 select-none overflow-hidden",
+        // Mono, like every other small monogram the app draws (the profile
+        // rows, the note-presence stack): at this size the initials are a
+        // label, not display type. The 88px `AvatarHero` below stays on UI
+        // type, where it IS display type.
         !showImage &&
-          'text-uikit-ink font-uikit-ui font-semibold leading-none tracking-uikit-tighter opacity-90',
+          "text-uikit-ink font-uikit-mono font-semibold leading-none tracking-uikit-tighter opacity-90",
         className,
       )}
       style={{
         width: px,
         height: px,
-        borderRadius: radius ?? 3,
+        borderRadius: radius ?? 4,
         fontSize: Math.round(px * 0.36),
-        background: showImage ? undefined : 'color-mix(in oklab, var(--ink) 8%, var(--bg))',
+        background: showImage
+          ? undefined
+          : "color-mix(in oklab, var(--ink) 8%, var(--bg))",
         ...style,
       }}
       {...rest}
@@ -114,7 +129,7 @@ export function Avatar({
         getInitials(label)
       )}
     </span>
-  )
+  );
 }
 
 function AvatarComposed({
@@ -124,13 +139,13 @@ function AvatarComposed({
   style,
   children,
   ...rest
-}: { size: number; radius?: number } & ComponentProps<'span'>) {
-  const [status, setStatus] = useState<ImageStatus>('idle')
+}: { size: number; radius?: number } & ComponentProps<"span">) {
+  const [status, setStatus] = useState<ImageStatus>("idle");
   return (
     <AvatarContext.Provider value={{ status, setStatus }}>
       <span
         data-slot="avatar"
-        className={cn('relative flex shrink-0 overflow-hidden', className)}
+        className={cn("relative flex shrink-0 overflow-hidden", className)}
         style={{
           width: size,
           height: size,
@@ -142,51 +157,142 @@ function AvatarComposed({
         {children}
       </span>
     </AvatarContext.Provider>
-  )
+  );
 }
 
-export type AvatarImageProps = ComponentProps<'img'>
+export type AvatarImageProps = ComponentProps<"img">;
 
 /** Image for the composed `<Avatar>`. Hidden until it loads; on error the
  *  surrounding `<AvatarFallback>` takes over. */
-export function AvatarImage({ className, onLoad, onError, ...props }: AvatarImageProps) {
-  const ctx = useContext(AvatarContext)
+export function AvatarImage({
+  className,
+  onLoad,
+  onError,
+  ...props
+}: AvatarImageProps) {
+  const ctx = useContext(AvatarContext);
   return (
     <img
       data-slot="avatar-image"
-      className={cn('aspect-square size-full object-cover', className)}
-      style={{ display: ctx?.status === 'loaded' ? undefined : 'none' }}
+      className={cn("aspect-square size-full object-cover", className)}
+      style={{ display: ctx?.status === "loaded" ? undefined : "none" }}
       onLoad={(e) => {
-        ctx?.setStatus('loaded')
-        onLoad?.(e)
+        ctx?.setStatus("loaded");
+        onLoad?.(e);
       }}
       onError={(e) => {
-        ctx?.setStatus('error')
-        onError?.(e)
+        ctx?.setStatus("error");
+        onError?.(e);
       }}
       {...props}
     />
-  )
+  );
 }
 
-export type AvatarFallbackProps = ComponentProps<'span'>
+export type AvatarFallbackProps = ComponentProps<"span">;
 
 /** Fallback (usually initials) for the composed `<Avatar>`. Shown until the
  *  image loads. */
-export function AvatarFallback({ className, children, ...props }: AvatarFallbackProps) {
-  const ctx = useContext(AvatarContext)
-  if (ctx?.status === 'loaded') return null
+export function AvatarFallback({
+  className,
+  children,
+  ...props
+}: AvatarFallbackProps) {
+  const ctx = useContext(AvatarContext);
+  if (ctx?.status === "loaded") return null;
   return (
     <span
       data-slot="avatar-fallback"
       className={cn(
-        'flex size-full items-center justify-center rounded-[inherit]',
-        'bg-uikit-chip text-uikit-ink text-uikit-11 font-medium select-none',
+        "flex size-full items-center justify-center rounded-[inherit]",
+        "bg-uikit-chip text-uikit-ink text-uikit-11 font-uikit-mono font-medium select-none",
         className,
       )}
       {...props}
     >
       {children}
     </span>
-  )
+  );
+}
+
+export interface AvatarHeroProps extends Omit<
+  ComponentProps<"div">,
+  "onClick"
+> {
+  /** Display name. Initials stand in when there is no image. */
+  name: string;
+  /** Image URL or data URL. */
+  image?: string | null;
+  /** Show the hover scrim + pencil and make the square clickable. Off by
+   *  default, so someone viewing another person's profile is not offered an
+   *  edit they have no permission for. */
+  editable?: boolean;
+  onEdit?: () => void;
+}
+
+/**
+ * Full-width 1:1 avatar for a profile rail — the hero the app's profile page
+ * has always drawn, and until now a private `RailAvatar` inside
+ * `ProfileLayout`. Exported so a page that builds its own rail gets the same
+ * square instead of re-deriving it.
+ *
+ * It fills its container, so the container caps it: the app's rail wants
+ * `className="max-w-[248px]"` so the square does not blow up to the full column
+ * width below the `lg` breakpoint.
+ */
+export function AvatarHero({
+  name,
+  image,
+  editable = false,
+  onEdit,
+  className,
+  ...rest
+}: AvatarHeroProps) {
+  return (
+    <div
+      onClick={editable ? onEdit : undefined}
+      role={editable ? "button" : undefined}
+      title={editable ? "change avatar" : undefined}
+      className={cn(
+        "group relative w-full aspect-square overflow-hidden rounded-xl select-none",
+        editable && "cursor-pointer",
+        className,
+      )}
+      {...rest}
+    >
+      {image ? (
+        <img
+          src={image}
+          alt={name}
+          className="block w-full h-full object-cover"
+        />
+      ) : (
+        <div
+          className={cn(
+            "w-full h-full flex items-center justify-center",
+            "font-uikit-ui font-semibold text-uikit-ink opacity-90",
+            "bg-[color-mix(in_oklab,var(--ink)_8%,var(--bg))]",
+            "tracking-[-.04em] text-[88px]",
+          )}
+        >
+          {getInitials(name)}
+        </div>
+      )}
+      {editable && (
+        <div
+          aria-hidden
+          className={cn(
+            "absolute inset-0 flex items-center justify-center gap-2",
+            "bg-[color-mix(in_srgb,black_38%,transparent)]",
+            "opacity-0 group-hover:opacity-100 transition-opacity duration-150",
+            "text-white font-uikit-mono text-uikit-12 tracking-uikit-snug",
+            "pointer-events-none",
+          )}
+        >
+          <Pencil size={16} />
+          <span>change avatar</span>
+        </div>
+      )}
+    </div>
+  );
 }
