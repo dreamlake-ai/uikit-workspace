@@ -163,7 +163,10 @@ export function Tag({
             data-x=""
             onClick={handleX}
             className={cn(
-              "inline-flex items-center cursor-pointer leading-none translate-y-px overflow-hidden",
+              // No nudge. The row is `items-center`, so the × centres on the
+              // chip by itself; the 1px lift it used to carry was tuned to a
+              // geometry this pill no longer has and left it off-centre.
+              "inline-flex items-center cursor-pointer leading-none overflow-hidden",
               "text-[color:var(--tag-accent)] hover:text-[color:var(--tag-danger)]",
               // Width / margin / opacity animate on parent hover.
               "w-0 ml-0 opacity-0",
@@ -197,22 +200,26 @@ export function Tag({
         light ? "font-normal" : "font-medium",
         onClick || removable ? "cursor-pointer" : "cursor-default",
         "transition-[color,background-color,box-shadow] duration-[140ms]",
-        // Rest: static text, transparent, a faint hairline.
-        "bg-transparent shadow-[inset_0_0_0_1px_var(--faint)]",
+        // No line and no fill, in any state — the colour does all of it.
+        //
+        // A hairline made every status and role read as an outlined button,
+        // something to press, when these are labels reporting a value. A fill
+        // was the same mistake with softer edges: it still drew a box around a
+        // word, and a column of them read as a stack of chips rather than as
+        // the values they name. What is left is the word in its tone, with
+        // enough padding to keep it off its neighbours.
+        "bg-transparent shadow-none",
         "text-[color:var(--tag-static)]",
-        // Active: the hairline it already has turns the accent colour and the
-        // ground takes the faintest wash of it. It used to fill solid and knock
-        // the label out in `--bg` — which is 2.5:1 on the kit's blue in light
-        // mode, and reads as a slab of colour wherever several are on at once.
-        // The line moves; the shape does not.
-        "data-[active]:bg-[color-mix(in_oklab,var(--tag-accent)_10%,transparent)]",
+        // Active is the accent, and nothing else.
         "data-[active]:text-[color:var(--tag-accent)]",
-        "data-[active]:shadow-[inset_0_0_0_1px_var(--tag-accent)]",
-        // × hover: text/ring turn danger; if active, bg also turns danger.
+        // × hover: the label turns danger AND takes the strike, which is the
+        // preview of what the click does. The `tag` variant has always drawn
+        // that line; this one only changed colour, so the same gesture showed
+        // two different previews depending on which variant you were on.
         "has-[[data-x]:hover]:!text-[color:var(--tag-danger)]",
-        "has-[[data-x]:hover]:shadow-[inset_0_0_0_1px_var(--tag-danger)]",
-        "data-[active]:has-[[data-x]:hover]:!bg-[color:var(--tag-danger)]",
-        "data-[active]:has-[[data-x]:hover]:!text-uikit-bg",
+        "has-[[data-x]:hover]:line-through",
+        "has-[[data-x]:hover]:decoration-[color:var(--tag-danger)]",
+        "transition-[color,text-decoration-color] duration-[140ms]",
         className,
       )}
     >
@@ -222,7 +229,7 @@ export function Tag({
           data-x=""
           onClick={handleX}
           className={cn(
-            "inline-flex items-center cursor-pointer leading-none -translate-y-px",
+            "inline-flex items-center cursor-pointer leading-none",
             "transition-[opacity,color] duration-[140ms]",
             "opacity-0 group-hover:opacity-55",
             "group-data-[active]:group-hover:opacity-80",
