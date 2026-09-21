@@ -40,6 +40,39 @@ import { ThemeColorToggle, LiquidToggle } from '@dreamlake/uikit'
 </header>
 ```
 
+## Segmented mode toggle
+
+`ThemeModeToggle` shows all three modes at once and moves a circular thumb to
+the one in force. It is the toggle the app wears in its navbar.
+
+Pick it over `ThemeColorToggle` wherever there is room for ~68px of chrome. The
+cycling button asks the reader for two clicks to get from light to dark, and
+asks them to infer the current mode from a single glyph — a sun could mean "you
+are in light" or "click for light". Three segments answer both questions at
+once. Keep the cycling button for a toolbar with no room.
+
+The thumb runs on `--uikit-ease-thumb` / `--uikit-dur-thumb`, the same curve and
+duration as the segmented `ToggleButtons` highlight, so two of them on one page
+read as the same widget family. An unselected glyph sits at 85% and leans away
+from the thumb; `prefers-reduced-motion` drops every transition.
+
+The demo above is **controlled**, which is why it can be live on a page whose
+own theme switch sits in the topbar: given `value` and `onValueChange` the
+toggle stops reading the provider and reports upward instead. That is also the
+migration path for an app that already keeps its own theme state — adopt the
+control now, move the state into `ThemeProvider` later.
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `size` | `number` | `22` | Segment size in px — the thumb's diameter, and the control's height minus its 2px padding. |
+| `value` | `BaseTheme` | — | Controlled mode. Omit to read the `ThemeProvider`. |
+| `onValueChange` | `(t: BaseTheme) => void` | — | Controlled mode: called with the picked theme. |
+| `enableSystem` | `boolean` | provider's setting (`true` when controlled) | Whether to offer the middle "follow the OS" segment. |
+
+Uncontrolled, it needs a `ThemeProvider` above it and throws a named error if
+there isn't one. With `enableSystem={false}` on the provider, the middle
+segment drops out on its own.
+
 ## `useTheme`
 
 Read or drive the theme from anywhere under the provider:
