@@ -4,6 +4,57 @@ A styled text field. `InputRoot` (also exported as `Input`) is the container +
 input; drop `InputSlot`s inside for icons, prefixes, or suffixes. Clicking a slot
 focuses the input and places the caret at the matching end.
 
+## Focus
+
+Click into a field above. Focus does two things, and both are load-bearing:
+
+- **A 1px accent line on the field's own edge, inset.** An outset ring around a
+  filled pill reads as a browser default dropped onto the page, and it has to be
+  budgeted for by whatever clips the field — a rail, a toolbar, a row. Inset, it
+  lands on the edge the field already has.
+- **The fill drops to the page ground** rather than deepening. That carries the
+  same message without colour, for a reader who cannot separate a blue hairline
+  from a grey one.
+
+An `error` field keeps its danger tint and takes the line in `--tone-red`
+instead.
+
+At rest the field sits on the translucent `--chip-bg`, not the opaque
+`--search-bg`. Over `--bg` the two are the same colour by construction — 4% ink
+on `#fffefa` *is* `#f5f4f0` — but only the translucent one stays right when the
+field sits on a panel or a rail.
+
+## Marking the match — `HighlightedText`
+
+A field produces a query; the rows under it have to show why they matched.
+`HighlightedText` wraps every occurrence of the query in a soft accent-tinted
+mark — documented here because a search field with no marked results is half a
+search.
+
+It renders a real `<mark>`, not a tinted `<span>`: the element exists for
+exactly this, and assistive tech can announce it. The browser's default yellow
+is overridden by the kit's wash, `--color-uikit-accent-22` — mixed in oklab
+rather than sRGB because it sits *under* text that has to stay readable in both
+themes.
+
+Matching is case-insensitive by default; a reader typing `lake` expects to see
+`Lakeshore` marked. Pass `caseSensitive` for a literal match. Every occurrence
+is marked, not just the first; overlapping matches are not, since `"aa"` inside
+`"aaa"` is one highlight to a reader. A query that doesn't appear — or an empty
+one — renders the text untouched, so it is safe to wrap around a label
+unconditionally.
+
+### `HighlightedText` props
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `text` | `string` | — | The full string to render. |
+| `query` | `string` | — | The substring to mark. Empty or absent leaves `text` untouched. |
+| `caseSensitive` | `boolean` | `false` | Match case. |
+| `markClassName` | `string` | — | Classes on each `<mark>`, for a different wash in a dense list. |
+
+Native `<span>` attributes are forwarded to the wrapper.
+
 ## A search field, and `Kbd`
 
 The app's ⌘K field is this component plus two slots — a glyph on the left, a

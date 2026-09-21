@@ -53,11 +53,28 @@ export const InputRoot = forwardRef<HTMLInputElement, InputRootProps>(
   ) {
     const inputRef = useRef<HTMLInputElement>(null);
 
+    // Focus drops the fill to the page ground and draws a 1px accent line on
+    // the field's own edge. Two parts, and both matter.
+    //
+    // The line is INSET. An outset ring around a filled pill reads as a browser
+    // default dropped on the page, and it has to be budgeted for by whatever
+    // clips the field — a rail, a toolbar, a row. Inset, it lands on the edge
+    // the field already has.
+    //
+    // And the fill DROPS rather than deepens. That carries the same message
+    // without colour, for a reader who cannot separate a blue hairline from a
+    // grey one. This is the inverse of what the kit used to do (chip → a deeper
+    // `--search-bg`), which is the treatment the app has never worn.
+    //
+    // Rest stays on the translucent `--chip-bg` rather than the opaque
+    // `--search-bg`: the two are the same colour over `--bg` by construction
+    // (4% ink on #fffefa IS #f5f4f0), but only the translucent one stays right
+    // when the field sits on a panel or a rail.
     const surface = disabled
       ? "bg-uikit-chip opacity-60 cursor-not-allowed"
       : state === "error"
-        ? "bg-uikit-danger-8"
-        : "bg-uikit-chip has-[input:focus]:bg-uikit-search";
+        ? "bg-uikit-danger-8 has-[input:focus]:shadow-[inset_0_0_0_1px_var(--color-uikit-danger)]"
+        : "bg-uikit-chip has-[input:focus]:bg-uikit-bg has-[input:focus]:shadow-[inset_0_0_0_1px_var(--uikit-accent)]";
 
     return (
       <div
@@ -65,6 +82,7 @@ export const InputRoot = forwardRef<HTMLInputElement, InputRootProps>(
         data-input
         className={cn(
           "flex items-center gap-2 overflow-hidden rounded-[var(--radius)] text-uikit-ink",
+          "transition-[background-color,box-shadow] duration-[140ms]",
           surface,
           SIZE[size],
           className,

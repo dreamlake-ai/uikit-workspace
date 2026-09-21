@@ -6,21 +6,27 @@ import {
   useState,
   type CSSProperties,
   type ReactNode,
-} from 'react'
-import { cn } from '../../lib/utils'
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../Select/Select'
+} from "react";
+import { cn } from "../../lib/utils";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "../Select/Select";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
 export interface FilterOption {
-  value: string
-  label: string
-  count?: number
+  value: string;
+  label: string;
+  count?: number;
   /** Optional tint color applied when count > 0. Prefer palette tones
    *  (`'#1f8f4a'` / `var(--tone-green)` for running, `'#c8513b'` /
    *  `var(--tone-red)` for failed). Style Guide §Color §"Never invent
    *  a near-miss hex." */
-  accent?: string
+  accent?: string;
   /** Rendered in place, but inert: no click, no hover, and never active — not
    *  as ink, and not as the underline, even if the controlled `filterValue`
    *  names it.
@@ -28,10 +34,10 @@ export interface FilterOption {
    *  showing it greyed states the intent, where hiding it would make the
    *  eventual arrival look like a new feature. Pair with `hint`, or the chip
    *  is simply dim with no reason given. */
-  disabled?: boolean
+  disabled?: boolean;
   /** Short superscript replacing `count` (e.g. "coming soon"), and the chip's
    *  native tooltip. Use for a state a number cannot express. */
-  hint?: string
+  hint?: string;
 }
 
 export interface FilterBarProps {
@@ -46,11 +52,11 @@ export interface FilterBarProps {
    * then patches with a negative margin. This slot is the alternative to that
    * patch.
    */
-  rightControls?: ReactNode
+  rightControls?: ReactNode;
   /** Filter chips rendered on the left. First option is treated as "all". Omit to hide chips. */
-  filters?: FilterOption[]
-  filterValue?: string
-  onFilterChange?: (value: string) => void
+  filters?: FilterOption[];
+  filterValue?: string;
+  onFilterChange?: (value: string) => void;
 
   /**
    * Keep the chip row visible while the search box has a query.
@@ -70,19 +76,19 @@ export interface FilterBarProps {
    * filter is selected, and drawing both would state the same fact twice with
    * two different controls for undoing it.
    */
-  keepFiltersWhileSearching?: boolean
+  keepFiltersWhileSearching?: boolean;
 
-  query: string
-  onQueryChange: (q: string) => void
-  placeholder?: string
-  searchRef?: RefObject<HTMLInputElement>
+  query: string;
+  onQueryChange: (q: string) => void;
+  placeholder?: string;
+  searchRef?: RefObject<HTMLInputElement>;
 
   /** Sort dropdown rendered on the right. Omit to hide. */
-  sortValue?: string
-  onSortChange?: (value: string) => void
-  sortOptions?: { value: string; label: string }[]
+  sortValue?: string;
+  onSortChange?: (value: string) => void;
+  sortOptions?: { value: string; label: string }[];
 
-  className?: string
+  className?: string;
 }
 
 // ── FilterChip ─────────────────────────────────────────────────────────────
@@ -91,8 +97,8 @@ const FilterChip = forwardRef<
   HTMLSpanElement,
   { option: FilterOption; active: boolean; onClick: () => void }
 >(function FilterChip({ option, active, onClick }, ref) {
-  const { label, count, accent, disabled, hint } = option
-  const isHot = !disabled && !!accent && (count ?? 0) > 0
+  const { label, count, accent, disabled, hint } = option;
+  const isHot = !disabled && !!accent && (count ?? 0) > 0;
   // `hint` outranks `count`: an option that cannot be queried has no honest
   // number to show, so the slot states why instead of standing empty.
   //
@@ -101,13 +107,13 @@ const FilterChip = forwardRef<
   // a server has no way to express the second if this collapses it into the
   // first. Callers that would rather hide a zero can pass `undefined`; a caller
   // that wants to show one had no way to say so.
-  const showCount = !hint && count !== undefined
+  const showCount = !hint && count !== undefined;
 
   // Hot chips force their accent color (status palette); inject it as a CSS var
   // so the Tailwind `text-[color:var(--chip-accent)]` arbitrary can pick it up.
   const cssVars: CSSProperties | undefined = isHot
-    ? ({ '--chip-accent': accent } as CSSProperties)
-    : undefined
+    ? ({ "--chip-accent": accent } as CSSProperties)
+    : undefined;
 
   return (
     <span
@@ -120,19 +126,19 @@ const FilterChip = forwardRef<
       data-disabled={disabled || undefined}
       style={cssVars}
       className={cn(
-        'group/chip inline-flex items-start gap-px cursor-pointer pb-[3px] font-uikit-mono tracking-uikit-snug',
-        'transition-[color,opacity] duration-[160ms]',
+        "group/chip inline-flex items-start gap-px cursor-pointer pb-[3px] font-uikit-mono tracking-uikit-snug",
+        "transition-[color,opacity] duration-[160ms]",
         // Color: hot chips use injected --chip-accent; otherwise muted/ink by active.
-        'text-uikit-muted data-[active]:text-uikit-ink',
-        'data-[hot]:!text-[color:var(--chip-accent)]',
+        "text-uikit-muted data-[active]:text-uikit-ink",
+        "data-[hot]:!text-[color:var(--chip-accent)]",
         // Weight: hot=600, normal=500.
-        'font-medium data-[hot]:font-semibold',
+        "font-medium data-[hot]:font-semibold",
         // Opacity: rest 0.7 (hot 0.95) → hover 0.9 → active 1.
-        'opacity-70 hover:opacity-90 data-[active]:opacity-100',
-        'data-[hot]:opacity-95',
+        "opacity-70 hover:opacity-90 data-[active]:opacity-100",
+        "data-[hot]:opacity-95",
         // Disabled keeps its place and its type — only the affordance goes.
         // Listed last so it wins over the hover/active opacities above.
-        'data-[disabled]:!cursor-default data-[disabled]:!opacity-40',
+        "data-[disabled]:!cursor-default data-[disabled]:!opacity-40",
       )}
     >
       <span className="text-uikit-11">{label}</span>
@@ -144,16 +150,16 @@ const FilterChip = forwardRef<
       {showCount && (
         <sup
           className={cn(
-            'text-[8px] font-medium leading-none align-top mt-1 tracking-uikit-snug',
-            'text-current opacity-100', // inherits color/opacity from parent chip
+            "text-[8px] font-medium leading-none align-top mt-1 tracking-uikit-snug",
+            "text-current opacity-100", // inherits color/opacity from parent chip
           )}
         >
           {count}
         </sup>
       )}
     </span>
-  )
-})
+  );
+});
 
 // ── FilterChipRow ──────────────────────────────────────────────────────────
 
@@ -162,18 +168,18 @@ function FilterChipRow({
   value,
   onChange,
 }: {
-  options: FilterOption[]
-  value: string
-  onChange: (v: string) => void
+  options: FilterOption[];
+  value: string;
+  onChange: (v: string) => void;
 }) {
-  const containerRef = useRef<HTMLDivElement>(null)
-  const itemRefs = useRef<Record<string, HTMLSpanElement | null>>({})
-  const [bar, setBar] = useState({ left: 0, width: 0, ready: false })
+  const containerRef = useRef<HTMLDivElement>(null);
+  const itemRefs = useRef<Record<string, HTMLSpanElement | null>>({});
+  const [bar, setBar] = useState({ left: 0, width: 0, ready: false });
 
   // Whether the CONTROLLED value happens to name an inert option. `disabled`
   // only stops this row from producing that value; nothing stops a caller from
   // passing it in, and the underline reads the value directly.
-  const activeIsDisabled = options.some((o) => o.value === value && o.disabled)
+  const activeIsDisabled = options.some((o) => o.value === value && o.disabled);
 
   useLayoutEffect(() => {
     // An inert option is never underlined. Suppressing the chip's `data-active`
@@ -185,20 +191,20 @@ function FilterChipRow({
     // under whichever chip was selected before, which is the same lie about a
     // different option.
     if (activeIsDisabled) {
-      setBar((b) => (b.ready ? { ...b, ready: false } : b))
-      return
+      setBar((b) => (b.ready ? { ...b, ready: false } : b));
+      return;
     }
-    const el = itemRefs.current[value]
-    const container = containerRef.current
-    if (!el || !container) return
-    const elRect = el.getBoundingClientRect()
-    const cRect = container.getBoundingClientRect()
+    const el = itemRefs.current[value];
+    const container = containerRef.current;
+    if (!el || !container) return;
+    const elRect = el.getBoundingClientRect();
+    const cRect = container.getBoundingClientRect();
     setBar({
       left: elRect.left - cRect.left,
       width: elRect.width,
       ready: true,
-    })
-  }, [value, options.length, activeIsDisabled])
+    });
+  }, [value, options.length, activeIsDisabled]);
 
   return (
     <div ref={containerRef} className="flex items-center gap-2 pr-2 relative">
@@ -206,13 +212,13 @@ function FilterChipRow({
         <FilterChip
           key={opt.value}
           ref={(el) => {
-            itemRefs.current[opt.value] = el
+            itemRefs.current[opt.value] = el;
           }}
           option={opt}
           active={opt.value === value}
           onClick={() => {
-            if (opt.disabled) return
-            onChange(opt.value)
+            if (opt.disabled) return;
+            onChange(opt.value);
           }}
         />
       ))}
@@ -225,12 +231,12 @@ function FilterChipRow({
           transform: `translateX(${bar.left}px)`,
           opacity: bar.ready ? 1 : 0,
           transition: bar.ready
-            ? 'transform 260ms cubic-bezier(.2,.7,.2,1), width 260ms cubic-bezier(.2,.7,.2,1)'
-            : 'none',
+            ? "transform 260ms cubic-bezier(.2,.7,.2,1), width 260ms cubic-bezier(.2,.7,.2,1)"
+            : "none",
         }}
       />
     </div>
-  )
+  );
 }
 
 // ── FilterSearchLine ───────────────────────────────────────────────────────
@@ -241,25 +247,25 @@ function FilterSearchLine({
   searchRef,
   token,
   onClearToken,
-  placeholder = 'search',
+  placeholder = "search",
 }: {
-  query: string
-  onQueryChange: (q: string) => void
-  searchRef?: RefObject<HTMLInputElement>
-  token: string | null
-  onClearToken: () => void
-  placeholder?: string
+  query: string;
+  onQueryChange: (q: string) => void;
+  searchRef?: RefObject<HTMLInputElement>;
+  token: string | null;
+  onClearToken: () => void;
+  placeholder?: string;
 }) {
-  const [focused, setFocused] = useState(false)
-  const active = focused || query.length > 0
+  const [focused, setFocused] = useState(false);
+  const active = focused || query.length > 0;
 
   return (
     <label
       data-active={active || undefined}
       className={cn(
-        'inline-flex items-center gap-2 border-b pb-1 transition-[border-color] duration-[160ms]',
-        'border-uikit-faint data-[active]:border-uikit-ink',
-        'flex-1 min-w-[200px] basis-[320px]',
+        "inline-flex items-center gap-2 border-b pb-1 transition-[border-color] duration-[160ms]",
+        "border-uikit-faint data-[active]:border-uikit-ink",
+        "flex-1 min-w-[200px] basis-[320px]",
       )}
     >
       {/* "/" glyph */}
@@ -273,9 +279,9 @@ function FilterSearchLine({
           onClick={onClearToken}
           title="backspace to remove"
           className={cn(
-            'inline-flex items-center gap-1 shrink-0 cursor-pointer rounded',
-            'font-uikit-mono text-uikit-11 font-medium tracking-uikit-snug',
-            'text-uikit-ink bg-uikit-ink-8 px-1.5 py-0.5',
+            "inline-flex items-center gap-1 shrink-0 cursor-pointer rounded",
+            "font-uikit-mono text-uikit-11 font-medium tracking-uikit-snug",
+            "text-uikit-ink bg-uikit-ink-8 px-1.5 py-0.5",
           )}
         >
           {token}
@@ -291,9 +297,9 @@ function FilterSearchLine({
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
         onKeyDown={(e) => {
-          if (e.key === 'Backspace' && query === '' && token) {
-            e.preventDefault()
-            onClearToken()
+          if (e.key === "Backspace" && query === "" && token) {
+            e.preventDefault();
+            onClearToken();
           }
         }}
         // This is a search box, never an autofillable field. The decisive
@@ -307,29 +313,33 @@ function FilterSearchLine({
         data-1p-ignore
         data-lpignore="true"
         data-form-type="other"
-        placeholder={token ? 'filter…' : placeholder}
+        placeholder={token ? "filter…" : placeholder}
         className={cn(
-          'bg-transparent border-0 outline-none p-0 min-w-0 flex-1',
-          'font-uikit-mono text-uikit-12 text-uikit-ink tracking-uikit-snug',
+          "bg-transparent border-0 outline-none p-0 min-w-0 flex-1",
+          // UI face, like every other input in the kit. What someone types is
+          // prose — a name, a word — not a value to line up in a column; the
+          // mono around it belongs to the chrome (the `/` cue, `clear`), not to
+          // the text being entered.
+          "font-uikit-ui text-uikit-12 text-uikit-ink tracking-uikit-snug",
           // hide the native WebKit search clear ✕ (FilterBar renders its own)
-          '[&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-decoration]:appearance-none',
+          "[&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-decoration]:appearance-none",
         )}
       />
 
       {/* Clear */}
       {query && (
         <span
-          onClick={() => onQueryChange('')}
+          onClick={() => onQueryChange("")}
           className={cn(
-            'cursor-pointer shrink-0 font-uikit-mono text-uikit-10 tracking-uikit-snug',
-            'text-uikit-muted opacity-65',
+            "cursor-pointer shrink-0 font-uikit-mono text-uikit-10 tracking-uikit-snug",
+            "text-uikit-muted opacity-65",
           )}
         >
           clear
         </span>
       )}
     </label>
-  )
+  );
 }
 
 // ── FilterBar ──────────────────────────────────────────────────────────────
@@ -342,38 +352,38 @@ export function FilterBar({
   keepFiltersWhileSearching = false,
   query,
   onQueryChange,
-  placeholder = 'search',
+  placeholder = "search",
   searchRef,
   sortValue,
   onSortChange,
   sortOptions,
   className,
 }: FilterBarProps) {
-  const allValue = filters?.[0]?.value
-  const searching = query.length > 0
+  const allValue = filters?.[0]?.value;
+  const searching = query.length > 0;
   // The chips step aside for the token, unless the consumer says they carry
   // something the token cannot: see `keepFiltersWhileSearching`.
-  const showChips = !!filters && (keepFiltersWhileSearching || !searching)
+  const showChips = !!filters && (keepFiltersWhileSearching || !searching);
   const showToken =
     !!filters &&
     searching &&
     !keepFiltersWhileSearching &&
     !!filterValue &&
-    filterValue !== allValue
-  const activeFilter = filters?.find((f) => f.value === filterValue)
+    filterValue !== allValue;
+  const activeFilter = filters?.find((f) => f.value === filterValue);
   const tokenLabel = showToken
     ? (activeFilter?.label ?? filterValue ?? null)
-    : null
+    : null;
 
   return (
-    <div className={cn('flex flex-col gap-3 pb-3.5 mb-1.5', className)}>
+    <div className={cn("flex flex-col gap-3 pb-3.5 mb-1.5", className)}>
       <div className="flex items-center gap-4">
         {/* Left: chips (resting state) + search line */}
         <div className="flex items-center flex-1 min-w-0 relative">
           {showChips && (
             <FilterChipRow
               options={filters}
-              value={filterValue ?? allValue ?? ''}
+              value={filterValue ?? allValue ?? ""}
               onChange={(v) => onFilterChange?.(v)}
             />
           )}
@@ -382,7 +392,7 @@ export function FilterBar({
             onQueryChange={onQueryChange}
             searchRef={searchRef}
             token={tokenLabel}
-            onClearToken={() => onFilterChange?.(allValue ?? '')}
+            onClearToken={() => onFilterChange?.(allValue ?? "")}
             placeholder={placeholder}
           />
         </div>
@@ -410,5 +420,5 @@ export function FilterBar({
         )}
       </div>
     </div>
-  )
+  );
 }

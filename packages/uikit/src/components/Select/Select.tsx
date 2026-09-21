@@ -87,6 +87,12 @@ function collectLabels(children: ReactNode, map: Map<string, ReactNode>) {
   });
 }
 
+export interface SelectOption {
+  value: string;
+  label: ReactNode;
+  disabled?: boolean;
+}
+
 export interface SelectProps {
   value?: string;
   defaultValue?: string;
@@ -98,13 +104,28 @@ export interface SelectProps {
   disabled?: boolean;
   name?: string;
   font?: string;
-  children: ReactNode;
+  /** Shorthand for the plain case: pass a list and the trigger, panel and items
+   *  are composed for you. Ignored when `children` are given. */
+  options?: SelectOption[];
+  /** Trigger placeholder, for the `options` form. */
+  placeholder?: string;
+  /** Compose the picker yourself: `SelectTrigger` + `SelectContent`. */
+  children?: ReactNode;
 }
 
 /**
- * Compound single-select. Compose `SelectTrigger` (with `SelectValue`) +
- * `SelectContent` containing `SelectItem`s (optionally grouped with
- * `SelectGroup` / `SelectLabel`).
+ * Single-select, in two forms.
+ *
+ * **Shorthand** — `<Select value={…} onValueChange={…} options={[{value,label}]} />`
+ * composes the trigger, the panel and the items. Every picker that is just a
+ * list and a setter wants this; composing four elements to say that is
+ * boilerplate, and it is what consumers end up wrapping in a local adapter of
+ * their own (`dreamlake-ai` had one, `OptionSelect`).
+ *
+ * **Compound** — compose `SelectTrigger` (with `SelectValue`) + `SelectContent`
+ * containing `SelectItem`s (optionally grouped with `SelectGroup` /
+ * `SelectLabel`) when items need custom rendering, icons or groups. Children
+ * win when both are given.
  *
  * Drop-in for the legacy `@vuer-ai/vuer-uikit` Select (Radix), styled like the
  * kit's compact mono picker. Positioning, keyboard list navigation and typeahead
@@ -117,6 +138,8 @@ export function Select({
   open: controlledOpen,
   defaultOpen = false,
   onOpenChange,
+  options,
+  placeholder,
   children,
 }: SelectProps) {
   const [uncontrolledValue, setUncontrolledValue] = useState<
@@ -137,11 +160,36 @@ export function Select({
     onOpenChange?.(o);
   };
 
+  // The shorthand is expanded ONCE, here, so everything downstream — the label
+  // map, the floating list, the keyboard typeahead — sees an ordinary tree and
+  // no part of this component has to know which form the caller used.
+  const content = useMemo(() => {
+    if (children !== undefined) return children;
+    return (
+      <>
+        <SelectTrigger>
+          <SelectValue placeholder={placeholder} />
+        </SelectTrigger>
+        <SelectContent>
+          {(options ?? []).map((option) => (
+            <SelectItem
+              key={option.value}
+              value={option.value}
+              disabled={option.disabled}
+            >
+              {option.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </>
+    );
+  }, [children, options, placeholder]);
+
   const labelMap = useMemo(() => {
     const m = new Map<string, ReactNode>();
-    collectLabels(children, m);
+    collectLabels(content, m);
     return m;
-  }, [children]);
+  }, [content]);
 
   const elementsRef = useRef<Array<HTMLElement | null>>([]);
   const labelsRef = useRef<Array<string | null>>([]);
@@ -219,9 +267,7 @@ export function Select({
     ],
   );
 
-  return (
-    <SelectContext.Provider value={ctx}>{children}</SelectContext.Provider>
-  );
+  return <SelectContext.Provider value={ctx}>{content}</SelectContext.Provider>;
 }
 
 export interface SelectTriggerProps extends ComponentProps<"button"> {
@@ -259,9 +305,10 @@ export const SelectTrigger = forwardRef<HTMLButtonElement, SelectTriggerProps>(
           // put the sort value at nearly the weight of the row titles under
           // it. The darkening is also the only hover this trigger has ever
           // had: an opacity nudge alone was not visible on a muted colour.
-          "text-uikit-muted opacity-85",
-          "hover:text-uikit-ink hover:opacity-100",
-          "data-[state=open]:text-uikit-ink data-[state=open]:opacity-100",
+          // A trigger showing a CHOSEN value is showing content, so it reads
+          // in ink. The placeholder state is what should look unfilled, and
+          // `SelectValue` already dims itself for that.
+          "text-uikit-ink",
           "transition-[color,opacity] duration-[140ms]",
           className,
         )}
@@ -396,7 +443,11 @@ export function SelectItem({
         "cursor-pointer rounded-uikit-badge px-2.5 py-[6px] leading-[14px] outline-none select-none",
         "font-uikit-mono text-uikit-11 font-medium tracking-uikit-snug",
         "transition-[background-color,color] duration-[120ms]",
-        "bg-transparent text-uikit-muted opacity-85 hover:bg-uikit-ink-4",
+        // The options ARE the content of this panel, so they take ink. They
+        // used to render muted at 85% — 3.3:1 on the panel in dark, under AA —
+        // which made an open dropdown read as a list of disabled rows. Muted
+        // stays right for the GROUP LABEL below, which is a label.
+        "bg-transparent text-uikit-ink hover:bg-uikit-ink-4",
         "data-[active=true]:bg-uikit-ink-4",
         // The selected row is accent-tinted, the treatment consuming apps already
         // use for "this is the one you are on" (the account switcher and the

@@ -9,6 +9,7 @@ export {
 } from './Select'
 export type {
   SelectProps,
+  SelectOption,
   SelectTriggerProps,
   SelectValueProps,
   SelectContentProps,

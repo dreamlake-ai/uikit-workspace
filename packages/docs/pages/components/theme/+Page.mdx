@@ -5,6 +5,9 @@ order: 310
 description: ThemeProvider, the useTheme hook, and theme toggle controls.
 ---
 
+import { ModeToggleSpec } from '../../../components/specimens/components/theme/ModeToggleSpec'
+import modeToggleSrc from '../../../components/specimens/components/theme/ModeToggleSpec.tsx?raw'
+
 # Theme
 
 The theme system persists a base theme (`light` / `dark` / `system`) plus an
@@ -35,17 +38,74 @@ export function App() {
 
 ## Toggles
 
-`ThemeColorToggle` cycles `light → dark → system`; `LiquidToggle` flips the
-liquid flag. Both must be inside a `ThemeProvider`.
+`ThemeModeToggle` shows all three modes at once and moves a circular thumb to
+the one in force. It is the toggle the app wears in its navbar.
+`ThemeCycleToggle` is the one-glyph version for a surface the strip doesn't fit
+— a sidebar footer, a collapsed rail — advancing `dark → system → light` on each
+click. `LiquidToggle` flips the liquid flag. Both must be inside a `ThemeProvider` (or, for
+`ThemeModeToggle`, driven as a controlled input — see below).
 
 ```tsx
-import { ThemeColorToggle, LiquidToggle } from '@dreamlake/uikit'
+import { ThemeModeToggle, ThemeCycleToggle, LiquidToggle } from '@dreamlake/uikit'
 
 <header>
-  <ThemeColorToggle />
+  <ThemeModeToggle />
   <LiquidToggle />
 </header>
+
+<footer>
+  <ThemeCycleToggle />
+</footer>
 ```
+
+The strip is **transparent at rest and takes the chip tint on hover**, with an
+elevated thumb riding in it. The frame is there to say "these three are one
+control" at the moment someone is about to use it; a permanent tinted slab in a
+quiet navbar is a box drawn around three icons that were reading fine without
+one.
+
+What makes that safe is the thumb's `shadow-uikit-sm`. A `--bg` thumb on a
+transparent strip over a `--bg` page is invisible, and the control falls apart
+into three loose icons — the elevation is what lets it read on its own ground,
+so the frame doesn't have to carry it. It shares its curve with `ToggleButtons`
+and `Tabs`' segment pill through `--uikit-ease-thumb` / `--uikit-dur-thumb`. Unselected glyphs differ only in
+opacity: they used to shrink and counter-rotate, which meant every switch shoved
+all three icons around while the thumb travelled underneath, competing with the
+one piece of motion the control has.
+
+`orientation="vertical"` stacks the segments for a collapsed icon rail, where
+all three choices should stay directly clickable. The thumb travels the same
+distance, on the other axis.
+
+Both **replace** `ThemeColorToggle`, which was a rounded-square button on an
+ink-tint hover. `ThemeCycleToggle` is the borderless circle the app actually
+uses for this, and it cycles `dark → system → light` — the app's order.
+
+The thumb runs on `--uikit-ease-thumb` / `--uikit-dur-thumb`, the same curve and
+duration as the segmented `ToggleButtons` highlight, so two of them on one page
+read as the same widget family. An unselected glyph sits at 85% and leans away
+from the thumb; `prefers-reduced-motion` drops every transition.
+
+<Preview source={modeToggleSrc} filename="ModeToggleSpec.tsx">
+  <ModeToggleSpec />
+</Preview>
+
+The demo above is **controlled**, which is why it can be live on a page whose
+own theme switch sits in the topbar: given `value` and `onValueChange` the
+toggle stops reading the provider and reports upward instead. That is also the
+migration path for an app that already keeps its own theme state — adopt the
+control now, move the state into `ThemeProvider` later.
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `size` | `number` | `22` | Segment size in px — the thumb's diameter, and the control's height minus its 2px padding. |
+| `value` | `BaseTheme` | — | Controlled mode. Omit to read the `ThemeProvider`. |
+| `onValueChange` | `(t: BaseTheme) => void` | — | Controlled mode: called with the picked theme. |
+| `enableSystem` | `boolean` | provider's setting (`true` when controlled) | Whether to offer the middle "follow the OS" segment. |
+
+Uncontrolled, it needs a `ThemeProvider` above it and throws a named error if
+there isn't one. With `enableSystem={false}` on the provider, the middle
+segment drops out on its own.
 
 ## `useTheme`
 
