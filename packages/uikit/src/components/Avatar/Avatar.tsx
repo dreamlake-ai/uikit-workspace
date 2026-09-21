@@ -17,8 +17,8 @@ export interface AvatarProps extends Omit<ComponentProps<"span">, "children"> {
   image?: string;
   /** Avatar size in px. Default 32 for the simple form, 24 for the composed form. */
   size?: number;
-  /** Border radius in px. Default 4 (rounded-square) for the simple form; the
-   *  composed form is a circle unless you pass a value. */
+  /** Border radius in px. Default 4 (rounded-square) in both forms. Pass
+   *  `size / 2` for a circle. */
   radius?: number;
   /** Composed form: `<AvatarImage>` + `<AvatarFallback>` children (drop-in with
    *  the legacy Radix-based Avatar). When omitted, the simple `name`/`image`
@@ -149,7 +149,12 @@ function AvatarComposed({
         style={{
           width: size,
           height: size,
-          borderRadius: radius ?? 9999,
+          // The same rounded square as the simple form. The circle here was
+          // inherited from the legacy Radix drop-in, and nothing in the app
+          // wears one: every avatar it draws is a square at 4, 6 or 12px. A
+          // component whose two forms disagree about their own shape is one
+          // the caller has to remember a rule for.
+          borderRadius: radius ?? 4,
           ...style,
         }}
         {...rest}
