@@ -2,6 +2,7 @@ import {
   type ComponentProps,
   type ReactNode,
   createContext,
+  useCallback,
   useContext,
   useState,
 } from "react";
@@ -73,6 +74,22 @@ export function Avatar({
   // Declared unconditionally (Rules of Hooks). Only used by the simple form.
   const [failedSrc, setFailedSrc] = useState<string | null>(null);
 
+  /**
+   * Catch an image that failed BEFORE React was listening.
+   *
+   * The markup is server-rendered, so the browser starts fetching as soon as
+   * the HTML lands — often finishing, and failing, before hydration attaches
+   * `onError`. That event is gone by then, and the avatar sits there showing
+   * the broken-image glyph and its alt text forever. A ref callback runs at
+   * attach time and can ask the element directly: a decoded image has a
+   * natural width, a broken one has zero.
+   */
+  const catchEarlyError = useCallback((node: HTMLImageElement | null) => {
+    if (node && node.complete && node.naturalWidth === 0 && node.src) {
+      setFailedSrc(node.getAttribute("src"));
+    }
+  }, []);
+
   // Composed form: render children and coordinate image/fallback via context.
   if (children !== undefined) {
     const px = size ?? 24;
@@ -120,6 +137,7 @@ export function Avatar({
     >
       {showImage ? (
         <img
+          ref={catchEarlyError}
           src={image}
           alt={label}
           className="w-full h-full object-cover"
@@ -176,8 +194,17 @@ export function AvatarImage({
   ...props
 }: AvatarImageProps) {
   const ctx = useContext(AvatarContext);
+  // Same pre-hydration race as the simple form: a server-rendered image can
+  // finish — or fail — before React attaches these handlers, and the event is
+  // gone by then. A ref callback runs at attach time and can ask the element
+  // what actually happened.
+  const settle = (node: HTMLImageElement | null) => {
+    if (!node || !node.complete || !node.src) return;
+    ctx?.setStatus(node.naturalWidth === 0 ? "error" : "loaded");
+  };
   return (
     <img
+      ref={settle}
       data-slot="avatar-image"
       className={cn("aspect-square size-full object-cover", className)}
       style={{ display: ctx?.status === "loaded" ? undefined : "none" }}
