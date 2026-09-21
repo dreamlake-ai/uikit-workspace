@@ -25,3 +25,33 @@ Drive it from state with `checked` + `onCheckedChange`. Omit `checked` and pass
 | `thumbClassName` | `string` | — | Extra classes on the moving thumb. |
 
 Any other native `<button>` attributes (`aria-*`, `id`, …) are forwarded.
+
+## Naming the two states — `SlideToggle`
+
+`Switch` answers *"is this on"*, and its two positions are the same shape. When
+the two states have **names** — `o` / `vim`, source / preview — reach for
+`SlideToggle` instead: a pill whose knob slides between a left and a right face,
+each face carrying its own width.
+
+That is why the knob **expands** as it travels. The control is as wide as the
+two words it chooses between, and the knob is exactly as wide as the word it is
+sitting on.
+
+State reads through colour, not position alone: the face under the knob is
+inked, the other muted. Hovering tints the whole pill — accent while on, amber
+while off — and knocks the exposed face to white, so the control says what it
+will become before it is clicked. Pass `onColor` / `offColor` to change those
+tints.
+
+`VimToggle` is the `o` / `vim` preset from the app's editor toolbar.
+
+### `SlideToggle` props
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `on` | `boolean` | — | Which face is chosen: `false` = left, `true` = right. |
+| `onToggle` | `() => void` | — | Called on click. |
+| `left` / `right` | `ToggleFace` | — | `{ node, w, fontSize? }`. `w` sizes the face **and** the knob when it lands there. |
+| `label` | `string` | — | Accessible name — the faces are usually too terse to serve as one. |
+| `onColor` / `offColor` | `string` | accent / amber | Hover tint per state. |
+| `slideMs` / `bgMs` | `number` | `240` | Knob travel and background fade. |
