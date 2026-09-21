@@ -46,6 +46,10 @@ fills its container, so the container caps it — the app's rail passes
 `className="max-w-[248px]"` so the square doesn't blow up to the full column
 width below the `lg` breakpoint.
 
+The initials size off the box, not off a literal: 35.5% of the width, which is
+the app's 88px in its 248px rail — the ratio the design was drawn at — and holds
+at any width. Drop it in a 64px slot and it still reads as an avatar.
+
 `editable` adds the hover scrim, the pencil and the click target. It is off by
 default, so someone viewing another person's profile isn't offered an edit they
 have no permission for. (`ProfileLayout` builds its own rail on this component

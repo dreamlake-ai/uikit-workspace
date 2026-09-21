@@ -255,6 +255,12 @@ export function AvatarHero({
       title={editable ? "change avatar" : undefined}
       className={cn(
         "group relative w-full aspect-square overflow-hidden rounded-xl select-none",
+        // The initials size off the BOX, not off a literal. 35.5% of the width
+        // is the app's 88px in its 248px rail — the ratio the design was drawn
+        // at — and it now holds at any width. A fixed 88px was fine while the
+        // only caller was that one rail; exported, it made a 120px rail render
+        // initials at 73% of the square.
+        "[container-type:inline-size]",
         editable && "cursor-pointer",
         className,
       )}
@@ -272,7 +278,7 @@ export function AvatarHero({
             "w-full h-full flex items-center justify-center",
             "font-uikit-ui font-semibold text-uikit-ink opacity-90",
             "bg-[color-mix(in_oklab,var(--ink)_8%,var(--bg))]",
-            "tracking-[-.04em] text-[88px]",
+            "tracking-[-.04em] text-[35.5cqi]",
           )}
         >
           {getInitials(name)}
