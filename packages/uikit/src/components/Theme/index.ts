@@ -11,7 +11,7 @@ export type {
   UseThemeProps,
   ThemeProviderProps,
 } from "./ThemeProvider";
-export { ThemeColorToggle, LiquidToggle } from "./ThemeToggles";
-export type { ThemeColorToggleProps, LiquidToggleProps } from "./ThemeToggles";
+export { LiquidToggle } from "./ThemeToggles";
+export type { LiquidToggleProps } from "./ThemeToggles";
 export { ThemeModeToggle } from "./ThemeModeToggle";
 export type { ThemeModeToggleProps } from "./ThemeModeToggle";

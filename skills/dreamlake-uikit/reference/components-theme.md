@@ -28,28 +28,27 @@ export function App() {
 
 ## Toggles
 
-`ThemeColorToggle` cycles `light → dark → system`; `LiquidToggle` flips the
-liquid flag. Both must be inside a `ThemeProvider`.
+`ThemeModeToggle` shows all three modes at once and moves a circular thumb to
+the one in force. It is the toggle the app wears in its navbar. `LiquidToggle`
+flips the liquid flag. Both must be inside a `ThemeProvider` (or, for
+`ThemeModeToggle`, driven as a controlled input — see below).
 
 ```tsx
-import { ThemeColorToggle, LiquidToggle } from '@dreamlake/uikit'
+import { ThemeModeToggle, LiquidToggle } from '@dreamlake/uikit'
 
 <header>
-  <ThemeColorToggle />
+  <ThemeModeToggle />
   <LiquidToggle />
 </header>
 ```
 
-## Segmented mode toggle
-
-`ThemeModeToggle` shows all three modes at once and moves a circular thumb to
-the one in force. It is the toggle the app wears in its navbar.
-
-Pick it over `ThemeColorToggle` wherever there is room for ~68px of chrome. The
-cycling button asks the reader for two clicks to get from light to dark, and
-asks them to infer the current mode from a single glyph — a sun could mean "you
-are in light" or "click for light". Three segments answer both questions at
-once. Keep the cycling button for a toolbar with no room.
+It **replaces** `ThemeColorToggle`, a single button that cycled
+`light → dark → system`. That control asked the reader for two clicks to get
+from light to dark, and asked them to infer the current mode from one glyph — a
+sun could mean "you are in light" or "click for light". Three segments answer
+both questions at once, and the app never adopted the cycling version in the
+first place. For a toolbar with no room for ~68px, render it at a smaller `size`
+rather than reaching for a different control.
 
 The thumb runs on `--uikit-ease-thumb` / `--uikit-dur-thumb`, the same curve and
 duration as the segmented `ToggleButtons` highlight, so two of them on one page
