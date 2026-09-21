@@ -296,7 +296,11 @@ export function AvatarHero({
           )}
         >
           <Pencil size={16} />
-          <span>change avatar</span>
+          {/* The label is a fixed 12px, so it stops fitting on one line well
+              before the square stops being usable — at 112px it wrapped and
+              overflowed. Under 160px the pencil carries the affordance alone;
+              the title attribute still says what the click does. */}
+          <span className="@max-[160px]:hidden">change avatar</span>
         </div>
       )}
     </div>
