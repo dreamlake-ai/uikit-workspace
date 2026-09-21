@@ -59,13 +59,12 @@ independently.
 
 ## Pill variant
 
-A single-select chip row. Every pill carries a hairline; the active one turns
-its line the accent colour, takes the faintest wash of it, and sets its label to
-match. **The line moves; the shape does not.**
+A boxed chip on the 6px badge radius with a hairline border. This is what the
+app reaches for when a value needs to read as a **labelled object** rather than
+as prose: a kind, a run's status, someone's role, a bindr you can take off.
 
-It used to fill solid and knock the label out in `--bg`, which is 2.5:1 on the
-kit's blue in light mode and reads as a slab of colour wherever several are on
-at once.
+Every one of them is `compact`, and the status row is `light` as well —
+`compact light` is the shape in production, not the default size below it.
 
 <Preview source={pillSrc} filename="PillSpec.tsx">
   <PillSpec />
@@ -92,7 +91,7 @@ at once.
 | --- | --- | --- | --- |
 | `name` | `string` | — | Tag label text. |
 | `variant` | `'tag' \| 'pill'` | `'tag'` | Visual style — hashtag, or boxed pill. |
-| `active` | `boolean` | `false` | The accent colour takes over: the pill's hairline and label, or the tag's label. Neither fills. |
+| `active` | `boolean` | `false` | The accent colour takes over: the pill's hairline and label, or the tag's label. Neither fills. **The app does not use this** — every Tag it renders is a passive label — so treat it as available rather than as the shape to design against. |
 | `removable` | `boolean` | `false` | Show a × button on hover that calls `onRemove`. |
 | `tone` | `TagTone` | — | Constrain the tag to one of 6 palette buckets. Sets both static text color and default accent. |
 | `accent` | `TagTone \| string` | — | Override the hover/active color. Accepts a palette tone name or any CSS color. |
