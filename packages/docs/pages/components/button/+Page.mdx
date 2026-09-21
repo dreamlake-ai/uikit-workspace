@@ -7,8 +7,10 @@ description: Action button with primary, secondary, ghost and danger variants.
 
 import { VariantsSpec } from '../../../components/specimens/components/button/VariantsSpec'
 import { StatesSpec } from '../../../components/specimens/components/button/StatesSpec'
+import { ActionSpec } from '../../../components/specimens/components/button/ActionSpec'
 import variantsSrc from '../../../components/specimens/components/button/VariantsSpec.tsx?raw'
 import statesSrc from '../../../components/specimens/components/button/StatesSpec.tsx?raw'
+import actionSrc from '../../../components/specimens/components/button/ActionSpec.tsx?raw'
 
 # Button
 
@@ -18,9 +20,24 @@ variants, sizes and a loading state.
 
 ## Variants
 
-`primary` is an inverted (ink-on-background) fill for the main action;
-`secondary` is a bordered neutral button; `ghost` is transparent with a hover
-tint (for low-emphasis / list actions); `danger` is for destructive actions;
+Every variant shares **one radius (6px, the badge step), one padding scale and
+one typeface**. A set whose members round or set differently reads as parts from
+two kits, and none of those is where a variant should carry its meaning — the
+fill is. The typeface is mono, because that is the app's button vocabulary: the
+dialog footer, the toolbar pill and the chrome actions are all set in it.
+
+`primary` fills with the **accent** — the app's dialog footer, to the pixel. It replaces an inverted ink fill, which made the
+submit button the heaviest ink on a form whose fields are bare text. Hover
+darkens the accent rather than fading it; a primary action should not look like
+it is switching off under the pointer.
+
+`ghost` is the action you take by **not** acting — the cancel beside that
+primary. A bare muted mono label: no fill, no border, no hover chrome, just
+opacity. Two buttons in a footer make the reader compare two boxes; one button
+and one label say which is the way forward.
+
+`secondary` is a bordered neutral button; `action` is the mono chrome pill for
+toolbars and detail headers; `danger` is `primary`'s shape in the palette red;
 `link` renders as inline underlined text with no padding.
 
 <Preview source={variantsSrc} filename="VariantsSpec.tsx">
@@ -36,16 +53,39 @@ button; `disabled` greys it out and blocks clicks.
   <StatesSpec />
 </Preview>
 
+## Chrome actions
+
+`action` is the borderless mono pill the app wears in toolbars and detail
+headers — `+ publish`, `+ import`, a back arrow. It differs from `ghost` in what it
+paints: `ghost` is a bare label, while `action` takes a hover fill, so a toolbar
+row reads as a row of targets rather than a run of words. Geometry is the set's
+— same radius, same padding as every other button.
+
+`tone` colors it without reaching for `style`: `muted` for secondary chrome (a
+back arrow), `danger` for a destructive action — ink at rest, palette red under
+the pointer, because a row of permanently-red labels reads as an error state
+rather than an available action. `value` marks it active in the accent and
+switches its hover wash to `--accent-soft` with it; `hoverBg` overrides that
+wash for anything else. `href` makes it a real link, so cmd-click, middle-click
+and the status-bar URL all still work.
+
+<Preview source={actionSrc} filename="ActionSpec.tsx">
+  <ActionSpec />
+</Preview>
+
 ## Props
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `variant` | `'primary' \| 'secondary' \| 'ghost' \| 'danger' \| 'link'` | `'primary'` | Visual style. `'destructive'` is also accepted as an alias for `'danger'`. |
-| `size` | `'sm' \| 'md' \| 'lg'` | `'sm'` | Padding/text scale. |
+| `variant` | `'primary' \| 'secondary' \| 'ghost' \| 'action' \| 'danger' \| 'link'` | `'primary'` | Visual style. `'destructive'` is also accepted as an alias for `'danger'`. |
+| `size` | `'sm' \| 'md' \| 'lg'` | `'sm'` | Padding/text scale, shared by every variant. |
+| `tone` | `'default' \| 'muted' \| 'danger'` | `'default'` | Text color for the transparent variants (`ghost`, `action`, `link`). `muted` starts at muted ink and raises to full ink on hover — for a button inside an already-muted strip. `danger` keeps its ink until the pointer arrives, then turns red. |
 | `loading` | `boolean` | `false` | Shows a spinner and disables the button. |
 | `leftIcon` | `ReactNode` | — | Icon rendered before the label. |
 | `icon` | `boolean` | `false` | Square icon-button padding (for a button whose content is a single icon). |
-| `value` | `boolean` | `false` | Active/selected state — renders the label and icon in the accent color. |
+| `value` | `boolean` | `false` | Active/selected state — renders the label and icon in the accent color, and takes `--accent-soft` as its hover wash. |
+| `hoverBg` | `string` | `var(--ink)` at 5% | Hover surface for the transparent variants. Pass `var(--accent-soft)` under an accent-colored label. |
+| `href` | `string` | — | Renders an `<a>` with identical styling. `target` and `rel` ride along; a disabled link drops its `href` and reports `aria-disabled`. |
 | `asChild` | `boolean` | `false` | Render the single child element with the button styling instead of a `<button>` (merging classes and forwarding props). |
 | `disabled` | `boolean` | `false` | Disables interaction. |
 | `type` | `'button' \| 'submit' \| 'reset'` | `'button'` | Native button type. |
@@ -56,6 +96,6 @@ Any other native `<button>` attributes (`onClick`, `aria-*`, …) are forwarded.
 ### `buttonVariants`
 
 `buttonVariants(options)` returns the composed class string for a button
-without rendering one. Accepts `variant`, `size`, `icon`, `value`, and
+without rendering one. Accepts `variant`, `size`, `tone`, `icon`, `value`, and
 `className`, and is useful for styling a non-button element (like a link) to
 match the button set.
