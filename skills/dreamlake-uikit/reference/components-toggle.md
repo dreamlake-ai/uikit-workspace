@@ -30,9 +30,14 @@ form-field type at the 6px badge radius rather than the Tag's UI type at 12px.
 They look adjacent on purpose and are not interchangeable.
 
 `PillRadio` fills the selected pill with **ink**: picking one role out of four
-is a choice among peers, so it should read as "this one", not as a highlight.
-`ChipMulti` fills with the **accent**, which is what the rest of the kit uses
-for "on" — picking several things out of a set is additive.
+is a choice among peers, and a solid slab says "this one".
+
+`ChipMulti` does not fill. The hairline it already carries turns **accent** and
+the ground takes the faintest accent wash, because several selected chips at
+once is the normal state for a multi-select — four solid accent slabs in a row
+read as a bar of colour rather than as four marked pills. Keeping the label in
+ink also keeps it legible: white on `--uikit-accent` is 2.5:1 in light mode,
+under WCAG AA.
 
 `PillRadio` is a `radiogroup` of real `role="radio"` buttons: one tab stop for
 the group, arrow keys to move within it, and selection follows focus.

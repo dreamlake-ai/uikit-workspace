@@ -25,11 +25,17 @@ const PILL = [
   "disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:opacity-40",
 ].join(" ");
 
-// Selected: filled, label in the page ground, no ring. The two controls part
-// company only here — see the note on each.
+// The two controls part company only here — see the note on each.
+//
+// Single-select fills: one of these is THE answer, and a solid slab says so.
 const SELECTED_INK = "bg-uikit-ink text-uikit-bg shadow-none opacity-100";
+// Multi-select does NOT fill. The hairline it already carries turns accent and
+// the ground takes the faintest accent wash, so a set of four selected chips
+// reads as four marked pills rather than a bar of solid colour — and the label
+// stays ink, which a white-on-accent fill could not manage in light mode
+// (#fffefa on #23aaff is 2.5:1, under AA).
 const SELECTED_ACCENT =
-  "bg-uikit-accent text-uikit-bg shadow-none opacity-100 hover:opacity-100";
+  "bg-uikit-accent-soft text-uikit-ink shadow-[inset_0_0_0_1px_var(--uikit-accent)] opacity-100";
 
 export interface PillRadioProps extends Omit<
   ComponentProps<"div">,
