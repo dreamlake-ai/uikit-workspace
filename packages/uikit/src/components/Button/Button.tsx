@@ -94,11 +94,17 @@ const VARIANTS: Record<ButtonVariant, string> = {
   link: "bg-transparent text-uikit-ink underline-offset-4 hover:underline !px-0",
 };
 
+// A real ladder: heights 24.5 / 30.5 / 36.5, side padding 10 / 14 / 18.
+//
+// Both step evenly, and the height is DECLARED rather than inherited. Left to
+// itself the mono face gives an 11px label a 16.5px line box, so `sm` came out
+// at 26.5px — a number nobody chose. Pinning the box to 14.5px lands `sm` on
+// 24.5px, which is the height the app's pills and toolbar buttons already are,
+// and lets md and lg step from it by exactly 6.
 const SIZES: Record<ButtonSize, string> = {
-  // 11px on 5px/10px padding — the app's dialog footer, to the pixel.
-  sm: "text-uikit-11 px-2.5 py-[5px] gap-1",
-  md: "text-uikit-12 px-3.5 py-1.5 gap-1.5",
-  lg: "text-uikit-14 px-4 py-2 gap-1.5",
+  sm: "text-uikit-11 leading-[14.5px] px-2.5 py-[5px] gap-1",
+  md: "text-uikit-12 leading-[16.5px] px-3.5 py-[7px] gap-1.5",
+  lg: "text-uikit-14 leading-[18.5px] px-[18px] py-[9px] gap-1.5",
 };
 
 const ICON_SIZES: Record<ButtonSize, string> = {

@@ -58,7 +58,7 @@ affordance alone; the label is a fixed 12px and wrapped out of the square before
 that. (`ProfileLayout` builds its own rail on this component
 and wires `onEdit` to its avatar-picker dialog.)
 
-### `AvatarHero` props
+### `AvatarHero`
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
