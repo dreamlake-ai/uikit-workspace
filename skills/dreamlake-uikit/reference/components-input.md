@@ -44,7 +44,7 @@ is marked, not just the first; overlapping matches are not, since `"aa"` inside
 one — renders the text untouched, so it is safe to wrap around a label
 unconditionally.
 
-### `HighlightedText` props
+### `HighlightedText`
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
