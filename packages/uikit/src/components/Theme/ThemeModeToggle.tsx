@@ -172,12 +172,17 @@ export function ThemeModeToggle({
       aria-label="Theme"
       data-orientation={orientation}
       className={cn(
-        // A chip-tinted frame with an elevated thumb riding in it — the same
-        // shell as ToggleButtons and Tabs' segment pill. It used to be a
-        // transparent strip whose thumb was painted in `--bg`, which on a page
-        // already `--bg` left the thumb invisible and the control reading as
-        // three loose icons rather than a segmented switch.
-        "relative isolate inline-flex shrink-0 items-center rounded-full p-0.5 bg-uikit-chip",
+        // Transparent at rest; the chip tint arrives with the pointer. The
+        // frame is there to say "these three are one control" at the moment
+        // someone is about to use it, and a permanent tinted slab in a quiet
+        // navbar is a box drawn around three icons that were reading fine.
+        //
+        // What makes that safe is the thumb's shadow. A `--bg` thumb on a
+        // transparent strip over a `--bg` page is invisible — that is the bug
+        // the permanent frame was added to fix — but an elevated thumb reads
+        // on its own ground, so the frame does not have to carry it.
+        "relative isolate inline-flex shrink-0 items-center rounded-full p-0.5",
+        "bg-transparent hover:bg-uikit-chip transition-colors duration-[160ms]",
         orientation === "vertical" && "flex-col",
         className,
       )}
