@@ -302,6 +302,14 @@ html[data-theme="dark"] {
     var(--uikit-accent) 12%,
     transparent
   );
+  /* Search-match wash — `HighlightedText`. Mixed in oklab, not srgb: this one
+     sits UNDER text that must stay readable in both themes, and a perceptual
+     mix keeps the wash at the same apparent lightness as the accent moves. */
+  --color-uikit-accent-22: color-mix(
+    in oklab,
+    var(--uikit-accent) 22%,
+    transparent
+  );
 
   /* Opaque twin of `ink-5`: the same 5% ink, but mixed over `--bg` rather
      than transparent, so a chip filled with it reads identically on any

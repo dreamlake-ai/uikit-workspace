@@ -16,6 +16,7 @@ export * from "./FilterBar";
 export * from "./Layout";
 export * from "./FormLayout";
 export * from "./Icons";
+export * from "./HighlightedText";
 export * from "./Input";
 export * from "./Inputs";
 export * from "./Label";
