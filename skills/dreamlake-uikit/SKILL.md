@@ -25,7 +25,7 @@ file that matches the question; each is a self-contained markdown page.
 - `reference/components-code-block.md` — CodeBlock: Syntax-highlighted code surface that can switch into an editor.
 - `reference/components-dialog.md` — Dialog: Modal dialog with backdrop, Escape-to-dismiss, and a footer action row.
 - `reference/components-field.md` — Field: Form-field wrapper — label, required marker, hint and error.
-- `reference/components-filter-bar.md` — FilterBar: Filter chips + search input + sort dropdown, and marking the match in the results.
+- `reference/components-filter-bar.md` — FilterBar: Filter chips + search input + sort dropdown for list/table toolbars.
 - `reference/components-menu.md` — Menu: Trigger-anchored dropdown menu with sections, items, dividers, and a destructive variant.
 - `reference/components-profile-card.md` — ProfileCard: Bordered card for a resource row — title, tag, meta, description, footer, optional hover actions.
 - `reference/components-profile-layout.md` — ProfileLayout: Full-page profile layout — sticky top bar with animated tabs, a fixed left rail, and a scrollable main column.
