@@ -1,7 +1,9 @@
 import { AvatarHero } from "@dreamlake/uikit";
 
-/** Three widths, to show the initials sizing off the box rather than a literal.
- *  248px is the app's profile rail — the width the design was drawn at. */
+/** Three widths, all editable, to show two things at once: the initials size
+ *  off the box rather than a literal, and the hover overlay drops its label
+ *  once the square is too narrow to hold it on one line. 248px is the app's
+ *  profile rail — the width the design was drawn at. */
 export const HeroSpec = () => (
   <div
     style={{
@@ -12,13 +14,13 @@ export const HeroSpec = () => (
     }}
   >
     <Rail width={168}>
-      <AvatarHero name="Ge Yang" />
+      <AvatarHero name="Ge Yang" editable onEdit={() => {}} />
     </Rail>
     <Rail width={112}>
       <AvatarHero name="dreamlake" editable onEdit={() => {}} />
     </Rail>
     <Rail width={64}>
-      <AvatarHero name="perception team" />
+      <AvatarHero name="perception team" editable onEdit={() => {}} />
     </Rail>
   </div>
 );

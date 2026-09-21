@@ -50,9 +50,12 @@ The initials size off the box, not off a literal: 35.5% of the width, which is
 the app's 88px in its 248px rail — the ratio the design was drawn at — and holds
 at any width. Drop it in a 64px slot and it still reads as an avatar.
 
-`editable` adds the hover scrim, the pencil and the click target. It is off by
-default, so someone viewing another person's profile isn't offered an edit they
-have no permission for. (`ProfileLayout` builds its own rail on this component
+`editable` adds the hover scrim, the pencil and the click target — hover any of
+the three below. It is off by default, so someone viewing another person's
+profile isn't offered an edit they have no permission for. Under a 160px
+container the overlay drops its "change avatar" label and the pencil carries the
+affordance alone; the label is a fixed 12px and wrapped out of the square before
+that. (`ProfileLayout` builds its own rail on this component
 and wires `onEdit` to its avatar-picker dialog.)
 
 ### `AvatarHero` props
