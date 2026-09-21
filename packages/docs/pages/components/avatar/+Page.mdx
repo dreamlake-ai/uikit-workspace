@@ -45,8 +45,11 @@ Five sizes showing how the initials scale up and down with the avatar.
 
 ## Custom radius
 
-Pass `radius` (px) to override the simple form's default `4` (rounded square).
-Use `size / 2` for a perfect circle.
+Pass `radius` (px) to override the default `4`. The three below are the ones the
+app draws: `4` for a row, `6` for the presence stack, `12` for the profile hero.
+
+It never draws a circle — `size / 2` gets you one if you need it, but nothing in
+the product does.
 
 <Preview source={shapesSrc} filename="ShapesSpec.tsx">
   <ShapesSpec />
@@ -66,8 +69,8 @@ initials — so `name` is always required as the fallback.
 
 You can also compose `<AvatarImage>` and `<AvatarFallback>` as children. The
 image is hidden until it loads; if it's missing or errors, the fallback
-(usually initials) shows instead. This form defaults to a circle — pass
-`radius` to change it.
+(usually initials) shows instead. It takes the same rounded square as the simple
+form — pass `radius` (or `size / 2` for a circle) to change it.
 
 <Preview source={composedSrc} filename="ComposedSpec.tsx">
   <ComposedSpec />
@@ -113,7 +116,7 @@ and wires `onEdit` to its avatar-picker dialog.)
 | `name` | `string` | — | Display name (simple form). Initials are derived automatically; used as the fallback when `image` is absent or fails to load. Optional when using the composed form. |
 | `image` | `string` | — | Avatar image URL. Cropped to fill the avatar; falls back to initials on missing/error. |
 | `size` | `number` | `32` / `24` | Avatar size in px. Defaults to `32` for the simple form and `24` for the composed form. The initials scale with the size. |
-| `radius` | `number` | `4` / circle | Border radius in px. The simple form defaults to `4` (rounded square); the composed form defaults to a circle. Use `size / 2` for a circle in the simple form. |
+| `radius` | `number` | `4` | Border radius in px — the same rounded square in both forms. Use `size / 2` for a circle. |
 | `className` | `string` | — | Extra classes on the root `<span>`. |
 
 ### Composed sub-components
