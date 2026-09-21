@@ -41,7 +41,7 @@ and the status-bar URL all still work.
 | --- | --- | --- | --- |
 | `variant` | `'primary' \| 'secondary' \| 'ghost' \| 'action' \| 'danger' \| 'link'` | `'primary'` | Visual style. `'destructive'` is also accepted as an alias for `'danger'`. |
 | `size` | `'sm' \| 'md' \| 'lg'` | `'sm'` | Padding/text scale. `action` runs one step denser at every size. |
-| `tone` | `'default' \| 'muted' \| 'danger'` | `'default'` | Text color for the transparent variants (`ghost`, `action`, `link`). `muted` for secondary chrome; `danger` turns the label red on hover. |
+| `tone` | `'default' \| 'muted' \| 'danger'` | `'default'` | Text color for the transparent variants (`ghost`, `action`, `link`). `muted` starts at muted ink and raises to full ink on hover — for a button inside an already-muted strip. `danger` keeps its ink until the pointer arrives, then turns red. |
 | `loading` | `boolean` | `false` | Shows a spinner and disables the button. |
 | `leftIcon` | `ReactNode` | — | Icon rendered before the label. |
 | `icon` | `boolean` | `false` | Square icon-button padding (for a button whose content is a single icon). |

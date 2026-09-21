@@ -101,12 +101,19 @@ const ICON_SIZES: Record<ButtonSize, string> = {
   lg: "!px-0 !py-0 size-9 gap-0",
 };
 
-// Rest color only. `danger` keeps its ink until the pointer arrives — a row of
-// permanently-red labels reads as an error state rather than an available
-// action.
+// Rest color, and where it goes under the pointer.
+//
+// `muted` raises to full ink on hover — it is for a button inside an already
+// muted strip (the 9px uppercase count rows a file column carries), where the
+// default ink made a secondary action the darkest thing in a row of labels. It
+// still answers the pointer; it just stops shouting before anyone has pointed
+// at it.
+//
+// `danger` keeps its ink until the pointer arrives — a row of permanently-red
+// labels reads as an error state rather than an available action.
 const TONES: Record<ButtonTone, string> = {
   default: "",
-  muted: "text-uikit-muted",
+  muted: "text-uikit-muted hover:text-uikit-ink",
   danger: "hover:text-uikit-danger",
 };
 
