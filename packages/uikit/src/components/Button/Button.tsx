@@ -58,14 +58,23 @@ export interface ButtonProps extends Omit<
 }
 
 const VARIANTS: Record<ButtonVariant, string> = {
-  // Inverted fill — matches the app's existing primary action buttons.
-  primary: "bg-uikit-ink text-uikit-bg hover:opacity-90",
+  // The main action fills with the ACCENT, in mono, and rounds to the badge
+  // step. This replaces an inverted ink fill, which made the submit button the
+  // heaviest ink on a form whose fields are bare text. Hover darkens the
+  // accent rather than fading it — a primary action should not look like it is
+  // switching off under the pointer.
+  primary:
+    "font-uikit-mono rounded-uikit-badge bg-uikit-accent text-white " +
+    "hover:bg-[color-mix(in_oklab,var(--uikit-accent)_88%,#000)] " +
+    "disabled:bg-[color-mix(in_oklab,var(--uikit-accent)_38%,var(--bg))] disabled:opacity-55",
   secondary:
     "bg-transparent border border-uikit-faint text-uikit-ink hover:bg-uikit-ink-5",
-  // Low-emphasis action inside a dialog or form — the Cancel beside a primary
-  // Create. UI type, so it sits on the same baseline as the button it pairs with.
+  // The action you take by NOT acting — the cancel beside a primary. A bare
+  // muted mono label: no fill, no border, no hover chrome, just opacity. Two
+  // buttons in a footer make the reader compare two boxes; one button and one
+  // label say which is the way forward.
   ghost:
-    "bg-transparent text-uikit-ink opacity-80 hover:opacity-100 hover:bg-[var(--btn-hover-bg,var(--color-uikit-ink-5))]",
+    "font-uikit-mono text-uikit-muted opacity-80 hover:opacity-100 bg-transparent !px-0",
   // Chrome action — the borderless mono pill in a toolbar or detail header
   // (+ publish, + import, ← back). MONO and denser than `ghost` on purpose:
   // these sit in rows of metadata, not in a dialog footer. `rounded-uikit-badge`
@@ -74,14 +83,21 @@ const VARIANTS: Record<ButtonVariant, string> = {
   action:
     "bg-transparent font-uikit-mono tracking-uikit-snug rounded-uikit-badge shrink-0 " +
     "text-uikit-ink opacity-80 hover:opacity-100 hover:bg-[var(--btn-hover-bg,var(--color-uikit-ink-5))]",
-  danger: "bg-uikit-danger text-white hover:opacity-90",
+  // Same shape as `primary`, in the palette red — for a delete or disconnect
+  // confirm.
+  danger:
+    "font-uikit-mono rounded-uikit-badge bg-uikit-danger text-white " +
+    "hover:bg-[color-mix(in_oklab,var(--color-uikit-danger)_88%,#000)]",
   // Drop-in alias for the legacy kit's `destructive`.
-  destructive: "bg-uikit-danger text-white hover:opacity-90",
+  destructive:
+    "font-uikit-mono rounded-uikit-badge bg-uikit-danger text-white " +
+    "hover:bg-[color-mix(in_oklab,var(--color-uikit-danger)_88%,#000)]",
   link: "bg-transparent text-uikit-ink underline-offset-4 hover:underline !px-0",
 };
 
 const SIZES: Record<ButtonSize, string> = {
-  sm: "text-uikit-11 px-2.5 py-1 gap-1",
+  // 11px on 5px/10px padding — the app's dialog footer, to the pixel.
+  sm: "text-uikit-11 px-2.5 py-[5px] gap-1",
   md: "text-uikit-12 px-3.5 py-1.5 gap-1.5",
   lg: "text-uikit-14 px-4 py-2 gap-1.5",
 };
@@ -144,6 +160,10 @@ export function buttonVariants({
     "[&_svg]:shrink-0 [&_svg]:pointer-events-none",
     SIZES[size],
     variant === "action" && ACTION_SIZES[size],
+    // `ghost` is a label, not a box: it drops the padding the sizes hand out,
+    // and sits a half-pixel above the filled button beside it — 11.5px, the
+    // app's cancel, which the kit's integer scale leaves to an arbitrary.
+    variant === "ghost" && "!py-0 text-[11.5px]!",
     icon && ICON_SIZES[size],
     VARIANTS[variant],
     TONES[tone],

@@ -20,11 +20,20 @@ variants, sizes and a loading state.
 
 ## Variants
 
-`primary` is an inverted (ink-on-background) fill for the main action;
-`secondary` is a bordered neutral button; `ghost` is transparent with a hover
-tint (the Cancel beside a primary Create); `action` is the mono chrome pill for
-toolbars and detail headers; `danger` is for destructive actions; `link` renders
-as inline underlined text with no padding.
+`primary` fills with the **accent**, in mono, on the badge radius — the app's
+dialog footer, to the pixel. It replaces an inverted ink fill, which made the
+submit button the heaviest ink on a form whose fields are bare text. Hover
+darkens the accent rather than fading it; a primary action should not look like
+it is switching off under the pointer.
+
+`ghost` is the action you take by **not** acting — the cancel beside that
+primary. A bare muted mono label: no fill, no border, no hover chrome, just
+opacity. Two buttons in a footer make the reader compare two boxes; one button
+and one label say which is the way forward.
+
+`secondary` is a bordered neutral button; `action` is the mono chrome pill for
+toolbars and detail headers; `danger` is `primary`'s shape in the palette red;
+`link` renders as inline underlined text with no padding.
 
 <Preview source={variantsSrc} filename="VariantsSpec.tsx">
   <VariantsSpec />
