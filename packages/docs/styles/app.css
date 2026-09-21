@@ -91,7 +91,13 @@
   background: var(--chip-bg);
   pointer-events: none;
   will-change: transform;
-  transition-property: var(--glide-transition, transform, width, height, opacity);
+  transition-property: var(
+    --glide-transition,
+    transform,
+    width,
+    height,
+    opacity
+  );
   transition-duration: 220ms;
   transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -103,5 +109,4 @@
   .doc-sidebar::before {
     transition-duration: 0ms;
   }
-}
 }
