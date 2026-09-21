@@ -132,6 +132,8 @@ selection" — which is the thing a bulk action is about to act on.
 A gap in the selection is a second run, not a taller one:
 
 The run owns the 2px gap between its rows, because that tight rhythm is part of
-reading them as one block. The ring is outset and the run sits above its
-neighbours, so it is not clipped by the row below it. Native `<div>` attributes
+reading them as one block. The ring is **outset** and the run sits
+above its neighbours, so a row below cannot clip it — but the list around it
+still has to leave 2px of side room, or the ring's corners go under whatever
+does the clipping. Native `<div>` attributes
 are forwarded.
