@@ -1,5 +1,9 @@
 import { useState } from "react";
-import { ThemeModeToggle, type BaseTheme } from "@dreamlake/uikit";
+import {
+  ThemeCycleToggle,
+  ThemeModeToggle,
+  type BaseTheme,
+} from "@dreamlake/uikit";
 
 /**
  * Controlled, so picking a segment here does NOT drive the docs site's own
@@ -24,6 +28,8 @@ export const ModeToggleSpec = () => {
         enableSystem={false}
       />
       <ThemeModeToggle value={theme} onValueChange={setTheme} size={28} />
+      <ThemeCycleToggle size={28} value={theme} onValueChange={setTheme} />
+      <ThemeCycleToggle size={32} value={theme} onValueChange={setTheme} />
       <span
         style={{
           fontFamily: "var(--f-mono)",
