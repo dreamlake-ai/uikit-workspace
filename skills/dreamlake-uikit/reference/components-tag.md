@@ -5,7 +5,7 @@ Two tag styles in one component. Pick `variant` by the role the tag plays:
 - **`variant="tag"` (default)** — hashtag presentation. `#name` with an
   brought to full strength when active. Used in experiment metadata, dataset bindrs, profile
   project footers.
-- **`variant="pill"`** — boxed pill with a hairline border; the line turns accent
+- **`variant="pill"`** — boxed pill on the 6px badge radius with a hairline border; the line turns accent
   when active. Used for filter chips, single-select tag pickers.
 
 ## Removable tags

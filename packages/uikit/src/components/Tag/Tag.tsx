@@ -188,7 +188,11 @@ export function Tag({
       className={cn(
         "group inline-flex items-center gap-1.5 whitespace-nowrap leading-none",
         "font-uikit-ui tracking-uikit-snug",
-        "px-2.5 py-[5px] rounded-[calc(var(--radius)*1.2)]",
+        // The badge step, like every other small control in the kit. At
+        // `--radius * 1.2` a 24px pill is most of the way to a stadium, which
+        // made it the one chip shape that did not match the buttons and the
+        // form pills beside it.
+        "px-2.5 py-[5px] rounded-uikit-badge",
         compact ? "text-uikit-11" : "text-[11.5px]",
         light ? "font-normal" : "font-medium",
         onClick || removable ? "cursor-pointer" : "cursor-default",
