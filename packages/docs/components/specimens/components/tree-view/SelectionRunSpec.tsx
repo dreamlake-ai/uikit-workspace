@@ -50,7 +50,10 @@ export const SelectionRunSpec = () => {
         width: "100%",
         padding: "7px 10px",
         border: 0,
-        borderRadius: 8,
+        // Matches the run's radius. The ring is outset, so its INNER curve is
+        // the run's corner — a row rounded any tighter pulls away from it and
+        // leaves a sliver at each corner.
+        borderRadius: "var(--radius)",
         background: "var(--panel-bg)",
         fontFamily: "var(--f-mono)",
         fontSize: 12,

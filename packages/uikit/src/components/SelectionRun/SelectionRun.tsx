@@ -18,6 +18,11 @@ export interface SelectionRunProps extends ComponentProps<"div"> {}
  *
  * The ring is outset and sits above its neighbours (`isolate`, `z-1`) so it is
  * not clipped by the row below it.
+ *
+ * Its radius must MATCH the rows'. An outset ring's inner curve is the run's
+ * own corner, so a row rounded tighter than the run pulls away from the ring at
+ * each corner and leaves a sliver there. The default is `var(--radius)`;
+ * override with `className` when the rows are rounded differently.
  */
 export function SelectionRun({ className, ...props }: SelectionRunProps) {
   return (
