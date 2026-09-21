@@ -19,6 +19,7 @@ export * from "./Icons";
 export * from "./HighlightedText";
 export * from "./Input";
 export * from "./Inputs";
+export * from "./Kbd";
 export * from "./Label";
 export * from "./Menu";
 export * from "./Modal";
