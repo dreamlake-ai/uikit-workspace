@@ -109,10 +109,18 @@ export const InputRoot = forwardRef<HTMLInputElement, InputRootProps>(
 
 export interface InputSlotProps extends ComponentProps<"div"> {
   side?: "left" | "right";
+  /** Hide this slot while the input has focus — for a hint that has served its
+   *  purpose the moment the reader is typing (a `⌘K` chip, a format example).
+   *  Pure CSS: slots render after the input in the DOM, so a sibling selector
+   *  reaches them without any focus state in React. */
+  hideOnFocus?: boolean;
 }
 
 export const InputSlot = forwardRef<HTMLDivElement, InputSlotProps>(
-  function InputSlot({ className, children, side = "left", ...props }, ref) {
+  function InputSlot(
+    { className, children, side = "left", hideOnFocus, ...props },
+    ref,
+  ) {
     return (
       <div
         data-side={side}
@@ -121,6 +129,7 @@ export const InputSlot = forwardRef<HTMLDivElement, InputSlotProps>(
         className={cn(
           "input-slot shrink-0 cursor-text text-uikit-muted",
           side === "left" ? "-order-1" : "order-0",
+          hideOnFocus && "[input:focus~&]:hidden",
           className,
         )}
       >

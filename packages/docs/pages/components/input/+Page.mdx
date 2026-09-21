@@ -7,6 +7,8 @@ description: Styled text input with optional left/right slots.
 
 import { BasicSpec } from '../../../components/specimens/components/input/BasicSpec'
 import basicSrc from '../../../components/specimens/components/input/BasicSpec.tsx?raw'
+import { SearchSpec } from '../../../components/specimens/components/input/SearchSpec'
+import searchSrc from '../../../components/specimens/components/input/SearchSpec.tsx?raw'
 
 # Input
 
@@ -16,6 +18,20 @@ focuses the input and places the caret at the matching end.
 
 <Preview source={basicSrc} filename="BasicSpec.tsx">
   <BasicSpec />
+</Preview>
+
+## A search field
+
+The app's ⌘K field is this component plus two slots — a glyph on the left, a
+`Kbd` hint on the right. The hint carries `hideOnFocus`, so it steps out of the
+way the moment the reader starts typing: it is advertising a shortcut for
+reaching this field, and they are already here.
+
+`hideOnFocus` is pure CSS. Slots render after the input in the DOM, so a sibling
+selector reaches them — no focus state in React, and nothing to keep in sync.
+
+<Preview source={searchSrc} filename="SearchSpec.tsx">
+  <SearchSpec />
 </Preview>
 
 ## Props
@@ -37,5 +53,6 @@ All native `<input>` attributes (`placeholder`, `value`, `onChange`, `disabled`,
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `side` | `'left' \| 'right'` | `'left'` | Which end of the input the slot sits at. |
+| `hideOnFocus` | `boolean` | `false` | Hide the slot while the input has focus — for a hint that has served its purpose once the reader is typing. |
 
 Native `<div>` attributes are forwarded.

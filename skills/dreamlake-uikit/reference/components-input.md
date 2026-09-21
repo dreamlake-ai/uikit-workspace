@@ -4,6 +4,16 @@ A styled text field. `InputRoot` (also exported as `Input`) is the container +
 input; drop `InputSlot`s inside for icons, prefixes, or suffixes. Clicking a slot
 focuses the input and places the caret at the matching end.
 
+## A search field
+
+The app's ⌘K field is this component plus two slots — a glyph on the left, a
+`Kbd` hint on the right. The hint carries `hideOnFocus`, so it steps out of the
+way the moment the reader starts typing: it is advertising a shortcut for
+reaching this field, and they are already here.
+
+`hideOnFocus` is pure CSS. Slots render after the input in the DOM, so a sibling
+selector reaches them — no focus state in React, and nothing to keep in sync.
+
 ## Props
 
 ### `InputRoot`
@@ -23,5 +33,6 @@ All native `<input>` attributes (`placeholder`, `value`, `onChange`, `disabled`,
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `side` | `'left' \| 'right'` | `'left'` | Which end of the input the slot sits at. |
+| `hideOnFocus` | `boolean` | `false` | Hide the slot while the input has focus — for a hint that has served its purpose once the reader is typing. |
 
 Native `<div>` attributes are forwarded.
