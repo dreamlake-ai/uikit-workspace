@@ -6,61 +6,75 @@ import {
   useEffect,
   useMemo,
   useState,
-} from 'react'
+} from "react";
 
-export type BaseTheme = 'dark' | 'light' | 'system'
-export type ComputedTheme = 'light' | 'dark' | 'liquid-light' | 'liquid-dark'
+export type BaseTheme = "dark" | "light" | "system";
+export type ComputedTheme = "light" | "dark" | "liquid-light" | "liquid-dark";
 
 export interface UseThemeProps {
-  baseTheme: BaseTheme
-  setBaseTheme: (theme: BaseTheme) => void
-  isLiquid: boolean
-  toggleLiquid: () => void
-  computedTheme: ComputedTheme
-  resolvedTheme: ComputedTheme
-  systemTheme?: 'dark' | 'light'
-  storageKey: string
+  baseTheme: BaseTheme;
+  setBaseTheme: (theme: BaseTheme) => void;
+  isLiquid: boolean;
+  toggleLiquid: () => void;
+  computedTheme: ComputedTheme;
+  resolvedTheme: ComputedTheme;
+  systemTheme?: "dark" | "light";
+  storageKey: string;
 }
 
 export interface ThemeProviderProps {
-  defaultBaseTheme?: BaseTheme
-  defaultIsLiquid?: boolean
-  enableSystem?: boolean
-  storageKey?: string
+  defaultBaseTheme?: BaseTheme;
+  defaultIsLiquid?: boolean;
+  enableSystem?: boolean;
+  storageKey?: string;
 }
 
-const MEDIA = '(prefers-color-scheme: dark)'
-const isServer = typeof window === 'undefined'
+const MEDIA = "(prefers-color-scheme: dark)";
+const isServer = typeof window === "undefined";
 
-export const defaultThemes = ['light', 'dark', 'liquid-light', 'liquid-dark']
+export const defaultThemes = ["light", "dark", "liquid-light", "liquid-dark"];
 
-const ThemeContext = createContext<UseThemeProps | undefined>(undefined)
+const ThemeContext = createContext<UseThemeProps | undefined>(undefined);
 
 export function useTheme(): UseThemeProps {
-  const ctx = useContext(ThemeContext)
-  if (ctx === undefined) throw new Error('useTheme must be used within a ThemeProvider')
-  return ctx
+  const ctx = useContext(ThemeContext);
+  if (ctx === undefined)
+    throw new Error("useTheme must be used within a ThemeProvider");
+  return ctx;
+}
+
+/** The same context, without the throw — for a component that can also be
+ *  driven as a controlled input and so must be able to render with no provider
+ *  above it (a docs specimen, a preview pane, an app that keeps its own theme
+ *  state). Returns `undefined` outside a `ThemeProvider`. */
+export function useThemeOptional(): UseThemeProps | undefined {
+  return useContext(ThemeContext);
 }
 
 /** Resolve (baseTheme, isLiquid, systemIsDark) → the concrete theme name. */
-export function computeTheme(baseTheme: BaseTheme, isLiquid: boolean, systemIsDark: boolean): ComputedTheme {
-  const resolvedBase = baseTheme === 'system' ? (systemIsDark ? 'dark' : 'light') : baseTheme
-  if (isLiquid) return resolvedBase === 'dark' ? 'liquid-dark' : 'liquid-light'
-  return resolvedBase
+export function computeTheme(
+  baseTheme: BaseTheme,
+  isLiquid: boolean,
+  systemIsDark: boolean,
+): ComputedTheme {
+  const resolvedBase =
+    baseTheme === "system" ? (systemIsDark ? "dark" : "light") : baseTheme;
+  if (isLiquid) return resolvedBase === "dark" ? "liquid-dark" : "liquid-light";
+  return resolvedBase;
 }
 
 function read(key: string, fallback: string) {
-  if (isServer) return fallback
+  if (isServer) return fallback;
   try {
-    return window.localStorage.getItem(key) ?? fallback
+    return window.localStorage.getItem(key) ?? fallback;
   } catch {
-    return fallback
+    return fallback;
   }
 }
 function write(key: string, value: string) {
-  if (isServer) return
+  if (isServer) return;
   try {
-    window.localStorage.setItem(key, value)
+    window.localStorage.setItem(key, value);
   } catch {
     /* storage unavailable */
   }
@@ -78,56 +92,61 @@ export function ThemeProvider({
   defaultBaseTheme,
   defaultIsLiquid = false,
   enableSystem = true,
-  storageKey = 'dl-theme',
+  storageKey = "dl-theme",
   children,
 }: PropsWithChildren<ThemeProviderProps>) {
-  const fallbackBase: BaseTheme = defaultBaseTheme ?? (enableSystem ? 'system' : 'light')
+  const fallbackBase: BaseTheme =
+    defaultBaseTheme ?? (enableSystem ? "system" : "light");
 
   const [baseTheme, setBaseThemeState] = useState<BaseTheme>(() => {
-    const stored = read(`${storageKey}-base`, fallbackBase)
-    return (['light', 'dark', 'system'].includes(stored) ? stored : fallbackBase) as BaseTheme
-  })
-  const [isLiquid, setIsLiquid] = useState<boolean>(() => read(`${storageKey}-liquid`, String(defaultIsLiquid)) === 'true')
+    const stored = read(`${storageKey}-base`, fallbackBase);
+    return (
+      ["light", "dark", "system"].includes(stored) ? stored : fallbackBase
+    ) as BaseTheme;
+  });
+  const [isLiquid, setIsLiquid] = useState<boolean>(
+    () => read(`${storageKey}-liquid`, String(defaultIsLiquid)) === "true",
+  );
   const [systemIsDark, setSystemIsDark] = useState<boolean>(() =>
     isServer ? false : window.matchMedia(MEDIA).matches,
-  )
+  );
 
   useEffect(() => {
-    if (isServer || !enableSystem) return
-    const mql = window.matchMedia(MEDIA)
-    const onChange = () => setSystemIsDark(mql.matches)
-    onChange()
-    mql.addEventListener('change', onChange)
-    return () => mql.removeEventListener('change', onChange)
-  }, [enableSystem])
+    if (isServer || !enableSystem) return;
+    const mql = window.matchMedia(MEDIA);
+    const onChange = () => setSystemIsDark(mql.matches);
+    onChange();
+    mql.addEventListener("change", onChange);
+    return () => mql.removeEventListener("change", onChange);
+  }, [enableSystem]);
 
   const computedTheme = useMemo(
     () => computeTheme(baseTheme, isLiquid, systemIsDark),
     [baseTheme, isLiquid, systemIsDark],
-  )
+  );
 
   // Reflect onto html[data-theme]; the kit's CSS keys off light/dark.
   useEffect(() => {
-    if (isServer) return
-    const resolvedBase = computedTheme.includes('dark') ? 'dark' : 'light'
-    document.documentElement.setAttribute('data-theme', resolvedBase)
-    document.documentElement.toggleAttribute('data-liquid', isLiquid)
-  }, [computedTheme, isLiquid])
+    if (isServer) return;
+    const resolvedBase = computedTheme.includes("dark") ? "dark" : "light";
+    document.documentElement.setAttribute("data-theme", resolvedBase);
+    document.documentElement.toggleAttribute("data-liquid", isLiquid);
+  }, [computedTheme, isLiquid]);
 
   const setBaseTheme = useCallback(
     (next: BaseTheme) => {
-      setBaseThemeState(next)
-      write(`${storageKey}-base`, next)
+      setBaseThemeState(next);
+      write(`${storageKey}-base`, next);
     },
     [storageKey],
-  )
+  );
   const toggleLiquid = useCallback(() => {
     setIsLiquid((prev) => {
-      const next = !prev
-      write(`${storageKey}-liquid`, String(next))
-      return next
-    })
-  }, [storageKey])
+      const next = !prev;
+      write(`${storageKey}-liquid`, String(next));
+      return next;
+    });
+  }, [storageKey]);
 
   const value = useMemo<UseThemeProps>(
     () => ({
@@ -137,11 +156,22 @@ export function ThemeProvider({
       toggleLiquid,
       computedTheme,
       resolvedTheme: computedTheme,
-      systemTheme: enableSystem ? (systemIsDark ? 'dark' : 'light') : undefined,
+      systemTheme: enableSystem ? (systemIsDark ? "dark" : "light") : undefined,
       storageKey,
     }),
-    [baseTheme, setBaseTheme, isLiquid, toggleLiquid, computedTheme, enableSystem, systemIsDark, storageKey],
-  )
+    [
+      baseTheme,
+      setBaseTheme,
+      isLiquid,
+      toggleLiquid,
+      computedTheme,
+      enableSystem,
+      systemIsDark,
+      storageKey,
+    ],
+  );
 
-  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
+  return (
+    <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
+  );
 }
