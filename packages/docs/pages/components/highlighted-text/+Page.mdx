@@ -1,0 +1,48 @@
+---
+title: HighlightedText
+section: Components
+order: 155
+description: Marks every occurrence of a search query inside a string.
+---
+
+import { HighlightedTextSpec } from '../../../components/specimens/components/highlighted-text/HighlightedTextSpec'
+import highlightedTextSrc from '../../../components/specimens/components/highlighted-text/HighlightedTextSpec.tsx?raw'
+
+# HighlightedText
+
+Renders a string with every occurrence of a query wrapped in a soft
+accent-tinted mark. For search-result rows and result cards, where the matched
+substring is what anchors the reader's eye.
+
+<Preview source={highlightedTextSrc} filename="HighlightedTextSpec.tsx">
+  <HighlightedTextSpec />
+</Preview>
+
+## Notes
+
+It renders a real `<mark>`, not a tinted `<span>`: the element exists for
+exactly this, and assistive tech can announce it. The browser's default yellow
+is overridden by the kit's wash, `--color-uikit-accent-22` — mixed in oklab
+rather than sRGB because it sits *under* text that has to stay readable in both
+themes.
+
+Matching is case-insensitive by default; a reader typing `lake` expects to see
+`Lakeshore` marked. Pass `caseSensitive` for a literal match.
+
+Every occurrence is marked, not just the first. Overlapping matches are not:
+`"aa"` inside `"aaa"` is one highlight to a reader, not two.
+
+A query that doesn't appear — or an empty one — renders the text untouched, so
+this is safe to wrap around a label unconditionally.
+
+## Props
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `text` | `string` | — | The full string to render. |
+| `query` | `string` | — | The substring to mark. Empty or absent leaves `text` untouched. |
+| `caseSensitive` | `boolean` | `false` | Match case. |
+| `className` | `string` | — | Classes on the wrapping `<span>`. |
+| `markClassName` | `string` | — | Classes on each `<mark>`, for a different wash in a dense list. |
+
+Native `<span>` attributes are forwarded to the wrapper.
