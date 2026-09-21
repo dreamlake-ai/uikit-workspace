@@ -34,13 +34,23 @@ export interface MenuProps {
   trigger: (open: boolean) => ReactNode
   /** Panel alignment relative to the trigger. Default `'left'`. */
   align?: 'left' | 'right'
+  /**
+   * Which side of the trigger the panel opens on. Default `'down'` (below the
+   * trigger). `'up'` anchors the panel's BOTTOM edge above the trigger — for
+   * triggers parked at the bottom of the viewport (e.g. a sidebar footer),
+   * where opening downward would put the panel off-screen. Both placements
+   * clamp the panel to the viewport: content taller than the space between
+   * the trigger and the viewport edge scrolls inside the panel.
+   */
+  placement?: 'down' | 'up'
   /** Panel min-width in px. Default `240`. */
   width?: number
   /**
-   * Render a wedge on the panel's top edge, pointing back at the trigger.
-   * Default `true`. The wedge centers on the first `[data-menu-arrow]`
-   * descendant of the trigger — put it on the chevron — and falls back to the
-   * trigger's own center when no such element exists.
+   * Render a wedge on the panel's trigger-side edge (top when opening down,
+   * bottom when opening up), pointing back at the trigger. Default `true`.
+   * The wedge centers on the first `[data-menu-arrow]` descendant of the
+   * trigger — put it on the chevron — and falls back to the trigger's own
+   * center when no such element exists.
    */
   arrow?: boolean
 
@@ -65,6 +75,7 @@ export interface MenuProps {
 export function Menu({
   trigger,
   align = 'left',
+  placement = 'down',
   width = 240,
   arrow = true,
   open: openProp,
@@ -87,10 +98,14 @@ export function Menu({
   const triggerRef = useRef<HTMLSpanElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
   const [coords, setCoords] = useState<{
+    /** Distance from the viewport top ('down') or bottom ('up'). */
     top: number
     left: number
     right: number
-  }>({ top: 0, left: 0, right: 0 })
+    /** Space between the trigger and the near viewport edge — the panel's
+     *  content scrolls rather than growing past it. */
+    maxHeight: number
+  }>({ top: 0, left: 0, right: 0, maxHeight: 0 })
   // Wedge center, in px from whichever panel edge `align` pins.
   const [arrowInset, setArrowInset] = useState(ARROW_MIN_INSET)
 
@@ -106,60 +121,41 @@ export function Menu({
       // the right offset by the scrollbar width when classic scrollbars are
       // present, shifting the panel leftward by that amount.
       const viewportContentWidth = document.documentElement.clientWidth
-      const top = r.bottom + 6
+      const viewportContentHeight = document.documentElement.clientHeight
+      // 'down' measures from the viewport top to the panel's top edge;
+      // 'up' measures from the viewport bottom to the panel's BOTTOM edge —
+      // the panel then grows upward from the trigger, and `maxHeight` stops
+      // it at the viewport margin instead of letting it run off the top.
+      const top =
+        placement === 'up'
+          ? viewportContentHeight - r.top + 6
+          : r.bottom + 6
+      const maxHeight = Math.max(0, viewportContentHeight - top - VIEWPORT_MARGIN)
 
-      if (!arrow) {
-        setCoords({
-          top,
-          left: r.left,
-          right: viewportContentWidth - r.right,
-        })
-        return
-      }
-
-      // Aim the wedge at the trigger's chevron when one is tagged, else at the
-      // trigger's midpoint. `align` decides which panel edge the offset is
-      // measured from: 'left' pins the panel's left edge to r.left, 'right'
-      // pins its right edge to r.right — so both are trigger-relative and the
-      // panel's own width is only needed for the far-edge clamp.
+      const panelWidth = Math.min(
+        panelRef.current?.offsetWidth || width,
+        Math.max(0, viewportContentWidth - VIEWPORT_MARGIN * 2),
+      )
       const anchor = triggerRef.current!.querySelector('[data-menu-arrow]')
       const aRect = anchor?.getBoundingClientRect()
       const anchorCenter = aRect
         ? aRect.left + aRect.width / 2
         : r.left + r.width / 2
-      const raw =
-        align === 'left' ? anchorCenter - r.left : r.right - anchorCenter
-      // Keep the wedge clear of the panel's rounded corners at both ends.
-      const panelWidth = panelRef.current?.offsetWidth ?? width
-      const far = Math.max(ARROW_MIN_INSET, panelWidth - ARROW_MIN_INSET)
-
-      // When the anchor sits closer to the panel's edge than the wedge is
-      // allowed to come, move the PANEL rather than letting the wedge fall
-      // short. A wedge that does not point at the control that opened the menu
-      // has lost its only job; a few px of overhang past that control is
-      // invisible. This is what `shift` + `arrow` do together in floating-ui,
-      // and what a bare clamp here could not: it had nothing to give.
-      //
-      // It surfaced on a borderless trigger whose chevron is its last element —
-      // the chevron's centre lands ~6px from the trigger's right edge, well
-      // inside ARROW_MIN_INSET, so the wedge parked at the minimum and pointed
-      // at the label instead.
-      const wanted = Math.max(0, ARROW_MIN_INSET - raw)
-      // Never push the panel off-screen: the shift is only as much as the
-      // viewport can spare, and the wedge follows whatever was actually
-      // applied rather than assuming it got what it asked for.
-      const room =
-        align === 'left'
-          ? Math.max(0, r.left - VIEWPORT_MARGIN)
-          : Math.max(0, viewportContentWidth - r.right - VIEWPORT_MARGIN)
-      const shift = Math.min(wanted, room)
-
-      setCoords({
-        top,
-        left: r.left - shift,
-        right: viewportContentWidth - r.right - shift,
-      })
-      setArrowInset(Math.min(Math.max(raw + shift, ARROW_MIN_INSET), far))
+      const rawInset = align === 'left' ? anchorCenter - r.left : r.right - anchorCenter
+      const shift = arrow ? Math.max(0, ARROW_MIN_INSET - rawInset) : 0
+      const desiredLeft = align === 'left' ? r.left - shift : r.right - panelWidth + shift
+      // Both edges must stay in view, including a right-aligned theme menu
+      // opened from the collapsed sidebar at the far LEFT of the viewport.
+      const left = Math.max(
+        VIEWPORT_MARGIN,
+        Math.min(desiredLeft, viewportContentWidth - panelWidth - VIEWPORT_MARGIN),
+      )
+      setCoords({ top, left, right: viewportContentWidth - left - panelWidth, maxHeight })
+      const inset = align === 'left' ? anchorCenter - left : left + panelWidth - anchorCenter
+      setArrowInset(Math.min(
+        Math.max(inset, ARROW_MIN_INSET),
+        Math.max(ARROW_MIN_INSET, panelWidth - ARROW_MIN_INSET),
+      ))
     }
     update()
     window.addEventListener('scroll', update, true)
@@ -168,7 +164,7 @@ export function Menu({
       window.removeEventListener('scroll', update, true)
       window.removeEventListener('resize', update)
     }
-  }, [open, align, width, arrow])
+  }, [open, align, placement, width, arrow])
 
   // Esc dismiss.
   useEffect(() => {
@@ -194,10 +190,14 @@ export function Menu({
   }, [open, dismissOnOutsideClick]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Position is runtime-computed; everything else is class-driven.
+  // `coords.top` is the offset from the anchoring viewport edge: `top` when
+  // opening down, `bottom` when opening up (the panel grows away from the
+  // trigger in both cases).
   const panelStyle: CSSProperties = {
-    top: coords.top,
+    ...(placement === 'up' ? { bottom: coords.top } : { top: coords.top }),
     ...(align === 'left' ? { left: coords.left } : { right: coords.right }),
-    minWidth: width,
+    minWidth: `min(${width}px, calc(100vw - ${VIEWPORT_MARGIN * 2}px))`,
+    maxWidth: `calc(100vw - ${VIEWPORT_MARGIN * 2}px)`,
     // Menu elevation — set inline (not via a shadow-* utility) so it always
     // applies. Uses the MEDIUM shadow tint + a tight spread so it doesn't read
     // as a heavy black blob in dark (where the deep tint-3 hits 0.75); the 1px
@@ -242,9 +242,14 @@ export function Menu({
               <span
                 aria-hidden
                 className={cn(
-                  'absolute top-0 rotate-45',
-                  'rounded-tl-[2px] border-t border-l border-uikit-faint',
-                  'bg-uikit-bg',
+                  'absolute rotate-45 bg-uikit-bg',
+                  // The wedge sits on the trigger-side edge: top edge with the
+                  // top-left corner's two borders when opening down, bottom
+                  // edge with the bottom-right pair when opening up — after
+                  // the 45° rotation each pair is the one facing the trigger.
+                  placement === 'up'
+                    ? 'bottom-0 rounded-br-[2px] border-b border-r border-uikit-faint'
+                    : 'top-0 rounded-tl-[2px] border-t border-l border-uikit-faint',
                 )}
                 style={{
                   width: ARROW_SIZE,
@@ -257,14 +262,25 @@ export function Menu({
                   // paints outside the box, so centering at y:0 leaves the two
                   // bordered edges running a full ring-width past the visible
                   // line — they poke out below it as little ears at the base.
-                  translate: `0 calc(-50% - ${PANEL_RING / 2}px)`,
+                  translate:
+                    placement === 'up'
+                      ? `0 calc(50% + ${PANEL_RING / 2}px)`
+                      : `0 calc(-50% - ${PANEL_RING / 2}px)`,
                 }}
               />
             )}
             {/* Side padding here is what insets rows from the panel edge, so
                 hover / selected fills read as rounded chips instead of
-                edge-to-edge bands. Rows carry px-2 to keep text at 14px. */}
-            <div className="flex flex-col px-1.5 py-1.5">{children}</div>
+                edge-to-edge bands. Rows carry px-2 to keep text at 14px.
+                The wrapper (not the panel) owns the viewport clamp: the panel
+                must keep `overflow: visible` for the wedge, so content that
+                outgrows the trigger-to-edge space scrolls in here instead. */}
+            <div
+              className="flex flex-col px-1.5 py-1.5 overflow-y-auto"
+              style={coords.maxHeight > 0 ? { maxHeight: coords.maxHeight } : undefined}
+            >
+              {children}
+            </div>
           </div>,
           document.body,
         )}
