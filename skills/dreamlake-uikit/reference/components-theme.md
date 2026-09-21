@@ -31,8 +31,10 @@ export function App() {
 `ThemeModeToggle` shows all three modes at once and moves a circular thumb to
 the one in force. It is the toggle the app wears in its navbar.
 `ThemeCycleToggle` is the one-glyph version for a surface the strip doesn't fit
-— a sidebar footer, a collapsed rail — advancing `dark → system → light` on each
-click. `LiquidToggle` flips the liquid flag. Both must be inside a `ThemeProvider` (or, for
+— a sidebar footer, a collapsed rail, the marketing site's header — advancing
+`dark → system → light` on each click. `size` scales it and the glyph follows at
+half the box: 28 in the app's sidebar, 32 in the marketing header, which is the
+2:1 ratio both have always kept. `LiquidToggle` flips the liquid flag. Both must be inside a `ThemeProvider` (or, for
 `ThemeModeToggle`, driven as a controlled input — see below).
 
 ```tsx
