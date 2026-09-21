@@ -118,3 +118,20 @@ a ring around its whole subtree.
 | `isRegexValid`       | `boolean`                                      | `false` when `isRegex` is on and the query is not a valid pattern.      |
 | `renderLabel`        | `(label: string, itemId: string) => ReactNode` | Label renderer that highlights matched substrings — pass to `TreeView`. |
 | `hasActiveSearch`    | `boolean`                                      | Whether a non-empty query is active.                                    |
+
+## Selected runs — `SelectionRun`
+
+When a list lets you pick several rows at once, wrap each **contiguous** stretch
+of selected rows in a `SelectionRun`. The rows keep their own surface and a
+single accent ring goes around the run, so five selected rows are one shape
+rather than five repeated fills.
+
+Five filled rows say "five things happened". One ringed block says "this is the
+selection" — which is the thing a bulk action is about to act on.
+
+A gap in the selection is a second run, not a taller one:
+
+The run owns the 2px gap between its rows, because that tight rhythm is part of
+reading them as one block. The ring is outset and the run sits above its
+neighbours, so it is not clipped by the row below it. Native `<div>` attributes
+are forwarded.
