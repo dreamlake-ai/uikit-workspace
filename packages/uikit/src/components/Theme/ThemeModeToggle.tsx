@@ -60,12 +60,12 @@ function MoonIcon() {
   );
 }
 
-// `rest` is how an UNSELECTED glyph sits: a touch small and turned away from
-// the thumb it is waiting for. The sun leans back, the moon leans forward, and
-// the monitor — the middle segment, with nowhere to lean — only shrinks. Each
-// is written out in full because Tailwind reads these as source text; a
-// composed `[&>svg]:${...}` would compile to nothing.
-const SELECTED_ICON = "[&>svg]:scale-100 [&>svg]:opacity-100";
+// Unselected glyphs differ from selected in OPACITY ONLY. They used to shrink
+// to .85 and counter-rotate 18°, which meant every switch shoved all three
+// icons around while the thumb travelled underneath them — competing with the
+// one piece of motion the control actually has. The icons hold still; the thumb
+// is the only thing that moves.
+const SELECTED_ICON = "[&>svg]:opacity-100";
 const SEGMENTS: Record<
   BaseTheme,
   { label: string; icon: ReactNode; rest: string }
@@ -73,17 +73,17 @@ const SEGMENTS: Record<
   light: {
     label: "Light mode",
     icon: <SunIcon />,
-    rest: "[&>svg]:scale-[0.85] [&>svg]:-rotate-[18deg] [&>svg]:opacity-70",
+    rest: "[&>svg]:opacity-70",
   },
   system: {
     label: "System theme",
     icon: <MonitorIcon />,
-    rest: "[&>svg]:scale-[0.85] [&>svg]:opacity-70",
+    rest: "[&>svg]:opacity-70",
   },
   dark: {
     label: "Dark mode",
     icon: <MoonIcon />,
-    rest: "[&>svg]:scale-[0.85] [&>svg]:rotate-[18deg] [&>svg]:opacity-70",
+    rest: "[&>svg]:opacity-70",
   },
 };
 
@@ -94,6 +94,9 @@ export interface ThemeModeToggleProps extends Omit<
   /** Segment size in px — the thumb's diameter and the control's height minus
    *  its 2px padding. Default 22, the size the app's navbar wears. */
   size?: number;
+  /** `vertical` stacks the three segments — for a collapsed icon rail, where
+   *  all three choices should stay directly clickable. */
+  orientation?: "horizontal" | "vertical";
   /** Controlled mode: the selected theme. Given this, the control stops
    *  reading the `ThemeProvider` and reports changes through `onValueChange`
    *  instead — for an app that keeps its own theme state, or a preview that
@@ -132,6 +135,7 @@ export interface ThemeModeToggleProps extends Omit<
  */
 export function ThemeModeToggle({
   size = 22,
+  orientation = "horizontal",
   value,
   onValueChange,
   enableSystem,
@@ -166,9 +170,15 @@ export function ThemeModeToggle({
     <div
       role="group"
       aria-label="Theme"
+      data-orientation={orientation}
       className={cn(
-        "relative isolate inline-flex shrink-0 items-center rounded-full p-0.5",
-        "bg-transparent hover:bg-uikit-ink-6 transition-colors",
+        // A chip-tinted frame with an elevated thumb riding in it — the same
+        // shell as ToggleButtons and Tabs' segment pill. It used to be a
+        // transparent strip whose thumb was painted in `--bg`, which on a page
+        // already `--bg` left the thumb invisible and the control reading as
+        // three loose icons rather than a segmented switch.
+        "relative isolate inline-flex shrink-0 items-center rounded-full p-0.5 bg-uikit-chip",
+        orientation === "vertical" && "flex-col",
         className,
       )}
       style={style}
@@ -177,14 +187,20 @@ export function ThemeModeToggle({
       <span
         aria-hidden
         className={cn(
-          "absolute left-0.5 top-0.5 z-0 rounded-full bg-uikit-bg",
+          // `shadow-uikit-sm` is what makes it read as a thumb sitting IN the
+          // frame rather than a hole cut out of it.
+          "absolute left-0.5 top-0.5 z-0 rounded-full bg-uikit-bg shadow-uikit-sm",
           "transition-transform ease-[var(--uikit-ease-thumb)] duration-[var(--uikit-dur-thumb)]",
           "motion-reduce:transition-none",
         )}
         style={{
           width: size,
           height: size,
-          transform: `translateX(${index * size}px)`,
+          // Same travel distance either way — the axis is all that changes.
+          transform:
+            orientation === "vertical"
+              ? `translateY(${index * size}px)`
+              : `translateX(${index * size}px)`,
           willChange: "transform",
         }}
       />
@@ -204,14 +220,8 @@ export function ThemeModeToggle({
               "relative z-10 inline-flex items-center justify-center rounded-full",
               "text-uikit-muted hover:text-uikit-ink aria-pressed:text-uikit-ink",
               "cursor-pointer outline-none transition-colors duration-[250ms]",
-              // The press squish belongs to the glyph, not the 22px hit area —
-              // shrinking the button would pull the thumb's circle with it.
-              "active:[&>svg]:scale-[0.88]",
               "[&>svg]:block [&>svg]:size-[13px]",
-              // `scale` and `rotate` are their own properties in Tailwind v4,
-              // so a `transition-[transform]` here would animate nothing.
-              "[&>svg]:transition-[scale,rotate,opacity]",
-              "[&>svg]:ease-[var(--uikit-ease-thumb)] [&>svg]:duration-[var(--uikit-dur-thumb)]",
+              "[&>svg]:transition-opacity [&>svg]:duration-[250ms]",
               "motion-reduce:[&>svg]:transition-none",
               selected ? SELECTED_ICON : seg.rest,
             )}

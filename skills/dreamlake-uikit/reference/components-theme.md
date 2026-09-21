@@ -29,26 +29,39 @@ export function App() {
 ## Toggles
 
 `ThemeModeToggle` shows all three modes at once and moves a circular thumb to
-the one in force. It is the toggle the app wears in its navbar. `LiquidToggle`
-flips the liquid flag. Both must be inside a `ThemeProvider` (or, for
+the one in force. It is the toggle the app wears in its navbar.
+`ThemeCycleToggle` is the one-glyph version for a surface the strip doesn't fit
+— a sidebar footer, a collapsed rail — advancing `dark → system → light` on each
+click. `LiquidToggle` flips the liquid flag. Both must be inside a `ThemeProvider` (or, for
 `ThemeModeToggle`, driven as a controlled input — see below).
 
 ```tsx
-import { ThemeModeToggle, LiquidToggle } from '@dreamlake/uikit'
+import { ThemeModeToggle, ThemeCycleToggle, LiquidToggle } from '@dreamlake/uikit'
 
 <header>
   <ThemeModeToggle />
   <LiquidToggle />
 </header>
+
+<footer>
+  <ThemeCycleToggle />
+</footer>
 ```
 
-It **replaces** `ThemeColorToggle`, a single button that cycled
-`light → dark → system`. That control asked the reader for two clicks to get
-from light to dark, and asked them to infer the current mode from one glyph — a
-sun could mean "you are in light" or "click for light". Three segments answer
-both questions at once, and the app never adopted the cycling version in the
-first place. For a toolbar with no room for ~68px, render it at a smaller `size`
-rather than reaching for a different control.
+The strip is a **chip-tinted frame with an elevated thumb** — the same shell as
+`ToggleButtons` and `Tabs`' segment pill, sharing their curve through
+`--uikit-ease-thumb` / `--uikit-dur-thumb`. Unselected glyphs differ only in
+opacity: they used to shrink and counter-rotate, which meant every switch shoved
+all three icons around while the thumb travelled underneath, competing with the
+one piece of motion the control has.
+
+`orientation="vertical"` stacks the segments for a collapsed icon rail, where
+all three choices should stay directly clickable. The thumb travels the same
+distance, on the other axis.
+
+Both **replace** `ThemeColorToggle`, which was a rounded-square button on an
+ink-tint hover. `ThemeCycleToggle` is the borderless circle the app actually
+uses for this, and it cycles `dark → system → light` — the app's order.
 
 The thumb runs on `--uikit-ease-thumb` / `--uikit-dur-thumb`, the same curve and
 duration as the segmented `ToggleButtons` highlight, so two of them on one page
