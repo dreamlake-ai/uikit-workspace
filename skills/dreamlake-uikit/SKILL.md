@@ -52,7 +52,7 @@ file that matches the question; each is a self-contained markdown page.
 - `reference/components-uikit-badge.md` — UIKit Badge: Version chip showing the @dreamlake/uikit package name and version.
 - `reference/components-use-is-mobile.md` — useIsMobile: Hook returning true when the viewport is narrower than 768px.
 - `reference/components-label.md` — Label: Form label with size variants, associated via htmlFor.
-- `reference/components-toggle.md` — Toggle: Two-state toggle button, plus a segmented ToggleButtons group.
+- `reference/components-toggle.md` — Toggle: Two-state toggle button, a segmented ToggleButtons group, and the outlined pill rows.
 - `reference/components-toolbar.md` — Toolbar: Horizontal container for grouped actions, with separators.
 - `reference/components-modal.md` — Modal: General-purpose modal dialog with a trigger and close button.
 - `reference/components-form-layout.md` — Form Layout: Pairs a label with a control, stacked or side-by-side.
