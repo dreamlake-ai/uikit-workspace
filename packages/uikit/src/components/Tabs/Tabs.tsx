@@ -146,7 +146,7 @@ function UnderlineTabItem({
       data-small={isSmall || undefined}
       onClick={onClick}
       className={cn(
-        "group/tab relative inline-flex items-center gap-1.5 cursor-pointer select-none whitespace-nowrap",
+        "group/tab relative isolate inline-flex items-center gap-1.5 cursor-pointer select-none whitespace-nowrap",
         "font-uikit-ui tracking-uikit-snug",
         "transition-[color,opacity] duration-[120ms]",
         underlineSizeMap[size],
@@ -165,6 +165,21 @@ function UnderlineTabItem({
         "data-[small]:data-[active]:opacity-100",
       )}
     >
+      {/* Hover reads as ONE item.
+          The label, the count and (in a consumer's tab) an icon are parts of a
+          single target, so the pointer should light the target, not fade each
+          part on its own. The block is absolutely positioned and outset rather
+          than padding on the tab: padding would widen every tab and drag the
+          sliding underline's measurement with it, and this control's geometry
+          is load-bearing. */}
+      <span
+        aria-hidden
+        className={cn(
+          "absolute -inset-x-2 -inset-y-1 -z-10 rounded-uikit-badge bg-uikit-ink-5",
+          "opacity-0 transition-opacity duration-[120ms]",
+          "group-hover/tab:opacity-100",
+        )}
+      />
       <span>{tab.label}</span>
       {tab.count != null && (
         <span

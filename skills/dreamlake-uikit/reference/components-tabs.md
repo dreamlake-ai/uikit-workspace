@@ -87,3 +87,14 @@ Also forwards native `<button>` attributes (`onClick`, `disabled`, …).
 | --- | --- | --- | --- |
 | `value` | `string` | — | Panel is shown only when this matches the active tab. Required. |
 | `className` | `string` | — | Extra classes on the panel. |
+
+## Hover
+
+Hovering lights the **whole tab** as one rounded block — the label, its count,
+and any icon a consumer puts beside them. They are parts of a single target, so
+the pointer should light the target rather than fade each part on its own.
+
+The block is absolutely positioned and outset, not padding on the tab. Padding
+would widen every tab and drag the sliding underline's measurement with it, and
+this control's geometry is load-bearing: hovering changes the tab's box by
+exactly 0px in both directions.
