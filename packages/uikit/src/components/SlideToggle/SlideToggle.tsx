@@ -50,7 +50,11 @@ export function SlideToggle({
   title,
   label,
   onColor = "var(--uikit-accent)",
-  offColor = "var(--tone-amber)",
+  // The app's literal, kept 1:1 — a vivid orange that is deliberately NOT one
+  // of the palette's six tones. `--tone-amber` is a dull mustard at this size
+  // and reads as a disabled state rather than as "this is off, click to change
+  // it". Do not "correct" it to a token.
+  offColor = "#f97316",
   slideMs = 240,
   bgMs = 240,
   style,
