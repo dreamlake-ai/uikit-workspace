@@ -1,6 +1,6 @@
 ---
 name: dreamlake-uikit
-description: DreamLake uikit is the React component library and design contract — surfaces, ink, semantic color, type, geometry, and the zebra-list patterns shared by every DreamLake page. Use when answering questions about DreamLake (Overview, Avatar, Style guide, BreadcrumbTree, LLM-Readable Docs, Button, CodeBlock, Dialog, Field, FilterBar, Menu, ProfileCard, ProfileLayout, ResizableLayout, PanelLayout, Select, SideNav, Tabs, Tab Row, Tag, TextField, VirtualList, VirtualListFlow, VideoAnnotator, Spinner, Skeleton, Switch, Badge, Collapsible, Card, Alert Dialog, Drawer, Toast, UIKit Badge, Pipeline Graph, Anatomy, Pipeline Graph JSON, Architecture & Roadmap, useIsMobile, Subtask Annotation, Label, Toggle, Workflow Canvas, Node Types, Toolbar, Modal, Form Layout, Input, Mouse Cursor Icons, Tooltip, Popover, Dropdown Menu, Theme, Tree View, Context Menu, Dial, Waterfall, Slider, Number Inputs, Layout, Sync Scroll, Cmp2).
+description: DreamLake uikit is the React component library and design contract — surfaces, ink, semantic color, type, geometry, and the zebra-list patterns shared by every DreamLake page. Use when answering questions about DreamLake (Overview, Avatar, Style guide, BreadcrumbTree, LLM-Readable Docs, Button, CodeBlock, Dialog, Field, FilterBar, Menu, ProfileCard, ProfileLayout, ResizableLayout, PanelLayout, Select, SideNav, Tabs, Tab Row, Tag, TextField, VirtualList, VirtualListFlow, VideoAnnotator, Spinner, Skeleton, Switch, Badge, Collapsible, Card, Alert Dialog, Drawer, Toast, UIKit Badge, Pipeline Graph, Anatomy, Pipeline Graph JSON, Architecture & Roadmap, useIsMobile, Subtask Annotation, Label, Toggle, Workflow Canvas, Node Types, Toolbar, Modal, Form Layout, Input, Mouse Cursor Icons, Tooltip, Popover, Dropdown Menu, Theme, Tree View, Context Menu, Dial, Waterfall, Slider, Number Inputs, Layout, Sync Scroll).
 ---
 # DreamLake
 
@@ -70,7 +70,6 @@ file that matches the question; each is a self-contained markdown page.
 - `reference/components-number-inputs.md` — Number Inputs: Drag-to-adjust numeric, vector, color, and text inputs for the Dial system.
 - `reference/components-layout.md` — Layout: Studio layout shells — an edge-docked dock layout and a pointer-transparent liquid layout for floating panels over a 3D canvas.
 - `reference/components-sync-scroll.md` — Sync Scroll: Synchronize scroll position across multiple panes — a master drives its slaves, with optional drag-to-scroll on either axis.
-- `reference/cmp2.md` — Cmp2: Throwaway decision harness.
 
 **Pipeline**
 
