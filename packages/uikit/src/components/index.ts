@@ -31,6 +31,7 @@ export * from "./ProfileCard";
 export * from "./ProfileLayout";
 export * from "./ResizableLayout";
 export * from "./Select";
+export * from "./SelectionRun";
 export * from "./SideNav";
 export * from "./Skeleton";
 export * from "./SlideToggle";

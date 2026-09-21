@@ -43,6 +43,31 @@ selecting a group MEANS: only the clicked row is marked — descendants are
 untouched, and a selected group renders like any lone selection instead of
 a ring around its whole subtree.
 
+## Selected runs — `SelectionRun`
+
+When a list lets you pick several rows at once, wrap each **contiguous** stretch
+of selected rows in a `SelectionRun`. The rows keep their own surface and a
+single accent ring goes around the run, so five selected rows are one shape
+rather than five repeated fills.
+
+Five filled rows say "five things happened". One ringed block says "this is the
+selection" — which is the thing a bulk action is about to act on.
+
+Click the rows below: selecting a neighbour grows a run, and deselecting one in
+the middle splits it. A gap in the selection is a second run, not a taller one.
+
+**Give the run the same corner radius as the rows it wraps.** The ring is
+outset, so its inner curve *is* the run's radius: rows rounded any tighter pull
+away from it and leave a sliver at every corner. The default is `var(--radius)`;
+override it with `className` if your rows are rounded differently.
+
+The run owns the 2px gap between its rows, because that tight rhythm is part of
+reading them as one block. The ring is **outset** and the run sits
+above its neighbours, so a row below cannot clip it — but the list around it
+still has to leave 2px of side room, or the ring's corners go under whatever
+does the clipping. Native `<div>` attributes
+are forwarded.
+
 ## Props
 
 ### `TreeView` / `VirtualTreeView`
