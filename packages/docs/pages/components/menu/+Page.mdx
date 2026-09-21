@@ -17,6 +17,10 @@ follows the trigger as the page scrolls or resizes. The trigger is rendered via
 a render-prop so it can react to the open state — typical use is a tinted
 background or a rotated chevron while the menu is open.
 
+For a sidebar footer, pass `placement="up"` so the panel opens above its
+trigger. The default remains `"down"` for header menus. Both placements constrain
+long menus to the available viewport height and scroll their content.
+
 ## Minimal
 
 A minimal action menu — three items and a destructive divider.
@@ -44,7 +48,7 @@ decision before that's been made.
 
 ## Behavior
 
-- **Wedge points at the chevron** — the panel's top edge carries a wedge that
+- **Wedge points at the chevron** — the panel's trigger-facing edge carries a wedge that
   centers on the first `[data-menu-arrow]` descendant of the trigger. Tag the
   chevron with it; without a tag the wedge falls back to the trigger's center,
   which is only right for triggers whose chevron sits near the middle. The
@@ -77,8 +81,9 @@ decision before that's been made.
 | --- | --- | --- | --- |
 | `trigger` | `(open: boolean) => ReactNode` | — | Render-prop for the trigger element. Receives the current open state. |
 | `align` | `'left' \| 'right'` | `'left'` | Panel horizontal alignment relative to the trigger. |
+| `placement` | `'down' \| 'up'` | `'down'` | Open below or above the trigger; tall panels scroll within the viewport. |
 | `width` | `number` | `240` | Panel min-width in px. |
-| `arrow` | `boolean` | `true` | Render a wedge on the panel's top edge pointing back at the trigger. |
+| `arrow` | `boolean` | `true` | Render a wedge on the trigger-facing edge pointing back at the trigger. |
 | `open` | `boolean` | — | Controlled open state. Omit for uncontrolled mode. |
 | `onOpenChange` | `(open: boolean) => void` | — | Fires when the menu wants to open or close. Required when controlled. |
 | `defaultOpen` | `boolean` | `false` | Initial open state in uncontrolled mode. |
