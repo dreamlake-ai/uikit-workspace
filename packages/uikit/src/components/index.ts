@@ -33,6 +33,7 @@ export * from "./ResizableLayout";
 export * from "./Select";
 export * from "./SideNav";
 export * from "./Skeleton";
+export * from "./SlideToggle";
 export * from "./Slider";
 export * from "./Spinner";
 export * from "./Switch";
