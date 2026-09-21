@@ -64,7 +64,7 @@ const VARIANTS: Record<ButtonVariant, string> = {
   // accent rather than fading it — a primary action should not look like it is
   // switching off under the pointer.
   primary:
-    "font-uikit-mono rounded-uikit-badge bg-uikit-accent text-white " +
+    "bg-uikit-accent text-white " +
     "hover:bg-[color-mix(in_oklab,var(--uikit-accent)_88%,#000)] " +
     "disabled:bg-[color-mix(in_oklab,var(--uikit-accent)_38%,var(--bg))] disabled:opacity-55",
   secondary:
@@ -73,8 +73,7 @@ const VARIANTS: Record<ButtonVariant, string> = {
   // muted mono label: no fill, no border, no hover chrome, just opacity. Two
   // buttons in a footer make the reader compare two boxes; one button and one
   // label say which is the way forward.
-  ghost:
-    "font-uikit-mono text-uikit-muted opacity-80 hover:opacity-100 bg-transparent !px-0",
+  ghost: "text-uikit-muted opacity-80 hover:opacity-100 bg-transparent",
   // Chrome action — the borderless mono pill in a toolbar or detail header
   // (+ publish, + import, ← back). MONO and denser than `ghost` on purpose:
   // these sit in rows of metadata, not in a dialog footer. `rounded-uikit-badge`
@@ -86,11 +85,11 @@ const VARIANTS: Record<ButtonVariant, string> = {
   // Same shape as `primary`, in the palette red — for a delete or disconnect
   // confirm.
   danger:
-    "font-uikit-mono rounded-uikit-badge bg-uikit-danger text-white " +
+    "bg-uikit-danger text-white " +
     "hover:bg-[color-mix(in_oklab,var(--color-uikit-danger)_88%,#000)]",
   // Drop-in alias for the legacy kit's `destructive`.
   destructive:
-    "font-uikit-mono rounded-uikit-badge bg-uikit-danger text-white " +
+    "bg-uikit-danger text-white " +
     "hover:bg-[color-mix(in_oklab,var(--color-uikit-danger)_88%,#000)]",
   link: "bg-transparent text-uikit-ink underline-offset-4 hover:underline !px-0",
 };
@@ -100,15 +99,6 @@ const SIZES: Record<ButtonSize, string> = {
   sm: "text-uikit-11 px-2.5 py-[5px] gap-1",
   md: "text-uikit-12 px-3.5 py-1.5 gap-1.5",
   lg: "text-uikit-14 px-4 py-2 gap-1.5",
-};
-
-// `action` runs denser than the form-control sizes above: it packs into header
-// rows beside a title and a breadcrumb, where the extra side padding is what
-// pushes a three-button group onto a second line.
-const ACTION_SIZES: Record<ButtonSize, string> = {
-  sm: "px-2",
-  md: "px-2.5",
-  lg: "px-3",
 };
 
 const ICON_SIZES: Record<ButtonSize, string> = {
@@ -154,16 +144,22 @@ export function buttonVariants({
 }: ButtonVariantsOptions = {}) {
   return cn(
     "inline-flex items-center justify-center select-none whitespace-nowrap",
-    "rounded-[var(--radius)] font-uikit-ui font-medium tracking-uikit-snug cursor-pointer outline-none",
+    // ONE radius, ONE padding scale and ONE typeface for every variant. A set
+    // whose members round or set differently reads as parts from two kits, and
+    // none of those is where a variant should carry its meaning — the fill is.
+    // Mono, because that is the app's button vocabulary: the dialog footer, the
+    // toolbar pill and the chrome actions are all set in it.
+    "rounded-uikit-badge font-uikit-mono font-medium tracking-uikit-snug cursor-pointer outline-none",
     "transition-[background-color,opacity,border-color,color] duration-[120ms]",
     "disabled:opacity-50 disabled:cursor-not-allowed",
     "[&_svg]:shrink-0 [&_svg]:pointer-events-none",
     SIZES[size],
-    variant === "action" && ACTION_SIZES[size],
-    // `ghost` is a label, not a box: it drops the padding the sizes hand out,
-    // and sits a half-pixel above the filled button beside it — 11.5px, the
-    // app's cancel, which the kit's integer scale leaves to an arbitrary.
-    variant === "ghost" && "!py-0 text-[11.5px]!",
+    // `ghost` paints nothing, but it keeps the shared padding: the label then
+    // shares a baseline and a height with the filled button beside it, and gets
+    // a real hit area instead of being a 40px run of text. Only its type is its
+    // own — 11.5px, the app's cancel, which the kit's integer scale leaves to
+    // an arbitrary.
+    variant === "ghost" && "text-[11.5px]!",
     icon && ICON_SIZES[size],
     VARIANTS[variant],
     TONES[tone],

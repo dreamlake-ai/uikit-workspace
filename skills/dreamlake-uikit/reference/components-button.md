@@ -6,8 +6,13 @@ variants, sizes and a loading state.
 
 ## Variants
 
-`primary` fills with the **accent**, in mono, on the badge radius — the app's
-dialog footer, to the pixel. It replaces an inverted ink fill, which made the
+Every variant shares **one radius (6px, the badge step), one padding scale and
+one typeface**. A set whose members round or set differently reads as parts from
+two kits, and none of those is where a variant should carry its meaning — the
+fill is. The typeface is mono, because that is the app's button vocabulary: the
+dialog footer, the toolbar pill and the chrome actions are all set in it.
+
+`primary` fills with the **accent** — the app's dialog footer, to the pixel. It replaces an inverted ink fill, which made the
 submit button the heaviest ink on a form whose fields are bare text. Hover
 darkens the accent rather than fading it; a primary action should not look like
 it is switching off under the pointer.
@@ -29,12 +34,10 @@ button; `disabled` greys it out and blocks clicks.
 ## Chrome actions
 
 `action` is the borderless mono pill the app wears in toolbars and detail
-headers — `+ publish`, `+ import`, a back arrow. It differs from `ghost` in the
-three ways that row asks for: **mono type**, because it sits in a line of
-metadata rather than in a dialog footer; **tighter side padding**, because three
-of them share a header with a title and a breadcrumb; and the **6px badge
-radius** small chips keep, since it is a chip-shaped control rather than a
-standalone form control on `var(--radius)`.
+headers — `+ publish`, `+ import`, a back arrow. It differs from `ghost` in what it
+paints: `ghost` is a bare label, while `action` takes a hover fill, so a toolbar
+row reads as a row of targets rather than a run of words. Geometry is the set's
+— same radius, same padding as every other button.
 
 `tone` colors it without reaching for `style`: `muted` for secondary chrome (a
 back arrow), `danger` for a destructive action — ink at rest, palette red under
@@ -49,7 +52,7 @@ and the status-bar URL all still work.
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `variant` | `'primary' \| 'secondary' \| 'ghost' \| 'action' \| 'danger' \| 'link'` | `'primary'` | Visual style. `'destructive'` is also accepted as an alias for `'danger'`. |
-| `size` | `'sm' \| 'md' \| 'lg'` | `'sm'` | Padding/text scale. `action` runs one step denser at every size. |
+| `size` | `'sm' \| 'md' \| 'lg'` | `'sm'` | Padding/text scale, shared by every variant. |
 | `tone` | `'default' \| 'muted' \| 'danger'` | `'default'` | Text color for the transparent variants (`ghost`, `action`, `link`). `muted` starts at muted ink and raises to full ink on hover — for a button inside an already-muted strip. `danger` keeps its ink until the pointer arrives, then turns red. |
 | `loading` | `boolean` | `false` | Shows a spinner and disables the button. |
 | `leftIcon` | `ReactNode` | — | Icon rendered before the label. |
