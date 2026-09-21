@@ -21,6 +21,17 @@ The shorthand is expanded once, inside `Select`, into exactly the tree you would
 have written — so the label map, the floating list and the typeahead all behave
 identically either way, and nothing downstream knows which form you used.
 
+## Reading the panel
+
+The options are the content of the panel, so they render in ink; `SelectLabel`
+stays muted, because a group heading is a label. The trigger reads in ink too
+once it holds a value — the *placeholder* is what should look unfilled, and
+`SelectValue` dims itself for that.
+
+Both used to render muted at 85% opacity, which measured 3.3:1 against the panel
+in dark mode — under WCAG AA — and made an open dropdown read as a list of
+disabled rows.
+
 ## Props
 
 ### `Select`

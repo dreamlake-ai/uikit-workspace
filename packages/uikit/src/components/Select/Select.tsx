@@ -305,9 +305,10 @@ export const SelectTrigger = forwardRef<HTMLButtonElement, SelectTriggerProps>(
           // put the sort value at nearly the weight of the row titles under
           // it. The darkening is also the only hover this trigger has ever
           // had: an opacity nudge alone was not visible on a muted colour.
-          "text-uikit-muted opacity-85",
-          "hover:text-uikit-ink hover:opacity-100",
-          "data-[state=open]:text-uikit-ink data-[state=open]:opacity-100",
+          // A trigger showing a CHOSEN value is showing content, so it reads
+          // in ink. The placeholder state is what should look unfilled, and
+          // `SelectValue` already dims itself for that.
+          "text-uikit-ink",
           "transition-[color,opacity] duration-[140ms]",
           className,
         )}
@@ -442,7 +443,11 @@ export function SelectItem({
         "cursor-pointer rounded-uikit-badge px-2.5 py-[6px] leading-[14px] outline-none select-none",
         "font-uikit-mono text-uikit-11 font-medium tracking-uikit-snug",
         "transition-[background-color,color] duration-[120ms]",
-        "bg-transparent text-uikit-muted opacity-85 hover:bg-uikit-ink-4",
+        // The options ARE the content of this panel, so they take ink. They
+        // used to render muted at 85% — 3.3:1 on the panel in dark, under AA —
+        // which made an open dropdown read as a list of disabled rows. Muted
+        // stays right for the GROUP LABEL below, which is a label.
+        "bg-transparent text-uikit-ink hover:bg-uikit-ink-4",
         "data-[active=true]:bg-uikit-ink-4",
         // The selected row is accent-tinted, the treatment consuming apps already
         // use for "this is the one you are on" (the account switcher and the
