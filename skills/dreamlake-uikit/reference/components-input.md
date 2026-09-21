@@ -9,6 +9,10 @@ focuses the input and places the caret at the matching end.
 The app's ⌘K field is this component plus two slots — a glyph on the left, a
 `Kbd` hint on the right.
 
+The field itself stays on the kit's UI face — a search box is still a text
+input, and a page that renders the same component in two typefaces is a page
+with no rule. Only the `Kbd` chip is mono, because a key legend is a key legend.
+
 `Kbd` is the shortcut chip itself, exported from the kit and documented here
 because the search field is what it exists for. It renders a real `<kbd>`, so
 the markup says what it is, and it is deliberately quiet: mono at 9.5px on the

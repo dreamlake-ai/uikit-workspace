@@ -12,7 +12,6 @@ export const SearchSpec = () => {
         value={query}
         placeholder="search"
         onChange={(e) => setQuery(e.target.value)}
-        inputClassName="font-uikit-mono"
       >
         <InputSlot side="left">
           <Search size={12} />
