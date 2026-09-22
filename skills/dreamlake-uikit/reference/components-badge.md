@@ -1,7 +1,9 @@
 # Badge
 
-A compact inline badge for counts and statuses. Filled variants map onto the
-6-color semantic palette; `secondary`/`outline` stay neutral.
+A compact inline chip for counts and short status markers. It wears the same
+face as the version chip in the docs topbar — mono at 10px, `0.02em`, a 4px
+corner and a 15px leading — so a badge in a table reads as the same kind of
+object as a badge in a header.
 
 > Related: [Tag](reference/components-tag.md) is the hashtag/pill primitive for filter chips
 > and categorical labels. Reach for **Badge** for counts and short status
@@ -9,16 +11,49 @@ A compact inline badge for counts and statuses. Filled variants map onto the
 
 ## Variants
 
+The container is neutral in every variant; the tone lives in the **ink**.
+
+Badge used to paint a saturated block per variant and set white on top of it,
+which made a row of them read as candy next to every other chip in the kit —
+and put a signal colour on things like counts that carry no signal. It now
+borrows UIKitBadge's three container treatments and nothing else:
+
+| Variant | Container | Ink |
+| --- | --- | --- |
+| `default` | `bg-uikit-ink-5-solid` | `--ink` |
+| `secondary` | `bg-uikit-ink-5-solid` | `--uikit-muted` |
+| `outline` | 1px `--faint` hairline | `--uikit-muted` |
+| `success` `warning` `destructive` `purple` `neutral` | `bg-uikit-ink-5-solid` | the matching `--tone-*` |
+
+This is the rule [Tag](reference/components-tag.md) already states out loud — *no line and
+no fill, in any state; the colour does all of it* — and the reason
+[UIKitBadge](reference/components-uikit-badge.md) spends no colour on a version string.
+
+> **Warning:** The `--tone-*` values are tuned as *fills*. As 10px text on
+>   `--uikit-ink-5-solid` they land between 2.4:1 and 4.6:1 depending on tone and
+>   theme — better than white-on-saturated was in dark, worse in light, and
+>   passing AA in neither. Treat a toned badge as a marker that repeats something
+>   already said in the row, never as the only place a state is reported.
+
+There is deliberately no blue variant: `--tone-blue` *is* `--uikit-accent`, so a
+blue badge would read as a signal beside components where blue genuinely means
+one. For a running/active state reach for `Tag tone="blue"`, which is what the
+app's own `lakeshore/StatusBadge` does.
+
 ## Shapes
 
-`type` switches the shape: `default` (label pill), `circle` (square-ish single
-glyph / count), and `dot` (a bare colored indicator with no label).
+`type` switches the shape: `default` (label chip), `circle` (square-ish single
+glyph / count — it says square-ish and now is; it used to be `rounded-full`),
+and `dot` (a bare colored indicator with no label).
+
+`dot` is the one place a tone is still a fill: a dot has no label to carry the
+colour, so taking the fill away would leave nothing to read.
 
 ## Props
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `variant` | `'default' \| 'secondary' \| 'outline' \| 'success' \| 'warning' \| 'destructive' \| 'purple' \| 'neutral'` | `'default'` | Color/fill (covers the full 6-tone palette). |
+| `variant` | `'default' \| 'secondary' \| 'outline' \| 'success' \| 'warning' \| 'destructive' \| 'purple' \| 'neutral'` | `'default'` | Ink. The container stays neutral in every variant. |
 | `type` | `'default' \| 'circle' \| 'dot'` | `'default'` | Shape. |
 | `asChild` | `boolean` | `false` | Render the single child element instead of a `<span>`, merging classes. |
 | `className` | `string` | — | Extra classes. |
