@@ -1,4 +1,5 @@
 import {
+  useEffect,
   useRef,
   useState,
   type CSSProperties,
@@ -57,6 +58,9 @@ export function Divider({
   const isRow = dir === 'row'
 
   const onPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
+    // Only a primary-button drag resizes; a right-click or middle-click must not
+    // arm one (it would never get its matching pointerup and would stick).
+    if (e.button !== 0) return
     const parent = e.currentTarget.parentElement
     if (!parent) return
     const rect = parent.getBoundingClientRect()
@@ -66,46 +70,68 @@ export function Divider({
       a: sizeA,
       b: sizeB,
     }
-    try {
-      e.currentTarget.setPointerCapture(e.pointerId)
-    } catch {
-      /* pointer capture is best-effort */
-    }
     setActive(true)
   }
 
+  // Track the cursor along the bar (drives the pill) — hover only. The DRAG is
+  // driven from window listeners (see the effect below), NOT from this handler:
+  // resizing slides the boundary out from under a fast pointer and past the thin
+  // 10px bar, so an element-scoped move/up would drop events — and a dropped
+  // pointerup left the drag armed, the boundary tracking the cursor forever after
+  // release. Window listeners always see the release, wherever it lands.
   const onPointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
-    // Track the cursor along the bar (drives the pill) on hover and drag.
+    if (drag.current) return
     const rect = e.currentTarget.getBoundingClientRect()
     setCur({
       pos: isRow ? e.clientY - rect.top : e.clientX - rect.left,
       len: isRow ? rect.height : rect.width,
     })
-
-    const d = drag.current
-    if (!d) return
-    const along = isRow ? e.clientX : e.clientY
-    const { a, b } = resizeSplit({
-      containerPx: d.containerPx,
-      childCount,
-      deltaPx: along - d.start,
-      a: d.a,
-      b: d.b,
-      minPx: MIN_PX,
-    })
-    onResize(splitId, index, a, b)
   }
 
-  const onPointerUp = (e: ReactPointerEvent<HTMLDivElement>) => {
-    drag.current = null
-    setActive(false)
-    if (!hover) setCur(null)
-    try {
-      if (e.currentTarget.hasPointerCapture(e.pointerId)) e.currentTarget.releasePointerCapture(e.pointerId)
-    } catch {
-      /* no-op */
+  // Keep the live callback and hover flag readable from the window listeners
+  // without re-subscribing them on every render.
+  const onResizeRef = useRef(onResize)
+  onResizeRef.current = onResize
+  const hoverRef = useRef(hover)
+  hoverRef.current = hover
+
+  useEffect(() => {
+    if (!active) return
+    const onMove = (e: PointerEvent) => {
+      const d = drag.current
+      if (!d) return
+      const along = isRow ? e.clientX : e.clientY
+      const { a, b } = resizeSplit({
+        containerPx: d.containerPx,
+        childCount,
+        deltaPx: along - d.start,
+        a: d.a,
+        b: d.b,
+        minPx: MIN_PX,
+      })
+      onResizeRef.current(splitId, index, a, b)
     }
-  }
+    const finish = () => {
+      drag.current = null
+      setActive(false)
+      if (!hoverRef.current) setCur(null)
+    }
+    // A drag over other panels should read as a resize, not select their text.
+    const prevCursor = document.body.style.cursor
+    const prevSelect = document.body.style.userSelect
+    document.body.style.cursor = isRow ? 'col-resize' : 'row-resize'
+    document.body.style.userSelect = 'none'
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', finish)
+    window.addEventListener('pointercancel', finish)
+    return () => {
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', finish)
+      window.removeEventListener('pointercancel', finish)
+      document.body.style.cursor = prevCursor
+      document.body.style.userSelect = prevSelect
+    }
+  }, [active, isRow, childCount, splitId, index])
 
   /** Resize by a px-equivalent nudge, through the very same clamp the drag uses. */
   const nudge = (deltaPx: number, el: HTMLElement) => {
@@ -195,8 +221,6 @@ export function Divider({
       )}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
-      onPointerUp={onPointerUp}
-      onPointerCancel={onPointerUp}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => {
         setHover(false)

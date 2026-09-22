@@ -560,6 +560,37 @@ it('the divider is a keyboard-operable splitter', () => {
   expect(sizes.every(Number.isFinite), 'no NaN from a zero-width container').toBe(true)
 })
 
+it('a divider drag ends on the window pointerup, not only on one over the bar', () => {
+  // The bug this pins: the divider used to end its drag from an element-scoped
+  // `onPointerUp`. But a resize slides the boundary out from under the pointer,
+  // so the release routinely lands off the 10px bar — the handler never fires,
+  // the drag stays armed, and every later hover-move keeps resizing. The fix
+  // moves pointermove/up/cancel to WINDOW listeners, which see the release
+  // wherever it lands. The body cursor lock is the drag's observable tell: set
+  // while armed, restored when it ends.
+  render(<PanelLayout initial={twoPane} />)
+  const sep = container.querySelector('[role="separator"]') as HTMLElement
+
+  act(() => {
+    sep.dispatchEvent(
+      new PointerEvent('pointerdown', { bubbles: true, button: 0, clientX: 5, clientY: 5 })
+    )
+  })
+  expect(document.body.style.cursor, 'armed: the drag locks the resize cursor').toBe('col-resize')
+
+  // Release over empty space, NOT over the bar — the case the old handler missed.
+  act(() => {
+    window.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, clientX: 400, clientY: 300 }))
+  })
+  expect(document.body.style.cursor, 'released: the drag ended and unlocked the cursor').toBe('')
+
+  // And it stays ended: a later stray move must not re-arm or re-lock.
+  act(() => {
+    window.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, clientX: 420, clientY: 300 }))
+  })
+  expect(document.body.style.cursor, 'stays ended: no lingering drag tracking the pointer').toBe('')
+})
+
 it('a tree handed to `initial` is migrated and reseeds the id counters', () => {
   const ref = createRef<PanelLayoutHandle>()
   // A blob off disk: no instanceId, and ids above wherever the counter sits.
