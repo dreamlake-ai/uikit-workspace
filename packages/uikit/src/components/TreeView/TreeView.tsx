@@ -422,15 +422,22 @@ export function TreeEntryItem<T extends TreeDataItem>({
         })}
         {indent > 0 && (
           <div className="relative h-full w-[1.24rem]">
+            {/* The branch into this row is an arc on EVERY row, not just the
+                last one. A tree's connectors are one drawn path, and a corner
+                that is square here and round there reads as two different
+                line systems in the same column. */}
             <div
               className={cn(
-                "absolute top-0 left-0 h-1/2 w-1/2 border-b border-l",
-                isLast ? "rounded-bl-md" : "",
+                "absolute top-0 left-0 h-1/2 w-1/2 border-b border-l rounded-bl-md",
                 "border-uikit-faint",
               )}
             />
+            {/* A row with siblings below it keeps an unbroken vertical running
+                past the branch — the arc leaves the trunk, it does not replace
+                it. (This used to start at the halfway mark, which was only
+                seamless while the corner was square.) */}
             {!isLast && (
-              <div className="border-uikit-faint absolute top-1/2 left-0 h-1/2 w-1/2 border-l" />
+              <div className="border-uikit-faint absolute top-0 left-0 h-full border-l" />
             )}
           </div>
         )}
