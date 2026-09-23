@@ -24,13 +24,19 @@ const CONTAINER: Record<ToggleButtonsVariant, string> = {
   ghost: "bg-transparent",
 };
 
-// The highlight marks *which segment you are on*, not a status, so it reads as
-// a raised neutral surface — the segment lifts off the track instead of being
-// flooded with accent. Colour stays available for genuine status elsewhere.
+// The highlight marks *which segment you are on*, so it takes `--selected-bg` —
+// the same surface a pressed `Toggle` takes. One family, one word for "this is
+// the one you are on"; a segmented control and a toggle button sitting in the
+// same row must not answer that question two different ways.
+//
+// It used to flood with `--accent`, which is far too loud for "the tab you are
+// looking at" and spends the one colour that means running/active elsewhere.
+// The shadow stays: inside a filled track the thumb still has to read as lifted
+// off it, which is a job colour alone does not do.
 const HIGHLIGHT: Record<ToggleButtonsVariant, string> = {
-  primary: "bg-uikit-bg shadow-uikit-sm rounded-[var(--radius)]",
-  secondary: "bg-uikit-bg shadow-uikit-sm rounded-[var(--radius)]",
-  ghost: "bg-uikit-chip shadow-uikit-sm rounded-[var(--radius)]",
+  primary: "bg-uikit-selected shadow-uikit-sm rounded-uikit-badge",
+  secondary: "bg-uikit-selected shadow-uikit-sm rounded-uikit-badge",
+  ghost: "bg-uikit-selected shadow-uikit-sm rounded-uikit-badge",
 };
 
 const BTN_VARIANT: Record<ToggleButtonsVariant, string> = {
@@ -48,7 +54,11 @@ function btnSizeClass(size: ToggleButtonSize, icon: boolean) {
   }[size];
   const box = icon
     ? { sm: "size-6 p-1", md: "size-8 p-2", lg: "size-9 p-2.5" }[size]
-    : { sm: "h-6 px-2", md: "h-7 px-3", lg: "h-8 px-4" }[size];
+    : {
+        sm: "px-2.5 py-[5px] leading-[14.5px]",
+        md: "px-3.5 py-[7px] leading-[16.5px]",
+        lg: "px-[18px] py-[9px] leading-[18.5px]",
+      }[size];
   return `${text} ${box}`;
 }
 
@@ -148,7 +158,11 @@ export function ToggleButtons({
       <div
         ref={containerRef}
         className={cn(
-          "relative inline-flex items-center rounded-[var(--radius)]",
+          "relative inline-flex items-center",
+          // Track radius = thumb radius + inset, so the two curves are
+          // concentric. 6 + 4 = 10 with `p-1`; 6 + 2 = 8 with `p-0.5`. Giving
+          // both the same radius is what makes an inner corner look clipped.
+          padding ? "rounded-[10px]" : "rounded-[8px]",
           CONTAINER[variant],
           // A minimal frame even when padding={false}, so the full-size
           // selection pill has room to sit inside the container instead of
@@ -232,7 +246,7 @@ export function ToggleButton({
 
   const classes = cn(
     "relative z-10 inline-flex items-center justify-center font-normal whitespace-nowrap transition-colors outline-none cursor-pointer",
-    "disabled:pointer-events-none disabled:opacity-50 rounded-[var(--radius)]",
+    "disabled:pointer-events-none disabled:opacity-50 rounded-uikit-badge",
     "[&_svg]:shrink-0 [&_svg]:pointer-events-none",
     BTN_VARIANT[ctx.variant],
     btnSizeClass(ctx.size, icon),

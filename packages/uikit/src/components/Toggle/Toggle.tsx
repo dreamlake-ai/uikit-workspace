@@ -4,23 +4,31 @@ import { cn } from "../../lib/utils";
 export type ToggleVariant = "primary" | "secondary";
 export type ToggleSize = "sm" | "base" | "lg";
 
-// Pressed is a *state of this control*, not a status in the domain, so it is
-// rendered with weight rather than hue — `primary` presses harder than
-// `secondary`. Accent stays free to mean running / active / selected elsewhere.
+// Pressed takes `--selected-bg`, the kit's one surface for "this is the one you
+// are on" (a pale blue, #d9e6f7 / #3d4856). It was an ink wash at 4–8%, which on
+// a light page is a grey smudge you have to hunt for — a pressed toggle is the
+// single most important thing in its own row to be able to find. The token has
+// existed since the palette was written and no component had ever reached for
+// it; this is what it is for.
 const VARIANTS: Record<ToggleVariant, string> = {
   primary:
-    "text-uikit-ink hover:bg-uikit-ink-5 data-[state=on]:text-uikit-ink data-[state=on]:bg-uikit-ink-8",
+    "text-uikit-ink hover:bg-uikit-ink-5 data-[state=on]:text-uikit-ink data-[state=on]:bg-uikit-selected",
   secondary:
-    "text-uikit-muted hover:bg-uikit-ink-5 data-[state=on]:text-uikit-ink data-[state=on]:bg-uikit-chip",
+    "text-uikit-muted hover:bg-uikit-ink-5 data-[state=on]:text-uikit-ink data-[state=on]:bg-uikit-selected",
 };
 
-// Fixed heights rather than four-sided padding: `p-2` made the base toggle 34px
-// tall for 12px text, and squared it off. These heights mirror `btnSizeClass` in
-// ToggleButtons, so a Toggle and a ToggleButton of the same text size line up.
+// Button's ladder, step for step — same text sizes, same leading, same padding.
+// A Toggle is a button that stays down; there is no reason for it to be built to
+// different measurements than the button beside it.
+//
+// It used to pin a height (`h-7`) and set no vertical padding at all, so the box
+// stopped growing with its own text: 12px sides against 0 top and bottom read as
+// a squashed pill. 6px corner, not `--radius`'s 10px — that is the panel/row
+// step, and at 28px tall it rounds a small control most of the way to a stadium.
 const SIZES: Record<ToggleSize, string> = {
-  sm: "text-uikit-11 gap-1 h-6 px-2 rounded-[var(--radius)] [&_svg:not([class*='size-'])]:size-3",
-  base: "text-uikit-12 gap-1.5 h-7 px-3 rounded-[var(--radius)] [&_svg:not([class*='size-'])]:size-4",
-  lg: "text-uikit-14 gap-1.5 h-8 px-4 rounded-[var(--radius)] [&_svg:not([class*='size-'])]:size-5",
+  sm: "text-uikit-11 leading-[14.5px] gap-1 px-2.5 py-[5px] rounded-uikit-badge [&_svg:not([class*='size-'])]:size-3",
+  base: "text-uikit-12 leading-[16.5px] gap-1.5 px-3.5 py-[7px] rounded-uikit-badge [&_svg:not([class*='size-'])]:size-4",
+  lg: "text-uikit-14 leading-[18.5px] gap-1.5 px-[18px] py-[9px] rounded-uikit-badge [&_svg:not([class*='size-'])]:size-5",
 };
 
 export interface ToggleVariantsOptions {
