@@ -1,8 +1,8 @@
 # Badge
 
 A compact inline chip for counts and short status markers. It wears the same
-face as the version chip in the docs topbar — mono at 10px, `0.02em`, a 4px
-corner and a 15px leading — so a badge in a table reads as the same kind of
+face as the version chip in the docs topbar — mono at 10px, 500, `0.02em`, a
+4px corner and a 15px leading — so a badge in a table reads as the same kind of
 object as a badge in a header.
 
 > Related: [Tag](reference/components-tag.md) is the hashtag/pill primitive for filter chips

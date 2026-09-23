@@ -12,18 +12,23 @@ export type BadgeVariant =
   | 'neutral'
 export type BadgeType = 'default' | 'circle' | 'dot'
 
-// Geometry and type are the docs-topbar version chip, copied value for value
-// from UIKitBadge: mono at 10px, 600, 0.02em, and a 15px leading rather than
-// `leading-none` — the leading is what gives the chip its height (19px bare,
+// Geometry and type are the docs-topbar version chip: mono at 10px, 0.02em,
+// and a 15px leading rather than `leading-none` — the leading is what gives the chip its height (19px bare,
 // 21px framed) instead of the 14px sliver this used to be. 4px radius, not the
 // 6px `--radius-uikit-badge`: at 14px tall a 6px corner is already most of a
 // stadium, which is why these read as candy pills next to every other chip.
+//
+// 500, not the 600 UIKitBadge puts on its segments. That 600 is tuned for the
+// docs topbar's Fira Code; the kit's mono is JetBrains Mono, whose stems are
+// visibly heavier at the same number, so copying the figure across typefaces
+// lands fatter than the thing it was copied from. Matched by eye against the
+// reference chip instead.
 //
 // A transparent 1px border is always present so `outline` can turn it on
 // without the box growing 2px and shifting its neighbours.
 const BASE =
   'inline-flex items-center justify-center w-fit shrink-0 whitespace-nowrap align-middle ' +
-  'font-uikit-mono text-uikit-10 font-semibold tracking-[0.02em] leading-[15px] ' +
+  'font-uikit-mono text-uikit-10 font-medium tracking-[0.02em] leading-[15px] ' +
   'rounded-[4px] border border-transparent px-1.5 py-0.5 overflow-hidden ' +
   'transition-colors [&>svg]:size-3 [&>svg]:pointer-events-none'
 
