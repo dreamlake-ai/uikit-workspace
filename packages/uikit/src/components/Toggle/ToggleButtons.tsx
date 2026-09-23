@@ -24,20 +24,44 @@ const CONTAINER: Record<ToggleButtonsVariant, string> = {
   ghost: "bg-transparent",
 };
 
+// The highlight marks *which segment you are on*, not a status, so it reads as
+// a raised neutral surface — the segment lifts off the track instead of being
+// flooded with accent. Colour stays available for genuine status elsewhere.
+//
+// `--bg` + a small shadow is not a choice made here; it is the shell all three
+// segmented controls already share. Tabs' `segment` pill is `bg-uikit-bg` with
+// the same shadow, and the app's own theme toggle (`.dl-theme-toggle`) says so
+// out loud: "Same shell as the kit's segmented controls (ToggleButtons / Tabs
+// `segment`): a chip-tinted frame with an elevated thumb riding inside it."
 const HIGHLIGHT: Record<ToggleButtonsVariant, string> = {
-  primary: "bg-uikit-accent shadow-uikit-sm rounded-[var(--radius)]",
-  secondary: "bg-uikit-bg shadow-uikit-sm rounded-[var(--radius)]",
-  ghost: "bg-uikit-chip shadow-uikit-sm rounded-[var(--radius)]",
+  primary: "bg-uikit-bg shadow-uikit-sm rounded-uikit-badge",
+  secondary: "bg-uikit-bg shadow-uikit-sm rounded-uikit-badge",
+  ghost: "bg-uikit-chip shadow-uikit-sm rounded-uikit-badge",
 };
 
 const BTN_VARIANT: Record<ToggleButtonsVariant, string> = {
-  primary: "text-uikit-ink data-[selected=true]:text-white",
+  primary: "text-uikit-ink data-[selected=true]:text-uikit-ink",
   secondary: "text-uikit-ink data-[selected=true]:text-uikit-ink",
   ghost:
     "text-uikit-muted hover:text-uikit-ink data-[selected=true]:text-uikit-ink",
 };
 
-function btnSizeClass(size: ToggleButtonSize, icon: boolean) {
+// `inset` is the track's own padding (4px normally, 2px when `padding={false}`).
+// It is SUBTRACTED from the segment's vertical padding rather than added on top
+// of it, so the whole control comes out the height of a Button of the same size
+// instead of 8px taller than the button standing next to it. The horizontal
+// padding is left alone — a segment needs its width, and the track's 4px at the
+// ends is the frame, not part of the label's box.
+// Written out as literals, never composed at runtime: Tailwind scans source
+// text, so a `py-[${n}px]` built from a variable produces a class name that has
+// no rule behind it and the padding silently vanishes.
+const SEG_PAD_Y: Record<ToggleButtonSize, Record<number, string>> = {
+  sm: { 4: "py-[1px]", 2: "py-[3px]" },
+  md: { 4: "py-[3px]", 2: "py-[5px]" },
+  lg: { 4: "py-[5px]", 2: "py-[7px]" },
+};
+
+function btnSizeClass(size: ToggleButtonSize, icon: boolean, inset = 4) {
   const text = {
     sm: "text-uikit-11 gap-1",
     md: "text-uikit-12 gap-1.5",
@@ -45,11 +69,13 @@ function btnSizeClass(size: ToggleButtonSize, icon: boolean) {
   }[size];
   const box = icon
     ? { sm: "size-6 p-1", md: "size-8 p-2", lg: "size-9 p-2.5" }[size]
-    : { sm: "h-6 px-2", md: "h-7 px-3", lg: "h-8 px-4" }[size];
+    : `${{ sm: "px-2.5 leading-[14.5px]", md: "px-3.5 leading-[16.5px]", lg: "px-[18px] leading-[18.5px]" }[size]} ${SEG_PAD_Y[size][inset] ?? SEG_PAD_Y[size][4]}`;
   return `${text} ${box}`;
 }
 
 interface Ctx {
+  /** Track padding in px — segments subtract it from their own. */
+  inset: number;
   value: string;
   onValueChange: (value: string) => void;
   size: ToggleButtonSize;
@@ -130,6 +156,7 @@ export function ToggleButtons({
   // measurement map, which can leave the sliding highlight stuck at opacity 0.
   const ctx = useMemo(
     () => ({
+      inset: padding ? 4 : 2,
       value,
       onValueChange,
       size,
@@ -137,7 +164,7 @@ export function ToggleButtons({
       registerItem,
       unregisterItem,
     }),
-    [value, onValueChange, size, variant, registerItem, unregisterItem],
+    [padding, value, onValueChange, size, variant, registerItem, unregisterItem],
   );
 
   return (
@@ -145,7 +172,11 @@ export function ToggleButtons({
       <div
         ref={containerRef}
         className={cn(
-          "relative inline-flex items-center rounded-[var(--radius)]",
+          "relative inline-flex items-center",
+          // Track radius = thumb radius + inset, so the two curves are
+          // concentric. 6 + 4 = 10 with `p-1`; 6 + 2 = 8 with `p-0.5`. Giving
+          // both the same radius is what makes an inner corner look clipped.
+          padding ? "rounded-[10px]" : "rounded-[8px]",
           CONTAINER[variant],
           // A minimal frame even when padding={false}, so the full-size
           // selection pill has room to sit inside the container instead of
@@ -229,10 +260,10 @@ export function ToggleButton({
 
   const classes = cn(
     "relative z-10 inline-flex items-center justify-center font-normal whitespace-nowrap transition-colors outline-none cursor-pointer",
-    "disabled:pointer-events-none disabled:opacity-50 rounded-[var(--radius)]",
+    "disabled:pointer-events-none disabled:opacity-50 rounded-uikit-badge",
     "[&_svg]:shrink-0 [&_svg]:pointer-events-none",
     BTN_VARIANT[ctx.variant],
-    btnSizeClass(ctx.size, icon),
+    btnSizeClass(ctx.size, icon, ctx.inset),
     className,
   );
 
