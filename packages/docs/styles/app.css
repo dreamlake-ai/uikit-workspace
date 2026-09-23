@@ -91,15 +91,29 @@
   background: var(--chip-bg);
   pointer-events: none;
   will-change: transform;
-  transition-property: var(
-    --glide-transition,
-    transform,
-    width,
-    height,
-    opacity
-  );
-  transition-duration: 220ms;
-  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  /* Only transform and opacity. Every row in this rail is the same 26x250
+     box, so width and height never actually change — keeping them in the
+     list bought nothing and put two layout-affecting properties on the
+     pointer's critical path. */
+  transition-property: var(--glide-transition, transform, opacity);
+  /* 140ms, not 220. This block is not a thing you pressed that then animates
+     to its new home; it is the pointer's own shadow, and a follower that
+     arrives a fifth of a second late reads as lag rather than as motion. The
+     old curve made it worse: easeOutQuint spends most of its time in a long
+     decelerating tail, so the block was still visibly settling after the
+     cursor had already picked the next row. */
+  transition-duration: 140ms;
+  transition-timing-function: cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+/* The rail's own rows must not light up too. The glide replaced per-row
+   hover; it never removed it, so a hovered row was painting the shell's
+   ink-5 on top of the block's chip-bg and landing near 9% — twice the
+   intended value, and the fifty-separate-events behaviour the glide exists
+   to avoid, just with a block sliding around underneath it.
+   Hover only. `aria-current` / `[data-active]` keep whatever they had. */
+.doc-sidebar .sidebar-link:hover {
+  background-color: transparent;
 }
 .doc-sidebar .sidebar-link {
   position: relative;
