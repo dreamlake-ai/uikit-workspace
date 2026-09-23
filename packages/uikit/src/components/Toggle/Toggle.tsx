@@ -4,17 +4,17 @@ import { cn } from "../../lib/utils";
 export type ToggleVariant = "primary" | "secondary";
 export type ToggleSize = "sm" | "base" | "lg";
 
-// Pressed takes `--selected-bg`, the kit's one surface for "this is the one you
-// are on" (a pale blue, #d9e6f7 / #3d4856). It was an ink wash at 4–8%, which on
-// a light page is a grey smudge you have to hunt for — a pressed toggle is the
-// single most important thing in its own row to be able to find. The token has
-// existed since the palette was written and no component had ever reached for
-// it; this is what it is for.
+// Pressed is a *state of this control*, not a status in the domain, so it stays
+// neutral — `--chip-bg`, the same layer a segmented control uses for its track
+// and Badge uses for `secondary`. Accent stays free to mean running / active.
+//
+// Both variants take it. They differ at rest (ink vs muted label) and meet in
+// the pressed state, which is the one thing they are both saying.
 const VARIANTS: Record<ToggleVariant, string> = {
   primary:
-    "text-uikit-ink hover:bg-uikit-ink-5 data-[state=on]:text-uikit-ink data-[state=on]:bg-uikit-selected",
+    "text-uikit-ink hover:bg-uikit-ink-5 data-[state=on]:text-uikit-ink data-[state=on]:bg-uikit-chip",
   secondary:
-    "text-uikit-muted hover:bg-uikit-ink-5 data-[state=on]:text-uikit-ink data-[state=on]:bg-uikit-selected",
+    "text-uikit-muted hover:bg-uikit-ink-5 data-[state=on]:text-uikit-ink data-[state=on]:bg-uikit-chip",
 };
 
 // Button's ladder, step for step — same text sizes, same leading, same padding.
