@@ -71,6 +71,14 @@ selection" — which is the thing a bulk action is about to act on.
 Click the rows below: selecting a neighbour grows a run, and deselecting one in
 the middle splits it. A gap in the selection is a second run, not a taller one.
 
+The hover block rounds by the same rule, and **breaks where a selected row
+interrupts it**. Hovering a group highlights the group and its descendants as
+one shape; if one of those descendants is selected it paints its own surface
+instead, so the hover band genuinely ends above it and resumes below. Each of
+the three pieces rounds all four corners. Treating the selected row as part of
+the band left square corners butted against it — the one place a tree row
+showed a raw corner.
+
 **Give the run the same corner radius as the rows it wraps.** The ring is
 outset, so its inner curve *is* the run's radius: rows rounded any tighter pull
 away from it and leave a sliver at every corner. The default is `var(--radius)`;

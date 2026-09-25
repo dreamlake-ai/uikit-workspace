@@ -312,11 +312,28 @@ export function TreeEntryItem<T extends TreeDataItem>({
     hoveredId != null &&
     (row.id === hoveredId ||
       (hoverSubtree && (row.ancestors || []).some((a) => a.id === hoveredId)));
-  const hasPrevHover = rowIndex > 0 && inHoverBlock(dataWithMeta[rowIndex - 1]);
+  // ...but a neighbour that paints the SELECTION fill is not a continuation of
+  // the hover band. It draws its own colour, so the band genuinely ends there
+  // and this row's corner has to round. Asking only "is the neighbour in the
+  // hover block?" left the band with square corners butted against a row that
+  // had already broken it — the one place a tree row showed a raw corner.
+  const paintsSelectionFill = (row?: TreeDataItemWithMeta<T>) => {
+    if (!row || !isSelectable || loneSelectionStyle !== "fill") return false;
+    const st =
+      groupSelection === "row"
+        ? visualIds.has(row.id)
+          ? "selected"
+          : "unselected"
+        : getMultiSelectState(row.id, visualIds, dataWithMeta);
+    return st === "selected" || st === "indirect";
+  };
+  const continuesHover = (row?: TreeDataItemWithMeta<T>) =>
+    inHoverBlock(row) && !paintsSelectionFill(row);
+  const hasPrevHover = rowIndex > 0 && continuesHover(dataWithMeta[rowIndex - 1]);
   const hasNextHover =
     rowIndex >= 0 &&
     rowIndex < dataWithMeta.length - 1 &&
-    inHoverBlock(dataWithMeta[rowIndex + 1]);
+    continuesHover(dataWithMeta[rowIndex + 1]);
 
   // Selection visuals:
   //  - lone selected LEAF  → solid system-blue fill + white text
