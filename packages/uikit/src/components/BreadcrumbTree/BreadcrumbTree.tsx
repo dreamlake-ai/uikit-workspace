@@ -236,7 +236,7 @@ function TreeRow({
           : null),
       }}
     >
-      <Folder
+      {node.icon ?? <Folder
         size={14}
         strokeWidth={1.5}
         className={cn(
@@ -253,7 +253,7 @@ function TreeRow({
           'group-data-[selected]/row:text-uikit-accent',
           'group-data-[drop=into]/row:!text-uikit-accent',
         )}
-      />
+      />}
       <span className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap tracking-uikit-snug">
         {node.name}
       </span>
@@ -582,7 +582,7 @@ export function BreadcrumbTree({
       {/* ── Breadcrumb trigger ── */}
       <div
         role="navigation"
-        aria-label="Folder path"
+        aria-label="Navigation path"
         className={cn(
           'inline-flex items-center gap-0 h-4 leading-4 whitespace-nowrap',
           'font-uikit-ui text-uikit-12 tracking-uikit-snug',
@@ -680,7 +680,7 @@ export function BreadcrumbTree({
                 const headerLabel =
                   depth === 0
                     ? (rootPath ?? null)
-                    : (path[depth - 1]?.name ?? null)
+                    : (path[depth - 1]?.displayName ?? path[depth - 1]?.name ?? null)
                 const isLastCol = depth === columns.length - 1
 
                 return (

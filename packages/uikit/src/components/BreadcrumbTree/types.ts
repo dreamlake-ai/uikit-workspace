@@ -1,6 +1,12 @@
+import type { ReactNode } from 'react';
+
 export interface BreadcrumbNode {
   id: string;
   name: string;
+  /** Presentation label; name remains the navigation/path key. */
+  displayName?: string;
+  /** Optional resource glyph for tree rows; defaults to a folder. */
+  icon?: ReactNode;
   /** When false, hides the chevron indicator — signals no sub-children exist. */
   hasChildren?: boolean;
 }
