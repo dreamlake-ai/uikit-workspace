@@ -41,6 +41,11 @@ const STUB = INDENT - 7;
  *  Below this it appears and is replaced inside one glance, which reads as a
  *  flicker rather than as loading. */
 const SPINNER_DELAY = 180;
+/** Radius of the bend where a branch leaves its trunk. Also the point the
+ *  corner's own vertical stops at, which is where a continuing trunk has to
+ *  pick it up — a constant, not a class name, so the two cannot drift apart
+ *  and leave a gap in the line. */
+const CORNER_R = 6;
 /** Gutter between wrapped columns. */
 const COL_GAP = 10;
 /** The scroller's own padding, `px-1.5 py-2`. */
@@ -626,8 +631,13 @@ function FlowRow({
                 className="relative shrink-0"
                 style={{ width: INDENT }}
               >
-                {/* An ancestor's trunk simply passes through this slot. */}
-                {continues && !isElbow && (
+                {/* The trunk is ONE unbroken rule, whether it is an ancestor's
+                    passing through or this row's own continuing below. Letting
+                    the corner draw part of it is what put a break in the line:
+                    a rounded corner's left border stops short of the bend by
+                    its radius, and the arc's ink does not resume the vertical
+                    exactly where it left off. */}
+                {continues && (
                   <div className="absolute top-0 bottom-0 left-0 border-l border-uikit-faint" />
                 )}
                 {isElbow && (
@@ -640,18 +650,32 @@ function FlowRow({
                         whether or not more siblings follow, and it carries the
                         trunk's upper half with it. */}
                     <div
-                      className="absolute top-0 left-0 border-b border-l border-uikit-faint rounded-bl-md"
-                      style={{ width: STUB, height: ROW_GAP + ROW_H / 2 }}
+                      className={cn(
+                        "absolute left-0 border-b border-uikit-faint",
+                        // A last child has no trunk to bend out of, so its
+                        // corner has to supply the drop as well.
+                        isLast && "border-l",
+                      )}
+                      style={{
+                        width: STUB,
+                        // Exactly the radius: the left edge is then all arc and
+                        // no straight run, so the bend sits ON the trunk
+                        // instead of alongside a second copy of it.
+                        top: isLast ? 0 : ROW_GAP + ROW_H / 2 - CORNER_R,
+                        height: isLast ? ROW_GAP + ROW_H / 2 : CORNER_R,
+                        borderBottomLeftRadius: CORNER_R,
+                      }}
                     />
                     {/* ...and a branch that continues picks the trunk back up
-                        BELOW that corner. Running it full height instead would
-                        lay a second 8% rule over the corner's own vertical —
-                        visibly darker — and square off the curve it just
-                        drew. */}
+                        exactly where the corner's vertical ends — one radius
+                        above the bend. Starting it at the bend instead leaves
+                        a visible break in the line; running it the full height
+                        instead lays a second 8% rule over the corner's own
+                        vertical, which comes out darker than the rest. */}
                     {continues && (
                       <div
                         className="absolute left-0 bottom-0 border-l border-uikit-faint"
-                        style={{ top: ROW_GAP + ROW_H / 2 }}
+                        style={{ top: ROW_GAP + ROW_H / 2 - CORNER_R }}
                       />
                     )}
                   </>
