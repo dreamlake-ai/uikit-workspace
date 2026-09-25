@@ -51,7 +51,11 @@ export function TreeSearchBar({
         <InputSlot side="left">
           <Search className="text-uikit-muted size-4 stroke-1" />
         </InputSlot>
-        <InputSlot side="right">
+        {/* Flex, so the slot is exactly as tall as the buttons in it. As a
+            block it was a line box — 22px for 18px buttons, with the extra
+            leading landing under them, which left the hover fill 1px from the
+            field's top edge and 5px from its bottom. */}
+        <InputSlot side="right" className="flex items-center">
           <TooltipProvider delayDuration={200}>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -62,7 +66,13 @@ export function TreeSearchBar({
                     // pointer is on them; without a rest-to-hover step the
                     // only feedback was the tooltip, which says what the
                     // control does, not that it is a control.
-                    "rounded-uikit-badge mr-1 p-1 hover:bg-uikit-ink-5",
+                    //
+                    // 18px tall inside a 24px field, not 24: at `p-1` the fill
+                    // reached the field's own top and bottom edge, so hovering
+                    // looked like the field had changed rather than that a
+                    // control inside it had lit up. 3px of field shows above
+                    // and below it now.
+                    "rounded-uikit-badge mr-1 px-1 py-px hover:bg-uikit-ink-5",
                     isCaseSensitive ? "bg-uikit-ink-6" : "",
                   )}
                 >
@@ -76,7 +86,7 @@ export function TreeSearchBar({
                 <button
                   onClick={() => setIsRegex((prev) => !prev)}
                   className={cn(
-                    "rounded-uikit-badge p-1 hover:bg-uikit-ink-5",
+                    "rounded-uikit-badge px-1 py-px hover:bg-uikit-ink-5",
                     isRegex && "bg-uikit-ink-6",
                   )}
                 >
