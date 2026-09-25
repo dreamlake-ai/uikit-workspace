@@ -162,7 +162,12 @@ export const InputNumber = forwardRef<HTMLInputElement, InputNumberProps>(
         onBlur={handleBlur}
         className={cn([
           "group/number-input",
-          "cursor-text",
+          // The field is a scrubber first and a text box second, so the
+          // resting cursor is the drag arrow and the I-beam appears only once
+          // it actually holds focus. It was the other way round, and the
+          // arrow was gated on `data-hover`, which the drag handlers set —
+          // so the affordance arrived after the drag had begun.
+          "cursor-col-resize focus-within:cursor-text",
           cursorState === "dragging-x" && [
             "hover:bg-uikit-chip!",
             "data-[hover=x]:hover:bg-uikit-ink-8!",
@@ -175,7 +180,7 @@ export const InputNumber = forwardRef<HTMLInputElement, InputNumberProps>(
           disabled && "cursor-not-allowed opacity-60",
         ])}
         inputClassName={cn([
-          "cursor-text",
+          "cursor-col-resize focus:cursor-text",
           "group-data-[hover=x]/number-input:cursor-col-resize",
           "group-data-[hover=y]/number-input:cursor-ns-resize",
           disabled && "cursor-not-allowed",

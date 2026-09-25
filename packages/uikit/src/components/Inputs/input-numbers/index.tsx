@@ -432,7 +432,7 @@ export const InputNumbers = forwardRef<HTMLDivElement, InputNumbersProps>(
                 <InputSlot
                   side="left"
                   className={cn(
-                    "cursor-text",
+                    "cursor-col-resize",
                     "group-data-[hover=x]/number-input:cursor-col-resize",
                     "group-data-[hover=y]/number-input:cursor-ns-resize",
                   )}
