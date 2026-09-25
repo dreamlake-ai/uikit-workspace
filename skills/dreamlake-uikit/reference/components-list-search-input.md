@@ -7,7 +7,7 @@ can become a badge to make more room for the field while searching.
 ## Category badge and expanded search
 
 Focus search to fold the category choices into a badge. The input takes the
-remaining width and shows a 1px underline. The badge has no dropdown: its × removes the filter, returning to all categories. Blurring an empty search restores the choices; a nonempty query
+remaining width and shows a 2px underline matching the category tabs. The badge has no dropdown: its × removes the filter, returning to all categories. Blurring an empty search restores the choices; a nonempty query
 keeps its category visible. Category state belongs to the host, not the input.
 
 ## Standard underline
@@ -22,7 +22,7 @@ Import `@dreamlake/uikit/styles.css` once with the app's shared tokens.
 | `query` | `string` | required | Controlled search text. |
 | `onQuery` | `(value: string) => void` | required | Receives edits; does not fetch or filter data. |
 | `placeholder` | `string` | `search` | Placeholder and accessible input name. |
-| `strongUnderline` | `boolean` | `false` | 1px baseline on focus or while a query is present. |
+| `strongUnderline` | `boolean` | `false` | 2px baseline on focus or while a query is present. |
 | `filter` | `{ label: string; onRemove: () => void }` | — | Removable filter badge; omit for the unfiltered state. |
 | `searchRef` | `RefObject<HTMLInputElement or null>` | — | Focus the underlying input from the host. |
 | `onKeyDown` | `KeyboardEventHandler` | — | Additional keyboard handling; preventDefault overrides built-in keyboard handling. |

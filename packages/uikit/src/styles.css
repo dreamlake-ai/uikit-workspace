@@ -645,11 +645,8 @@ html[data-theme="dark"] {
   color: var(--muted);
 }
 .uikit-search-input:focus {
-  /* Focus is a 0.5px → 1px step, not 0.5px → 2px. At 2px of full ink this rule
-     ran the width of the list as a bar, not a hairline — the field read as
-     selected the way a heading reads as a heading. 1px at 70% ink still answers
-     "this is where typing goes" without out-weighing the rows below it. */
-  box-shadow: inset 0 -1px color-mix(in srgb, var(--ink) 70%, transparent);
+  /* Match the category tabs' active indicator. */
+  box-shadow: inset 0 -2px var(--ink);
 }
 
 .uikit-search-input[data-has-query] {
@@ -664,7 +661,7 @@ html[data-theme="dark"] {
 .uikit-list-search { font-family: var(--f-mono); }
 .uikit-list-search[data-strong]:focus-within .uikit-search-input,
 .uikit-list-search[data-strong][data-has-query] .uikit-search-input {
-  box-shadow: inset 0 -1px var(--ink); }
+  box-shadow: inset 0 -2px var(--ink); }
 
 /* Reveal panel dismissal alongside the header's dock handle. Keep its space
    reserved so the breadcrumb does not shift, and expose it to keyboard focus. */

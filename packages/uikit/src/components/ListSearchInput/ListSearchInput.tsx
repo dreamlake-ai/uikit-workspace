@@ -36,9 +36,6 @@ export function ListSearchInput({
       data-strong={strongUnderline || undefined}
       data-has-query={query.length > 0 || undefined}
     >
-      <span aria-hidden="true" data-search-separator className="uikit-search-separator">
-        /
-      </span>
       {filter && (
         <span className="uikit-search-filter">
           {filter.label}
@@ -48,6 +45,9 @@ export function ListSearchInput({
           </button>
         </span>
       )}
+      <span aria-hidden="true" data-search-separator className="uikit-search-separator">
+        /
+      </span>
       <input
         ref={inputRef}
         type="search"
