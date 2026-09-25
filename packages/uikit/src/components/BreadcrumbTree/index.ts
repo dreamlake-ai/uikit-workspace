@@ -1,5 +1,8 @@
 export { BreadcrumbTree } from "./BreadcrumbTree";
-export type { BreadcrumbTreeProps } from "./BreadcrumbTree";
+export type {
+  BreadcrumbTreeProps,
+  BreadcrumbTreeHandle,
+} from "./BreadcrumbTree";
 export type {
   BreadcrumbNode,
   BreadcrumbView,

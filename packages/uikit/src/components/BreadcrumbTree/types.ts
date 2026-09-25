@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { ReactNode } from "react";
 
 export interface BreadcrumbNode {
   id: string;
@@ -84,10 +84,7 @@ export interface BreadcrumbDragAndDrop {
    */
   onMove: (move: BreadcrumbMove) => void | Promise<void>;
   /** Host veto, on top of the built-in self/descendant/no-op guards. */
-  canDrop?: (
-    source: BreadcrumbNode,
-    target: BreadcrumbDropTarget
-  ) => boolean;
+  canDrop?: (source: BreadcrumbNode, target: BreadcrumbDropTarget) => boolean;
   /** Dwell before a hovered row springs its column open. Default 500ms. */
   springDelayMs?: number;
 }

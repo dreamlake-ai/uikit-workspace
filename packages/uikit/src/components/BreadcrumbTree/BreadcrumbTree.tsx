@@ -3,8 +3,10 @@ import {
   useEffect,
   useRef,
   useCallback,
+  useImperativeHandle,
   Fragment,
   ReactNode,
+  Ref,
 } from "react";
 import { createPortal } from "react-dom";
 import {
@@ -36,6 +38,16 @@ const PANEL_H = 360;
 const FOOTER_H = 30;
 const PANEL_GAP = 6;
 const VIEWPORT_EDGE = 8;
+
+/** Imperative access, for the moves a HOST starts. The tree applies a drag to
+ *  its own cache and never refetches, so an edit it is not told about is one
+ *  it cannot show — and cannot animate. */
+export interface BreadcrumbTreeHandle {
+  /** Apply a move to the tree's cache, as though it had made it. */
+  applyMove: (move: BreadcrumbMove) => void;
+  /** Put back a move the tree reported — the one an Undo needs. */
+  undo: (move: BreadcrumbMove) => void;
+}
 
 export interface BreadcrumbTreeProps {
   /** Controlled navigation path, root → leaf. Empty array = nothing selected. */
@@ -97,6 +109,8 @@ export interface BreadcrumbTreeProps {
   /** Drop the in-panel toggle — for a host that offers the switch elsewhere,
    *  or one that only ever wants a single layout. */
   hideViewToggle?: boolean;
+  /** See `BreadcrumbTreeHandle`. */
+  ref?: Ref<BreadcrumbTreeHandle>;
   className?: string;
 }
 
@@ -324,6 +338,7 @@ export function BreadcrumbTree({
   defaultView = "columns",
   onViewChange,
   hideViewToggle = false,
+  ref,
   className,
 }: BreadcrumbTreeProps) {
   const [open, setOpen] = useState(false);
@@ -352,6 +367,10 @@ export function BreadcrumbTree({
   // Which keys the wrapped tree has open. Panel state rather than TreeFlow's
   // own, because a drag re-keys the cache and these have to move with it.
   const [expanded, setExpanded] = useState<Record<string, true>>({});
+  const [justMoved, setJustMoved] = useState<{
+    id: string;
+    token: number;
+  } | null>(null);
   const seededRef = useRef(false);
 
   const { fetchPath, loadMore, getColumnData, applyMove, cache, clearCache } =
@@ -674,9 +693,11 @@ export function BreadcrumbTree({
   // told after — see `BreadcrumbDragAndDrop.onMove` for why the tree no longer
   // waits for a refetch to show a move it already knows the shape of. If the
   // host rejects, the exact inverse is applied and the row goes back.
-  const performMove = useCallback(
+  // The cache half of a move, with no host call attached — so the same edit
+  // can serve a drag the tree reported, the rollback when the host refuses it,
+  // and an UNDO the host initiates through the imperative handle below.
+  const applyMoveLocally = useCallback(
     (move: BreadcrumbMove) => {
-      if (!dnd) return;
       const names = (nodes: BreadcrumbNode[]) => nodes.map((n) => n.name);
       const fromKey = buildKey(names(move.fromPath));
       const toKey = buildKey(names(move.to.parentPath));
@@ -712,19 +733,77 @@ export function BreadcrumbTree({
       });
       rekey(oldPrefix, newPrefix);
 
+      // Open the way to where it landed. A destination that happens to be
+      // collapsed swallows the row whole — it does not glide anywhere, it
+      // simply stops existing — and that is exactly the case where someone
+      // cannot tell what an Undo just did.
+      //
+      // Only as far as the cache already reaches, though. Expanding a column
+      // that has never been fetched starts a fetch, and that fetch races the
+      // host's write: it returns the tree as it was BEFORE the move and
+      // overwrites the edit, so the row vanishes instead of arriving. Whether
+      // that happens would come down to how quick the server is, which is no
+      // basis for whether a row exists. Stopping at the last cached ancestor
+      // reveals the move whenever the destination was on screen — which is
+      // every drag, and every undo of one — and otherwise leaves the toast to
+      // say what happened.
+      setExpanded((prev) => {
+        const next = { ...prev };
+        for (let i = 0; i < move.to.parentPath.length; i++) {
+          const key = buildKey(names(move.to.parentPath.slice(0, i + 1)));
+          if (getColumnData(key).page === 0) break;
+          next[key] = true;
+        }
+        return next;
+      });
+      // Tells the tree WHICH row to scroll to and mark, and `token` makes a
+      // repeat of the same move count as a new event.
+      setJustMoved((prev) => ({
+        id: move.source.id,
+        token: (prev?.token ?? 0) + 1,
+      }));
+    },
+    [buildKey, applyMove, getColumnData],
+  );
+
+  /** `move` reversed: what it would take to put the node back. */
+  const invert = useCallback(
+    (move: BreadcrumbMove): BreadcrumbMove => ({
+      source: move.source,
+      from: move.to.parent,
+      fromPath: move.to.parentPath,
+      to: {
+        parent: move.from,
+        parentPath: move.fromPath,
+        kind: move.from ? "into" : "level",
+      },
+    }),
+    [],
+  );
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      // An undo is a move the HOST starts, so the tree would otherwise learn
+      // of it only by refetching — which is the one thing this component no
+      // longer does. Routed through here it is applied like any other move,
+      // and the row plays back to where it came from instead of silently
+      // reappearing there.
+      applyMove: applyMoveLocally,
+      undo: (move: BreadcrumbMove) => applyMoveLocally(invert(move)),
+    }),
+    [applyMoveLocally, invert],
+  );
+
+  const performMove = useCallback(
+    (move: BreadcrumbMove) => {
+      if (!dnd) return;
+      applyMoveLocally(move);
       Promise.resolve(dnd.onMove(move)).catch(() => {
-        applyMove({
-          node: move.source,
-          fromKey: toKey,
-          toKey: fromKey,
-          oldPrefix: newPrefix,
-          newPrefix: oldPrefix,
-          newParentId: move.from?.id ?? null,
-        });
-        rekey(newPrefix, oldPrefix);
+        applyMoveLocally(invert(move));
       });
     },
-    [dnd, buildKey, applyMove],
+    [dnd, applyMoveLocally, invert],
   );
 
   const commitMove = useCallback(
@@ -884,6 +963,7 @@ export function BreadcrumbTree({
                   renderEmpty={renderEmpty}
                   expanded={expanded}
                   setExpanded={setExpanded}
+                  justMoved={justMoved}
                   dnd={dnd}
                   onMove={performMove}
                   height={bodyHeight}

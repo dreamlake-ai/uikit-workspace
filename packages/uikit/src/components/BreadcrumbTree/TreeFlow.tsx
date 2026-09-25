@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { ChevronRight, Folder, Loader } from "lucide-react";
 import { cn } from "../../lib/utils";
 import type {
@@ -37,6 +44,15 @@ const CHEVRON_CENTER = 15;
 /** Trunk → the child's chevron. Constant at every depth: the slot sits at
  *  `depth * INDENT - 5` and the chevron box at `depth * INDENT + 8`. */
 const STUB = INDENT - 7;
+/** How long a row takes to glide from where it was to where it now is. Long
+ *  enough to be followed by eye, short enough not to be waited on. */
+const FLIP_MS = 260;
+/** How long the moved row stays marked. Long enough to find with the eye after
+ *  reading the toast that announced it, short enough not to linger as state. */
+const MARK_MS = 1400;
+/** Below this a row has not really gone anywhere, and animating it only adds
+ *  noise to an ordinary re-render. */
+const FLIP_MIN_PX = 2;
 /** How long a fetch must be outstanding before a spinner row is worth showing.
  *  Below this it appears and is replaced inside one glance, which reads as a
  *  flicker rather than as loading. */
@@ -84,6 +100,10 @@ export interface TreeFlowProps {
    *  through the column layout and back. */
   expanded: Record<string, true>;
   setExpanded: React.Dispatch<React.SetStateAction<Record<string, true>>>;
+  /** The node a move just put somewhere, and a token that changes on each one.
+   *  The row is scrolled to and marked, so the change is witnessed rather than
+   *  discovered. */
+  justMoved?: { id: string; token: number } | null;
   dnd?: BreadcrumbDragAndDrop;
   /** Commit a completed drag. The panel owns the optimistic cache edit and
    *  the host call, so both layouts move a row the same way. */
@@ -101,11 +121,83 @@ export function TreeFlow({
   renderEmpty,
   expanded,
   setExpanded,
+  justMoved,
   dnd,
   onMove,
   height,
 }: TreeFlowProps) {
   const rootKey = useMemo(() => keyOf([]), [keyOf]);
+  const scrollerRefForFlip = useRef<HTMLDivElement>(null);
+
+  // FLIP. A re-parent is applied straight to the cache, so a row simply appears
+  // somewhere else on the next render — and if it landed off screen, or the eye
+  // was on the toast rather than the tree, nothing about the change was
+  // witnessed at all. Measuring where each row WAS, then playing it from there
+  // to where it now is, makes the move something you watch happen rather than
+  // something you find afterwards.
+  //
+  // Keyed by node id: a move changes a row's path key, so the key is precisely
+  // what cannot tie the before and the after together.
+  const lastRects = useRef<Map<string, DOMRect>>(new Map());
+  useLayoutEffect(() => {
+    const host = scrollerRefForFlip.current;
+    if (!host) return;
+    const nodes = host.querySelectorAll<HTMLElement>("[data-node-id]");
+    const next = new Map<string, DOMRect>();
+    for (const el of nodes) {
+      const id = el.dataset.nodeId!;
+      const now = el.getBoundingClientRect();
+      next.set(id, now);
+      const before = lastRects.current.get(id);
+      if (!before) continue;
+      const dx = before.left - now.left;
+      const dy = before.top - now.top;
+      if (Math.abs(dx) < FLIP_MIN_PX && Math.abs(dy) < FLIP_MIN_PX) continue;
+      // Invert, then play. The entrance stagger writes to `animation`, so this
+      // has to clear it or a row that moves on its first sight would run both.
+      el.style.animation = "none";
+      el.style.transition = "none";
+      el.style.transform = `translate(${dx}px, ${dy}px)`;
+      requestAnimationFrame(() => {
+        el.style.transition = `transform ${FLIP_MS}ms cubic-bezier(0.2, 0.8, 0.2, 1)`;
+        el.style.transform = "";
+        const done = () => {
+          el.style.transition = "";
+          el.removeEventListener("transitionend", done);
+        };
+        el.addEventListener("transitionend", done);
+      });
+    }
+    lastRects.current = next;
+  });
+
+  // Bring the moved row into view and mark it briefly. The FLIP above plays it
+  // from where it was; this makes sure there is somewhere to play it TO that
+  // the user is actually looking at — the flow scrolls sideways, so a move can
+  // easily land a column or two off screen.
+  const markTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!justMoved) return;
+    const host = scrollerRefForFlip.current;
+    const el = host?.querySelector<HTMLElement>(
+      `[data-node-id="${CSS.escape(justMoved.id)}"]`,
+    );
+    if (!el) return;
+    el.scrollIntoView({
+      block: "nearest",
+      inline: "nearest",
+      behavior: "smooth",
+    });
+    el.setAttribute("data-just-moved", "");
+    if (markTimer.current) clearTimeout(markTimer.current);
+    markTimer.current = setTimeout(
+      () => el.removeAttribute("data-just-moved"),
+      MARK_MS,
+    );
+    return () => {
+      if (markTimer.current) clearTimeout(markTimer.current);
+    };
+  }, [justMoved]);
 
   const [slow, setSlow] = useState<Record<string, true>>({});
   const [hovered, setHovered] = useState<string | null>(null);
@@ -356,7 +448,10 @@ export function TreeFlow({
 
   return (
     <div
-      ref={scrollerRef}
+      ref={(el) => {
+        scrollerRef.current = el;
+        scrollerRefForFlip.current = el;
+      }}
       className="scroll-auto-hide h-full overflow-x-auto overflow-y-hidden pl-1.5 py-2"
       onDragOver={
         dnd && drag
@@ -561,6 +656,7 @@ function FlowRow({
       onDragEnd={onDragEnd}
       onDragOver={onDragOver}
       onDrop={onDrop}
+      data-node-id={row.node.id}
       data-selected={selected || undefined}
       data-trail={onTrail || undefined}
       data-source={isSource || undefined}
@@ -578,6 +674,10 @@ function FlowRow({
         "data-[drop=blocked]:!bg-transparent data-[drop=blocked]:!opacity-40",
         "data-[drop=blocked]:cursor-no-drop",
         "data-[source]:!opacity-55",
+        // The row a move just landed. Rides on the ring, not the fill: the
+        // fill already carries selection and the drop target.
+        "data-[just-moved]:[box-shadow:inset_0_0_0_1.5px_var(--uikit-accent)]",
+        "transition-[background-color,box-shadow] duration-[200ms]",
         "data-[dim]:!opacity-45",
       )}
       style={{
