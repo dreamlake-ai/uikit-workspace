@@ -58,7 +58,11 @@ export function TreeSearchBar({
                 <button
                   onClick={() => setIsCaseSensitive((prev) => !prev)}
                   className={cn(
-                    "rounded-uikit-badge mr-1 p-1",
+                    // Hover fills. These read as pressable only while the
+                    // pointer is on them; without a rest-to-hover step the
+                    // only feedback was the tooltip, which says what the
+                    // control does, not that it is a control.
+                    "rounded-uikit-badge mr-1 p-1 hover:bg-uikit-ink-5",
                     isCaseSensitive ? "bg-uikit-ink-6" : "",
                   )}
                 >
@@ -72,7 +76,7 @@ export function TreeSearchBar({
                 <button
                   onClick={() => setIsRegex((prev) => !prev)}
                   className={cn(
-                    "rounded-uikit-badge p-1",
+                    "rounded-uikit-badge p-1 hover:bg-uikit-ink-5",
                     isRegex && "bg-uikit-ink-6",
                   )}
                 >

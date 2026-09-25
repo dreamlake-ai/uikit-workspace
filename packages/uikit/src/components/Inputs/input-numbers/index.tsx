@@ -389,7 +389,11 @@ export const InputNumbers = forwardRef<HTMLDivElement, InputNumbersProps>(
         className={cn([
           "gap-1 touch-none select-none",
           !useGrid && "flex flex-col",
-          cursorState === "default" && "cursor-crosshair",
+          // The resting cursor is the horizontal drag arrow, not a
+          // crosshair. `data-hover` is only set once a drag is under way, so
+          // the affordance used to appear *after* you had already guessed it
+          // was there — the one moment it is no longer needed.
+          cursorState === "default" && "cursor-col-resize",
           cursorState === "dragging-y" && "cursor-ns-resize",
           cursorState === "dragging-x" && "cursor-col-resize",
           "data-[hover=down]:bg-uikit-ink-8",
