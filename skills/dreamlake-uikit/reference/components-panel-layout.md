@@ -30,11 +30,44 @@ Escape cancels a drag in flight.
 
 ## Tab groups
 
-A `group` is a flat tab bar of panels sharing one region; only the active tab is
-mounted. Groups normally arise from a user dropping one panel onto another's
+A `group` is a flat tab bar of panels sharing one region. By default, only the
+active tab is mounted. Enable `tabbed` to keep each view mounted and connected
+while switching tabs or docking it into another region. Groups normally arise from a user dropping one panel onto another's
 centre, so `panelGroup` is how you seed a layout that already has tabs. A tab
 can be dragged straight out of its group to dock elsewhere, and a group that
 loses its second-to-last tab collapses back into a plain panel.
+
+## Persistent editor and preview views
+
+Use `tabbed` for editors, collaborative documents, and iframe previews that must
+retain their own state when hidden or moved. Each leaf keeps one connected body;
+inactive bodies are hidden. Closing a leaf disposes its body.
+
+A singleton uses the same header row without an extra tab strip. Multiple views
+show tabs beside the active view's header controls. Custom labels stay on one
+line and clip when they reach those controls.
+
+```tsx
+<PanelLayout
+  ref={layout}
+  tabbed
+  initial={() => panelGroup([panelLeaf({ view: 'editor', title: 'Draft' }), panelLeaf({ view: 'preview', title: 'Preview' })])}
+  renderTab={(leaf) => <span>{leaf.title}</span>}
+  renderHeader={(leaf) => <ViewActions viewId={leaf.id} />}
+  renderBody={(leaf) => <ViewBody viewId={leaf.id} kind={leaf.view} />}
+  onFocusedLeafChange={(leaf) => setActiveView(leaf.id)}
+  onRequestClose={(id) => {
+    if (canClose(id)) layout.current?.closeLeaf(id)
+  }}
+/>
+```
+
+`onRequestClose` delegates user close actions to the host. When supplied, the
+host must call `closeLeaf` after its save/discard guard permits disposal.
+`showSingleTab` can opt individual singleton leaves into tab presentation.
+Calling `focusLeaf(id)` also activates that leaf when it belongs to a group.
+Keep resource identity keyed by leaf ID; hiding or moving a view must not replace
+its document or authorization context.
 
 ## Singletons
 

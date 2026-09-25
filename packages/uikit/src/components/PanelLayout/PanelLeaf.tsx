@@ -4,12 +4,12 @@ import {
   useState,
   type CSSProperties,
   type PointerEvent as ReactPointerEvent,
-} from 'react'
-import { cn } from '../../lib/utils'
-import { tintFor, usePanelConfig } from './config'
-import { tabDomId, tabPanelDomId } from './GroupTabBar'
-import type { PanelBox } from './panel-box'
-import type { LeafNode } from './panel-tree'
+} from "react";
+import { cn } from "../../lib/utils";
+import { tintFor, usePanelConfig } from "./config";
+import { tabDomId, tabPanelDomId } from "./GroupTabBar";
+import type { PanelBox } from "./panel-box";
+import type { LeafNode } from "./panel-tree";
 
 const CloseIcon = () => (
   <svg
@@ -25,7 +25,7 @@ const CloseIcon = () => (
     <line x1="6" y1="6" x2="18" y2="18" />
     <line x1="18" y1="6" x2="6" y2="18" />
   </svg>
-)
+);
 
 function HeaderBtn({
   label,
@@ -33,10 +33,10 @@ function HeaderBtn({
   children,
   className,
 }: {
-  label: string
-  onClick: () => void
-  children: React.ReactNode
-  className?: string
+  label: string;
+  onClick: () => void;
+  children: React.ReactNode;
+  className?: string;
 }) {
   return (
     <button
@@ -44,18 +44,18 @@ function HeaderBtn({
       aria-label={label}
       title={label}
       onClick={(e) => {
-        e.stopPropagation()
-        onClick()
+        e.stopPropagation();
+        onClick();
       }}
       className={cn(
-        'inline-flex items-center justify-center w-6 h-6 rounded-[6px] border-none cursor-pointer bg-transparent',
-        'text-uikit-muted [transition:background_120ms_ease,color_120ms_ease] hover:bg-uikit-chip hover:text-uikit-ink',
-        className
+        "inline-flex items-center justify-center w-6 h-6 rounded-[6px] border-none cursor-pointer bg-transparent",
+        "text-uikit-muted [transition:background_120ms_ease,color_120ms_ease] hover:bg-uikit-chip hover:text-uikit-ink",
+        className,
       )}
     >
       {children}
     </button>
-  )
+  );
 }
 
 /**
@@ -67,22 +67,25 @@ export function PanelLeaf({
   dragging,
   box,
   inGroup = false,
+  tabRole = true,
   onFocus,
   onClose,
   onHandleDown,
 }: {
-  leaf: LeafNode
-  dragging: boolean
+  leaf: LeafNode;
+  dragging: boolean;
   /** This panel's box in viewport coordinates, as CSS math (see panel-box.ts). */
-  box: PanelBox
+  box: PanelBox;
   /** True when this leaf is the visible tab of a group, which already renders a
    *  tab bar above it. */
-  inGroup?: boolean
-  onFocus: () => void
-  onClose: () => void
-  onHandleDown: (e: ReactPointerEvent) => void
+  inGroup?: boolean;
+  tabRole?: boolean;
+  onFocus: () => void;
+  onClose: () => void;
+  onHandleDown: (e: ReactPointerEvent) => void;
 }) {
   const {
+    tabbed,
     renderBody,
     renderHeader,
     leafClassName,
@@ -91,17 +94,17 @@ export function PanelLeaf({
     contentColumnHeaderClass,
     closable,
     palette,
-  } = usePanelConfig()
+  } = usePanelConfig();
 
-  const tint = tintFor(leaf.n, palette)
+  const tint = tintFor(leaf.n, palette);
   // A panel the host will not let go of shows no close button. This is the
   // affordance half only: the refusal itself lives in one place, next to the
   // close handler, so a path that never touches a button (Delete on a tab) is
   // covered by the same rule — see ClosablePredicate.
-  const canClose = closable?.(leaf) ?? true
-  const customHeader = renderHeader?.(leaf)
-  const [headerHovered, setHeaderHovered] = useState(false)
-  const rootRef = useRef<HTMLDivElement>(null)
+  const canClose = closable?.(leaf) ?? true;
+  const customHeader = renderHeader?.(leaf);
+  const [headerHovered, setHeaderHovered] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
 
   // Publish this panel's geometry to CSS. Content that needs to position itself
   // against the VIEWPORT rather than against its panel — a centered column, an
@@ -111,22 +114,23 @@ export function PanelLeaf({
   // stay correct through an animation without a single JS measurement. A leaf
   // may additionally cap its column via `contentMax`.
   const boxStyle = {
-    '--panel-x': `calc(${box.x})`,
-    '--panel-w': `calc(${box.w})`,
-    ...(leaf.contentMax ? { '--content-max': `${leaf.contentMax}px` } : {}),
-  } as CSSProperties
+    "--panel-x": `calc(${box.x})`,
+    "--panel-w": `calc(${box.w})`,
+    ...(leaf.contentMax ? { "--content-max": `${leaf.contentMax}px` } : {}),
+  } as CSSProperties;
 
   // Inside a group the tab ALREADY carries this panel's title, its close button,
   // and its drag affordance, so a default header underneath would duplicate all
   // three — two close buttons for one panel. A CUSTOM header still renders: it
   // holds controls the tab cannot (a breadcrumb, a mode switch), which is a
   // deliberate choice by the host rather than redundancy.
-  const showHeader = !inGroup || !!customHeader
+  const showHeader = !inGroup || !!customHeader || tabbed;
 
   // Only a leaf that opts in (a custom header AND a `contentMax`) gets the
   // host's centered-gutter header treatment; the rest keep a plain flush-left
   // header. With no `contentColumnHeaderClass` configured, every header is flush.
-  const headerOnColumn = !!customHeader && !!leaf.contentMax && !!contentColumnHeaderClass
+  const headerOnColumn =
+    !!customHeader && !!leaf.contentMax && !!contentColumnHeaderClass;
 
   // PORTAL SEAM: a host may render part of a panel's content through a REVERSE
   // PORTAL — DOM that lives inside this leaf but whose React fiber hangs
@@ -136,15 +140,15 @@ export function PanelLeaf({
   // listener follows DOM bubbling instead, so clicking portaled content still
   // focuses this leaf. The React `onPointerDown` below stays for the ordinary
   // (fiber-descendant) case — `onFocus` is idempotent, so double-firing is fine.
-  const onFocusRef = useRef(onFocus)
-  onFocusRef.current = onFocus
+  const onFocusRef = useRef(onFocus);
+  onFocusRef.current = onFocus;
   useEffect(() => {
-    const el = rootRef.current
-    if (!el) return
-    const handle = () => onFocusRef.current()
-    el.addEventListener('pointerdown', handle)
-    return () => el.removeEventListener('pointerdown', handle)
-  }, [])
+    const el = rootRef.current;
+    if (!el) return;
+    const handle = () => onFocusRef.current();
+    el.addEventListener("pointerdown", handle);
+    return () => el.removeEventListener("pointerdown", handle);
+  }, []);
 
   return (
     <div
@@ -153,7 +157,11 @@ export function PanelLeaf({
       // The other half of the tab relationship: a grouped panel IS the tabpanel
       // its tab controls, and takes its accessible name from that tab.
       {...(inGroup
-        ? { id: tabPanelDomId(leaf.id), role: 'tabpanel', 'aria-labelledby': tabDomId(leaf.id) }
+        ? {
+            id: tabPanelDomId(leaf.id),
+            role: tabRole ? "tabpanel" : "region",
+            "aria-labelledby": tabDomId(leaf.id),
+          }
         : {})}
       onPointerDown={onFocus}
       // OCCLUSION HYGIENE: `bg-uikit-bg` makes every panel opaque. On a flat
@@ -168,10 +176,10 @@ export function PanelLeaf({
       // While this panel is the one being dragged, fade it — the floating
       // surrogate is the thing the eye should follow.
       className={cn(
-        'relative flex flex-col w-full h-full min-w-0 min-h-0 rounded-[12px] overflow-hidden',
-        'bg-uikit-bg border-none shadow-none [transition:opacity_120ms_ease]',
-        dragging ? 'opacity-40' : 'opacity-100',
-        leafClassName?.(leaf)
+        "relative flex flex-col w-full h-full min-w-0 min-h-0 rounded-[12px] overflow-hidden",
+        "bg-uikit-bg border-none shadow-none [transition:opacity_120ms_ease]",
+        dragging ? "opacity-40" : "opacity-100",
+        leafClassName?.(leaf),
       )}
       style={boxStyle}
     >
@@ -180,33 +188,41 @@ export function PanelLeaf({
           onMouseEnter={() => setHeaderHovered(true)}
           onMouseLeave={() => setHeaderHovered(false)}
           className={cn(
-            'uikit-panel-header relative flex items-center gap-[6px] h-[26px] shrink-0 select-none cursor-default pr-[6px] bg-uikit-bg',
+            "uikit-panel-header relative flex items-center gap-[6px] h-[26px] shrink-0 select-none cursor-default pr-[6px] bg-uikit-bg",
             // When a panel opts into the centered content column, pad the left edge
             // to the SAME gutter the body uses, so header text lines up on the
             // x-axis with the content below even when side panels shift the column
             // off the panel's own center.
-            headerOnColumn ? contentColumnHeaderClass : 'pl-[12px]',
-            headerClassName?.(leaf)
+            headerOnColumn ? contentColumnHeaderClass : "pl-[12px]",
+            tabbed && inGroup
+              ? "h-[34px] pt-[8px] pl-[20px] pr-[20px]"
+              : undefined,
+            headerClassName?.(leaf),
           )}
         >
           {/* Centered grab handle — drag to dock. `data-dock-handle` gives a host's
             gesture guards a stable selector, so a horizontal DRAG of this handle
             can be told apart from a swipe on the panel body. */}
-          <span
-            onPointerDown={onHandleDown}
-            data-dock-handle
-            title="Drag to dock this panel beside another"
-            className="absolute left-1/2 top-[2px] -translate-x-1/2 inline-flex items-center justify-center w-16 h-[10px] cursor-grab z-[1] touch-none"
-          >
+          {!(tabbed && inGroup) && (
             <span
-              className={cn(
-                'w-7 h-[3px] rounded-full pointer-events-none [transition:opacity_280ms_ease,background_140ms_ease]',
-                dragging
-                  ? 'bg-uikit-handle-active opacity-100'
-                  : cn('bg-uikit-handle', headerHovered ? 'opacity-60' : 'opacity-0')
-              )}
-            />
-          </span>
+              onPointerDown={onHandleDown}
+              data-dock-handle
+              title="Drag to dock this panel beside another"
+              className="absolute left-1/2 top-[2px] -translate-x-1/2 inline-flex items-center justify-center w-16 h-[10px] cursor-grab z-[1] touch-none"
+            >
+              <span
+                className={cn(
+                  "w-7 h-[3px] rounded-full pointer-events-none [transition:opacity_280ms_ease,background_140ms_ease]",
+                  dragging
+                    ? "bg-uikit-handle-active opacity-100"
+                    : cn(
+                        "bg-uikit-handle",
+                        headerHovered ? "opacity-60" : "opacity-0",
+                      ),
+                )}
+              />
+            </span>
+          )}
           {customHeader ? (
             // A custom header can pack many controls. Keep it in a constrained,
             // clipping flex row so a long header can never push the close button off
@@ -216,14 +232,17 @@ export function PanelLeaf({
             // escape vertically — a tab strip whose active tab notches the border,
             // for instance.
             <div
+              data-panel-toolbar={tabbed && inGroup ? leaf.id : undefined}
               className={cn(
-                'flex items-center gap-[6px] flex-1 min-w-0',
-                headerContentClassName?.(leaf) ?? 'overflow-hidden'
+                tabbed && inGroup
+                  ? "flex items-center gap-[6px] shrink-0 ml-auto min-w-0"
+                  : "flex items-center gap-[6px] flex-1 min-w-0",
+                headerContentClassName?.(leaf) ?? "overflow-hidden",
               )}
             >
               {customHeader}
             </div>
-          ) : (
+          ) : !inGroup ? (
             <>
               {/* Runtime tint color stays inline. */}
               <span
@@ -234,9 +253,13 @@ export function PanelLeaf({
                 {leaf.title ?? `Panel ${leaf.n}`}
               </span>
             </>
-          )}
-          {canClose && (
-            <HeaderBtn label="Close panel" onClick={onClose} className="uikit-panel-header-close ml-auto shrink-0">
+          ) : null}
+          {canClose && !inGroup && (
+            <HeaderBtn
+              label="Close panel"
+              onClick={onClose}
+              className="uikit-panel-header-close ml-auto shrink-0"
+            >
               <CloseIcon />
             </HeaderBtn>
           )}
@@ -256,7 +279,9 @@ export function PanelLeaf({
             >
               {leaf.n}
             </span>
-            <span className="text-uikit-muted font-uikit-ui text-[12.5px]">Placeholder panel</span>
+            <span className="text-uikit-muted font-uikit-ui text-[12.5px]">
+              Placeholder panel
+            </span>
             <span className="text-uikit-muted font-uikit-mono text-[10px] opacity-70 tracking-[0.02em] text-center">
               ⌘D split → · ⌘⇧D split ↓
             </span>
@@ -264,7 +289,7 @@ export function PanelLeaf({
         )}
       </div>
     </div>
-  )
+  );
 }
 
-export { CloseIcon }
+export { CloseIcon };
