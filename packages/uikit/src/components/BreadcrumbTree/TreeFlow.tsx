@@ -626,22 +626,35 @@ function FlowRow({
                 className="relative shrink-0"
                 style={{ width: INDENT }}
               >
-                {continues && (
+                {/* An ancestor's trunk simply passes through this slot. */}
+                {continues && !isElbow && (
                   <div className="absolute top-0 bottom-0 left-0 border-l border-uikit-faint" />
                 )}
                 {isElbow && (
-                  // Only the last child draws a vertical here: for every other
-                  // child the trunk above already covers it, and a second 8%
-                  // rule on top of it is visibly darker than the rest of the
-                  // line. The last child has no trunk to borrow, so its elbow
-                  // carries the drop AND the corner.
-                  <div
-                    className={cn(
-                      "absolute top-0 left-0 border-b border-uikit-faint",
-                      isLast && "border-l rounded-bl-md",
+                  <>
+                    {/* EVERY child curves out of the trunk — a branch leaves
+                        its parent by bending away from it, not by crossing it.
+                        A right-angled T reads as two lines that happen to
+                        touch; the radius is what makes one line look like it
+                        became the other. So the corner is drawn the same way
+                        whether or not more siblings follow, and it carries the
+                        trunk's upper half with it. */}
+                    <div
+                      className="absolute top-0 left-0 border-b border-l border-uikit-faint rounded-bl-md"
+                      style={{ width: STUB, height: ROW_GAP + ROW_H / 2 }}
+                    />
+                    {/* ...and a branch that continues picks the trunk back up
+                        BELOW that corner. Running it full height instead would
+                        lay a second 8% rule over the corner's own vertical —
+                        visibly darker — and square off the curve it just
+                        drew. */}
+                    {continues && (
+                      <div
+                        className="absolute left-0 bottom-0 border-l border-uikit-faint"
+                        style={{ top: ROW_GAP + ROW_H / 2 }}
+                      />
                     )}
-                    style={{ width: STUB, height: ROW_GAP + ROW_H / 2 }}
-                  />
+                  </>
                 )}
               </div>
             );
