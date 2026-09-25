@@ -180,7 +180,7 @@ export function PanelLeaf({
           onMouseEnter={() => setHeaderHovered(true)}
           onMouseLeave={() => setHeaderHovered(false)}
           className={cn(
-            'relative flex items-center gap-[6px] h-[26px] shrink-0 select-none cursor-default pr-[6px] bg-uikit-bg',
+            'uikit-panel-header relative flex items-center gap-[6px] h-[26px] shrink-0 select-none cursor-default pr-[6px] bg-uikit-bg',
             // When a panel opts into the centered content column, pad the left edge
             // to the SAME gutter the body uses, so header text lines up on the
             // x-axis with the content below even when side panels shift the column
@@ -236,7 +236,7 @@ export function PanelLeaf({
             </>
           )}
           {canClose && (
-            <HeaderBtn label="Close panel" onClick={onClose} className="ml-auto shrink-0">
+            <HeaderBtn label="Close panel" onClick={onClose} className="uikit-panel-header-close ml-auto shrink-0">
               <CloseIcon />
             </HeaderBtn>
           )}

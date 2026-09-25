@@ -607,3 +607,102 @@ html[data-theme="dark"] {
 [data-uikit-card][data-uikit-bottom-actions] [data-uikit-tags] {
   padding-right: var(--uikit-card-action-gutter);
 }
+
+/* Shared list search, extracted from the app toolbars. */
+.uikit-list-search {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+.uikit-search-separator {
+  flex: none;
+  color: var(--muted);
+  opacity: 0.55;
+  font-size: 11px;
+  line-height: 16px;
+}
+.uikit-search-input {
+  width: 100%;
+  min-width: 0;
+  height: 28px;
+  padding: 2px 0;
+  border: 0;
+  /* The kit's hairline weight (--faint, 1px at 8% ink). It was 0.5px at 7%:
+     thinner AND lighter than every other rule in the system, which left the
+     field with no visible baseline until it was focused — and a half-pixel
+     rule is the first thing a fractional display scale drops, so on some
+     machines it was not drawn at all. */
+  box-shadow: inset 0 -1px var(--faint);
+  background: transparent;
+  outline: none;
+  color: var(--ink);
+  font: inherit;
+  font-size: 11px;
+  line-height: 16px;
+}
+.uikit-search-input::placeholder {
+  color: var(--muted);
+}
+.uikit-search-input:focus {
+  /* Focus is a 0.5px → 1px step, not 0.5px → 2px. At 2px of full ink this rule
+     ran the width of the list as a bar, not a hairline — the field read as
+     selected the way a heading reads as a heading. 1px at 70% ink still answers
+     "this is where typing goes" without out-weighing the rows below it. */
+  box-shadow: inset 0 -1px color-mix(in srgb, var(--ink) 70%, transparent);
+}
+
+.uikit-search-input[data-has-query] {
+  font-weight: 500;
+}
+.uikit-search-input::-webkit-search-cancel-button,
+.uikit-search-input::-webkit-search-decoration {
+  display: none;
+  -webkit-appearance: none;
+}
+
+.uikit-list-search { font-family: var(--f-mono); }
+.uikit-list-search[data-strong]:focus-within .uikit-search-input,
+.uikit-list-search[data-strong][data-has-query] .uikit-search-input {
+  box-shadow: inset 0 -1px var(--ink); }
+
+/* Reveal panel dismissal alongside the header's dock handle. Keep its space
+   reserved so the breadcrumb does not shift, and expose it to keyboard focus. */
+.uikit-panel-header-close {
+  opacity: 0;
+  pointer-events: none;
+}
+.uikit-panel-header:hover > .uikit-panel-header-close,
+.uikit-panel-header-close:focus-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.uikit-search-filter {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 2px;
+  height: 24px;
+  padding: 0 3px 0 8px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
+  color: var(--ink);
+  font-size: 11px;
+  line-height: 16px;
+}
+.uikit-search-filter-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  cursor: pointer;
+}
+.uikit-search-filter-remove:hover { color: var(--ink); }
+.uikit-search-filter-remove:focus-visible { outline: 1px solid var(--ink); border-radius: 2px; }
