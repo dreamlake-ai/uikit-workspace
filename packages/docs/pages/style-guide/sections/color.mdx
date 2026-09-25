@@ -22,26 +22,36 @@ recedes into a deeper plane.
 
 `--faint` is translucent, which is what you want for a hairline that should sit
 *on* the panel it crosses. It is the wrong behaviour when the thing underneath
-changes. A connector line in a tree crosses rows that hover, select and band, so
-a translucent line is drawn in a different shade on each of them — it ends up
+changes. A connector line in a tree crosses rows that hover and select, so a
+translucent line is drawn in a different shade on each of them — it ends up
 reporting the row's state instead of the structure it exists to describe.
 
-`--tree-guide` is that line: **opaque**, so it holds still, and **toned**, because
-once it is opaque it has to clear four surfaces at once. Derived as `accent 70%
-into --ink, then 45% into --bg`:
+`--tree-guide` is that line held still: `#eae9e6` light, `#3f3f45` dark, which
+is `--faint` composited on `--bg` to within 2/255 in both themes.
 
-| | value | weakest contrast across page / hover / selected / selected+hover |
-| --- | --- | --- |
-| light | `#9bc5dd` | 1.43:1 |
-| dark | `#446f8d` | 1.56:1 |
-
-A neutral hairline at the same opacity bottoms out at **1.02:1** on the light
-hover band — which is not a faint line, it is no line.
+Being opaque costs it something, and the number is worth knowing: against the
+row surfaces it crosses the line bottoms out at **1.03:1** in light and
+**1.10:1** in dark. It is legible on the page and faint on a filled row. The
+tree's surfaces sit inside 19 levels of each other in light mode, so a neutral
+hairline cannot clear all of them — separating them needs either a tone on the
+line or more room between the row fills.
 
 `--color-uikit-ink-5-solid` is the same idea for a fill: identical 5% ink, mixed
 over `--bg` instead of over transparent, so a chip reads the same on every
 surface. Keep the translucent originals for washes that *should* tint what they
 sit on.
+
+#### Row states are luminance, not hue
+
+`--tree-hover` used to be a warm amber against a neutral `--tree-sel`, so hover
+and selection were told apart by **hue** — they were never more than 1.05:1
+apart in luminance. It is now a grey, which puts both cues on the same axis and
+leaves 19 levels in light mode to fit page, hover and selection into:
+`#fffefa` → `#f6f5f1` → `#ececec`, nine and ten levels apart.
+
+That is enough to read and not much more. If the two ever need to be told apart
+at a glance rather than side by side, the room has to come from somewhere —
+a darker selection fill, or the accent ring a multi-row run already carries.
 
 ### Ink
 
