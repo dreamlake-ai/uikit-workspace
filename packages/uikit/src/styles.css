@@ -53,6 +53,16 @@
   /* Scene-graph tree row states (ml-dash design): warm-amber hover, neutral-grey
      selection fill (singleStyle "neutral"), deeper grey on selected-hover. */
   --tree-hover: #f3e6cc;
+  /* The connector line. Opaque, so it does not take a tint from every row it
+     crosses — a translucent hairline was drawn in one shade on the page,
+     another on a hover band and another on a selected row, which left the
+     line reporting the row's state instead of the structure it describes.
+     Toned rather than grey so it survives being opaque: derived as
+     `accent 70% into --ink, then 45% into --bg`. Against the four surfaces
+     it crosses (page / hover / selected / selected+hover) the weakest
+     contrast is 1.43:1; the neutral hairline bottomed out at 1.02:1 on the
+     hover band, which is invisible. */
+  --tree-guide: #9bc5dd;
   --tree-sel: #ececec;
   --tree-sel-hover: #e3e3e3;
   --uikit-accent: #23aaff;
@@ -147,6 +157,7 @@ html[data-theme="dark"] {
 
   --selected-bg: #3d4856;
   --tree-hover: #3d4856;
+  --tree-guide: #446f8d; /* same derivation; weakest 1.56:1 */
   --tree-sel: #45454a;
   --tree-sel-hover: #4d4d52;
   --accent-soft: rgba(35, 170, 255, 0.18);
@@ -202,6 +213,7 @@ html[data-theme="dark"] {
 
     --selected-bg: #3d4856;
     --tree-hover: #3d4856;
+    --tree-guide: #446f8d; /* same derivation; weakest 1.56:1 */
     --tree-sel: #45454a;
     --tree-sel-hover: #4d4d52;
     --accent-soft: rgba(35, 170, 255, 0.18);
@@ -262,6 +274,7 @@ html[data-theme="dark"] {
   --color-uikit-handle: var(--uikit-handle);
   --color-uikit-handle-active: var(--uikit-handle-active);
   --color-uikit-tree-hover: var(--tree-hover);
+  --color-uikit-tree-guide: var(--tree-guide);
   --color-uikit-tree-sel: var(--tree-sel);
   --color-uikit-tree-sel-hover: var(--tree-sel-hover);
 
@@ -316,15 +329,6 @@ html[data-theme="dark"] {
      surface instead of picking up the panel behind it. This is the docs
      topbar version-chip recipe — `bg-uikit-ink-5-solid`. */
   --color-uikit-ink-5-solid: color-mix(in srgb, var(--ink) 5%, var(--bg));
-
-  /* The opaque twin of `--faint`, for hairlines that must NOT pick up what
-     they cross. A translucent line takes a tint from every row it passes
-     over, so in a list with hover and selection states one connector ends up
-     drawn in several shades — the line reports the row's state instead of
-     the structure it is there to describe.
-     9% of `--ink` over `--bg` lands within 2/255 of `--faint` composited on
-     `--bg` in both themes, so this is the same line, just held still. */
-  --color-uikit-faint-solid: color-mix(in srgb, var(--ink) 9%, var(--bg));
 
   /* ── Fonts ────────────────────────────────────────────────────── */
   --font-uikit-ui: var(--f-ui);
