@@ -312,11 +312,28 @@ export function TreeEntryItem<T extends TreeDataItem>({
     hoveredId != null &&
     (row.id === hoveredId ||
       (hoverSubtree && (row.ancestors || []).some((a) => a.id === hoveredId)));
-  const hasPrevHover = rowIndex > 0 && inHoverBlock(dataWithMeta[rowIndex - 1]);
+  // ...but a neighbour that paints the SELECTION fill is not a continuation of
+  // the hover band. It draws its own colour, so the band genuinely ends there
+  // and this row's corner has to round. Asking only "is the neighbour in the
+  // hover block?" left the band with square corners butted against a row that
+  // had already broken it — the one place a tree row showed a raw corner.
+  const paintsSelectionFill = (row?: TreeDataItemWithMeta<T>) => {
+    if (!row || !isSelectable || loneSelectionStyle !== "fill") return false;
+    const st =
+      groupSelection === "row"
+        ? visualIds.has(row.id)
+          ? "selected"
+          : "unselected"
+        : getMultiSelectState(row.id, visualIds, dataWithMeta);
+    return st === "selected" || st === "indirect";
+  };
+  const continuesHover = (row?: TreeDataItemWithMeta<T>) =>
+    inHoverBlock(row) && !paintsSelectionFill(row);
+  const hasPrevHover = rowIndex > 0 && continuesHover(dataWithMeta[rowIndex - 1]);
   const hasNextHover =
     rowIndex >= 0 &&
     rowIndex < dataWithMeta.length - 1 &&
-    inHoverBlock(dataWithMeta[rowIndex + 1]);
+    continuesHover(dataWithMeta[rowIndex + 1]);
 
   // Selection visuals:
   //  - lone selected LEAF  → solid system-blue fill + white text
@@ -415,7 +432,7 @@ export function TreeEntryItem<T extends TreeDataItem>({
               className={cn(
                 "h-full w-[1.25rem]",
                 parentIsLast ? "" : "border-l",
-                "border-uikit-faint",
+                "border-uikit-tree-guide",
               )}
             />
           );
@@ -429,7 +446,7 @@ export function TreeEntryItem<T extends TreeDataItem>({
             <div
               className={cn(
                 "absolute top-0 left-0 h-1/2 w-1/2 border-b border-l rounded-bl-md",
-                "border-uikit-faint",
+                "border-uikit-tree-guide",
               )}
             />
             {/* A row with siblings below it keeps an unbroken vertical running
@@ -437,7 +454,7 @@ export function TreeEntryItem<T extends TreeDataItem>({
                 it. (This used to start at the halfway mark, which was only
                 seamless while the corner was square.) */}
             {!isLast && (
-              <div className="border-uikit-faint absolute top-0 left-0 h-full border-l" />
+              <div className="border-uikit-tree-guide absolute top-0 left-0 h-full border-l" />
             )}
           </div>
         )}

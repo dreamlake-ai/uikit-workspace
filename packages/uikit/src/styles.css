@@ -52,7 +52,20 @@
   --selected-bg: #d9e6f7;
   /* Scene-graph tree row states (ml-dash design): warm-amber hover, neutral-grey
      selection fill (singleStyle "neutral"), deeper grey on selected-hover. */
-  --tree-hover: #f3e6cc;
+  --tree-hover: #f6f5f1;
+  /* The connector line. Opaque, so it does not take a tint from every row it
+
+     crosses — a translucent hairline was drawn in one shade on the page,
+
+     another on a hover band and another on a selected row, which left the
+
+     line reporting the row's state instead of the structure it describes.
+
+     Matches `--faint` composited on `--bg` to within 2/255 in both themes:
+
+     the same line, just held still. */
+
+  --tree-guide: #eae9e6;
   --tree-sel: #ececec;
   --tree-sel-hover: #e3e3e3;
   --uikit-accent: #23aaff;
@@ -146,7 +159,8 @@ html[data-theme="dark"] {
   --uikit-handle-active: #ffffff;
 
   --selected-bg: #3d4856;
-  --tree-hover: #3d4856;
+  --tree-hover: #37373d;
+  --tree-guide: #3f3f45;
   --tree-sel: #45454a;
   --tree-sel-hover: #4d4d52;
   --accent-soft: rgba(35, 170, 255, 0.18);
@@ -201,7 +215,8 @@ html[data-theme="dark"] {
     --uikit-handle-active: #ffffff;
 
     --selected-bg: #3d4856;
-    --tree-hover: #3d4856;
+    --tree-hover: #37373d;
+    --tree-guide: #3f3f45;
     --tree-sel: #45454a;
     --tree-sel-hover: #4d4d52;
     --accent-soft: rgba(35, 170, 255, 0.18);
@@ -262,6 +277,7 @@ html[data-theme="dark"] {
   --color-uikit-handle: var(--uikit-handle);
   --color-uikit-handle-active: var(--uikit-handle-active);
   --color-uikit-tree-hover: var(--tree-hover);
+  --color-uikit-tree-guide: var(--tree-guide);
   --color-uikit-tree-sel: var(--tree-sel);
   --color-uikit-tree-sel-hover: var(--tree-sel-hover);
 

@@ -14,6 +14,25 @@ Pass the `visibleData` from `useTreeState` to `data`, and wire `expandedItems`,
 `getIcon` returns whatever node icon you want, with the expanded flag for
 folder-open states.
 
+## Connectors
+
+The branch into a row is an arc on every row, not only the last child — a column
+of connectors is one drawn path, and a corner that is square here and round
+there reads as two line systems in the same rail. A row with siblings below it
+keeps an unbroken vertical running *past* its branch; the arc leaves the trunk
+rather than replacing it.
+
+The line is `--tree-guide`, **not** `--faint`. Rows hover and select, and a
+translucent hairline takes a tint from each of those, so one connector ended up
+drawn in several shades down a single column — reporting the row's state
+instead of the structure it is there to describe. `--tree-guide` is the same
+colour held still.
+
+It is legible on the page and faint where it crosses a filled row (1.03:1 in
+light). That is the cost of a neutral line in a tree whose surfaces sit within
+19 levels of each other — see
+[Color → Lines that cross rows](reference/style-guide.md#lines-that-cross-rows).
+
 ## Selectable
 
 Set `isSelectable` and control selection with `selectedItemIds` /
@@ -55,6 +74,14 @@ selection" — which is the thing a bulk action is about to act on.
 
 Click the rows below: selecting a neighbour grows a run, and deselecting one in
 the middle splits it. A gap in the selection is a second run, not a taller one.
+
+The hover block rounds by the same rule, and **breaks where a selected row
+interrupts it**. Hovering a group highlights the group and its descendants as
+one shape; if one of those descendants is selected it paints its own surface
+instead, so the hover band genuinely ends above it and resumes below. Each of
+the three pieces rounds all four corners. Treating the selected row as part of
+the band left square corners butted against it — the one place a tree row
+showed a raw corner.
 
 **Give the run the same corner radius as the rows it wraps.** The ring is
 outset, so its inner curve *is* the run's radius: rows rounded any tighter pull
