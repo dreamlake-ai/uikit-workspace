@@ -17,6 +17,12 @@ import type {
   BreadcrumbDropTarget,
 } from './types'
 
+/** Panel height, the anchor→panel gap, and the closest the panel may come to
+ *  the edge of the window. */
+const PANEL_H = 360
+const PANEL_GAP = 6
+const VIEWPORT_EDGE = 8
+
 export interface BreadcrumbTreeProps {
   /** Controlled navigation path, root → leaf. Empty array = nothing selected. */
   path: BreadcrumbNode[]
@@ -290,6 +296,9 @@ export function BreadcrumbTree({
     top: number
     left: number
     height: number
+    /** Captured alongside the rect, because where the panel can go depends on
+     *  it and it has to be re-read on the same events the rect is. */
+    viewportH: number
   } | null>(null)
   const wrapRef = useRef<HTMLDivElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
@@ -316,7 +325,12 @@ export function BreadcrumbTree({
       const el = wrapRef.current
       if (!el) return
       const r = el.getBoundingClientRect()
-      setAnchorRect({ top: r.top, left: r.left, height: r.height })
+      setAnchorRect({
+        top: r.top,
+        left: r.left,
+        height: r.height,
+        viewportH: window.innerHeight,
+      })
     }
     update()
     window.addEventListener('resize', update)
@@ -577,6 +591,24 @@ export function BreadcrumbTree({
 
   const columns = Array.from({ length: path.length + 1 }, (_, i) => i)
 
+  // The panel hangs below the breadcrumb, and it is a FIXED 360px — so on a
+  // trigger low in the window it used to hang straight off the bottom, taking
+  // its last rows with it. Nothing could scroll it back: a `fixed` element
+  // does not move with the page. Flip it above the trigger when that is where
+  // the room is, and clamp to the edge when neither side has enough.
+  const panelTop = (() => {
+    if (!anchorRect) return 0
+    const below = anchorRect.top + anchorRect.height + PANEL_GAP
+    const spaceBelow = anchorRect.viewportH - below
+    const spaceAbove = anchorRect.top - PANEL_GAP
+    if (spaceBelow < PANEL_H && spaceAbove > spaceBelow)
+      return Math.max(VIEWPORT_EDGE, anchorRect.top - PANEL_GAP - PANEL_H)
+    return Math.max(
+      VIEWPORT_EDGE,
+      Math.min(below, anchorRect.viewportH - VIEWPORT_EDGE - PANEL_H),
+    )
+  })()
+
   return (
     <div ref={wrapRef} className={cn('relative inline-flex items-center font-uikit-ui', className)}>
       {/* ── Breadcrumb trigger ── */}
@@ -646,9 +678,9 @@ export function BreadcrumbTree({
               'rounded-[calc(var(--radius)+2px)]',
             )}
             style={{
-              top: anchorRect.top + anchorRect.height + 6,
+              top: panelTop,
               left: anchorRect.left - 14,
-              height: 360,
+              height: PANEL_H,
               // `--shadow-uikit-soft` WITHOUT its third layer. That token is
               // the kit's floating-panel elevation, but it ends in a
               // `0 0 0 1px var(--faint)` ring meant for menus and dropdowns,
