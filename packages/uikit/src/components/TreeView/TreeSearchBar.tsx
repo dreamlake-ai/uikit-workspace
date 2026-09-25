@@ -51,14 +51,29 @@ export function TreeSearchBar({
         <InputSlot side="left">
           <Search className="text-uikit-muted size-4 stroke-1" />
         </InputSlot>
-        <InputSlot side="right">
+        {/* Flex, so the slot is exactly as tall as the buttons in it. As a
+            block it was a line box — 22px for 18px buttons, with the extra
+            leading landing under them, which left the hover fill 1px from the
+            field's top edge and 5px from its bottom. */}
+        <InputSlot side="right" className="flex items-center">
           <TooltipProvider delayDuration={200}>
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
                   onClick={() => setIsCaseSensitive((prev) => !prev)}
                   className={cn(
-                    "rounded-uikit-badge mr-1 p-1",
+                    // Hover darkens the glyph; it does not paint a box. The
+                    // slot's icons rest at `--uikit-muted`, so going to
+                    // `--ink` is the same move the rest of the kit makes for
+                    // "the pointer is on this" — and inside a 24px field a
+                    // fill had nowhere to go without reading as the field
+                    // itself changing.
+                    //
+                    // The ACTIVE fill stays. Hover is transient and the
+                    // pointer is on it; on/off has to survive the pointer
+                    // leaving, which colour alone cannot do here because
+                    // hover already uses it.
+                    "rounded-uikit-badge mr-1 px-1 py-px transition-colors hover:text-uikit-ink",
                     isCaseSensitive ? "bg-uikit-ink-6" : "",
                   )}
                 >
@@ -72,7 +87,7 @@ export function TreeSearchBar({
                 <button
                   onClick={() => setIsRegex((prev) => !prev)}
                   className={cn(
-                    "rounded-uikit-badge p-1",
+                    "rounded-uikit-badge px-1 py-px transition-colors hover:text-uikit-ink",
                     isRegex && "bg-uikit-ink-6",
                   )}
                 >

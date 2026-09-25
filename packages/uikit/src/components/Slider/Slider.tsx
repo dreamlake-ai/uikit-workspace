@@ -220,8 +220,16 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(function Slider(
           data-slot="slider-thumb"
           onKeyDown={onKeyDown(i)}
           className={cn(
-            "absolute h-4 w-[0.6rem] -translate-x-1/2 shrink-0 rounded-uikit-badge outline-none",
-            "transition-[box-shadow] hover:cursor-ew-resize hover:ring-4 focus-visible:ring-4",
+            "absolute size-2 -translate-x-1/2 shrink-0 rounded-full outline-none",
+            // No halo on hover. At 8px the thumb is half what it was, and a
+            // 4px translucent ring doubled its footprint the moment the
+            // pointer arrived — the dot grew a second, softer dot around it.
+            // A small scale says the same thing without adding a shape.
+            //
+            // focus-visible keeps a ring, because a keyboard user gets no
+            // cursor and no hover: it drops to ring-2 so it stays in the same
+            // proportion to the thumb that ring-4 had at 16px.
+            "transition-[transform,box-shadow] hover:cursor-ew-resize hover:scale-125 focus-visible:ring-2",
             disabled
               ? "pointer-events-none bg-uikit-ink-12"
               : "bg-uikit-accent ring-uikit-accent/40",
