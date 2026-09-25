@@ -340,6 +340,11 @@ export function TreeFlow({
   );
   const columnCount = Math.max(1, Math.ceil(rows.length / perColumn));
   const flowWidth = columnCount * ROW_W + (columnCount - 1) * COL_GAP + PAD_X;
+  // Whatever the last row in a column does not use. A branch that continues
+  // into the NEXT column has to carry its trunk across that slack — stopping
+  // at the last row's bottom edge leaves the line hanging in mid-air with the
+  // rest of the branch nowhere in sight.
+  const columnSlack = innerH - (perColumn * ROW_H + (perColumn - 1) * ROW_GAP);
 
   const rootData = getColumnData(rootKey);
   const rootDropActive = !!drag && dropAt?.kind === "root" && dropAllowed(null);
@@ -409,7 +414,7 @@ export function TreeFlow({
           </div>
         )}
 
-        {rows.map((row) =>
+        {rows.map((row, i) =>
           row.kind === "loading" ? (
             <div
               key={row.key}
@@ -428,6 +433,11 @@ export function TreeFlow({
           ) : (
             <FlowRow
               key={row.key}
+              // Only matters for the last row in a wrapped column; see
+              // `columnSlack`.
+              trailingSlack={
+                (i + 1) % perColumn === 0 ? Math.max(0, columnSlack) : 0
+              }
               row={row}
               firstSight={
                 !seen.current.has(row.key) && (seen.current.add(row.key), true)
@@ -501,6 +511,7 @@ function FlowRow({
   onDragEnd,
   onDragOver,
   onDrop,
+  trailingSlack = 0,
 }: {
   row: Row;
   firstSight: boolean;
@@ -518,6 +529,9 @@ function FlowRow({
   onDragEnd?: (e: React.DragEvent) => void;
   onDragOver?: (e: React.DragEvent) => void;
   onDrop?: (e: React.DragEvent) => void;
+  /** Extra height for the guidelines below this row — the empty tail of a
+   *  wrapped column, which a continuing trunk has to cross. */
+  trailingSlack?: number;
 }) {
   const hasChildren = row.node.hasChildren !== false;
   const isLast = row.isLastPath[row.depth];
@@ -597,7 +611,11 @@ function FlowRow({
         <div
           aria-hidden="true"
           className="absolute z-0 flex items-stretch"
-          style={{ left: CHEVRON_CENTER, top: -ROW_GAP, bottom: 0 }}
+          style={{
+            left: CHEVRON_CENTER,
+            top: -ROW_GAP,
+            bottom: -trailingSlack,
+          }}
         >
           {Array.from({ length: row.depth }, (_, i) => {
             const isElbow = i === row.depth - 1;
