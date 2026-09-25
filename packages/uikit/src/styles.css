@@ -317,6 +317,15 @@ html[data-theme="dark"] {
      topbar version-chip recipe — `bg-uikit-ink-5-solid`. */
   --color-uikit-ink-5-solid: color-mix(in srgb, var(--ink) 5%, var(--bg));
 
+  /* The opaque twin of `--faint`, for hairlines that must NOT pick up what
+     they cross. A translucent line takes a tint from every row it passes
+     over, so in a list with hover and selection states one connector ends up
+     drawn in several shades — the line reports the row's state instead of
+     the structure it is there to describe.
+     9% of `--ink` over `--bg` lands within 2/255 of `--faint` composited on
+     `--bg` in both themes, so this is the same line, just held still. */
+  --color-uikit-faint-solid: color-mix(in srgb, var(--ink) 9%, var(--bg));
+
   /* ── Fonts ────────────────────────────────────────────────────── */
   --font-uikit-ui: var(--f-ui);
   --font-uikit-mono: var(--f-mono);

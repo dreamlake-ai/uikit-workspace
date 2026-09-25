@@ -415,7 +415,7 @@ export function TreeEntryItem<T extends TreeDataItem>({
               className={cn(
                 "h-full w-[1.25rem]",
                 parentIsLast ? "" : "border-l",
-                "border-uikit-faint",
+                "border-uikit-faint-solid",
               )}
             />
           );
@@ -429,7 +429,7 @@ export function TreeEntryItem<T extends TreeDataItem>({
             <div
               className={cn(
                 "absolute top-0 left-0 h-1/2 w-1/2 border-b border-l rounded-bl-md",
-                "border-uikit-faint",
+                "border-uikit-faint-solid",
               )}
             />
             {/* A row with siblings below it keeps an unbroken vertical running
@@ -437,7 +437,7 @@ export function TreeEntryItem<T extends TreeDataItem>({
                 it. (This used to start at the halfway mark, which was only
                 seamless while the corner was square.) */}
             {!isLast && (
-              <div className="border-uikit-faint absolute top-0 left-0 h-full border-l" />
+              <div className="border-uikit-faint-solid absolute top-0 left-0 h-full border-l" />
             )}
           </div>
         )}

@@ -18,6 +18,25 @@ recedes into a deeper plane.
 
 <SurfaceTokens />
 
+#### Opaque twins
+
+`--faint` and the `--ink-N` washes are translucent, which is usually what you want: a
+hairline over a panel should sit *on* that panel. It is the wrong behaviour when the
+thing underneath changes. A connector line in a list crosses rows that hover, select
+and band, so a translucent line is drawn in a different shade on every one of them —
+it ends up reporting the row's state instead of the structure it exists to describe.
+
+Two solid twins exist for that case. They are the same colour, composited over `--bg`
+once instead of over whatever is behind them:
+
+| Token | Value | Matches |
+| --- | --- | --- |
+| `--color-uikit-ink-5-solid` | `ink 5%` over `--bg` | `--ink-5` |
+| `--color-uikit-faint-solid` | `ink 9%` over `--bg` | `--faint` (within 2/255, both themes) |
+
+Reach for them on a line or chip that must read the same everywhere; keep the
+translucent originals for washes that *should* tint what they sit on.
+
 ### Ink
 
 Two text colors carry every glyph on the page: `--ink` for primary content, `--muted`

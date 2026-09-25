@@ -14,6 +14,21 @@ Pass the `visibleData` from `useTreeState` to `data`, and wire `expandedItems`,
 `getIcon` returns whatever node icon you want, with the expanded flag for
 folder-open states.
 
+## Connectors
+
+The branch into a row is an arc on every row, not only the last child — a column
+of connectors is one drawn path, and a corner that is square here and round
+there reads as two line systems in the same rail. A row with siblings below it
+keeps an unbroken vertical running *past* its branch; the arc leaves the trunk
+rather than replacing it.
+
+The line is `--color-uikit-faint-solid`, the opaque twin of `--faint`, **not**
+`--faint` itself. Rows hover, select and band, and a translucent hairline takes
+a tint from each of those — so one connector ended up drawn in several shades
+down a single column, reporting the row's state instead of the structure it is
+there to describe. The solid token is the same colour held still (see
+[Color → Opaque twins](reference/style-guide.md#opaque-twins)).
+
 ## Selectable
 
 Set `isSelectable` and control selection with `selectedItemIds` /
