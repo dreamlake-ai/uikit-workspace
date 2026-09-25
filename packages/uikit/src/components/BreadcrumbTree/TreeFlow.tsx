@@ -636,9 +636,16 @@ function FlowRow({
                     the corner draw part of it is what put a break in the line:
                     a rounded corner's left border stops short of the bend by
                     its radius, and the arc's ink does not resume the vertical
-                    exactly where it left off. */}
+                    exactly where it left off.
+
+                    `--uikit-rail-stroke`, not `--faint`: the guidelines cross
+                    and overlap themselves at every bend, and an alpha colour
+                    compounds where it doubles — a hairline that is 8% black in
+                    one place and 15% in another reads as a line drawn twice.
+                    A flat hex cannot do that. The token exists for exactly
+                    this and stays legible on `--panel-bg`. */}
                 {continues && (
-                  <div className="absolute top-0 bottom-0 left-0 border-l border-uikit-faint" />
+                  <div className="absolute top-0 bottom-0 left-0 border-l border-uikit-rail-stroke" />
                 )}
                 {isElbow && (
                   <>
@@ -651,7 +658,7 @@ function FlowRow({
                         trunk's upper half with it. */}
                     <div
                       className={cn(
-                        "absolute left-0 border-b border-uikit-faint",
+                        "absolute left-0 border-b border-uikit-rail-stroke",
                         // A last child has no trunk to bend out of, so its
                         // corner has to supply the drop as well.
                         isLast && "border-l",
@@ -669,12 +676,10 @@ function FlowRow({
                     {/* ...and a branch that continues picks the trunk back up
                         exactly where the corner's vertical ends — one radius
                         above the bend. Starting it at the bend instead leaves
-                        a visible break in the line; running it the full height
-                        instead lays a second 8% rule over the corner's own
-                        vertical, which comes out darker than the rest. */}
+                        a visible break in the line. */}
                     {continues && (
                       <div
-                        className="absolute left-0 bottom-0 border-l border-uikit-faint"
+                        className="absolute left-0 bottom-0 border-l border-uikit-rail-stroke"
                         style={{ top: ROW_GAP + ROW_H / 2 - CORNER_R }}
                       />
                     )}
