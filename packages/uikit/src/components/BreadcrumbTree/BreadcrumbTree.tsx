@@ -7,11 +7,21 @@ import {
   ReactNode,
 } from 'react'
 import { createPortal } from 'react-dom'
-import { Folder, ChevronRight, ChevronDown, Loader } from 'lucide-react'
+import {
+  Folder,
+  ChevronRight,
+  ChevronDown,
+  Columns3,
+  ListTree,
+  Loader,
+} from 'lucide-react'
 import { cn } from '../../lib/utils'
+import { ToggleButtons, ToggleButton } from '../Toggle/ToggleButtons'
 import { useBreadcrumbTree } from './useBreadcrumbTree'
+import { TreeFlow } from './TreeFlow'
 import type {
   BreadcrumbNode,
+  BreadcrumbView,
   FetchChildrenResult,
   BreadcrumbDragAndDrop,
   BreadcrumbDropTarget,
@@ -21,6 +31,9 @@ import type {
 /** Panel height, the anchor→panel gap, and the closest the panel may come to
  *  the edge of the window. */
 const PANEL_H = 360
+/** The strip the view toggle sits in; the body gets what is left, and the
+ *  wrapped tree wraps against exactly that. */
+const FOOTER_H = 30
 const PANEL_GAP = 6
 const VIEWPORT_EDGE = 8
 
@@ -70,6 +83,20 @@ export interface BreadcrumbTreeProps {
    * could never show at the same time.
    */
   dnd?: BreadcrumbDragAndDrop
+  /**
+   * Panel layout. Uncontrolled by default: `defaultView` picks what it opens
+   * in and the in-panel toggle takes it from there. Pass `view` to drive it
+   * from outside — e.g. to persist the choice per user — in which case
+   * `onViewChange` is the only way it can change.
+   */
+  view?: BreadcrumbView
+  /** Initial layout when `view` is not supplied. Default `columns`. */
+  defaultView?: BreadcrumbView
+  /** Fires whichever way the toggle is driven. */
+  onViewChange?: (view: BreadcrumbView) => void
+  /** Drop the in-panel toggle — for a host that offers the switch elsewhere,
+   *  or one that only ever wants a single layout. */
+  hideViewToggle?: boolean
   className?: string
 }
 
@@ -290,6 +317,10 @@ export function BreadcrumbTree({
   refreshToken = 0,
   placeholder = 'Select folder',
   dnd,
+  view,
+  defaultView = 'columns',
+  onViewChange,
+  hideViewToggle = false,
   className,
 }: BreadcrumbTreeProps) {
   const [open, setOpen] = useState(false)
@@ -304,6 +335,21 @@ export function BreadcrumbTree({
   const wrapRef = useRef<HTMLDivElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
   const columnsRef = useRef<HTMLDivElement>(null)
+
+  const [ownView, setOwnView] = useState<BreadcrumbView>(defaultView)
+  const activeView = view ?? ownView
+  const setView = useCallback(
+    (next: BreadcrumbView) => {
+      if (view === undefined) setOwnView(next)
+      onViewChange?.(next)
+    },
+    [view, onViewChange],
+  )
+
+  // Which keys the wrapped tree has open. Panel state rather than TreeFlow's
+  // own, because a drag re-keys the cache and these have to move with it.
+  const [expanded, setExpanded] = useState<Record<string, true>>({})
+  const seededRef = useRef(false)
 
   const { fetchPath, loadMore, getColumnData, applyMove, cache, clearCache } =
     useBreadcrumbTree(fetchChildren)
@@ -374,6 +420,8 @@ export function BreadcrumbTree({
   useEffect(() => {
     if (!refreshToken) return
     clearCache()
+    setExpanded({})
+    seededRef.current = false
     if (open) {
       for (let depth = 0; depth <= path.length; depth++) {
         fetchPath(getColumnPathKey(depth), 1)
@@ -381,10 +429,13 @@ export function BreadcrumbTree({
     }
   }, [refreshToken]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Follow the path to the newest column. The wrapped tree has no such column
+  // — it grows wherever the expanded node happens to sit — so it keeps its own
+  // scroll position instead of being yanked right on every click.
   useEffect(() => {
-    if (!open || !columnsRef.current) return
+    if (!open || activeView !== 'columns' || !columnsRef.current) return
     columnsRef.current.scrollLeft = columnsRef.current.scrollWidth
-  }, [path.length, open])
+  }, [path.length, open, activeView])
 
   useEffect(() => {
     if (!open) return
@@ -430,6 +481,30 @@ export function BreadcrumbTree({
       }
     },
     [],
+  )
+
+  // First trip into the wrapped tree: open whatever the breadcrumb already
+  // points at, so it starts where the user is rather than at the root. Once
+  // only — after that the expansion is theirs.
+  useEffect(() => {
+    if (activeView !== 'tree' || seededRef.current) return
+    seededRef.current = true
+    if (path.length === 0) return
+    const seeds: Record<string, true> = {}
+    for (let i = 0; i < path.length; i++)
+      seeds[buildKey(path.slice(0, i + 1).map((n) => n.name))] = true
+    setExpanded((e) => ({ ...e, ...seeds }))
+  }, [activeView, path, buildKey])
+
+  // A stable "load this key if it isn't loaded" — the wrapped tree opens
+  // arbitrary keys, not just the ones along `path`.
+  const requestPath = useCallback(
+    (pathKey: string) => {
+      const data = getColumnData(pathKey)
+      if (!data.loading && data.items.length === 0 && data.page === 0)
+        fetchPath(pathKey, 1)
+    },
+    [getColumnData, fetchPath],
   )
 
   const handleRowClick = useCallback(
@@ -582,10 +657,10 @@ export function BreadcrumbTree({
     [dropAllowed, cancelSpring, handleRowClick, dnd],
   )
 
-  // The row moves in the cache FIRST and the host is told after — see
-  // `BreadcrumbDragAndDrop.onMove` for why the tree no longer waits for a
-  // refetch to show a move it already knows the shape of. If the host rejects,
-  // the exact inverse is applied and the row goes back.
+  // Both layouts land here. The row moves in the cache FIRST and the host is
+  // told after — see `BreadcrumbDragAndDrop.onMove` for why the tree no longer
+  // waits for a refetch to show a move it already knows the shape of. If the
+  // host rejects, the exact inverse is applied and the row goes back.
   const performMove = useCallback(
     (move: BreadcrumbMove) => {
       if (!dnd) return
@@ -598,6 +673,22 @@ export function BreadcrumbTree({
         move.source.name,
       ])
 
+      // The moved node's whole subtree changes cache key, and every open key
+      // inside it has to change with it — otherwise the branch the user had
+      // open silently reads as collapsed at its new address, and its children
+      // vanish from the tree even though nothing was refetched.
+      const rekey = (from: string, to: string) =>
+        setExpanded((prev) => {
+          const next: Record<string, true> = {}
+          for (const k of Object.keys(prev))
+            next[
+              k === from || k.startsWith(`${from}/`)
+                ? to + k.slice(from.length)
+                : k
+            ] = true
+          return next
+        })
+
       applyMove({
         node: move.source,
         fromKey,
@@ -606,6 +697,7 @@ export function BreadcrumbTree({
         newPrefix,
         newParentId: move.to.parent?.id ?? null,
       })
+      rekey(oldPrefix, newPrefix)
 
       Promise.resolve(dnd.onMove(move)).catch(() => {
         applyMove({
@@ -616,6 +708,7 @@ export function BreadcrumbTree({
           newPrefix: oldPrefix,
           newParentId: move.from?.id ?? null,
         })
+        rekey(newPrefix, oldPrefix)
       })
     },
     [dnd, buildKey, applyMove],
@@ -639,6 +732,7 @@ export function BreadcrumbTree({
   )
 
   const columns = Array.from({ length: path.length + 1 }, (_, i) => i)
+  const bodyHeight = PANEL_H - (hideViewToggle ? 0 : FOOTER_H)
 
   // The panel hangs below the breadcrumb, and it is a FIXED 360px — so on a
   // trigger low in the window it used to hang straight off the bottom, taking
@@ -722,7 +816,7 @@ export function BreadcrumbTree({
           <div
             ref={panelRef}
             className={cn(
-              'uikit-panel-in fixed z-[1000] flex overflow-hidden origin-top-left',
+              'uikit-panel-in fixed z-[1000] flex flex-col overflow-hidden origin-top-left',
               'bg-uikit-bg text-uikit-ink font-uikit-ui',
               'rounded-[calc(var(--radius)+2px)]',
             )}
@@ -730,6 +824,14 @@ export function BreadcrumbTree({
               top: panelTop,
               left: anchorRect.left - 14,
               height: PANEL_H,
+              // Columns are added one per level, so that layout's width is
+              // bounded by how deep the user has gone. The wrapped tree's is
+              // bounded by nothing — expand enough branches and it would run
+              // off the screen instead of scrolling, which is the one thing
+              // that layout is supposed to do.
+              ...(activeView === 'tree'
+                ? { maxWidth: 'min(86vw, 920px)' }
+                : null),
               // `--shadow-uikit-soft` WITHOUT its third layer. That token is
               // the kit's floating-panel elevation, but it ends in a
               // `0 0 0 1px var(--faint)` ring meant for menus and dropdowns,
@@ -752,7 +854,23 @@ export function BreadcrumbTree({
                 '0 1px 3px var(--shadow-panel-1), 0 8px 20px -10px var(--shadow-panel-2)',
             }}
           >
-            <div ref={columnsRef} className="flex h-full overflow-x-auto">
+            <div className="flex-1 min-h-0">
+              {activeView === 'tree' ? (
+                <TreeFlow
+                  path={path}
+                  onNavigate={onNavigate}
+                  keyOf={buildKey}
+                  getColumnData={getColumnData}
+                  requestPath={requestPath}
+                  renderEmpty={renderEmpty}
+                  expanded={expanded}
+                  setExpanded={setExpanded}
+                  dnd={dnd}
+                  onMove={performMove}
+                  height={bodyHeight}
+                />
+              ) : (
+                <div ref={columnsRef} className="flex h-full overflow-x-auto">
               {columns.map((depth) => {
                 const pathKey = getColumnPathKey(depth)
                 const { items, loading, hasMore, error } =
@@ -954,7 +1072,31 @@ export function BreadcrumbTree({
                   </div>
                 )
               })}
+                </div>
+              )}
             </div>
+
+            {!hideViewToggle && (
+              <div
+                className="shrink-0 flex items-center justify-end pr-2"
+                style={{ height: FOOTER_H }}
+              >
+                <ToggleButtons
+                  value={activeView}
+                  onValueChange={(v) => setView(v as BreadcrumbView)}
+                  variant="secondary"
+                  size="sm"
+                  padding={false}
+                >
+                  <ToggleButton value="columns" icon aria-label="Column view">
+                    <Columns3 size={13} strokeWidth={1.5} />
+                  </ToggleButton>
+                  <ToggleButton value="tree" icon aria-label="Tree view">
+                    <ListTree size={13} strokeWidth={1.5} />
+                  </ToggleButton>
+                </ToggleButtons>
+              </div>
+            )}
           </div>,
           document.body,
         )}

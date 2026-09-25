@@ -11,6 +11,20 @@ export interface BreadcrumbNode {
   hasChildren?: boolean;
 }
 
+/**
+ * Which layout the panel body uses.
+ *
+ * `columns` — Miller columns: one column per level of the current path, each
+ * listing that node's children. Depth is the only axis, so the panel always
+ * shows exactly one root→leaf path and sibling branches are collapsed away.
+ *
+ * `tree` — the whole expanded tree as one top-to-bottom flow that wraps into
+ * columns at the panel's height. Breadth survives (several branches open at
+ * once) at the cost of a column meaning nothing: column two is simply what did
+ * not fit in column one. Both scroll horizontally and never vertically.
+ */
+export type BreadcrumbView = "columns" | "tree";
+
 export interface FetchChildrenResult {
   items: BreadcrumbNode[];
   totalPages: number;
