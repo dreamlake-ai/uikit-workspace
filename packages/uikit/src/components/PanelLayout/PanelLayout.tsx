@@ -23,6 +23,7 @@ import {
   applyActivateTab,
   applyClose,
   applyDock,
+  applyDockGroup,
   applyResize,
   applySplit,
   buildInitial,
@@ -72,6 +73,7 @@ type DragState = {
    *  drag. An unarmed drag paints nothing and commits nothing. */
   armed: boolean
   srcId: string
+  wholeGroup?: boolean
   label: string
   tint: string
   grabDX: number // cursor offset within the source panel at grab time
@@ -498,6 +500,7 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
     setDrag({
       armed: thresholdPx <= 0,
       srcId: leaf.id,
+      wholeGroup: from.hasAttribute('data-panel-group-handle'),
       label: leaf.title ?? `Panel ${leaf.n}`,
       tint: tintFor(leaf.n, palette),
       grabDX: e.clientX - r.left,
@@ -533,7 +536,8 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
       const panelEl = hit && containerRef.current?.contains(hit) ? hit : null
       let tid = panelEl?.getAttribute('data-leaf-id') || null
       const ownRegion = tid === d.srcId
-      if (ownRegion) {
+      if (ownRegion && d.wholeGroup) tid = null
+      if (ownRegion && !d.wholeGroup) {
         // A tab may split away from its OWN group. The visible source occupies
         // the group's box; target a remaining sibling after extraction.
         const sibling = (node: PanelNode): string | null => node.kind === 'group'
@@ -551,7 +555,7 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
         const tree = rootRef.current
         const srcLeaf = findLeaf(tree, d.srcId)
         const tgtLeaf = findLeaf(tree, tid)
-        const allowCenter = !ownRegion && (!canTab || (canTab(srcLeaf?.view) && canTab(tgtLeaf?.view)))
+        const allowCenter = !d.wholeGroup && !ownRegion && (!canTab || (canTab(srcLeaf?.view) && canTab(tgtLeaf?.view)))
         if (!ownRegion || dockSideFromPoint(r, x, y, true) !== 'center') {
           target = {
             id: tid,
@@ -570,7 +574,7 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
       if (d?.armed && d.target) {
         // Belt-and-suspenders: even though the side was already gated during the
         // drag, pass the predicate so a `center` can never group a singleton.
-        const next = applyDock(
+        const next = d.wholeGroup ? applyDockGroup(rootRef.current, d.srcId, d.target.id, d.target.side) : applyDock(
           rootRef.current,
           d.srcId,
           d.target.id,
