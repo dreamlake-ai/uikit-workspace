@@ -20,7 +20,7 @@ export function NavigationControls({
           icon buttons at the badge step, and the shell carries p-1 around
           them: 6 + 4 = 10, so the outer curve is concentric with the inner
           ones instead of swallowing them. */}
-      <div className="bg-uikit-panel/75 flex items-center gap-2 rounded-[8px] p-0.5 text-uikit-11 shadow-uikit-soft backdrop-blur-[2px]">
+      <div className="bg-uikit-panel/75 flex items-center gap-1 rounded-[8px] p-0.5 text-uikit-11 shadow-uikit-soft backdrop-blur-[2px]">
         <button
           onClick={() => handlePan("left")}
           className="hover:bg-uikit-ink-5 rounded-uikit-badge p-0.5"
@@ -28,7 +28,7 @@ export function NavigationControls({
           <ChevronLeft className="size-3.5" />
         </button>
         <span
-          className="text-uikit-11 hover:bg-uikit-ink-5 rounded-uikit-badge w-20 cursor-col-resize px-1 py-0 text-center font-uikit-mono transition-colors select-none"
+          className="text-uikit-11 hover:bg-uikit-ink-5 rounded-uikit-badge w-16 cursor-col-resize px-1 py-0 text-center font-uikit-mono transition-colors select-none"
           onMouseDown={handleZoomDragStart}
         >
           {formatDuration(viewDuration)}

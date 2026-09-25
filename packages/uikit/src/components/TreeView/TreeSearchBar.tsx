@@ -62,17 +62,18 @@ export function TreeSearchBar({
                 <button
                   onClick={() => setIsCaseSensitive((prev) => !prev)}
                   className={cn(
-                    // Hover fills. These read as pressable only while the
-                    // pointer is on them; without a rest-to-hover step the
-                    // only feedback was the tooltip, which says what the
-                    // control does, not that it is a control.
+                    // Hover darkens the glyph; it does not paint a box. The
+                    // slot's icons rest at `--uikit-muted`, so going to
+                    // `--ink` is the same move the rest of the kit makes for
+                    // "the pointer is on this" — and inside a 24px field a
+                    // fill had nowhere to go without reading as the field
+                    // itself changing.
                     //
-                    // 18px tall inside a 24px field, not 24: at `p-1` the fill
-                    // reached the field's own top and bottom edge, so hovering
-                    // looked like the field had changed rather than that a
-                    // control inside it had lit up. 3px of field shows above
-                    // and below it now.
-                    "rounded-uikit-badge mr-1 px-1 py-px hover:bg-uikit-ink-5",
+                    // The ACTIVE fill stays. Hover is transient and the
+                    // pointer is on it; on/off has to survive the pointer
+                    // leaving, which colour alone cannot do here because
+                    // hover already uses it.
+                    "rounded-uikit-badge mr-1 px-1 py-px transition-colors hover:text-uikit-ink",
                     isCaseSensitive ? "bg-uikit-ink-6" : "",
                   )}
                 >
@@ -86,7 +87,7 @@ export function TreeSearchBar({
                 <button
                   onClick={() => setIsRegex((prev) => !prev)}
                   className={cn(
-                    "rounded-uikit-badge px-1 py-px hover:bg-uikit-ink-5",
+                    "rounded-uikit-badge px-1 py-px transition-colors hover:text-uikit-ink",
                     isRegex && "bg-uikit-ink-6",
                   )}
                 >
