@@ -15,6 +15,7 @@ import type {
   FetchChildrenResult,
   BreadcrumbDragAndDrop,
   BreadcrumbDropTarget,
+  BreadcrumbMove,
 } from './types'
 
 /** Panel height, the anchor→panel gap, and the closest the panel may come to
@@ -304,7 +305,7 @@ export function BreadcrumbTree({
   const panelRef = useRef<HTMLDivElement>(null)
   const columnsRef = useRef<HTMLDivElement>(null)
 
-  const { fetchPath, loadMore, getColumnData, cache, clearCache } =
+  const { fetchPath, loadMore, getColumnData, applyMove, cache, clearCache } =
     useBreadcrumbTree(fetchChildren)
 
   const buildKey = useCallback(
@@ -491,6 +492,9 @@ export function BreadcrumbTree({
     /** The parent it started under, captured at dragstart. Spring-loading
      *  rewrites `path` mid-drag, so this cannot be re-derived at drop time. */
     from: BreadcrumbNode | null
+    /** ...and the whole chain above it, for the same reason. This is what
+     *  names the row's old cache key when the move is undone. */
+    fromPath: BreadcrumbNode[]
   } | null>(null)
   const [dropAt, setDropAt] = useState<
     { kind: 'into'; depth: number; id: string } | { kind: 'level'; depth: number } | null
@@ -502,6 +506,7 @@ export function BreadcrumbTree({
     node: BreadcrumbNode
     depth: number
     from: BreadcrumbNode | null
+    fromPath: BreadcrumbNode[]
   } | null>(null)
   const springRef = useRef<{ key: string; timer: ReturnType<typeof setTimeout> } | null>(null)
 
@@ -577,16 +582,60 @@ export function BreadcrumbTree({
     [dropAllowed, cancelSpring, handleRowClick, dnd],
   )
 
+  // The row moves in the cache FIRST and the host is told after — see
+  // `BreadcrumbDragAndDrop.onMove` for why the tree no longer waits for a
+  // refetch to show a move it already knows the shape of. If the host rejects,
+  // the exact inverse is applied and the row goes back.
+  const performMove = useCallback(
+    (move: BreadcrumbMove) => {
+      if (!dnd) return
+      const names = (nodes: BreadcrumbNode[]) => nodes.map((n) => n.name)
+      const fromKey = buildKey(names(move.fromPath))
+      const toKey = buildKey(names(move.to.parentPath))
+      const oldPrefix = buildKey([...names(move.fromPath), move.source.name])
+      const newPrefix = buildKey([
+        ...names(move.to.parentPath),
+        move.source.name,
+      ])
+
+      applyMove({
+        node: move.source,
+        fromKey,
+        toKey,
+        oldPrefix,
+        newPrefix,
+        newParentId: move.to.parent?.id ?? null,
+      })
+
+      Promise.resolve(dnd.onMove(move)).catch(() => {
+        applyMove({
+          node: move.source,
+          fromKey: toKey,
+          toKey: fromKey,
+          oldPrefix: newPrefix,
+          newPrefix: oldPrefix,
+          newParentId: move.from?.id ?? null,
+        })
+      })
+    },
+    [dnd, buildKey, applyMove],
+  )
+
   const commitMove = useCallback(
     (depth: number, node: BreadcrumbNode | null) => {
       const src = dragSourceRef.current
       const ok = src && dropAllowed(depth, node)
       const target = ok ? targetFor(depth, node) : null
-      const from = src ? src.from : null
       endDrag()
-      if (src && target && dnd) void dnd.onMove({ source: src.node, from, to: target })
+      if (src && target)
+        performMove({
+          source: src.node,
+          from: src.from,
+          fromPath: src.fromPath,
+          to: target,
+        })
     },
-    [dropAllowed, targetFor, endDrag, dnd],
+    [dropAllowed, targetFor, endDrag, performMove],
   )
 
   const columns = Array.from({ length: path.length + 1 }, (_, i) => i)
@@ -825,9 +874,16 @@ export function BreadcrumbTree({
                           onDragStart={
                             dnd
                               ? (e) => {
-                                  const origin = path[depth - 1] ?? null
-                                  dragSourceRef.current = { node, depth, from: origin }
-                                  setDragSource({ node, depth, from: origin })
+                                  const originPath = path.slice(0, depth)
+                                  const origin = originPath[depth - 1] ?? null
+                                  const src = {
+                                    node,
+                                    depth,
+                                    from: origin,
+                                    fromPath: originPath,
+                                  }
+                                  dragSourceRef.current = src
+                                  setDragSource(src)
                                   e.dataTransfer.effectAllowed = 'move'
                                   // Firefox refuses to start a drag without payload.
                                   e.dataTransfer.setData('text/plain', node.id)
