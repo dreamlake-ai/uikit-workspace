@@ -466,6 +466,23 @@ export function applyDock(
   return insertBeside(tree, targetId, taken, side)
 }
 
+/** Dock the entire group containing a leaf, preserving its active tab and order. */
+export function applyDockGroup(node: PanelNode, srcId: string, targetId: string, side: DockSide): PanelNode {
+  const findGroup = (part: PanelNode): Extract<PanelNode, { kind: 'group' }> | undefined => part.kind === 'group'
+    ? part.children.some(child => child.id === srcId) ? part : undefined
+    : part.kind === 'split' ? part.children.map(findGroup).find(Boolean) : undefined
+  const group = findGroup(node)
+  if (!group) return applyDock(node, srcId, targetId, side === 'center' ? 'right' : side)
+  if (group.children.some(child => child.id === targetId) || !findLeaf(node, targetId)) return node
+  const active = group.children.find(child => child.id === group.activeId) ?? group.children[0]
+  const replace = (part: PanelNode, id: string, value: PanelNode): PanelNode => {
+    if (part.id === id) return value
+    return part.kind === 'split' ? { ...part, children: part.children.map(child => replace(child, id, value)) } : part
+  }
+  const docked = applyDock(replace(node, group.id, active), active.id, targetId, side === 'center' ? 'right' : side)
+  return replace(docked, active.id, group)
+}
+
 /** Merge the leaf `srcId` INTO the group (or lone leaf) that owns `targetId` as a
  *  new TAB. Pulls the source out of its current slot, then either appends it into
  *  the target group, or — when the target is a bare leaf — promotes the target +

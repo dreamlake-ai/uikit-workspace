@@ -4,6 +4,7 @@ import {
   applyAddTab,
   applyClose,
   applyDock,
+  applyDockGroup,
   applyResize,
   applySplit,
   buildInitial,
@@ -21,6 +22,19 @@ import {
 
 // A bare leaf helper (no id churn from makeLeaf) for structural assertions.
 const leaf = (id: string, view?: string): LeafNode => ({ kind: 'leaf', id, n: 1, view, instanceId: id })
+it('docks a whole group without changing tab order, identities or selection', () => {
+  const a = leaf('group-a'), b = leaf('group-b'), target = leaf('outside')
+  const group: PanelNode = { kind: 'group', id: 'moving-group', children: [a, b], activeId: b.id }
+  const root: PanelNode = { kind: 'split', id: 'root', dir: 'row', children: [group, target], sizes: [40, 60] }
+  const next = applyDockGroup(root, b.id, target.id, 'bottom')
+  expect(next.kind).toBe('split')
+  if (next.kind !== 'split') throw new Error('Expected split')
+  expect(next.dir).toBe('column')
+  expect(next.children).toEqual([target, group])
+  expect(next.children[1]).toBe(group)
+  expect(applyDockGroup(root, b.id, a.id, 'right')).toBe(root)
+  expect(applyDockGroup(root, b.id, 'missing', 'right')).toBe(root)
+})
 const split = (dir: 'row' | 'column', children: PanelNode[], sizes?: number[]): PanelNode => ({
   kind: 'split', id: `s-${children.map(c => c.id).join('')}`, dir, children,
   sizes: sizes ?? children.map(() => 100 / children.length),
