@@ -33,9 +33,16 @@ import type {
 /** Panel height, the anchor→panel gap, and the closest the panel may come to
  *  the edge of the window. */
 const PANEL_H = 360;
-/** The strip the view toggle sits in; the body gets what is left, and the
- *  wrapped tree wraps against exactly that. */
-const FOOTER_H = 30;
+/** How far the view toggle sits from the panel's edges. One number for both
+ *  sides: the control is tucked into a corner, and a corner reads as a corner
+ *  only when the two gaps match. Measured at 8 left and 1 bottom before this,
+ *  which made it look dropped rather than placed. */
+const TOGGLE_INSET = 8;
+/** The control's own height, and with the inset below it, the strip it sits
+ *  in. The body gets what is left, and the wrapped tree wraps against exactly
+ *  that. */
+const TOGGLE_H = 28;
+const FOOTER_H = TOGGLE_H + TOGGLE_INSET;
 const PANEL_GAP = 6;
 const VIEWPORT_EDGE = 8;
 
@@ -1191,8 +1198,15 @@ export function BreadcrumbTree({
               // is the one thing that does not move, and it lines the control
               // up with the first column.
               <div
-                className="shrink-0 flex items-center justify-start pl-2"
-                style={{ height: FOOTER_H }}
+                // `items-end` + a bottom pad, rather than centring in the
+                // strip: the gap below is then exactly the inset whatever the
+                // control's own height turns out to be.
+                className="shrink-0 flex items-end justify-start"
+                style={{
+                  height: FOOTER_H,
+                  paddingLeft: TOGGLE_INSET,
+                  paddingBottom: TOGGLE_INSET,
+                }}
               >
                 <ToggleButtons
                   value={activeView}
