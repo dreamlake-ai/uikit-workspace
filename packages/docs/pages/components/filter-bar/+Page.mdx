@@ -13,16 +13,16 @@ import searchSrc from '../../../components/specimens/components/filter-bar/Searc
 # FilterBar
 
 A compact toolbar that combines filter chips, a search input, and an optional
-sort dropdown. When the user starts typing with a non-`"all"` filter active,
+sort dropdown. When the user focuses search with a non-`"all"` filter active,
 the chip row collapses and the active filter appears as a dismissible token
 inside the search field.
 
 ## Demo
 
 Filter chips on the left slide an animated underline to the active chip. When
-`query` is non-empty and a non-`"all"` filter is selected, the chips are
-replaced by a token pill inside the search field. Pressing Backspace on an
-empty input removes the token. Filter chips can carry a state color via
+search is focused or `query` is non-empty and a non-`"all"` filter is selected, the chips are
+replaced by a token pill inside the search field. The token has an accessible × button and no dropdown. Backspace at the start
+of the input removes the token without changing the query. Filter chips can carry a state color via
 `accent` — see the `FilterOption.accent` prop below.
 
 <Preview source={fullSrc} filename="FullSpec.tsx">

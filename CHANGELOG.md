@@ -1,5 +1,12 @@
 # Release notes
 
+## Unreleased
+
+- Add `ListSearchInput` with an optional removable filter badge. The × control and Backspace at a collapsed caret at the start remove the filter without changing the query.
+- Reuse that control in `FilterBar`; collapse category choices on search focus and match the category tabs with a 2px ink underline.
+- Show panel close controls on header hover or keyboard focus without moving header content.
+- Document the shared search control and its keyboard behavior.
+
 ## 0.1.15 — 2026-09-13
 
 - Waterfall entry panes resize through the shared drag divider or keyboard arrows/Home/End. Public width bounds, resize callback, and a disable toggle support embedded views.

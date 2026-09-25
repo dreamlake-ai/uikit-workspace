@@ -1,3 +1,4 @@
+import { ListSearchInput } from "../ListSearchInput";
 import {
   forwardRef,
   RefObject,
@@ -256,89 +257,14 @@ function FilterSearchLine({
   onClearToken: () => void;
   placeholder?: string;
 }) {
-  const [focused, setFocused] = useState(false);
-  const active = focused || query.length > 0;
-
   return (
-    <label
-      data-active={active || undefined}
-      className={cn(
-        "inline-flex items-center gap-2 border-b pb-1 transition-[border-color] duration-[160ms]",
-        "border-uikit-faint data-[active]:border-uikit-ink",
-        "flex-1 min-w-[200px] basis-[320px]",
-      )}
-    >
-      {/* "/" glyph */}
-      <span className="shrink-0 font-uikit-mono text-uikit-11 text-uikit-muted opacity-55 tracking-uikit-snug">
-        /
-      </span>
-
-      {/* Active filter token — click or Backspace to remove */}
-      {token && (
-        <span
-          onClick={onClearToken}
-          title="backspace to remove"
-          className={cn(
-            "inline-flex items-center gap-1 shrink-0 cursor-pointer rounded",
-            "font-uikit-mono text-uikit-11 font-medium tracking-uikit-snug",
-            "text-uikit-ink bg-uikit-ink-8 px-1.5 py-0.5",
-          )}
-        >
-          {token}
-          <span className="opacity-55 text-uikit-10">×</span>
-        </span>
-      )}
-
-      {/* Input */}
-      <input
-        ref={searchRef}
-        value={query}
-        onChange={(e) => onQueryChange(e.target.value)}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
-        onKeyDown={(e) => {
-          if (e.key === "Backspace" && query === "" && token) {
-            e.preventDefault();
-            onClearToken();
-          }
-        }}
-        // This is a search box, never an autofillable field. The decisive
-        // signal is the native type="search" — Chrome/Safari don't offer
-        // address/payment autofill on a search field, regardless of how their
-        // heuristics would otherwise classify it. (autoComplete="off" is
-        // ignored by Chrome for payment autofill; kept only as a cheap fallback
-        // for other browsers, alongside the password-manager opt-out hints.)
-        type="search"
-        autoComplete="off"
-        data-1p-ignore
-        data-lpignore="true"
-        data-form-type="other"
-        placeholder={token ? "filter…" : placeholder}
-        className={cn(
-          "bg-transparent border-0 outline-none p-0 min-w-0 flex-1",
-          // UI face, like every other input in the kit. What someone types is
-          // prose — a name, a word — not a value to line up in a column; the
-          // mono around it belongs to the chrome (the `/` cue, `clear`), not to
-          // the text being entered.
-          "font-uikit-ui text-uikit-12 text-uikit-ink tracking-uikit-snug",
-          // hide the native WebKit search clear ✕ (FilterBar renders its own)
-          "[&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-decoration]:appearance-none",
-        )}
-      />
-
-      {/* Clear */}
-      {query && (
-        <span
-          onClick={() => onQueryChange("")}
-          className={cn(
-            "cursor-pointer shrink-0 font-uikit-mono text-uikit-10 tracking-uikit-snug",
-            "text-uikit-muted opacity-65",
-          )}
-        >
-          clear
-        </span>
-      )}
-    </label>
+    <div className="flex flex-1 min-w-0 items-center gap-2">
+      <ListSearchInput query={query} onQuery={onQueryChange} searchRef={searchRef}
+        placeholder={placeholder} strongUnderline className="flex-1"
+        filter={token ? { label: token, onRemove: onClearToken } : undefined} />
+      {query && <button type="button" onClick={() => onQueryChange("")}
+        className="text-uikit-muted text-uikit-10">clear</button>}
+    </div>
   );
 }
 
@@ -360,7 +286,8 @@ export function FilterBar({
   className,
 }: FilterBarProps) {
   const allValue = filters?.[0]?.value;
-  const searching = query.length > 0;
+  const [focused, setFocused] = useState(false);
+  const searching = focused || query.length > 0;
   // The chips step aside for the token, unless the consumer says they carry
   // something the token cannot: see `keepFiltersWhileSearching`.
   const showChips = !!filters && (keepFiltersWhileSearching || !searching);
@@ -379,7 +306,9 @@ export function FilterBar({
     <div className={cn("flex flex-col gap-3 pb-3.5 mb-1.5", className)}>
       <div className="flex items-center gap-4">
         {/* Left: chips (resting state) + search line */}
-        <div className="flex items-center flex-1 min-w-0 relative">
+        <div className="flex items-center flex-1 min-w-0 relative"
+          onFocusCapture={(event) => { if (event.target instanceof HTMLInputElement) setFocused(true); }}
+          onBlurCapture={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setFocused(false); }}>
           {showChips && (
             <FilterChipRow
               options={filters}

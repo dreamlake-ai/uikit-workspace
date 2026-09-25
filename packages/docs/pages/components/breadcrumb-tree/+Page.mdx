@@ -76,6 +76,8 @@ resizes.
 interface BreadcrumbNode {
   id: string
   name: string
+  displayName?: string // visible breadcrumb label; name stays the path key
+  icon?: ReactNode // tree-row glyph; defaults to a folder
   /** When false, hides the chevron — signals no sub-children exist. */
   hasChildren?: boolean
 }

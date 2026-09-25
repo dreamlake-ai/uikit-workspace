@@ -17,6 +17,7 @@ import {
   type PanelConfig,
 } from './config'
 import { RenderNode } from './RenderNode'
+import { PersistentPanels } from './PersistentPanels'
 import { ROOT_PANEL_BOX, type PanelBox } from './panel-box'
 import {
   applyActivateTab,
@@ -119,6 +120,12 @@ export interface PanelLayoutHandle {
 }
 
 export interface PanelLayoutProps {
+  /** Layout-owned tabs; keep view DOM connected across moves. */
+  tabbed?: boolean
+  /** Show a tab for a lone view only when its content opts in. Groups always show tabs. */
+  showSingleTab?: ClosablePredicate
+  /** Host disposal guard. Called for every user close affordance. */
+  onRequestClose?: (id: string) => void
   // ── the tree ────────────────────────────────────────────────────────────
   /** Build the initial tree (uncontrolled). Called once, on mount. Compose it
    *  with `panelLeaf` / `panelSplit`. */
@@ -132,12 +139,15 @@ export interface PanelLayoutProps {
    *  persisting the layout. Cause is intentionally not exposed — to tell a user
    *  drag from a programmatic change, subscribe to `onResize` instead. */
   onChange?: (root: PanelNode) => void
+  onFocusedLeafChange?: (leaf: LeafNode) => void
   /** Fires ONLY when the user drags a divider — the one signal that actually
    *  expresses "I want this panel at this size". Split/close/dock produce
    *  computed sizes that should not be confused with user intent. */
   onResize?: (root: PanelNode) => void
 
   // ── content ─────────────────────────────────────────────────────────────
+  /** Optional identity/eyebrow content inside a tab. */
+  renderTab?: LeafRenderer
   renderBody?: LeafRenderer
   renderHeader?: LeafRenderer
 
@@ -201,9 +211,14 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
   {
     initial,
     initialSingle = false,
+    tabbed = false,
+    showSingleTab,
+    onRequestClose,
     root: rootProp,
     onChange,
+    onFocusedLeafChange,
     onResize,
+    renderTab,
     renderBody,
     renderHeader,
     showToolbar = false,
@@ -257,6 +272,8 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
   const containerRef = useRef<HTMLDivElement>(null)
   const rootRef = useRef(root)
   rootRef.current = root
+  const focusedLeafCallback = useRef(onFocusedLeafChange)
+  focusedLeafCallback.current = onFocusedLeafChange
   const focusRef = useRef(focusedId)
   focusRef.current = focusedId
   const dragRef = useRef(drag)
@@ -267,6 +284,8 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
   onResizeRef.current = onResize
   const isTabbableRef = useRef(isTabbable)
   isTabbableRef.current = isTabbable
+  const requestCloseRef = useRef(onRequestClose)
+  requestCloseRef.current = onRequestClose
   const closableRef = useRef(closable)
   closableRef.current = closable
   const primaryViewRef = useRef(primaryView)
@@ -283,6 +302,8 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
   const focus = (id: string) => {
     focusRef.current = id
     setFocusedId(id)
+    const leaf = findLeaf(rootRef.current, id)
+    if (leaf) focusedLeafCallback.current?.(leaf)
   }
 
   /** Close a leaf, keeping focus on a live one. A tree that empties out is
@@ -308,7 +329,8 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
   const requestClose = (id: string) => {
     const leaf = findLeaf(rootRef.current, id)
     if (leaf && closableRef.current?.(leaf) === false) return
-    closeLeaf(id)
+    if (requestCloseRef.current) requestCloseRef.current(id)
+    else closeLeaf(id)
   }
 
   const doSplit = (id: string, dir: Dir) => {
@@ -427,6 +449,8 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
       closeLeaf,
       focusLeaf: (id: string) => {
         if (!findLeaf(rootRef.current, id)) return // not a live leaf — ignore
+        const activate = (node: PanelNode): PanelNode => node.kind === 'group' && node.children.some(c => c.id === id) ? { ...node, activeId: id } : node.kind === 'split' ? { ...node, children: node.children.map(activate) } : node
+        commit(activate(rootRef.current))
         focus(id)
       },
     }),
@@ -507,7 +531,16 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
       const hit = el?.closest('[data-leaf-id]') as HTMLElement | null
       // Ignore a panel belonging to another layout on the same page.
       const panelEl = hit && containerRef.current?.contains(hit) ? hit : null
-      const tid = panelEl?.getAttribute('data-leaf-id') || null
+      let tid = panelEl?.getAttribute('data-leaf-id') || null
+      const ownRegion = tid === d.srcId
+      if (ownRegion) {
+        // A tab may split away from its OWN group. The visible source occupies
+        // the group's box; target a remaining sibling after extraction.
+        const sibling = (node: PanelNode): string | null => node.kind === 'group'
+          ? node.children.some(child => child.id === d.srcId) ? node.children.find(child => child.id !== d.srcId)?.id ?? null : null
+          : node.kind === 'split' ? node.children.map(sibling).find(Boolean) ?? null : null
+        tid = sibling(rootRef.current)
+      }
       let target: DragState['target'] = null
       if (panelEl && tid && tid !== d.srcId) {
         const r = panelEl.getBoundingClientRect()
@@ -518,11 +551,13 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
         const tree = rootRef.current
         const srcLeaf = findLeaf(tree, d.srcId)
         const tgtLeaf = findLeaf(tree, tid)
-        const allowCenter = !canTab || (canTab(srcLeaf?.view) && canTab(tgtLeaf?.view))
-        target = {
-          id: tid,
-          side: dockSideFromPoint(r, x, y, allowCenter),
-          rect: { left: r.left, top: r.top, width: r.width, height: r.height },
+        const allowCenter = !ownRegion && (!canTab || (canTab(srcLeaf?.view) && canTab(tgtLeaf?.view)))
+        if (!ownRegion || dockSideFromPoint(r, x, y, true) !== 'center') {
+          target = {
+            id: tid,
+            side: dockSideFromPoint(r, x, y, allowCenter),
+            rect: { left: r.left, top: r.top, width: r.width, height: r.height },
+          }
         }
       }
       setDrag((prev) => (prev ? { ...prev, x, y, target } : prev))
@@ -587,6 +622,9 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
   }, [dragArmed])
 
   const config: PanelConfig = {
+    tabbed,
+    showSingleTab,
+    renderTab,
     renderBody,
     renderHeader,
     leafClassName,
@@ -633,7 +671,7 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
 
       {/* Panel tree */}
       <PanelConfigContext.Provider value={config}>
-        <div className="flex-1 min-h-0 min-w-0 flex">
+        <div className="flex-1 min-h-0 min-w-0 flex relative">
           <RenderNode
             node={root}
             box={rootBox}
@@ -644,6 +682,7 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
             onActivateTab={doActivateTab}
             onHandleDown={onHandleDown}
           />
+          {tabbed && <PersistentPanels root={root} rootBox={rootBox} draggingId={drag?.armed ? drag.srcId : null} onFocus={focus} onClose={requestClose} onHandleDown={onHandleDown} />}
         </div>
       </PanelConfigContext.Provider>
 

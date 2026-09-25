@@ -1,0 +1,57 @@
+---
+title: ListSearchInput
+section: Components
+order: 41
+description: Underlined list search with an optional category badge and strong active baseline.
+---
+
+import { Demo, AlwaysOpen } from '../../../components/specimens/components/list-search-input/Demo'
+import source from '../../../components/specimens/components/list-search-input/Demo.tsx?raw'
+
+# ListSearchInput
+
+A controlled search field for list panels, extracted from the app's Profile,
+Vault, and Compute toolbars. Search always remains an input. A selected category
+can become a badge to make more room for the field while searching.
+
+## Category badge and expanded search
+
+<Preview source={source} filename="Demo.tsx"><Demo /></Preview>
+
+Focus search to fold the category choices into a badge. The input takes the
+remaining width and shows a 2px underline matching the category tabs. The badge has no dropdown: its × removes the filter, returning to all categories. Blurring an empty search restores the choices; a nonempty query
+keeps its category visible. Category state belongs to the host, not the input.
+
+## Standard underline
+
+<Preview><AlwaysOpen /></Preview>
+
+The default has a light baseline and fits toolbars that keep every filter visible.
+Import `@dreamlake/uikit/styles.css` once with the app's shared tokens.
+
+## Props
+
+| Prop | Type | Default | Purpose |
+| --- | --- | --- | --- |
+| `query` | `string` | required | Controlled search text. |
+| `onQuery` | `(value: string) => void` | required | Receives edits; does not fetch or filter data. |
+| `placeholder` | `string` | `search` | Placeholder and accessible input name. |
+| `strongUnderline` | `boolean` | `false` | 2px baseline on focus or while a query is present. |
+| `filter` | `{ label: string; onRemove: () => void }` | — | Removable filter badge; omit for the unfiltered state. |
+| `searchRef` | `RefObject<HTMLInputElement or null>` | — | Focus the underlying input from the host. |
+| `onKeyDown` | `KeyboardEventHandler` | — | Additional keyboard handling; preventDefault overrides built-in keyboard handling. |
+| `className` | `string` | — | Root layout classes. |
+
+## Keyboard and accessibility
+
+The field is always keyboard focusable. Escape blurs without clearing the query.
+Backspace with a collapsed caret at position zero removes the filter, even when
+text follows the caret. Selected text, composition, and modified Backspace keep
+their native editing behavior. The × button also removes the filter and returns
+focus to the input. Neither action changes the query.
+Use `searchRef.current?.focus()` for a host-owned shortcut; the component never
+registers a global handler. Native `type="search"` and password-manager hints
+prevent address and payment autofill prompts. Supply a descriptive placeholder
+such as `search notes`, which is also its accessible name.
+
+Use `FilterBar` for a complete toolbar and `InputRoot` for a filled form field.

@@ -45,7 +45,8 @@ export function GroupTabBar({
   const barRef = useRef<HTMLDivElement>(null)
   // Affordances only — see the Delete case below for why the strip does not
   // enforce this itself.
-  const { closable } = usePanelConfig()
+  const { closable, renderTab, tabbed } = usePanelConfig()
+  const Tab = renderTab ? 'div' : 'button'
   const canClose = (leaf: LeafNode) => closable?.(leaf) ?? true
 
   const moveFocus = (from: number, to: number) => {
@@ -59,7 +60,9 @@ export function GroupTabBar({
     onActivate(group.children[i].id)
   }
 
-  const onKeyDown = (e: ReactKeyboardEvent<HTMLButtonElement>, index: number) => {
+  const onKeyDown = (e: ReactKeyboardEvent<HTMLElement>, index: number) => {
+    if (e.target !== e.currentTarget) return
+    if (renderTab && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onActivate(group.children[index].id); return }
     switch (e.key) {
       case 'ArrowLeft':
         e.preventDefault()
@@ -89,6 +92,18 @@ export function GroupTabBar({
     }
   }
 
+  if (tabbed && group.children.length === 1) {
+    const leaf = group.children[0]
+    return <div data-single-view-header={leaf.id} id={tabDomId(leaf.id)}
+      className="flex items-center h-[26px] px-2.5 min-w-0 overflow-hidden whitespace-nowrap text-uikit-muted"
+      onPointerDown={event => {
+        if (!(event.target as HTMLElement).closest('button, a') && event.button === 0)
+          onHandleDown(leaf, event, TAB_DRAG_THRESHOLD_PX)
+      }}>
+      {renderTab ? renderTab(leaf) : leaf.title ?? `Panel ${leaf.n}`}
+    </div>
+  }
+
   return (
     // `bg-uikit-bg`: occlusion hygiene for the same reason as PanelLeaf's root —
     // the 28px tab-bar band must not composite whatever a host stacked beneath.
@@ -96,15 +111,16 @@ export function GroupTabBar({
       ref={barRef}
       role="tablist"
       aria-orientation="horizontal"
-      className="flex items-stretch gap-[2px] h-[28px] shrink-0 px-1 overflow-x-auto select-none bg-uikit-bg"
+      className={cn("flex items-stretch gap-[2px] shrink-0 overflow-x-auto select-none bg-uikit-bg", tabbed ? "h-[26px]" : "h-[28px] px-1")}
     >
       {group.children.map((leaf, index) => {
         const active = leaf.id === group.activeId
         const label = leaf.title ?? `Panel ${leaf.n}`
         return (
-          <button
+          <Tab
             key={leaf.id}
-            type="button"
+            {...(!renderTab ? { type: 'button' as const } : {})}
+            aria-label={renderTab ? label : undefined}
             role="tab"
             id={tabDomId(leaf.id)}
             aria-selected={active}
@@ -118,18 +134,20 @@ export function GroupTabBar({
               // becomes real once the pointer travels — otherwise every tab
               // switch would flash the floating surrogate. A plain click falls
               // through to onClick below.
+              if (renderTab && (e.target as HTMLElement).closest('button, a, [role=button]')) return
               if (e.button === 0) onHandleDown(leaf, e, TAB_DRAG_THRESHOLD_PX)
             }}
-            onClick={() => onActivate(leaf.id)}
+            onClick={e => { if (!(e.target as HTMLElement).closest('button, a, [role=button]') || !renderTab) onActivate(leaf.id) }}
             className={cn(
               'group/tab inline-flex items-center gap-1.5 px-2.5 rounded-t-[8px] cursor-pointer border-none',
               'font-uikit-ui text-[12px] whitespace-nowrap [transition:background_120ms_ease,color_120ms_ease]',
+              tabbed && 'min-w-0 max-w-full shrink-0',
               active
                 ? 'bg-uikit-chip text-uikit-ink'
                 : 'bg-transparent text-uikit-muted hover:text-uikit-ink hover:bg-uikit-chip/60'
             )}
           >
-            <span className="truncate max-w-[160px]">{label}</span>
+            <span className={cn("inline-flex items-center min-w-0", tabbed && "overflow-hidden")}>{renderTab ? renderTab(leaf) : <span className="truncate max-w-[160px]">{label}</span>}</span>
             {canClose(leaf) && (
               <span
                 role="button"
@@ -144,12 +162,12 @@ export function GroupTabBar({
                 // inner one — so this close affordance carries button semantics on
                 // a span. It stays OUT of the tab order on purpose: the keyboard
                 // route to closing a tab is Delete on the tab itself.
-                className="inline-flex items-center justify-center w-[15px] h-[15px] rounded-[4px] opacity-0 group-hover/tab:opacity-70 hover:opacity-100 hover:bg-uikit-panel"
+                className="inline-flex items-center justify-center shrink-0 w-[15px] h-[15px] rounded-[4px] opacity-0 group-hover/tab:opacity-70 hover:opacity-100 hover:bg-uikit-panel"
               >
                 <CloseIcon />
               </span>
             )}
-          </button>
+          </Tab>
         )
       })}
     </div>

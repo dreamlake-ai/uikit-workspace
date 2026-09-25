@@ -46,7 +46,7 @@ export type PanelNode =
   | LeafNode
   | { kind: 'split'; id: string; dir: Dir; children: PanelNode[]; sizes: number[] }
   // NEW — a flat tab bar of leaves; `activeId` names the visible tab.
-  | { kind: 'group'; id: string; children: LeafNode[]; activeId: string }
+  | { kind: 'group'; id: string; children: LeafNode[]; activeId: string; keepTabs?: boolean }
 
 /** Persisted-layout schema version. Bumped to 2 for the group node + the
  *  `{v,root}` envelope. `normalizeTree` accepts BOTH the envelope and a bare
@@ -164,7 +164,7 @@ export function buildInitial(single = false): PanelNode {
 export function normalizeGroup(node: Extract<PanelNode, { kind: 'group' }>): PanelNode | null {
   const children = node.children.map(normalizeLeaf)
   if (children.length === 0) return null
-  if (children.length === 1) return children[0]
+  if (children.length === 1 && !node.keepTabs) return children[0]
   const activeId = children.some((c) => c.id === node.activeId) ? node.activeId : children[0].id
   return { ...node, children, activeId }
 }

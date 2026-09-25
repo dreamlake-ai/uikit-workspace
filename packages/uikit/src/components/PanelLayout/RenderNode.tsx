@@ -1,4 +1,5 @@
 import { Fragment, type PointerEvent as ReactPointerEvent } from 'react'
+import { usePanelConfig } from './config'
 import { Divider } from './Divider'
 import { GroupTabBar } from './GroupTabBar'
 import { PanelLeaf } from './PanelLeaf'
@@ -30,6 +31,18 @@ export function RenderNode({
   onActivateTab,
   onHandleDown,
 }: RenderNodeProps) {
+  const { tabbed, showSingleTab } = usePanelConfig()
+  if (tabbed && node.kind !== 'split') {
+    const group = node.kind === 'group' ? node : { kind: 'group' as const, id: node.id, children: [node], activeId: node.id }
+    return <div data-panel-region className="relative flex flex-col w-full h-full min-w-0 min-h-0">
+      {(group.children.length > 1 || showSingleTab?.(group.children[0])) && (
+        <div data-panel-tab-slot={group.activeId} style={{ position: 'absolute', left: 10, right: 56, top: 8, zIndex: 2, minWidth: 0 }}>
+          <GroupTabBar group={group} onActivate={(id) => { onActivateTab(group.id, id); onFocus(id) }} onCloseTab={onClose} onHandleDown={onHandleDown} />
+        </div>
+      )}
+      <div data-panel-slot={group.activeId} className="flex-1 min-h-0 min-w-0" />
+    </div>
+  }
   if (node.kind === 'leaf') {
     return (
       <PanelLeaf
