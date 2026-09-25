@@ -385,9 +385,15 @@ html[data-theme="dark"] {
      ON the page, and a short ambient pool gives it height. The single
      `0 8px 28px -8px` pool did neither — it floated the panel with nothing
      holding its edge down, so the blur had to be large to register at all. */
+  /* MEASURED, not eyeballed. The old recipe's pool was
+     `0 6px 16px -6px var(--shadow-tint-2)`, and in dark that tint is black at
+     60% — it threw an 11px halo at delta 39 on a dark ground, which is why the
+     app stopped using this token and hand-rolled its own cast in NoteTabs. On
+     the reference the same card casts almost nothing: peak delta 3, gone within
+     4px, held off the page by its ring and its fill instead.
+     So: the hairline does the work, and the pool is short and light. */
   --shadow-uikit-soft:
-    0 1px 2px var(--shadow-tint-1), 0 6px 16px -6px var(--shadow-tint-2),
-    0 0 0 1px var(--faint);
+    0 0 0 1px var(--faint), 0 2px 8px -4px var(--shadow-panel-2);
   --shadow-uikit-deep:
     0 1px 2px var(--shadow-tint-1), 0 24px 60px var(--shadow-tint-3),
     inset 0 0 0 1px var(--faint);

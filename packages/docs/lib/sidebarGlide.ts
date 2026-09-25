@@ -55,7 +55,7 @@ function bind() {
     // off-screen.
     rail.style.setProperty(
       "--glide-transition",
-      parked ? "opacity" : "transform, width, height, opacity",
+      parked ? "opacity" : "transform, opacity",
     );
     place(link, true);
   });

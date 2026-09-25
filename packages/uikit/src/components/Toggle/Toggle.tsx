@@ -4,17 +4,31 @@ import { cn } from "../../lib/utils";
 export type ToggleVariant = "primary" | "secondary";
 export type ToggleSize = "sm" | "base" | "lg";
 
+// Pressed is a *state of this control*, not a status in the domain, so it stays
+// neutral — `--chip-bg`, the same layer a segmented control uses for its track
+// and Badge uses for `secondary`. Accent stays free to mean running / active.
+//
+// Both variants take it. They differ at rest (ink vs muted label) and meet in
+// the pressed state, which is the one thing they are both saying.
 const VARIANTS: Record<ToggleVariant, string> = {
   primary:
-    "text-uikit-ink hover:bg-uikit-ink-5 data-[state=on]:text-white data-[state=on]:bg-uikit-accent",
+    "text-uikit-ink hover:bg-uikit-ink-5 data-[state=on]:text-uikit-ink data-[state=on]:bg-uikit-chip",
   secondary:
     "text-uikit-muted hover:bg-uikit-ink-5 data-[state=on]:text-uikit-ink data-[state=on]:bg-uikit-chip",
 };
 
+// Button's ladder, step for step — same text sizes, same leading, same padding.
+// A Toggle is a button that stays down; there is no reason for it to be built to
+// different measurements than the button beside it.
+//
+// It used to pin a height (`h-7`) and set no vertical padding at all, so the box
+// stopped growing with its own text: 12px sides against 0 top and bottom read as
+// a squashed pill. 6px corner, not `--radius`'s 10px — that is the panel/row
+// step, and at 28px tall it rounds a small control most of the way to a stadium.
 const SIZES: Record<ToggleSize, string> = {
-  sm: "text-uikit-11 gap-1 p-1 rounded-[var(--radius)] [&_svg:not([class*='size-'])]:size-3",
-  base: "text-uikit-12 gap-1.5 p-2 rounded-[var(--radius)] [&_svg:not([class*='size-'])]:size-4",
-  lg: "text-uikit-14 gap-1.5 p-3 rounded-[var(--radius)] [&_svg:not([class*='size-'])]:size-5",
+  sm: "text-uikit-11 leading-[14.5px] gap-1 px-2.5 py-[5px] rounded-uikit-badge [&_svg:not([class*='size-'])]:size-3",
+  base: "text-uikit-12 leading-[16.5px] gap-1.5 px-3.5 py-[7px] rounded-uikit-badge [&_svg:not([class*='size-'])]:size-4",
+  lg: "text-uikit-14 leading-[18.5px] gap-1.5 px-[18px] py-[9px] rounded-uikit-badge [&_svg:not([class*='size-'])]:size-5",
 };
 
 export interface ToggleVariantsOptions {

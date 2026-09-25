@@ -44,7 +44,7 @@ file that matches the question; each is a self-contained markdown page.
 - `reference/components-spinner.md` — Spinner: Indeterminate loading spinner — a dual dot-pulse ring that inherits text color.
 - `reference/components-skeleton.md` — Skeleton: Pulsing placeholder block for loading states.
 - `reference/components-switch.md` — Switch: Binary on/off toggle. Controlled or uncontrolled.
-- `reference/components-badge.md` — Badge: Small inline status/category badge with filled, outline and dot forms.
+- `reference/components-badge.md` — Badge: Small inline status/category chip — neutral container, tone in the ink.
 - `reference/components-collapsible.md` — Collapsible: Expand/collapse region with an animated-height content area.
 - `reference/components-card.md` — Card: Panel container with padding, hairline border, and an optional collapse toggle.
 - `reference/components-alert-dialog.md` — Alert Dialog: Modal confirmation dialog for destructive or consequential actions.
