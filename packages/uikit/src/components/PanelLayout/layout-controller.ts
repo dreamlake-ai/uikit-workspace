@@ -30,6 +30,11 @@ const replace = (n: PanelNode, id: string, value: PanelNode): PanelNode =>
           ...n,
           children: n.children.map((c) => replace(c, id, value)),
         } as PanelNode);
+const centerDistance = (a: LayoutRect, b: LayoutRect) =>
+  Math.hypot(
+    a.x + a.width / 2 - b.x - b.width / 2,
+    a.y + a.height / 2 - b.y - b.height / 2,
+  );
 const distance = (a: LayoutRect, b: LayoutRect) =>
   Math.hypot(
     Math.max(0, a.x - b.x - b.width, b.x - a.x - a.width),
@@ -494,6 +499,10 @@ export function createLayoutController(host: {
       candidates.sort(
         (a, b) =>
           score(a) - score(b) ||
+          (choice === "closest"
+            ? centerDistance(origin!.bounds, a.bounds) -
+              centerDistance(origin!.bounds, b.bounds)
+            : 0) ||
           a.created - b.created ||
           a.id.localeCompare(b.id),
       );

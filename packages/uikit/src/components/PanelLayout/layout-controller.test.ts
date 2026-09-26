@@ -48,6 +48,25 @@ const open = (
 const all = (root: PanelNode): LeafNode[] =>
   root.kind === "leaf" ? [root] : root.children.flatMap(all);
 describe("layout request controller", () => {
+  it("prefers the aligned right panel over a touching corner in an equal grid", () => {
+    const a = view("A"),
+      b = view("B"),
+      c = view("C"),
+      d = view("D");
+    const f = fixture(
+      panelSplit("row", [
+        panelSplit("column", [a, b]),
+        panelSplit("column", [c, d]),
+      ]),
+    );
+    const result = f.api.resolve(
+      open({ from: b.id, direction: "right", select: "closest" }),
+    );
+    expect(result.status).toBe("ready");
+    expect(
+      f.api.inspect().regions.find((p) => p.id === result.panelId)?.tabs[0].id,
+    ).toBe(d.id);
+  });
   it("rejects an ambiguous named scope without changing the layout", async () => {
     const f = fixture(
       panelSplit("row", [
