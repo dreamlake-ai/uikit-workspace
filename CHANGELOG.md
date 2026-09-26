@@ -1,5 +1,9 @@
 # Release notes
 
+## 0.2.3 — 2026-09-26
+
+- Keep layout examples within the text column. Dockit ContentRow remains available for content that needs a wider row.
+
 ## 0.2.2 — 2026-09-26
 
 - Add opt-in mouse hover selection to `TabbedContainer`, preserving touch, click and keyboard navigation.
