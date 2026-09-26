@@ -228,7 +228,7 @@ function Example({ set }: { set: LayoutExampleSet }) {
       id={`example-${set.id}`}
     >
       <p>{set.description}</p>
-      <ContentRow>
+      <ContentRow width="text">
         <p className="layout-caption">A · Shared starting layout</p>
         <Illustration
           snapshot={state.before}
