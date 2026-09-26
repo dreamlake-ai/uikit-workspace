@@ -48,6 +48,19 @@ const open = (
 const all = (root: PanelNode): LeafNode[] =>
   root.kind === "leaf" ? [root] : root.children.flatMap(all);
 describe("layout request controller", () => {
+  it("rejects an ambiguous named scope without changing the layout", async () => {
+    const f = fixture(
+      panelSplit("row", [
+        view("A", "note", { names: ["preview"] }),
+        view("B", "note", { names: ["preview"] }),
+      ]),
+    );
+    const before = f.api.inspect();
+    expect((await f.api.apply(open({ scope: "preview" }))).status).toBe(
+      "ambiguous",
+    );
+    expect(f.api.inspect()).toEqual(before);
+  });
   it.each(["tab", "right", "below", "left", "above"] as const)(
     "opens atomically with %s placement",
     async (placement) => {

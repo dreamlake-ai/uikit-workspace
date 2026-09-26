@@ -396,8 +396,18 @@ export function createLayoutController(host: {
       }
     }
     if (q.scope) {
-      const scope =
-        address(q.scope) ?? all.find((r) => r.names.includes(q.scope!));
+      const addressed = address(q.scope);
+      const scopes = addressed
+        ? [addressed]
+        : all.filter((r) => r.names.includes(q.scope!));
+      if (scopes.length > 1)
+        return {
+          status: "ambiguous",
+          revision,
+          reason: "Multiple scopes match; use a region ID",
+          candidates: scopes.map((r) => r.id),
+        };
+      const scope = scopes[0];
       if (!scope) candidates = [];
       else {
         const inside = (r: LayoutRegionInfo): boolean =>
