@@ -57,7 +57,7 @@ A destination combines filters with one selection rule. Multiple matches are
 First and last use **region creation order**, not screen order. Original remains
 anchored to the initial named region; if it closes, original does not silently
 become another region. Closest uses edge-to-edge rectangle distance. Ties use
-creation order, then stable ID. Sizes use region area. Hidden tabs share their
+center-to-center distance, then creation order and stable ID. Sizes use region area. Hidden tabs share their
 visible panel's bounds; they are not independent spatial candidates.
 
 An area cannot receive a tab directly. Select a child panel or place a new panel

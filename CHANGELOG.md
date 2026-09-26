@@ -1,5 +1,9 @@
 # Release notes
 
+## 0.2.1 — 2026-09-26
+
+- Resolve equal closest-panel distances by center distance before creation order, so an aligned neighbor wins over a touching corner in a grid.
+
 ## Unreleased
 
 - `BreadcrumbTree` gains a second panel layout and a toggle between them. `columns` is the existing Miller browser; `tree` is the whole expanded tree in one flow that wraps into columns, so several branches stay on screen at once. `view` / `defaultView` / `onViewChange` / `hideViewToggle` control it.
