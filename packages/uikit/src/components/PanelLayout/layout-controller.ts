@@ -202,6 +202,7 @@ export function createLayoutController(host: {
   replaceRoot(root: PanelNode): void;
   describe?: (leaf: LeafNode) => LayoutView | undefined;
   createView?: (view: LayoutView) => LeafNode;
+  createEmpty?: () => LeafNode;
   updateView?: (leaf: LeafNode, view: LayoutView) => LeafNode;
   validateView?: (view: LayoutView) => void;
   canDispose?: (leaf: LeafNode) => boolean | Promise<boolean>;
@@ -674,7 +675,7 @@ export function createLayoutController(host: {
           : l,
       );
     else if (r.action === "close")
-      next = applyClose(root, r.tabId) ?? panelLeaf();
+      next = applyClose(root, r.tabId) ?? host.createEmpty?.() ?? panelLeaf();
     else if (r.action === "activate") next = activate(root, r.tabId);
     else if (r.action === "move") {
       // Native docking preserves leaf metadata and connected content identity.

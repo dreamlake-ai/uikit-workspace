@@ -380,3 +380,17 @@ for (const set of layoutExampleSets)
       }
       expect(result?.status).toBe(branch.expected ?? "applied");
     });
+
+it("uses the host empty view when closing its last tab", async () => {
+  const a = view("A");
+  let root: PanelNode = a;
+  const api = createLayoutController({
+    getRoot: () => root,
+    replaceRoot: (n) => {
+      root = n;
+    },
+    createEmpty: () => panelLeaf({ view: "host-empty" }),
+  });
+  await api.apply({ action: "close", tabId: a.id });
+  expect(all(root)[0].view).toBe("host-empty");
+});
