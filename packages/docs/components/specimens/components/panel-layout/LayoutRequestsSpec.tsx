@@ -1,6 +1,9 @@
-import { useEffect, useState, type KeyboardEvent } from "react";
+import { useEffect, useState } from "react";
 import {
+  TabbedContainer,
   createLayoutController,
+  createLayoutRegistry,
+  type LayoutRegistry,
   type LayoutSnapshot,
   type LayoutResult,
   type PanelNode,
@@ -25,7 +28,7 @@ function Illustration({
       style={{
         width: "100%",
         display: "block",
-        background: "#f8faf6",
+        background: "#f7f7f7",
         borderRadius: 8,
       }}
     >
@@ -48,8 +51,8 @@ function Illustration({
                 width={w}
                 height={h}
                 rx={5}
-                fill={artifact ? "#f3e5cf" : "#e8eee3"}
-                stroke="#9cad95"
+                fill={artifact ? "#e6e6e6" : "#f0f0f0"}
+                stroke="#b7b7b7"
               />
               {region.tabs.map((tab, i) => {
                 const tw = (w - 8) / region.tabs.length,
@@ -62,14 +65,14 @@ function Illustration({
                       width={Math.max(0, tw - 3)}
                       height={25}
                       rx={3}
-                      fill={tab.active ? "#fffef9" : "#dfe6da"}
-                      stroke={tab.preview ? "#927446" : "none"}
+                      fill={tab.active ? "#ffffff" : "#e4e4e4"}
+                      stroke={tab.preview ? "#787878" : "none"}
                       strokeDasharray={tab.preview ? "3 2" : undefined}
                     />
                     <text
                       x={tx + 5}
                       y={y + 21}
-                      fill="#263728"
+                      fill="#303030"
                       fontSize={12}
                       fontFamily="system-ui"
                     >
@@ -87,7 +90,7 @@ function Illustration({
                   x={x + 12}
                   y={y + 56}
                   fontSize={15}
-                  fill="#304634"
+                  fill="#303030"
                   fontFamily="system-ui"
                 >
                   {(
@@ -102,7 +105,7 @@ function Illustration({
                   x={x + 12}
                   y={y + h - 13}
                   fontSize={10}
-                  fill="#61705c"
+                  fill="#777777"
                   fontFamily="monospace"
                 >
                   {[...region.names, ...region.roles]
@@ -144,6 +147,21 @@ function Example({ set }: { set: LayoutExampleSet }) {
       canDispose: () => branch.guard !== false,
     });
     const before = controller.inspect();
+    const global = window as Window & { dreamlakeLayouts?: LayoutRegistry };
+    global.dreamlakeLayouts ??= createLayoutRegistry();
+    const unregister = global.dreamlakeLayouts.register(
+      `example-${set.id}`,
+      {
+        inspect: controller.inspect,
+        resolve: controller.resolve,
+        apply: async (request) => {
+          const result = await controller.apply(request);
+          if (alive) setState({ before, after: controller.inspect(), result });
+          return result;
+        },
+      },
+      set.title,
+    );
     void (async () => {
       let result: LayoutResult | undefined;
       for (const request of branch.requests) {
@@ -154,22 +172,9 @@ function Example({ set }: { set: LayoutExampleSet }) {
     })();
     return () => {
       alive = false;
+      unregister();
     };
   }, [set, branch]);
-  function onKey(event: KeyboardEvent<HTMLDivElement>) {
-    let next = selected;
-    if (event.key === "ArrowRight") next = (selected + 1) % set.branches.length;
-    else if (event.key === "ArrowLeft")
-      next = (selected + set.branches.length - 1) % set.branches.length;
-    else if (event.key === "Home") next = 0;
-    else if (event.key === "End") next = set.branches.length - 1;
-    else return;
-    event.preventDefault();
-    setSelected(next);
-    event.currentTarget
-      .querySelectorAll<HTMLButtonElement>("[role=tab]")
-      [next]?.focus();
-  }
   return (
     <section className="layout-example" id={`example-${set.id}`}>
       <h3>{set.title}</h3>
@@ -179,59 +184,48 @@ function Example({ set }: { set: LayoutExampleSet }) {
         snapshot={state.before}
         label={`${set.title}: starting layout`}
       />
-      <div
-        className="layout-branches"
-        role="tablist"
+      <TabbedContainer
         aria-label={`${set.title} command branches`}
-        onKeyDown={onKey}
-      >
-        {set.branches.map((b, i) => (
-          <button
-            key={b.title}
-            type="button"
-            role="tab"
-            id={`${set.id}-tab-${i}`}
-            aria-controls={`${set.id}-result`}
-            aria-selected={i === selected}
-            tabIndex={i === selected ? 0 : -1}
-            onClick={() => setSelected(i)}
-          >
-            {b.title}
-          </button>
-        ))}
-      </div>
-      <div
-        role="tabpanel"
-        id={`${set.id}-result`}
-        aria-labelledby={`${set.id}-tab-${selected}`}
-      >
-        <p>{branch.explanation}</p>
-        <details>
-          <summary>
-            Exact request{branch.requests.length > 1 ? " sequence" : ""}
-          </summary>
-          <pre>
-            {JSON.stringify(
-              branch.requests.length === 1
-                ? branch.requests[0]
-                : branch.requests,
-              null,
-              2,
-            )}
-          </pre>
-        </details>
-        <p className="layout-caption">B · Result</p>
-        <Illustration
-          snapshot={state.after}
-          label={`${set.title}: ${branch.title} result`}
-        />
-        <p className="layout-outcome" aria-live="polite">
-          <strong>{state.result?.status ?? "Resolving"}</strong>
-          {state.result
-            ? ` · ${state.result.effect ?? "no change"} · ${state.result.reason}`
-            : ""}
-        </p>
-      </div>
+        value={String(selected)}
+        onValueChange={(value) => setSelected(Number(value))}
+        keepMounted={false}
+        className="layout-branches"
+        items={set.branches.map((item, index) => ({
+          value: String(index),
+          label: item.title,
+          children:
+            index === selected ? (
+              <>
+                <p>{branch.explanation}</p>
+                <details>
+                  <summary>
+                    Exact request{branch.requests.length > 1 ? " sequence" : ""}
+                  </summary>
+                  <pre>
+                    {JSON.stringify(
+                      branch.requests.length === 1
+                        ? branch.requests[0]
+                        : branch.requests,
+                      null,
+                      2,
+                    )}
+                  </pre>
+                </details>
+                <p className="layout-caption">B · Result</p>
+                <Illustration
+                  snapshot={state.after}
+                  label={`${set.title}: ${branch.title} result`}
+                />
+                <p className="layout-outcome" aria-live="polite">
+                  <strong>{state.result?.status ?? "Resolving"}</strong>
+                  {state.result
+                    ? ` · ${state.result.effect ?? "no change"} · ${state.result.reason}`
+                    : ""}
+                </p>
+              </>
+            ) : null,
+        }))}
+      />
     </section>
   );
 }
@@ -239,13 +233,11 @@ export function LayoutRequestsSpec() {
   return (
     <div className="layout-examples">
       <style>{`
-.layout-examples .layout-example{border:1px solid var(--border,#d7dfd1);border-radius:12px;padding:22px;margin:28px 0;scroll-margin-top:80px}
-.layout-examples h3{margin:0 0 8px}.layout-examples p{font-size:14px}.layout-examples .layout-caption{text-transform:uppercase;letter-spacing:.1em;font-size:10px;color:var(--muted,#64745d);margin:16px 0 8px}
-.layout-examples .layout-branches{display:flex;flex-wrap:wrap;gap:5px;margin:20px 0 12px;border-bottom:1px solid var(--border,#d7dfd1);padding-bottom:8px}
-.layout-examples button{font:inherit;font-size:12px;padding:7px 11px;border-radius:6px;border:1px solid var(--border,#c7d2c0);background:transparent;color:inherit;cursor:pointer}
-.layout-examples button[aria-selected=true]{background:#2d4835;color:#fff;border-color:#2d4835}.layout-examples button:focus-visible{outline:2px solid #829d64;outline-offset:3px}
-.layout-examples details{font-size:12px;margin:14px 0}.layout-examples summary{cursor:pointer}.layout-examples pre{font-size:11px;white-space:pre;overflow:auto;padding:14px;border-radius:6px;background:var(--surface,#f3f5ef)}
-.layout-examples .layout-outcome{font-size:12px;color:var(--muted,#64745d)}@media(max-width:600px){.layout-examples .layout-example{padding:12px}.layout-examples button{padding:6px 8px}}
+.layout-examples .layout-example{border:1px solid var(--border,#dddddd);border-radius:12px;padding:22px;margin:28px 0;scroll-margin-top:80px}
+.layout-examples h3{margin:0 0 8px}.layout-examples p{font-size:14px}.layout-examples .layout-caption{text-transform:uppercase;letter-spacing:.1em;font-size:10px;color:var(--muted,#727272);margin:16px 0 8px}
+.layout-examples .layout-branches{margin:20px 0 12px}
+.layout-examples details{font-size:12px;margin:14px 0}.layout-examples summary{cursor:pointer}.layout-examples pre{font-size:11px;white-space:pre;overflow:auto;padding:14px;border-radius:6px;background:var(--surface,#f2f2f2)}
+.layout-examples .layout-outcome{font-size:12px;color:var(--muted,#727272)}@media(max-width:600px){.layout-examples .layout-example{padding:12px}}
 `}</style>
       {layoutExampleSets.map((set) => (
         <Example key={set.id} set={set} />

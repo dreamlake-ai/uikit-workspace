@@ -8,7 +8,6 @@ import {
 } from "./panel-tree";
 import type {
   LayoutController,
-  LayoutOpenRequest,
   LayoutPlacement,
   LayoutQuery,
   LayoutRect,

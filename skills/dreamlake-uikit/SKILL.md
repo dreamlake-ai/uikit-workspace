@@ -1,6 +1,6 @@
 ---
 name: dreamlake-uikit
-description: DreamLake uikit is the React component library and design contract — surfaces, ink, semantic color, type, geometry, and the zebra-list patterns shared by every DreamLake page. Use when answering questions about DreamLake (Overview, Avatar, Style guide, BreadcrumbTree, LLM-Readable Docs, Button, CodeBlock, Dialog, Field, FilterBar, ListSearchInput, Menu, ProfileCard, ProfileLayout, ResizableLayout, PanelLayout, Layout controller, Select, SideNav, Tabs, Tab Row, Tag, TextField, VirtualList, VirtualListFlow, VideoAnnotator, Spinner, Skeleton, Switch, Badge, Collapsible, Card, Alert Dialog, Drawer, Toast, UIKit Badge, Pipeline Graph, Anatomy, Pipeline Graph JSON, Architecture & Roadmap, useIsMobile, Subtask Annotation, Label, Toggle, Workflow Canvas, Node Types, Toolbar, Modal, Form Layout, Input, Mouse Cursor Icons, Tooltip, Popover, Dropdown Menu, Theme, Tree View, Context Menu, Dial, Waterfall, Slider, Number Inputs, Layout, Sync Scroll).
+description: DreamLake uikit is the React component library and design contract — surfaces, ink, semantic color, type, geometry, and the zebra-list patterns shared by every DreamLake page. Use when answering questions about DreamLake (Overview, Avatar, Style guide, BreadcrumbTree, LLM-Readable Docs, Button, CodeBlock, Dialog, Field, FilterBar, ListSearchInput, Menu, ProfileCard, ProfileLayout, ResizableLayout, PanelLayout, Layout controller, TabbedContainer, Select, SideNav, Tabs, Tab Row, Tag, TextField, VirtualList, VirtualListFlow, VideoAnnotator, Spinner, Skeleton, Switch, Badge, Collapsible, Card, Alert Dialog, Drawer, Toast, UIKit Badge, Pipeline Graph, Anatomy, Pipeline Graph JSON, Architecture & Roadmap, useIsMobile, Subtask Annotation, Label, Toggle, Workflow Canvas, Node Types, Toolbar, Modal, Form Layout, Input, Mouse Cursor Icons, Tooltip, Popover, Dropdown Menu, Theme, Tree View, Context Menu, Dial, Waterfall, Slider, Number Inputs, Layout, Sync Scroll).
 ---
 # DreamLake
 
@@ -33,6 +33,7 @@ file that matches the question; each is a self-contained markdown page.
 - `reference/components-resizable-layout.md` — ResizableLayout: Three-column drag-to-resize layout with optional persistence and fixed-px column modes.
 - `reference/components-panel-layout.md` — PanelLayout: Recursive tiling panel workspace — split, drag-to-dock, and tab groups over a pure tree model.
 - `reference/components-layout-controller.md` — Layout controller: Declarative panel destinations, spawn policies and agent control, with forkable executable examples.
+- `reference/components-tabbed-container.md` — TabbedContainer: A neutral framed tabbed surface for examples, scenarios and arbitrary content, based on CodeTabs.
 - `reference/components-select.md` — Select: Composable single-select with a trigger, value, and grouped items.
 - `reference/components-side-nav.md` — SideNav: Sidebar shell with pinned header/footer and a scrollable body of titled, sticky groups.
 - `reference/components-tabs.md` — Tabs: Animated tab switcher with underline or segment variants, multiple sizes, and controlled/uncontrolled state.
