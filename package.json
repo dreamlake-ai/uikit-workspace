@@ -1,6 +1,6 @@
 {
   "name": "uikit-workspace",
-  "version": "0.1.17",
+  "version": "0.2.0",
   "description": "@dreamlake/uikit workspace — UI primitives + Vike/MDX doc site",
   "private": true,
   "type": "module",
