@@ -4,6 +4,8 @@ A request describes **where a view should go and what happens when it gets there
 Callers do not traverse the layout tree. User interactions and agents use the same
 controller; the resulting panels retain native drag, dock, resize, tabs and close.
 
+<section>
+
 ## Three layers
 
 | Layer                         | Responsibility                                                                                                 |
@@ -21,8 +23,79 @@ application authorization or view-disposal guard.
 Each set shares one starting layout. Its tabs fork alternative commands from that
 same state. Open **Exact request** to see executable JSON. The illustrations are
 rendered from actual controller snapshots; these are topology diagrams, not product
-screenshots. White tabs are active, dashed tabs are replaceable previews, and a dot
-marks a pinned tab. Arrow keys switch branches.
+screenshots. Blue **+** tabs are new, red **−** tabs are removed from the starting
+layout, and amber **↔** tabs moved between panels or changed order. Unchanged tabs
+stay neutral. Dashed tabs are replaceable previews; a dot marks a pinned tab.
+Hover, click, or use arrow keys to switch branches. Each example has its own section
+heading and uses Dockit’s wider `ContentRow` without an enclosing card.
+
+</section>
+
+<section className="layout-example-section">
+
+## One panel
+
+</section>
+
+<section className="layout-example-section">
+
+## List and editor
+
+</section>
+
+<section className="layout-example-section">
+
+## A source with two tabs
+
+</section>
+
+<section className="layout-example-section">
+
+## One panel versus the whole area
+
+</section>
+
+<section className="layout-example-section">
+
+## A full-width bottom panel
+
+</section>
+
+<section className="layout-example-section">
+
+## Detach a named preview tab
+
+</section>
+
+<section className="layout-example-section">
+
+## X already exists
+
+</section>
+
+<section className="layout-example-section">
+
+## Preview replacement and pins
+
+</section>
+
+<section className="layout-example-section">
+
+## Contains versus displays
+
+</section>
+
+<section className="layout-example-section">
+
+## Available space
+
+</section>
+
+<section className="layout-example-section">
+
+## No destination, ambiguity, and guards
+
+</section>
 
 ## Destination queries
 
@@ -159,6 +232,6 @@ the generic API; DreamLake documents its application policies separately.
 
 Local browser verification of the documentation's live branches (September 26, 2026):
 
-![The right-of-both branch keeps A and B stacked and gives X their combined height.](/images/layout-controller/whole-area.png)
+![Preview replacement: removed Y is red and new X is blue.](/images/layout-controller/changes-replacement.png)
 
-![The last-preview branch opens X as a tab beside detached Z.](/images/layout-controller/detached-last.png)
+![Detached Z is amber in both snapshots; new X is blue.](/images/layout-controller/changes-moved.png)

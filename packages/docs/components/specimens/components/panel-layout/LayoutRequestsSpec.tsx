@@ -1,3 +1,4 @@
+import { ContentRow } from "@dreamlake/dockit";
 import { useEffect, useState } from "react";
 import {
   TabbedContainer,
@@ -13,12 +14,48 @@ import {
   type LayoutExampleSet,
 } from "../../../../../uikit/src/components/PanelLayout/layout-examples";
 
+type Change = "new" | "removed" | "moved";
+const changeColors = {
+  new: ["#dbeafe", "#1d4ed8", "+"],
+  removed: ["#fee2e2", "#b91c1c", "−"],
+  moved: ["#fef3c7", "#92400e", "↔"],
+};
+function changes(before: LayoutSnapshot, after: LayoutSnapshot) {
+  const locations = (s: LayoutSnapshot) =>
+    new Map(
+      s.regions
+        .filter((r) => r.level === "panel")
+        .flatMap((r) =>
+          r.tabs.map(
+            (t) =>
+              [t.id, { region: r.id, peers: r.tabs.map((p) => p.id) }] as const,
+          ),
+        ),
+    );
+  const a = locations(before),
+    b = locations(after),
+    result = new Map<string, Change>();
+  for (const [id, old] of a) {
+    const next = b.get(id);
+    if (!next) result.set(id, "removed");
+    else if (
+      old.region !== next.region ||
+      old.peers.filter((p) => next.peers.includes(p)).join() !==
+        next.peers.filter((p) => old.peers.includes(p)).join()
+    )
+      result.set(id, "moved");
+  }
+  for (const id of b.keys()) if (!a.has(id)) result.set(id, "new");
+  return result;
+}
 function Illustration({
   snapshot,
   label,
+  changes,
 }: {
   snapshot: LayoutSnapshot;
   label: string;
+  changes: Map<string, Change>;
 }) {
   return (
     <svg
@@ -57,25 +94,33 @@ function Illustration({
               {region.tabs.map((tab, i) => {
                 const tw = (w - 8) / region.tabs.length,
                   tx = x + 4 + i * tw;
+                const change = changes.get(tab.id),
+                  color = change && changeColors[change];
                 return (
-                  <g key={tab.id}>
+                  <g key={tab.id} data-change={change}>
+                    <title>{`${tab.view?.resource ?? "Empty"}${change ? ` · ${change}` : ""}`}</title>
                     <rect
                       x={tx}
                       y={y + 4}
                       width={Math.max(0, tw - 3)}
                       height={25}
                       rx={3}
-                      fill={tab.active ? "#ffffff" : "#e4e4e4"}
-                      stroke={tab.preview ? "#787878" : "none"}
+                      fill={
+                        color ? color[0] : tab.active ? "#ffffff" : "#e4e4e4"
+                      }
+                      stroke={
+                        color ? color[1] : tab.preview ? "#787878" : "none"
+                      }
                       strokeDasharray={tab.preview ? "3 2" : undefined}
                     />
                     <text
                       x={tx + 5}
                       y={y + 21}
-                      fill="#303030"
+                      fill={color ? color[1] : "#303030"}
                       fontSize={12}
                       fontFamily="system-ui"
                     >
+                      {color ? `${color[2]} ` : ""}
                       {tab.pinned ? "● " : ""}
                       {(tab.view?.title ?? tab.view?.resource ?? "Empty").slice(
                         0,
@@ -175,73 +220,93 @@ function Example({ set }: { set: LayoutExampleSet }) {
       unregister();
     };
   }, [set, branch]);
+  const diff = changes(state.before, state.after);
   return (
-    <section className="layout-example" id={`example-${set.id}`}>
-      <h3>{set.title}</h3>
+    <section
+      aria-label={set.title}
+      className="layout-example"
+      id={`example-${set.id}`}
+    >
       <p>{set.description}</p>
-      <p className="layout-caption">A · Shared starting layout</p>
-      <Illustration
-        snapshot={state.before}
-        label={`${set.title}: starting layout`}
-      />
-      <TabbedContainer
-        aria-label={`${set.title} command branches`}
-        value={String(selected)}
-        onValueChange={(value) => setSelected(Number(value))}
-        keepMounted={false}
-        className="layout-branches"
-        items={set.branches.map((item, index) => ({
-          value: String(index),
-          label: item.title,
-          children:
-            index === selected ? (
-              <>
-                <p>{branch.explanation}</p>
-                <details>
-                  <summary>
-                    Exact request{branch.requests.length > 1 ? " sequence" : ""}
-                  </summary>
-                  <pre>
-                    {JSON.stringify(
-                      branch.requests.length === 1
-                        ? branch.requests[0]
-                        : branch.requests,
-                      null,
-                      2,
-                    )}
-                  </pre>
-                </details>
-                <p className="layout-caption">B · Result</p>
-                <Illustration
-                  snapshot={state.after}
-                  label={`${set.title}: ${branch.title} result`}
-                />
-                <p className="layout-outcome" aria-live="polite">
-                  <strong>{state.result?.status ?? "Resolving"}</strong>
-                  {state.result
-                    ? ` · ${state.result.effect ?? "no change"} · ${state.result.reason}`
-                    : ""}
-                </p>
-              </>
-            ) : null,
-        }))}
-      />
+      <ContentRow>
+        <p className="layout-caption">A · Shared starting layout</p>
+        <Illustration
+          snapshot={state.before}
+          changes={diff}
+          label={`${set.title}: starting layout`}
+        />
+        <TabbedContainer
+          aria-label={`${set.title} command branches`}
+          value={String(selected)}
+          onValueChange={(value) => setSelected(Number(value))}
+          keepMounted={false}
+          activationMode="hover"
+          className="layout-branches"
+          items={set.branches.map((item, index) => ({
+            value: String(index),
+            label: item.title,
+            children:
+              index === selected ? (
+                <>
+                  <p>{branch.explanation}</p>
+                  <details>
+                    <summary>
+                      Exact request
+                      {branch.requests.length > 1 ? " sequence" : ""}
+                    </summary>
+                    <pre>
+                      {JSON.stringify(
+                        branch.requests.length === 1
+                          ? branch.requests[0]
+                          : branch.requests,
+                        null,
+                        2,
+                      )}
+                    </pre>
+                  </details>
+                  <p className="layout-caption">B · Result</p>
+                  <Illustration
+                    snapshot={state.after}
+                    changes={diff}
+                    label={`${set.title}: ${branch.title} result`}
+                  />
+                  <p className="layout-outcome" aria-live="polite">
+                    <strong>{state.result?.status ?? "Resolving"}</strong>
+                    {state.result
+                      ? ` · ${state.result.effect ?? "no change"} · ${state.result.reason}`
+                      : ""}
+                  </p>
+                </>
+              ) : null,
+          }))}
+        />
+        <p className="layout-change-summary">
+          {diff.size
+            ? [...diff]
+                .map(
+                  ([id, kind]) =>
+                    `${kind}: ${[...state.before.regions, ...state.after.regions].flatMap((r) => r.tabs).find((t) => t.id === id)?.view?.resource ?? id}`,
+                )
+                .join(" · ")
+            : "No tabs added, removed or moved."}
+        </p>
+      </ContentRow>
     </section>
   );
 }
-export function LayoutRequestsSpec() {
+export function LayoutRequestExample({ id }: { id: string }) {
+  const set = layoutExampleSets.find((set) => set.id === id);
+  if (!set) return null;
   return (
     <div className="layout-examples">
       <style>{`
-.layout-examples .layout-example{border:1px solid var(--border,#dddddd);border-radius:12px;padding:22px;margin:28px 0;scroll-margin-top:80px}
-.layout-examples h3{margin:0 0 8px}.layout-examples p{font-size:14px}.layout-examples .layout-caption{text-transform:uppercase;letter-spacing:.1em;font-size:10px;color:var(--muted,#727272);margin:16px 0 8px}
+.layout-examples .layout-example{margin:20px 0 52px;scroll-margin-top:80px}
+.layout-examples h2{font-size:24px;font-weight:650;line-height:1.25;margin:0 0 12px;scroll-margin-top:80px}.layout-examples p{font-size:14px}.layout-examples .layout-caption{text-transform:uppercase;letter-spacing:.1em;font-size:10px;color:var(--muted,#727272);margin:16px 0 8px}
 .layout-examples .layout-branches{margin:20px 0 12px}
 .layout-examples details{font-size:12px;margin:14px 0}.layout-examples summary{cursor:pointer}.layout-examples pre{font-size:11px;white-space:pre;overflow:auto;padding:14px;border-radius:6px;background:var(--surface,#f2f2f2)}
-.layout-examples .layout-outcome{font-size:12px;color:var(--muted,#727272)}@media(max-width:600px){.layout-examples .layout-example{padding:12px}}
+.layout-examples .layout-outcome{font-size:12px;color:var(--muted,#727272)} .layout-change-summary{font-size:12px}
 `}</style>
-      {layoutExampleSets.map((set) => (
-        <Example key={set.id} set={set} />
-      ))}
+      <Example set={set} />
     </div>
   );
 }
