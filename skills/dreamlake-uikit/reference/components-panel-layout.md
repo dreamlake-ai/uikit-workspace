@@ -18,6 +18,12 @@ Three layers ship separately, and the lower two are useful on their own:
 | `panel-box`   | Panel geometry as CSS math, published as `--panel-x` / `--panel-w`. |
 | `PanelLayout` | The renderer plus the pointer and keyboard wiring.                  |
 
+## Declarative requests and agent control
+
+Use the [layout controller](reference/components-layout-controller.md) to address named destinations,
+select panels by geometry or content, and apply pin-aware spawn requests. It provides
+inspect → resolve → apply above these low-level mechanics, with forkable examples.
+
 ## Demo
 
 Drag a divider to resize. Grab the **handle at the top of a panel header** and

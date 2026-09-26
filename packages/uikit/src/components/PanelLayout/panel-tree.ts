@@ -1,3 +1,4 @@
+import type { LayoutTabMetadata } from './layout-controller.types'
 // ---------------------------------------------------------------------------
 // panel-tree.ts — the PURE tiling-tree model behind <PanelLayout>.
 //
@@ -24,6 +25,8 @@ export type Dir = 'row' | 'column'
 
 export type LeafNode = {
   kind: 'leaf'
+  /** Optional declarative controller metadata. Native moves preserve it. */
+  layout?: LayoutTabMetadata
   id: string
   n: number
   view?: string
