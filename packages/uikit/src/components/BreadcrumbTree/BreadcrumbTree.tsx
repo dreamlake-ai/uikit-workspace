@@ -894,7 +894,7 @@ export function BreadcrumbTree({
           return (
             <Fragment key={node.id}>
               <BreadcrumbItem
-                name={node.name}
+                name={node.displayName ?? node.name}
                 isLeaf={isLeaf}
                 onClick={(e) => handleBreadcrumbClick(node, i, e)}
               />
