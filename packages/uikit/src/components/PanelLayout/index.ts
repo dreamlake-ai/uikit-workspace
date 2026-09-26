@@ -72,3 +72,9 @@ export type { ViewPref, ViewSplit, ResolveViewSplitOptions } from './open-view'
 // coalescing already handled.
 export { usePersistedPanelLayout } from './usePersistedPanelLayout'
 export type { PersistedPanelLayout, PersistedPanelLayoutOptions } from './usePersistedPanelLayout'
+
+// Declarative requests for both application interactions and agent control.
+export { createLayoutController, validateLayoutRequest } from './layout-controller'
+export type * from './layout-controller.types'
+export { createLayoutRegistry } from './layout-registry'
+export type { LayoutRegistry } from './layout-registry'

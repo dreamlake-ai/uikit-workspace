@@ -1,6 +1,6 @@
 ---
 name: dreamlake-uikit
-description: DreamLake uikit is the React component library and design contract — surfaces, ink, semantic color, type, geometry, and the zebra-list patterns shared by every DreamLake page. Use when answering questions about DreamLake (Overview, Avatar, Style guide, BreadcrumbTree, LLM-Readable Docs, Button, CodeBlock, Dialog, Field, FilterBar, ListSearchInput, Menu, ProfileCard, ProfileLayout, ResizableLayout, PanelLayout, Select, SideNav, Tabs, Tab Row, Tag, TextField, VirtualList, VirtualListFlow, VideoAnnotator, Spinner, Skeleton, Switch, Badge, Collapsible, Card, Alert Dialog, Drawer, Toast, UIKit Badge, Pipeline Graph, Anatomy, Pipeline Graph JSON, Architecture & Roadmap, useIsMobile, Subtask Annotation, Label, Toggle, Workflow Canvas, Node Types, Toolbar, Modal, Form Layout, Input, Mouse Cursor Icons, Tooltip, Popover, Dropdown Menu, Theme, Tree View, Context Menu, Dial, Waterfall, Slider, Number Inputs, Layout, Sync Scroll).
+description: DreamLake uikit is the React component library and design contract — surfaces, ink, semantic color, type, geometry, and the zebra-list patterns shared by every DreamLake page. Use when answering questions about DreamLake (Overview, Avatar, Style guide, BreadcrumbTree, LLM-Readable Docs, Button, CodeBlock, Dialog, Field, FilterBar, ListSearchInput, Menu, ProfileCard, ProfileLayout, ResizableLayout, PanelLayout, Layout controller, TabbedContainer, Select, SideNav, Tabs, Tab Row, Tag, TextField, VirtualList, VirtualListFlow, VideoAnnotator, Spinner, Skeleton, Switch, Badge, Collapsible, Card, Alert Dialog, Drawer, Toast, UIKit Badge, Pipeline Graph, Anatomy, Pipeline Graph JSON, Architecture & Roadmap, useIsMobile, Subtask Annotation, Label, Toggle, Workflow Canvas, Node Types, Toolbar, Modal, Form Layout, Input, Mouse Cursor Icons, Tooltip, Popover, Dropdown Menu, Theme, Tree View, Context Menu, Dial, Waterfall, Slider, Number Inputs, Layout, Sync Scroll).
 ---
 # DreamLake
 
@@ -20,7 +20,7 @@ file that matches the question; each is a self-contained markdown page.
 **Components**
 
 - `reference/components-avatar.md` — Avatar: Image-or-initials avatar with adjustable size and corner radius.
-- `reference/components-breadcrumb-tree.md` — BreadcrumbTree: Breadcrumb selector with a Miller-column drop-down for navigating deep hierarchies.
+- `reference/components-breadcrumb-tree.md` — BreadcrumbTree: Breadcrumb selector whose panel navigates deep hierarchies as Miller columns or as a column-wrapped tree.
 - `reference/components-button.md` — Button: Action button with primary, secondary, ghost and danger variants.
 - `reference/components-code-block.md` — CodeBlock: Syntax-highlighted code surface that can switch into an editor.
 - `reference/components-dialog.md` — Dialog: Modal dialog with backdrop, Escape-to-dismiss, and a footer action row.
@@ -32,6 +32,8 @@ file that matches the question; each is a self-contained markdown page.
 - `reference/components-profile-layout.md` — ProfileLayout: Full-page profile layout — sticky top bar with animated tabs, a fixed left rail, and a scrollable main column.
 - `reference/components-resizable-layout.md` — ResizableLayout: Three-column drag-to-resize layout with optional persistence and fixed-px column modes.
 - `reference/components-panel-layout.md` — PanelLayout: Recursive tiling panel workspace — split, drag-to-dock, and tab groups over a pure tree model.
+- `reference/components-layout-controller.md` — Layout controller: Declarative panel destinations, spawn policies and agent control, with forkable executable examples.
+- `reference/components-tabbed-container.md` — TabbedContainer: A neutral framed tabbed surface for examples, scenarios and arbitrary content, based on CodeTabs.
 - `reference/components-select.md` — Select: Composable single-select with a trigger, value, and grouped items.
 - `reference/components-side-nav.md` — SideNav: Sidebar shell with pinned header/footer and a scrollable body of titled, sticky groups.
 - `reference/components-tabs.md` — Tabs: Animated tab switcher with underline or segment variants, multiple sizes, and controlled/uncontrolled state.

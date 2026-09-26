@@ -58,3 +58,4 @@ export * from "./WorkflowGraph";
 export * from "./TabRow";
 
 export * from "./ListSearchInput";
+export * from './TabbedContainer';
