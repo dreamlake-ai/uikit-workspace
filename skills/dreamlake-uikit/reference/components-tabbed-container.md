@@ -4,17 +4,28 @@ A tab strip joined to one content frame. It generalizes the raised file-tab
 geometry of Dockit's code-block tabs to arbitrary React content. Colors use
 neutral UIKit surface, ink and hairline tokens in light and dark themes.
 
-One shared starting point.</p>},
-  {value:'right',label:'Spawn right',children:<p>A and the new view sit side by side.</p>},
-  {value:'below',label:'Spawn below',children:<p>The new view sits below A.</p>}
-]} />
+One shared starting point.</p>,
+    },
+    {
+      value: "right",
+      label: "Spawn right",
+      children: <p>A and the new view sit side by side.</p>,
+    },
+    {
+      value: "below",
+      label: "Spawn below",
+      children: <p>The new view sits below A.</p>,
+    },
+  ]}
+/>
 
 ```tsx
 <TabbedContainer
   aria-label="Spawn alternatives"
+  activationMode="hover"
   items={[
-    { value: 'right', label: 'Spawn right', children: <RightExample /> },
-    { value: 'below', label: 'Spawn below', children: <BelowExample /> },
+    { value: "right", label: "Spawn right", children: <RightExample /> },
+    { value: "below", label: "Spawn below", children: <BelowExample /> },
   ]}
 />
 ```
@@ -29,3 +40,7 @@ Arrow keys, Home and End select and focus tabs. Every tab and panel has linked
 ARIA IDs. Long labels remain on one line in a horizontally scrollable strip.
 The [layout controller examples](reference/components-layout-controller.md) use this container
 to fork commands from one shared starting layout.
+
+Set `activationMode="hover"` to switch on mouse hover without moving keyboard focus.
+The default is `click`. Touch still selects by tapping, and click and keyboard controls
+work in both modes. The layout examples enable hover for quick comparisons.

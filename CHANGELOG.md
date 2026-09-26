@@ -1,5 +1,10 @@
 # Release notes
 
+## 0.2.2 — 2026-09-26
+
+- Add opt-in mouse hover selection to `TabbedContainer`, preserving touch, click and keyboard navigation.
+- Give layout examples individual section headings, remove outer cards, use Dockit ContentRow, and distinguish new, removed and moved tabs with color and symbols.
+
 ## 0.2.1 — 2026-09-26
 
 - Resolve equal closest-panel distances by center distance before creation order, so an aligned neighbor wins over a touching corner in a grid.

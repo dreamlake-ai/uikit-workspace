@@ -15,6 +15,8 @@ export interface TabbedContainerProps {
   "aria-label": string;
   /** Preserve inactive contents and their local state. Hidden panels are inert. */
   keepMounted?: boolean;
+  /** Mouse hover selects a tab without moving keyboard focus. Click remains supported. */
+  activationMode?: "click" | "hover";
   className?: string;
   contentClassName?: string;
 }
@@ -28,6 +30,7 @@ export function TabbedContainer({
   onValueChange,
   "aria-label": label,
   keepMounted = true,
+  activationMode = "click",
   className,
   contentClassName,
 }: TabbedContainerProps) {
@@ -60,6 +63,14 @@ export function TabbedContainer({
                 id={`${id}-tab-${i}`}
                 aria-controls={`${id}-panel-${i}`}
                 tabIndex={index === i ? 0 : -1}
+                onPointerEnter={(event) => {
+                  if (
+                    activationMode === "hover" &&
+                    event.pointerType === "mouse" &&
+                    index !== i
+                  )
+                    choose(item.value);
+                }}
                 onKeyDown={(event) => {
                   let next: number;
                   if (event.key === "ArrowRight") next = (i + 1) % items.length;
