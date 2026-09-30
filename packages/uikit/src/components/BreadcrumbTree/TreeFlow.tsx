@@ -138,20 +138,36 @@ export function TreeFlow({
   //
   // Keyed by node id: a move changes a row's path key, so the key is precisely
   // what cannot tie the before and the after together.
-  const lastRects = useRef<Map<string, DOMRect>>(new Map());
+  //
+  // Positions are CONTENT coordinates — relative to the scroller's content,
+  // not the viewport. The flow scrolls sideways (the wheel, the scroll to a
+  // just-moved row) without re-rendering, and the panel itself can move; in
+  // viewport terms every row then "moved" by that offset, and the next render
+  // for any reason — a hover — slid the whole flow back and forth.
+  //
+  // And only a render with new rows plays: the tree's data or expansion
+  // changed. Hover re-renders to paint the trail and moves nothing.
+  const lastRects = useRef<Map<string, { x: number; y: number }>>(new Map());
+  const flippedRows = useRef<Row[] | null>(null);
   useLayoutEffect(() => {
     const host = scrollerRefForFlip.current;
     if (!host) return;
+    if (rows === flippedRows.current) return;
+    flippedRows.current = rows;
+    const frame = host.getBoundingClientRect();
+    const originX = frame.left - host.scrollLeft;
+    const originY = frame.top - host.scrollTop;
     const nodes = host.querySelectorAll<HTMLElement>("[data-node-id]");
-    const next = new Map<string, DOMRect>();
+    const next = new Map<string, { x: number; y: number }>();
     for (const el of nodes) {
       const id = el.dataset.nodeId!;
-      const now = el.getBoundingClientRect();
+      const rect = el.getBoundingClientRect();
+      const now = { x: rect.left - originX, y: rect.top - originY };
       next.set(id, now);
       const before = lastRects.current.get(id);
       if (!before) continue;
-      const dx = before.left - now.left;
-      const dy = before.top - now.top;
+      const dx = before.x - now.x;
+      const dy = before.y - now.y;
       if (Math.abs(dx) < FLIP_MIN_PX && Math.abs(dy) < FLIP_MIN_PX) continue;
       // Invert, then play. The entrance stagger writes to `animation`, so this
       // has to clear it or a row that moves on its first sight would run both.
