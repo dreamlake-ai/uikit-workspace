@@ -7,6 +7,7 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from 'react'
 import { cn } from '../../lib/utils'
+import { startResizeDrag } from '../../lib/resize-drag'
 import { resizeSplit } from './panel-box'
 import { MIN_PX, type Dir } from './panel-tree'
 
@@ -55,12 +56,16 @@ export function Divider({
   const [cur, setCur] = useState<{ pos: number; len: number } | null>(null)
   const drag = useRef<{ start: number; containerPx: number; a: number; b: number } | null>(null)
 
+  const stopRef = useRef<(() => void) | null>(null)
+  useEffect(() => () => stopRef.current?.(), [])
+
   const isRow = dir === 'row'
 
   const onPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
     // Only a primary-button drag resizes; a right-click or middle-click must not
     // arm one (it would never get its matching pointerup and would stick).
-    if (e.button !== 0) return
+    if (e.button !== 0 || drag.current) return
+    e.preventDefault()
     const parent = e.currentTarget.parentElement
     if (!parent) return
     const rect = parent.getBoundingClientRect()
@@ -71,14 +76,31 @@ export function Divider({
       b: sizeB,
     }
     setActive(true)
+    const target = e.currentTarget
+    const updatePill = (point: { clientX: number; clientY: number }) => {
+      const r = target.getBoundingClientRect()
+      setCur({ pos: isRow ? point.clientY - r.top : point.clientX - r.left,
+        len: isRow ? r.height : r.width })
+    }
+    updatePill(e)
+    stopRef.current = startResizeDrag(target, e, isRow ? 'col-resize' : 'row-resize', point => {
+      const d = drag.current
+      if (!d) return
+      const { a, b } = resizeSplit({ containerPx: d.containerPx, childCount,
+        deltaPx: (isRow ? point.clientX : point.clientY) - d.start,
+        a: d.a, b: d.b, minPx: MIN_PX })
+      onResizeRef.current(splitId, index, a, b)
+      updatePill(point)
+    }, () => {
+      drag.current = null
+      stopRef.current = null
+      setActive(false)
+      if (!hoverRef.current) setCur(null)
+    })
   }
 
-  // Track the cursor along the bar (drives the pill) — hover only. The DRAG is
-  // driven from window listeners (see the effect below), NOT from this handler:
-  // resizing slides the boundary out from under a fast pointer and past the thin
-  // 10px bar, so an element-scoped move/up would drop events — and a dropped
-  // pointerup left the drag armed, the boundary tracking the cursor forever after
-  // release. Window listeners always see the release, wherever it lands.
+  // Hover tracks locally. During a gesture the captured pointer and native
+  // window listener own movement, even when the boundary trails the pointer.
   const onPointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
     if (drag.current) return
     const rect = e.currentTarget.getBoundingClientRect()
@@ -94,44 +116,6 @@ export function Divider({
   onResizeRef.current = onResize
   const hoverRef = useRef(hover)
   hoverRef.current = hover
-
-  useEffect(() => {
-    if (!active) return
-    const onMove = (e: PointerEvent) => {
-      const d = drag.current
-      if (!d) return
-      const along = isRow ? e.clientX : e.clientY
-      const { a, b } = resizeSplit({
-        containerPx: d.containerPx,
-        childCount,
-        deltaPx: along - d.start,
-        a: d.a,
-        b: d.b,
-        minPx: MIN_PX,
-      })
-      onResizeRef.current(splitId, index, a, b)
-    }
-    const finish = () => {
-      drag.current = null
-      setActive(false)
-      if (!hoverRef.current) setCur(null)
-    }
-    // A drag over other panels should read as a resize, not select their text.
-    const prevCursor = document.body.style.cursor
-    const prevSelect = document.body.style.userSelect
-    document.body.style.cursor = isRow ? 'col-resize' : 'row-resize'
-    document.body.style.userSelect = 'none'
-    window.addEventListener('pointermove', onMove)
-    window.addEventListener('pointerup', finish)
-    window.addEventListener('pointercancel', finish)
-    return () => {
-      window.removeEventListener('pointermove', onMove)
-      window.removeEventListener('pointerup', finish)
-      window.removeEventListener('pointercancel', finish)
-      document.body.style.cursor = prevCursor
-      document.body.style.userSelect = prevSelect
-    }
-  }, [active, isRow, childCount, splitId, index])
 
   /** Resize by a px-equivalent nudge, through the very same clamp the drag uses. */
   const nudge = (deltaPx: number, el: HTMLElement) => {

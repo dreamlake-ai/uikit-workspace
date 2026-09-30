@@ -113,10 +113,14 @@ export function Waterfall({
   const maximum = Math.max(0, Math.min(maxPanelWidth, available));
   const minimum = Math.max(0, Math.min(minPanelWidth, maximum));
   const effectiveWidth = Math.max(minimum, Math.min(maximum, requestedWidth));
+  const liveWidthRef = useRef(effectiveWidth);
+  liveWidthRef.current = effectiveWidth;
   const resizePanel = (width: number) => {
     const next = Math.max(minimum, Math.min(maximum, width));
+    const previous = liveWidthRef.current;
+    liveWidthRef.current = next;
     setRequestedWidth(next);
-    if (next !== effectiveWidth) onPanelWidthChange?.(next);
+    if (next !== previous) onPanelWidthChange?.(next);
   };
   const [visibleLogData, setVisibleLogData] = useState<LogItemWithMeta[]>([]);
   const [temporalMarkers, setTemporalMarkers] = useState<number[]>([]);
@@ -271,7 +275,7 @@ export function Waterfall({
                 <ResizeDivider
                   axis="x"
                   size={12}
-                  onResize={(delta) => resizePanel(effectiveWidth + delta)}
+                  onResize={(delta) => resizePanel(liveWidthRef.current + delta)}
                 />
               </div>
             )}

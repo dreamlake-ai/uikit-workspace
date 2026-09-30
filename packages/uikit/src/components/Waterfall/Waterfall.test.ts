@@ -281,13 +281,13 @@ it("resizes through the real divider and keyboard within public bounds", () => {
   expect(separator().getAttribute("aria-controls")).toBeTruthy();
   act(() =>
     separator().firstElementChild!.dispatchEvent(
-      new MouseEvent("mousedown", { bubbles: true, clientX: 300 }),
+      new PointerEvent("pointerdown", { bubbles: true, pointerId: 1, buttons: 1, clientX: 300 }),
     ),
   );
   act(() =>
-    document.dispatchEvent(new MouseEvent("mousemove", { clientX: 350 })),
+    window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 1, buttons: 1, clientX: 350 })),
   );
-  act(() => document.dispatchEvent(new MouseEvent("mouseup")));
+  act(() => window.dispatchEvent(new PointerEvent("pointerup", { pointerId: 1, clientX: 350 })));
   expect(panelSize()).toBe(350);
   expect(onPanelWidthChange).toHaveBeenLastCalledWith(350);
   resizeKey("ArrowRight");

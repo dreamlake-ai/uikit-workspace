@@ -1,6 +1,7 @@
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { cn } from '../../lib/utils'
+import { startResizeDrag } from '../../lib/resize-drag'
 
 export interface ResizeDividerProps {
   axis: 'x' | 'y'
@@ -55,6 +56,8 @@ export function ResizeDivider({
 
   const hostRef = useRef<HTMLDivElement>(null)
   const startRef = useRef(0)
+  const stopRef = useRef<(() => void) | null>(null)
+  useEffect(() => () => stopRef.current?.(), [])
   const lastPosRef = useRef<number | null>(null)
   const prevPosRef = useRef<number | null>(null)
   const leaveTimers = useRef<ReturnType<typeof setTimeout>[]>([])
@@ -62,11 +65,9 @@ export function ResizeDivider({
   const onResizeRef = useRef(onResize)
   const onResizeStartRef = useRef(onResizeStart)
   const onResizeEndRef = useRef(onResizeEnd)
-  useEffect(() => {
-    onResizeRef.current = onResize
-    onResizeStartRef.current = onResizeStart
-    onResizeEndRef.current = onResizeEnd
-  }, [onResize, onResizeStart, onResizeEnd])
+  onResizeRef.current = onResize
+  onResizeStartRef.current = onResizeStart
+  onResizeEndRef.current = onResizeEnd
 
   const clearLeaveTimers = () => {
     leaveTimers.current.forEach(clearTimeout)
@@ -82,44 +83,32 @@ export function ResizeDivider({
     return isHorizontal ? e.clientY - r.top : e.clientX - r.left
   }
 
-  const handleMouseDown = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault()
-      setDragging(true)
-      startRef.current = isHorizontal ? e.clientX : e.clientY
-      onResizeStartRef.current?.()
-    },
-    [isHorizontal],
-  )
-
-  useEffect(() => {
-    if (!dragging) return
-    const onMove = (e: MouseEvent) => {
-      e.preventDefault()
-      const current = isHorizontal ? e.clientX : e.clientY
-      const delta = current - startRef.current
-      startRef.current = current
-      onResizeRef.current(delta)
-      // Track the cursor along the long axis so the pill follows during drag.
-      const pos = readPos(e)
-      if (pos != null) {
-        prevPosRef.current = lastPosRef.current
-        lastPosRef.current = pos
-        setCursorPos(pos)
-      }
-    }
-    const onUp = () => {
-      setDragging(false)
-      onResizeEndRef.current?.()
-    }
-    document.addEventListener('mousemove', onMove)
-    document.addEventListener('mouseup', onUp)
-    return () => {
-      document.removeEventListener('mousemove', onMove)
-      document.removeEventListener('mouseup', onUp)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dragging, isHorizontal])
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.button !== 0 || stopRef.current) return
+    e.preventDefault()
+    clearLeaveTimers()
+    setLeaveAnim(null)
+    setDragging(true)
+    startRef.current = isHorizontal ? e.clientX : e.clientY
+    stopRef.current = startResizeDrag(e.currentTarget, e,
+      isHorizontal ? 'col-resize' : 'row-resize', point => {
+        const current = isHorizontal ? point.clientX : point.clientY
+        const delta = current - startRef.current
+        startRef.current = current
+        if (delta !== 0) onResizeRef.current(delta)
+        const pos = readPos(point)
+        if (pos != null) {
+          prevPosRef.current = lastPosRef.current
+          lastPosRef.current = pos
+          setCursorPos(pos)
+        }
+      }, () => {
+        stopRef.current = null
+        setDragging(false)
+        onResizeEndRef.current?.()
+      })
+    onResizeStartRef.current?.()
+  }
 
   const handleMouseEnter = (e: React.MouseEvent) => {
     clearLeaveTimers()
@@ -135,7 +124,7 @@ export function ResizeDivider({
 
   const handleMouseMove = (e: React.MouseEvent) => {
     // Only react when we own cursor (hover or drag); useEffect handles drag.
-    if (!hover) return
+    if (!hover || stopRef.current) return
     const pos = readPos(e)
     if (pos == null) return
     prevPosRef.current = lastPosRef.current
@@ -145,6 +134,7 @@ export function ResizeDivider({
 
   const handleMouseLeave = () => {
     setHover(false)
+    if (stopRef.current) return
     const last = lastPosRef.current
     const prev = prevPosRef.current
     const host = hostRef.current
@@ -207,7 +197,7 @@ export function ResizeDivider({
     <>
       {/* While dragging, a transparent full-viewport overlay covers any iframe
           (or other event-swallowing surface) in a sibling column, so the
-          document mousemove/mouseup listeners keep firing — otherwise a drag
+          window pointermove/pointerup listeners keep firing — otherwise a drag
           over an iframe stops tracking and never ends. */}
       {dragging && typeof document !== 'undefined' && createPortal(
         <div
@@ -225,8 +215,8 @@ export function ResizeDivider({
           isHorizontal ? 'cursor-col-resize h-full' : 'cursor-row-resize w-full',
           className,
         )}
-        style={isHorizontal ? { width: size } : { height: size }}
-        onMouseDown={handleMouseDown}
+        style={{ ...(isHorizontal ? { width: size } : { height: size }), touchAction: 'none' }}
+        onPointerDown={handlePointerDown}
         onMouseEnter={handleMouseEnter}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
