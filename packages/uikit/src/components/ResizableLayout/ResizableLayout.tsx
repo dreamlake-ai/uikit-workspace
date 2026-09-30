@@ -175,8 +175,10 @@ export function ResizableLayout({
       -(leftFlexRef.current - leftMin),
       Math.min(middleFlexRef.current - middleMin, raw)
     );
-    setLeftFlex(leftFlexRef.current + delta);
-    setMiddleFlex(middleFlexRef.current - delta);
+    leftFlexRef.current += delta;
+    middleFlexRef.current -= delta;
+    setLeftFlex(leftFlexRef.current);
+    setMiddleFlex(middleFlexRef.current);
   }, []);
 
   const handleMiddleRightResize = useCallback((deltaX: number) => {
@@ -192,6 +194,7 @@ export function ResizableLayout({
       const rightMin = minWidthsRef.current?.right ?? 0;
       const max = Math.max(min, cw - fixedLeft - rightMin);
       const next = Math.max(min, Math.min(max, middlePxRef.current + deltaX));
+      middlePxRef.current = next;
       setMiddlePx(next);
       return;
     }
@@ -213,8 +216,10 @@ export function ResizableLayout({
       -(middleFlexRef.current - middleMin),
       Math.min(rightFlexRef.current - rightMin, raw)
     );
-    setMiddleFlex(middleFlexRef.current + delta);
-    setRightFlex(rightFlexRef.current - delta);
+    middleFlexRef.current += delta;
+    rightFlexRef.current -= delta;
+    setMiddleFlex(middleFlexRef.current);
+    setRightFlex(rightFlexRef.current);
   }, [leftFixedPx, leftHidden, middleFixedPx]);
 
   const showLeftDivider = !leftHidden && !middleHidden;

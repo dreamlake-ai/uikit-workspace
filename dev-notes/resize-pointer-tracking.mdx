@@ -1,0 +1,35 @@
+# Resize pointer tracking — 2026-09-30
+
+## Unreleased
+
+ResizeDivider and PanelLayout dividers register their gesture listeners directly
+in pointerdown, before React commits an active state. They capture the initiating
+pointer so crossing a thin divider or an iframe does not require returning to the
+handle. Native window capture listeners also provide a fallback when pointer
+capture is unavailable and observe events stopped by child surfaces.
+
+Every move records the latest viewport position. Resize callbacks run at most
+once per animation frame, avoiding a backlog of obsolete positions when rendering
+is busy. Release applies its final position synchronously before ending the drag.
+Cancellation, lost capture, window blur, a missed release, and unmount flush any
+pending move and remove listeners, capture, and cursor/selection locks. Only the
+initiating pointer can move or finish a gesture. JavaScript cannot update the
+layout during a main-thread stall; tracking resumes at the latest delivered
+position when the thread becomes available.
+
+PanelLayout continues to compute absolute sizes from the press position and
+preserves its keyboard splitter controls. Its pill now follows the pointer during
+drag as well as hover. ResizableLayout and Waterfall update their live width refs
+immediately so several moves or release before a React render retain the full
+travel and final persisted width. The DreamLake sidebar reuses ResizeDivider while
+preserving its existing pill and width limits.
+
+Validation: 264 UIKit tests, including burst movement/release before a render,
+latest-position frame coalescing, pointer identity and all termination paths.
+The DreamLake `tests/resize-drag-preview` fixture exercises row, column, legacy
+and sidebar controls in Chromium and WebKit with repeated 65ms main-thread stalls,
+iframe crossings, final coordinates, and release outside the handle.
+
+No public skill impact: this changes browser gesture reliability and preserves
+component props and task procedures. No public documentation pages or generated
+skills change. This source behavior has not been released.
