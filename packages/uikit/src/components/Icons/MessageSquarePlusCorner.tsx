@@ -26,6 +26,6 @@ export const MessageSquarePlusCorner = createLucideIcon(
         key: "bubble",
       },
     ],
-    ["path", { d: "M14 15h8M18 11v8", key: "plus" }],
+  ["path", { d: "M14 16h8M18 12v8", key: "plus" }],
   ],
 );
