@@ -18,6 +18,7 @@ import {
   FloatingList,
   FloatingPortal,
   autoUpdate,
+  arrow as arrowMiddleware,
   flip,
   offset,
   shift,
@@ -50,6 +51,8 @@ function mergeRefs<T>(
 }
 
 interface SelectContextValue {
+  arrow: boolean;
+  arrowRef: React.RefObject<HTMLSpanElement | null>;
   open: boolean;
   setOpen: (open: boolean) => void;
   value: string | undefined;
@@ -94,6 +97,8 @@ export interface SelectOption {
 }
 
 export interface SelectProps {
+  /** Show a trigger-pointing wedge, matching Menu. Default false. */
+  arrow?: boolean;
   value?: string;
   defaultValue?: string;
   onValueChange?: (value: string) => void;
@@ -132,6 +137,7 @@ export interface SelectProps {
  * come from `@floating-ui/react`; the panel matches the trigger width.
  */
 export function Select({
+  arrow = false,
   value: controlledValue,
   defaultValue,
   onValueChange,
@@ -195,6 +201,7 @@ export function Select({
   const labelsRef = useRef<Array<string | null>>([]);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
+  const arrowRef = useRef<HTMLSpanElement>(null);
   const { refs, floatingStyles, context } = useFloating({
     open,
     onOpenChange: setOpen,
@@ -207,6 +214,7 @@ export function Select({
       offset(8),
       flip({ padding: 8 }),
       shift({ padding: 8 }),
+      ...(arrow ? [arrowMiddleware({ element: arrowRef, padding: 16 })] : []),
       sizeMiddleware({
         apply({ rects, elements }) {
           Object.assign(elements.floating.style, {
@@ -237,6 +245,8 @@ export function Select({
 
   const ctx = useMemo<SelectContextValue>(
     () => ({
+      arrow,
+      arrowRef,
       open,
       setOpen,
       value,
@@ -254,6 +264,7 @@ export function Select({
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
+      arrow,
       open,
       value,
       labelMap,
@@ -379,16 +390,52 @@ export function SelectContent({
             // A flex column so the rows do not touch. Each row paints its own rounded
             // fill on hover and when selected, and two of those meeting edge to edge
             // read as one shape rather than two rows.
-            "uikit-panel-in z-[200] min-w-[140px] max-h-[min(60vh,320px)] overflow-y-auto rounded-[var(--radius)] p-1 font-uikit-ui",
-            "flex flex-col gap-px",
+            "uikit-panel-in z-[200] min-w-[140px] max-h-[min(60vh,320px)] rounded-[var(--radius)] font-uikit-ui",
+            "flex flex-col",
             "bg-uikit-bg shadow-uikit-soft outline-none",
             className,
           )}
           {...ctx.getFloatingProps(rest)}
         >
-          <FloatingList elementsRef={ctx.elementsRef} labelsRef={ctx.labelsRef}>
-            {children}
-          </FloatingList>
+          {ctx.arrow && (
+            <span
+              ref={ctx.arrowRef}
+              aria-hidden="true"
+              data-select-arrow=""
+              style={{
+                position: 'absolute',
+                width: 7,
+                height: 7,
+                left: ctx.context.middlewareData.arrow?.x,
+                ...(ctx.context.placement.startsWith('top')
+                  ? {
+                      bottom: -0.5,
+                      borderBottom: '1px solid var(--faint)',
+                      borderRight: '1px solid var(--faint)',
+                      borderBottomRightRadius: 2,
+                      translate: '0 50%',
+                    }
+                  : {
+                      top: -0.5,
+                      borderTop: '1px solid var(--faint)',
+                      borderLeft: '1px solid var(--faint)',
+                      borderTopLeftRadius: 2,
+                      translate: '0 -50%',
+                    }),
+                transform: 'rotate(45deg)',
+                background: 'inherit',
+                pointerEvents: 'none',
+              }}
+            />
+          )}
+          <div
+            className="flex flex-col gap-px overflow-y-auto p-1"
+            style={{ maxHeight: 'inherit' }}
+          >
+            <FloatingList elementsRef={ctx.elementsRef} labelsRef={ctx.labelsRef}>
+              {children}
+            </FloatingList>
+          </div>
         </div>
       </FloatingFocusManager>
     </FloatingPortal>
