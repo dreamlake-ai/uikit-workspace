@@ -12,7 +12,7 @@ import {
 export const BasicSpec = () => {
   const [value, setValue] = useState<string | undefined>(undefined)
   return (
-    <Select value={value} onValueChange={setValue}>
+    <Select arrow value={value} onValueChange={setValue}>
       <SelectTrigger>
         <SelectValue placeholder="Pick a region…" />
       </SelectTrigger>

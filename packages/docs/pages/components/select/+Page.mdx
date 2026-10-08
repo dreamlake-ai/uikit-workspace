@@ -41,6 +41,10 @@ The shorthand is expanded once, inside `Select`, into exactly the tree you would
 have written — so the label map, the floating list and the typeahead all behave
 identically either way, and nothing downstream knows which form you used.
 
+The composed example enables `arrow`: a wedge matching `Menu` points toward the
+trigger and follows the panel when it flips. Options scroll inside the panel so
+the wedge remains visible.
+
 ## Reading the panel
 
 The options are the content of the panel, so they render in ink; `SelectLabel`
@@ -58,6 +62,7 @@ disabled rows.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
+| `arrow` | `boolean` | `false` | Show a trigger-pointing wedge. |
 | `options` | `SelectOption[]` | — | `{ value, label, disabled? }`. Composes the whole picker. Ignored when `children` are given. |
 | `placeholder` | `string` | — | Trigger placeholder, for the `options` form. |
 | `value` | `string` | — | Controlled selected value. |
