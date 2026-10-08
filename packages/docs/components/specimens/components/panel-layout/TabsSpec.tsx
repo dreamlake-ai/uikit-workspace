@@ -3,7 +3,8 @@ import { PanelStage } from './PanelStage'
 
 // A layout that already HAS tabs when it mounts. Groups otherwise only arise
 // from a user dropping one panel onto another's centre — `panelGroup` is how a
-// host seeds them.
+// host seeds them. Drag the divider to narrow the tabbed panel: its active
+// Chat tab stays in view while the earlier documents remain horizontally scrollable.
 const initial = () =>
   panelSplit(
     'row',
@@ -14,8 +15,9 @@ const initial = () =>
           panelLeaf({ view: 'editor', title: 'index.ts' }),
           panelLeaf({ view: 'editor', title: 'utils.ts' }),
           panelLeaf({ view: 'editor', title: 'README.md' }),
+          panelLeaf({ view: 'chat', title: 'Chat' }),
         ],
-        1,
+        3,
       ),
     ],
     [28, 72],

@@ -1,5 +1,6 @@
 import {
   useRef,
+  useLayoutEffect,
   type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
 } from 'react'
@@ -46,6 +47,28 @@ export function GroupTabBar({
   // Affordances only — see the Delete case below for why the strip does not
   // enforce this itself.
   const { closable, renderTab, tabbed } = usePanelConfig()
+  // Keep programmatically opened/selected tabs reachable when their panel
+  // narrows. Scroll only this strip: scrollIntoView can move the document or
+  // another docked panel and steal the reader's place.
+  useLayoutEffect(() => {
+    const bar = barRef.current
+    if (!bar) return
+    const active = bar.querySelector<HTMLElement>('[aria-selected="true"]')
+    if (!active) return
+    const reveal = () => {
+      const viewport = bar.getBoundingClientRect()
+      const tab = active.getBoundingClientRect()
+      if (!viewport.width || !tab.width) return
+      if (tab.left < viewport.left) bar.scrollLeft += tab.left - viewport.left
+      else if (tab.right > viewport.right) bar.scrollLeft += tab.right - viewport.right
+    }
+    reveal()
+    if (typeof ResizeObserver === 'undefined') return
+    const observer = new ResizeObserver(reveal)
+    observer.observe(bar)
+    observer.observe(active)
+    return () => observer.disconnect()
+  }, [group.activeId, group.children.length, tabbed])
   const Tab = renderTab ? 'div' : 'button'
   const canClose = (leaf: LeafNode) => closable?.(leaf) ?? true
 
