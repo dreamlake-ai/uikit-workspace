@@ -1,4 +1,4 @@
-import { createLucideIcon } from "lucide-react";
+import { createLucideIcon, type LucideIcon } from "lucide-react";
 
 /*
  * Adapted from Lucide's message-square-lock (ISC License).
@@ -16,7 +16,7 @@ import { createLucideIcon } from "lucide-react";
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-export const MessageSquarePlusCorner = createLucideIcon(
+export const MessageSquarePlusCorner: LucideIcon = createLucideIcon(
   "MessageSquarePlusCorner",
   [
     [
