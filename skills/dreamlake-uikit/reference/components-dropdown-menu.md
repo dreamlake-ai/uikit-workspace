@@ -8,15 +8,25 @@ A menu of actions opened from a trigger. Compose `DropdownMenuTrigger` +
 trigger and flips or shifts to stay within the viewport, supports keyboard list
 navigation, and dismisses on outside-click or Esc; submenus open on hover.
 
+## Trigger wedge
+
+Set `arrow` to connect the menu visually to its trigger. The optional wedge uses
+Select's seven-pixel shape, inherits the panel surface, and follows the actual
+placement when the menu flips or shifts near a viewport edge. It works on all
+four sides and adds four pixels to the configured `sideOffset` for clearance.
+Keyboard navigation and focus return are unchanged.
+
 ## Props
 
 ### `DropdownMenu`
 
-| Prop | Type | Default | Description |
-| --- | --- | --- | --- |
-| `side` | `'top' \| 'right' \| 'bottom' \| 'left'` | `'bottom'` | Preferred side. |
-| `align` | `'start' \| 'center' \| 'end'` | `'start'` | Alignment along the side. |
-| `open` / `defaultOpen` / `onOpenChange` | — | — | Controlled / uncontrolled open state. |
+| Prop                                    | Type                                     | Default    | Description                                            |
+| --------------------------------------- | ---------------------------------------- | ---------- | ------------------------------------------------------ |
+| `side`                                  | `'top' \| 'right' \| 'bottom' \| 'left'` | `'bottom'` | Preferred side.                                        |
+| `arrow`                                 | `boolean`                                | `false`    | Show a wedge facing the trigger after placement flips. |
+| `sideOffset`                            | `number`                                 | `4`        | Panel gap; `arrow` adds four pixels of clearance.      |
+| `align`                                 | `'start' \| 'center' \| 'end'`           | `'start'`  | Alignment along the side.                              |
+| `open` / `defaultOpen` / `onOpenChange` | —                                        | —          | Controlled / uncontrolled open state.                  |
 
 ### Items
 
