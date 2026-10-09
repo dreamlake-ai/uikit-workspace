@@ -15,6 +15,7 @@ import {
   FloatingList,
   FloatingPortal,
   autoUpdate,
+  arrow as arrowMiddleware,
   flip,
   offset,
   shift,
@@ -48,6 +49,8 @@ interface MenuContextValue {
   getItemProps: (p?: Record<string, unknown>) => Record<string, unknown>;
   activeIndex: number | null;
   elementsRef: React.MutableRefObject<Array<HTMLElement | null>>;
+  arrow: boolean;
+  arrowRef: React.RefObject<HTMLSpanElement | null>;
 }
 const MenuContext = createContext<MenuContextValue | null>(null);
 function useMenuContext(name: string) {
@@ -63,6 +66,8 @@ export interface DropdownMenuProps {
   side?: Side;
   align?: Align;
   sideOffset?: number;
+  /** Show a trigger-facing wedge that follows the resolved placement. */
+  arrow?: boolean;
   children: ReactNode;
 }
 
@@ -74,6 +79,7 @@ function useMenuFloating(
   align: Align,
   sideOffset: number,
   isSubmenu: boolean,
+  arrow = false,
 ) {
   const [uncontrolled, setUncontrolled] = useState(defaultOpen);
   const isControlled = controlledOpen !== undefined;
@@ -87,6 +93,7 @@ function useMenuFloating(
   const elementsRef = useRef<Array<HTMLElement | null>>([]);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
+  const arrowRef = useRef<HTMLSpanElement>(null);
   const { refs, floatingStyles, context } = useFloating({
     open,
     onOpenChange: setOpen,
@@ -97,9 +104,10 @@ function useMenuFloating(
     transform: false,
     whileElementsMounted: autoUpdate,
     middleware: [
-      offset(sideOffset),
+      offset(sideOffset + (arrow ? 4 : 0)),
       flip({ padding: 8 }),
       shift({ padding: 8 }),
+      ...(arrow ? [arrowMiddleware({ element: arrowRef, padding: 16 })] : []),
     ],
   });
 
@@ -136,6 +144,8 @@ function useMenuFloating(
     getItemProps,
     activeIndex,
     elementsRef,
+    arrow,
+    arrowRef,
   };
 }
 
@@ -155,6 +165,7 @@ export function DropdownMenu({
   side = "bottom",
   align = "start",
   sideOffset = 4,
+  arrow = false,
   children,
 }: DropdownMenuProps) {
   const value = useMenuFloating(
@@ -165,6 +176,7 @@ export function DropdownMenu({
     align,
     sideOffset,
     false,
+    arrow,
   );
   return <MenuContext.Provider value={value}>{children}</MenuContext.Provider>;
 }
@@ -221,10 +233,67 @@ export function DropdownMenuContent({
           )}
           {...ctx.getFloatingProps(rest)}
         >
+          <DropdownMenuArrow />
           <FloatingList elementsRef={ctx.elementsRef}>{children}</FloatingList>
         </div>
       </FloatingFocusManager>
     </FloatingPortal>
+  );
+}
+
+/** Same seven-pixel wedge as Select, on the edge facing the trigger after flips. */
+function DropdownMenuArrow() {
+  const ctx = useMenuContext("DropdownMenuArrow");
+  if (!ctx.arrow) return null;
+  const side = ctx.context.placement.split("-")[0] as Side;
+  const edge = {
+    top: {
+      bottom: -0.5,
+      borderBottom: "1px solid var(--faint)",
+      borderRight: "1px solid var(--faint)",
+      borderBottomRightRadius: 2,
+      translate: "0 50%",
+    },
+    bottom: {
+      top: -0.5,
+      borderTop: "1px solid var(--faint)",
+      borderLeft: "1px solid var(--faint)",
+      borderTopLeftRadius: 2,
+      translate: "0 -50%",
+    },
+    left: {
+      right: -0.5,
+      borderTop: "1px solid var(--faint)",
+      borderRight: "1px solid var(--faint)",
+      borderTopRightRadius: 2,
+      translate: "50% 0",
+    },
+    right: {
+      left: -0.5,
+      borderBottom: "1px solid var(--faint)",
+      borderLeft: "1px solid var(--faint)",
+      borderBottomLeftRadius: 2,
+      translate: "-50% 0",
+    },
+  }[side];
+  return (
+    <span
+      ref={ctx.arrowRef}
+      aria-hidden="true"
+      data-dropdown-menu-arrow=""
+      data-side={side}
+      style={{
+        position: "absolute",
+        width: 7,
+        height: 7,
+        left: ctx.context.middlewareData.arrow?.x,
+        top: ctx.context.middlewareData.arrow?.y,
+        ...edge,
+        transform: "rotate(45deg)",
+        background: "inherit",
+        pointerEvents: "none",
+      }}
+    />
   );
 }
 
