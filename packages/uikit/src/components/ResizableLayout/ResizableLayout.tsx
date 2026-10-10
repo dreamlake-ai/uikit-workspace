@@ -1,8 +1,20 @@
-import { ReactNode, useState, useEffect, useRef, useCallback } from "react";
+import { ReactNode, useState, useEffect, useRef, useCallback, useId, useLayoutEffect } from "react";
 import { cn } from "../../lib/utils";
+import { TabRow } from "../TabRow";
 import { ResizeDivider } from "./ResizeDivider";
 
+type CompactPanel = "left" | "middle" | "right";
+
 export interface ResizableLayoutProps {
+  /** Show one full-width panel with tabs; the caller owns the breakpoint. */
+  compact?: boolean;
+  /** Accessible product-specific names for the compact panel tabs. */
+  compactLabels?: Partial<Record<CompactPanel, string>>;
+  /** Controlled compact panel selection. Hidden panels use a visible fallback. */
+  compactPanel?: CompactPanel;
+  /** Initial uncontrolled selection. Defaults to middle. */
+  defaultCompactPanel?: CompactPanel;
+  onCompactPanelChange?: (panel: CompactPanel) => void;
   left: ReactNode;
   middle: ReactNode;
   right: ReactNode;
@@ -82,6 +94,11 @@ function writeWidths(key: string | undefined, widths: StoredWidths) {
 }
 
 export function ResizableLayout({
+  compact = false,
+  compactLabels,
+  compactPanel,
+  defaultCompactPanel = "middle",
+  onCompactPanelChange,
   left,
   middle,
   right,
@@ -101,6 +118,66 @@ export function ResizableLayout({
   middleFixedPx,
   className,
 }: ResizableLayoutProps) {
+  const panelId = useId();
+  const selectorRef = useRef<HTMLDivElement>(null);
+  const selectorHadFocus = useRef(false);
+  const slotRefs = useRef<Partial<Record<CompactPanel, HTMLDivElement | null>>>({});
+  const [selectedPanel, setSelectedPanel] = useState<CompactPanel>(defaultCompactPanel);
+  const visiblePanels = (["left", "middle", "right"] as const).filter(panel =>
+    !(panel === "left" ? leftHidden : panel === "middle" ? middleHidden : rightHidden)
+  );
+  const hasSelector = compact && visiblePanels.length > 1;
+  const requestedPanel = compactPanel ?? selectedPanel;
+  const activePanel = visiblePanels.includes(requestedPanel)
+    ? requestedPanel
+    : visiblePanels.includes("middle") ? "middle" : visiblePanels[0];
+  const labels = {
+    left: compactLabels?.left?.trim() || "Navigation",
+    middle: compactLabels?.middle?.trim() || "Content",
+    right: compactLabels?.right?.trim() || "Details",
+  };
+  const selectPanel = (panel: string) => {
+    const next = panel as CompactPanel;
+    setSelectedPanel(next);
+    onCompactPanelChange?.(next);
+  };
+  // Preserve the last usable selection if the uncontrolled active panel is removed.
+  useEffect(() => {
+    if (compact && activePanel && compactPanel == null && activePanel !== selectedPanel) {
+      setSelectedPanel(activePanel);
+    }
+  }, [compact, activePanel, compactPanel, selectedPanel]);
+
+  // A breakpoint or controlled selection can hide the currently focused editor.
+  // Move focus before paint so keyboard navigation resumes in the visible panel.
+  useLayoutEffect(() => {
+    if (!activePanel) return;
+    if (!hasSelector && selectorHadFocus.current) {
+      slotRefs.current[activePanel]?.focus({ preventScroll: true });
+      selectorHadFocus.current = false;
+    }
+    if (!compact) return;
+    const focused = document.activeElement;
+    const hiddenFocus = (["left", "middle", "right"] as const).some(panel =>
+      panel !== activePanel && slotRefs.current[panel]?.contains(focused)
+    );
+    if (hiddenFocus) slotRefs.current[activePanel]?.focus({ preventScroll: true });
+  }, [compact, activePanel, hasSelector]);
+
+  const compactProps = (panel: CompactPanel) => compact ? {
+    id: `${panelId}-${panel}`,
+    role: hasSelector ? "tabpanel" : undefined,
+    "aria-labelledby": hasSelector ? `${panelId}-${panel}-tab` : undefined,
+    inert: panel !== activePanel || undefined,
+    "aria-hidden": panel !== activePanel || undefined,
+    tabIndex: panel === activePanel ? 0 : -1,
+  } : { tabIndex: -1 };
+  const compactStyle = (panel: CompactPanel) => ({
+    display: panel === activePanel ? "flex" : "none",
+    flex: "1 1 0%",
+    minHeight: 0,
+  });
+
   // The divider's hit area is at least 20px regardless of `gap` so the
   // resize handle stays grabbable even when columns sit flush (`gap: 0`,
   // the design's flush-column layout). When the hit exceeds `gap` the
@@ -222,8 +299,8 @@ export function ResizableLayout({
     setRightFlex(rightFlexRef.current);
   }, [leftFixedPx, leftHidden, middleFixedPx]);
 
-  const showLeftDivider = !leftHidden && !middleHidden;
-  const showRightDivider = !middleHidden && !rightHidden;
+  const showLeftDivider = !compact && !leftHidden && !middleHidden;
+  const showRightDivider = !compact && !middleHidden && !rightHidden;
 
   // Column flex styles, derived once per render.
   const leftStyle = leftHidden
@@ -247,22 +324,44 @@ export function ResizableLayout({
       : { flexGrow: rightFlex, flexShrink: 1, flexBasis: 0 };
 
   return (
-    <div className={cn("relative w-full h-full", className)}>
+    <div className={cn("relative w-full h-full", className)} data-compact={compact || undefined}
+      onFocusCapture={event => { selectorHadFocus.current = !!selectorRef.current?.contains(event.target); }}
+      onBlurCapture={event => {
+        if (event.relatedTarget && !event.currentTarget.contains(event.relatedTarget)) selectorHadFocus.current = false;
+      }}
+    >
       <div
         className="absolute flex flex-col gap-3"
         style={{ inset: padding }}
       >
         {top && <div>{top}</div>}
 
-        <div ref={containerRef} className="flex flex-row flex-1 min-h-0">
+        {hasSelector && (
+          <div ref={selectorRef} className="shrink-0 min-w-0">
+            <TabRow
+              tabs={visiblePanels.map(panel => ({
+                value: panel, label: labels[panel],
+                id: `${panelId}-${panel}-tab`, panelId: `${panelId}-${panel}`,
+              }))}
+              value={activePanel!}
+              onValueChange={selectPanel}
+              aria-label="Layout panels"
+              minTabHeight={44}
+            />
+          </div>
+        )}
+
+        <div key="panels" ref={containerRef} className="flex flex-row flex-1 min-h-0">
           {/* Left column */}
           <div
             className={cn(
               "relative flex flex-col min-w-0 overflow-hidden",
-              !isResizing && "transition-all duration-300",
+              !compact && !isResizing && "transition-all duration-300",
               leftHidden ? "flex-[0_0_0px] opacity-0" : ""
             )}
-            style={leftStyle}
+            ref={element => { slotRefs.current.left = element; }}
+            {...compactProps("left")}
+            style={compact ? compactStyle("left") : leftStyle}
           >
             {left}
           </div>
@@ -303,16 +402,18 @@ export function ResizableLayout({
           <div
             className={cn(
               "relative flex flex-col min-w-0 min-h-0 overflow-hidden",
-              !isResizing && "transition-all duration-300",
+              !compact && !isResizing && "transition-all duration-300",
               middleHidden ? "flex-[0_0_0px] opacity-0" : ""
             )}
-            style={middleStyle}
+            ref={element => { slotRefs.current.middle = element; }}
+            {...compactProps("middle")}
+            style={compact ? compactStyle("middle") : middleStyle}
           >
             {middle}
           </div>
 
           {/* Gap between left and right when middle is hidden */}
-          {!leftHidden && middleHidden && !rightHidden && (
+          {!compact && !leftHidden && middleHidden && !rightHidden && (
             <div className="shrink-0" style={{ width: gap }} />
           )}
 
@@ -352,10 +453,12 @@ export function ResizableLayout({
           <div
             className={cn(
               "relative flex flex-col min-w-0 overflow-hidden",
-              !isResizing && "transition-all duration-300",
+              !compact && !isResizing && "transition-all duration-300",
               rightHidden ? "flex-[0_0_0px] opacity-0" : ""
             )}
-            style={rightStyle}
+            ref={element => { slotRefs.current.right = element; }}
+            {...compactProps("right")}
+            style={compact ? compactStyle("right") : rightStyle}
           >
             {right}
           </div>

@@ -4,6 +4,8 @@ import { cn } from "../../lib/utils";
 
 export interface TabRowItem {
   value: string;
+  /** Optional DOM identity for aria-labelledby on the controlled panel. */
+  id?: string;
   label: string;
   title?: string;
   /** Optional ID of the panel controlled by this tab. */
@@ -23,6 +25,8 @@ export interface TabRowProps {
   trailing?: ReactNode;
   /** Width in CSS pixels at which compression stops and scrolling begins. */
   minTabWidth?: number;
+  /** Minimum label height in CSS pixels; use 44 for touch-oriented selectors. */
+  minTabHeight?: number;
   /** Width in CSS pixels when enough room is available. */
   preferredTabWidth?: number;
   "aria-label"?: string;
@@ -33,7 +37,7 @@ export interface TabRowProps {
 /** Controlled, closable document tabs. Tabs compress before overflowing. */
 export function TabRow({
   tabs, value, onValueChange, onClose, leading, trailing,
-  minTabWidth = 80, preferredTabWidth = 170,
+  minTabWidth = 80, preferredTabWidth = 170, minTabHeight,
   "aria-label": ariaLabel = "Open documents", className, style,
 }: TabRowProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -48,6 +52,7 @@ export function TabRow({
   return (
     <div className={cn("uikit-tab-row", className)} style={{
       ...style,
+      "--tab-row-min-height": minTabHeight == null ? undefined : `${Math.max(0, minTabHeight)}px`,
       "--tab-row-min-width": `${minimum}px`,
       "--tab-row-preferred-width": `${preferred}px`,
     } as CSSProperties}>
@@ -57,7 +62,7 @@ export function TabRow({
         {tabs.map((tab, index) => (
           <div key={tab.value} className="uikit-tab-row-item" role="presentation"
             data-active={tab.value === value || undefined} data-enter={tab.entering || undefined}>
-            <button type="button" role="tab" className="uikit-tab-row-item-label"
+            <button id={tab.id} type="button" role="tab" className="uikit-tab-row-item-label"
               aria-selected={tab.value === value} aria-controls={tab.panelId}
               tabIndex={tab.value === value || (!tabs.some(t => t.value === value) && index === 0) ? 0 : -1}
               title={tab.title ?? tab.label} onClick={() => onValueChange(tab.value)}
@@ -117,7 +122,7 @@ const CSS =
   '.uikit-tab-row-item[data-active]{background:var(--bg);border-color:var(--faint);' +
   'border-bottom-color:var(--bg)}' +
   '.uikit-tab-row-item-label{font-family:var(--font-uikit-mono, monospace);font-size:11px;font-weight:500;letter-spacing:-.005em;' +
-  'border:0;background:transparent;cursor:pointer;padding:6px 10px;flex:1;min-width:0;text-align:left;' +
+  'border:0;background:transparent;cursor:pointer;padding:6px 10px;flex:1;min-width:0;min-height:var(--tab-row-min-height,0px);text-align:left;' +
   'overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--uikit-muted);opacity:.6;' +
   `transition:color 120ms ease,opacity 120ms ease,padding-right ${OPEN}}` +
   `.uikit-tab-row-item:hover .uikit-tab-row-item-label,.uikit-tab-row-item[data-active] .uikit-tab-row-item-label` +

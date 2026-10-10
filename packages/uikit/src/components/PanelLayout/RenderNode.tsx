@@ -31,9 +31,20 @@ export function RenderNode({
   onActivateTab,
   onHandleDown,
 }: RenderNodeProps) {
-  const { tabbed, showSingleTab } = usePanelConfig()
-  if (tabbed && node.kind !== 'split') {
+  const { tabbed, persistent, showSingleTab } = usePanelConfig()
+  if (persistent && node.kind !== 'split') {
     const group = node.kind === 'group' ? node : { kind: 'group' as const, id: node.id, children: [node], activeId: node.id }
+    // Persistent rendering is independent of the host's chrome policy. A
+    // compact=false opt-in keeps legacy headers, handles and group tabs exact.
+    if (!tabbed) return <div data-panel-region className="flex flex-col w-full h-full min-w-0 min-h-0">
+      {node.kind === 'group' && <GroupTabBar
+        group={group}
+        onActivate={id => onActivateTab(group.id, id)}
+        onCloseTab={onClose}
+        onHandleDown={onHandleDown}
+      />}
+      <div data-panel-slot={group.activeId} className="flex-1 min-h-0 min-w-0" />
+    </div>
     return <div data-panel-region className="relative flex flex-col w-full h-full min-w-0 min-h-0">
       <div
         data-dock-handle

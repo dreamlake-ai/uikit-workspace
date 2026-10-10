@@ -2,6 +2,7 @@ import {
   forwardRef,
   useEffect,
   useImperativeHandle,
+  useLayoutEffect,
   useRef,
   useState,
   type ForwardedRef,
@@ -16,6 +17,8 @@ import {
   tintFor,
   type PanelConfig,
 } from './config'
+import { TabRow } from '../TabRow/TabRow'
+import { tabDomId, tabPanelDomId } from './GroupTabBar'
 import { RenderNode } from './RenderNode'
 import { PersistentPanels } from './PersistentPanels'
 import { ROOT_PANEL_BOX, type PanelBox } from './panel-box'
@@ -122,6 +125,14 @@ export interface PanelLayoutHandle {
 }
 
 export interface PanelLayoutProps {
+  /** Show one focused panel with a selector for every leaf, including inactive
+   * group tabs. Pass a boolean at both widths to keep all view DOM mounted.
+   * Selection and breakpoint changes leave the desktop tree/sizes untouched. */
+  compact?: boolean
+  /** Accessible name for the compact panel selector. Default "Workspace panels". */
+  compactLabel?: string
+  /** Product-specific compact names, independent of desktop panel titles. */
+  compactPanelLabel?: (leaf: LeafNode) => string
   /** Layout-owned tabs; keep view DOM connected across moves. */
   tabbed?: boolean
   /** Show a tab for a lone view only when its content opts in. Groups always show tabs. */
@@ -214,6 +225,9 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
     initial,
     initialSingle = false,
     tabbed = false,
+    compact,
+    compactLabel = 'Workspace panels',
+    compactPanelLabel,
     showSingleTab,
     onRequestClose,
     root: rootProp,
@@ -258,6 +272,19 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
   })
   const root = controlled ? rootProp : internalRoot
   const [focusedId, setFocusedId] = useState<string>(() => firstLeafId(root))
+  // Supplying compact opts into connected surfaces at BOTH widths. Otherwise a
+  // breakpoint would switch renderers and destroy editors/iframes on resize.
+  const persistent = tabbed || compact !== undefined
+  const compactRef = useRef(compact)
+  compactRef.current = compact
+  const leaves: LeafNode[] = []
+  const collect = (node: PanelNode) => {
+    if (node.kind === 'leaf') leaves.push(node)
+    else node.children.forEach(collect)
+  }
+  collect(root)
+  const activeId = findLeaf(root, focusedId) ? focusedId : firstLeafId(root)
+  const hasCompactSelector = !!compact && leaves.length > 1
   // Active drag: the floating surrogate + where it would dock. `target` is null
   // while the cursor is over the source panel or empty space (the surrogate just
   // tracks the cursor at the panel's own size).
@@ -272,6 +299,8 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
   // layouts, and a document-wide query would happily return another layout's
   // panel — letting a drag in one dock into the other.
   const containerRef = useRef<HTMLDivElement>(null)
+  const selectorHadFocus = useRef(false)
+  const compactSelectorRef = useRef<HTMLDivElement>(null)
   const rootRef = useRef(root)
   rootRef.current = root
   const focusedLeafCallback = useRef(onFocusedLeafChange)
@@ -451,6 +480,7 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
       closeLeaf,
       focusLeaf: (id: string) => {
         if (!findLeaf(rootRef.current, id)) return // not a live leaf — ignore
+        if (compactRef.current) { focus(id); return }
         const activate = (node: PanelNode): PanelNode => node.kind === 'group' && node.children.some(c => c.id === id) ? { ...node, activeId: id } : node.kind === 'split' ? { ...node, children: node.children.map(activate) } : node
         commit(activate(rootRef.current))
         focus(id)
@@ -464,7 +494,7 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
   // the same chord does not also fire while we're here.
   const shortcutKey = splitShortcut === false ? null : (splitShortcut.key ?? 'd')
   useEffect(() => {
-    if (!shortcutKey) return
+    if (!shortcutKey || compact) return
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null
       if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return
@@ -477,7 +507,7 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
     window.addEventListener('keydown', onKey, true)
     return () => window.removeEventListener('keydown', onKey, true)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [shortcutKey])
+  }, [shortcutKey, compact])
 
   // Drag-to-dock via the header grab handle. Driven with pointer events rather
   // than native DnD so a floating surrogate can follow the cursor and morph into
@@ -625,7 +655,25 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
     }
   }, [dragArmed])
 
+  // Cancel a desktop gesture when its targets disappear at the breakpoint.
+  useEffect(() => { if (compact) setDrag(null) }, [compact])
+  useLayoutEffect(() => {
+    if (focusedId !== activeId) focus(activeId)
+  }, [activeId, focusedId])
+
+  useLayoutEffect(() => {
+    // The compact selector unmounts on return to desktop. Preserve a usable
+    // keyboard location instead of letting the removed tab send focus to body.
+    if (!hasCompactSelector && selectorHadFocus.current) {
+      containerRef.current?.querySelector<HTMLElement>('[data-surface]:not([hidden]) [data-leaf-id]')?.focus({ preventScroll: true })
+      selectorHadFocus.current = false
+    }
+  }, [hasCompactSelector])
+
   const config: PanelConfig = {
+    compact,
+    compactTabs: hasCompactSelector,
+    persistent,
     tabbed,
     showSingleTab,
     renderTab,
@@ -644,8 +692,14 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
   return (
     <div
       ref={containerRef}
+      onFocusCapture={event => {
+        selectorHadFocus.current = !!compactSelectorRef.current?.contains(event.target)
+      }}
+      onBlurCapture={event => {
+        if (event.relatedTarget && !event.currentTarget.contains(event.relatedTarget)) selectorHadFocus.current = false
+      }}
       className={cn(
-        'flex flex-col h-full min-h-0',
+        'flex flex-col h-full min-h-0 min-w-0',
         withToolbar ? 'gap-[10px]' : 'gap-0',
         className
       )}
@@ -673,10 +727,31 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
         </div>
       )}
 
-      {/* Panel tree */}
+      {hasCompactSelector && (
+        <div ref={compactSelectorRef} data-compact-selector className="shrink-0 min-w-0">
+          <TabRow
+            aria-label={compactLabel}
+            minTabHeight={44}
+            tabs={leaves.map(leaf => ({
+              value: leaf.id,
+              id: tabDomId(leaf.id),
+              label: compactPanelLabel?.(leaf)?.trim() || leaf.title || `Panel ${leaf.n}`,
+              panelId: tabPanelDomId(leaf.id),
+              closable: closable?.(leaf) ?? true,
+            }))}
+            value={activeId}
+            onValueChange={focus}
+            onClose={requestClose}
+          />
+        </div>
+      )}
+
+      {/* Compact changes slots, never the persisted tree or the view surfaces. */}
       <PanelConfigContext.Provider value={config}>
         <div className="flex-1 min-h-0 min-w-0 flex relative">
-          <RenderNode
+          {compact ? (
+            <div data-panel-slot={activeId} className="flex-1 min-h-0 min-w-0" />
+          ) : <RenderNode
             node={root}
             box={rootBox}
             draggingId={drag?.armed ? drag.srcId : null}
@@ -685,8 +760,8 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
             onResize={doResize}
             onActivateTab={doActivateTab}
             onHandleDown={onHandleDown}
-          />
-          {tabbed && <PersistentPanels root={root} rootBox={rootBox} draggingId={drag?.armed ? drag.srcId : null} onFocus={focus} onClose={requestClose} onHandleDown={onHandleDown} />}
+          />}
+          {persistent && <PersistentPanels compactId={compact ? activeId : undefined} root={root} rootBox={rootBox} draggingId={drag?.armed ? drag.srcId : null} onFocus={focus} onClose={requestClose} onHandleDown={onHandleDown} />}
         </div>
       </PanelConfigContext.Provider>
 
