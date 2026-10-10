@@ -69,8 +69,12 @@ full-width panel from every leaf, including inactive group tabs. Arrow keys,
 Home, End and Delete work as they do in other UIKit tab rows; `closable` and
 `onRequestClose` still govern dismissal. `compactLabel` names the selector for
 assistive technology (default: “Workspace panels”). `compactPanelLabel(leaf)` can
-provide shorter product-specific names without changing desktop titles. Hosts
-choose the breakpoint.
+provide shorter product-specific names without changing desktop titles.
+`compactPanelIcon(leaf)` makes that panel an icon-only tab while retaining its
+accessible label. `compactLeading` uses the existing TabRow leading slot for
+controls such as a subdued navigation menu; it keeps the row available even
+with one panel. Compact rows use the standard TabRow height and appearance.
+Hosts choose the breakpoint.
 
 Compact selection and resizing do not rewrite the desktop tree, group selection,
 or saved split sizes. Every view stays connected and mounted across panel changes
@@ -81,7 +85,8 @@ are suppressed while compact; explicit host split requests remain available and
 select the new panel.
 
 Supplying `compact` keeps surfaces mounted on the wide layout while preserving
-its existing header and tab chrome. A lone panel needs no selector. Keep passing
+its existing header and tab chrome. A lone panel needs no selector unless
+`compactLeading` supplies controls. Keep passing
 `false` on wide screens rather than removing the prop, so the renderer and view
 identities remain stable.
 

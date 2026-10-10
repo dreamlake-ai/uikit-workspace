@@ -117,13 +117,13 @@ it('omits the selector and tab relationships when only one panel is visible', ()
 })
 
 
-it('keeps touch selectors tall and supplies meaningful names for blank labels', () => {
+it('uses standard tab height and supplies meaningful names for blank labels', () => {
   render({ compact: true, compactLabels: { left: '', middle: '  ', right: 'Results' } })
   expect(tab('Navigation')).toBeDefined()
   expect(tab('Content')).toBeDefined()
   expect(tab('Results')).toBeDefined()
   const row = host.querySelector<HTMLElement>('.uikit-tab-row')!
-  expect(row.style.getPropertyValue('--tab-row-min-height')).toBe('44px')
+  expect(row.style.getPropertyValue('--tab-row-min-height')).toBe('')
 })
 
 it('restores focus to visible content when the compact selector disappears', () => {
@@ -131,4 +131,13 @@ it('restores focus to visible content when the compact selector disappears', () 
   act(() => tab('Editor').focus())
   render({ compact: false })
   expect(document.activeElement).toBe(host.querySelector('textarea')!.parentElement)
+})
+
+
+it('keeps leading controls in the same existing row even for a single visible panel', () => {
+  render({ compact: true, leftHidden: true, rightHidden: true, compactLeading: <button>Menu</button> })
+  const row = host.querySelector('.uikit-tab-row')!
+  expect(row.querySelector('.uikit-tab-row-controls')?.textContent).toBe('Menu')
+  expect(row.querySelectorAll('[role="tab"]')).toHaveLength(1)
+  expect(tab('Editor').getAttribute('aria-controls')).toBe(activePanels()[0].id)
 })

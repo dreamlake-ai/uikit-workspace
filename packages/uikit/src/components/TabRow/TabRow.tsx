@@ -7,6 +7,10 @@ export interface TabRowItem {
   /** Optional DOM identity for aria-labelledby on the controlled panel. */
   id?: string;
   label: string;
+  /** Optional visual beside the label, or in its place with iconOnly. */
+  icon?: ReactNode;
+  /** Compact icon tab; label remains the accessible name and default tooltip. */
+  iconOnly?: boolean;
   title?: string;
   /** Optional ID of the panel controlled by this tab. */
   panelId?: string;
@@ -59,10 +63,20 @@ export function TabRow({
       <div className="uikit-tab-row-line" aria-hidden />
       {leading != null && <div className="uikit-tab-row-controls">{leading}</div>}
       <div className="uikit-tab-row-scroll" ref={scrollRef} role="tablist" aria-label={ariaLabel}>
-        {tabs.map((tab, index) => (
+        {tabs.map((tab, index) => {
+          const hasIcon = tab.icon != null && typeof tab.icon !== "boolean";
+          const iconOnly = !!tab.iconOnly && hasIcon;
+          const iconWidth = onClose && tab.closable !== false ? 54 : 32;
+          return (
           <div key={tab.value} className="uikit-tab-row-item" role="presentation"
-            data-active={tab.value === value || undefined} data-enter={tab.entering || undefined}>
+            data-active={tab.value === value || undefined} data-enter={tab.entering || undefined}
+            data-icon-only={iconOnly || undefined}
+            style={iconOnly ? {
+              "--tab-row-min-width": `${iconWidth}px`,
+              "--tab-row-preferred-width": `${iconWidth}px`,
+            } as CSSProperties : undefined}>
             <button id={tab.id} type="button" role="tab" className="uikit-tab-row-item-label"
+              aria-label={iconOnly ? tab.label : undefined}
               aria-selected={tab.value === value} aria-controls={tab.panelId}
               tabIndex={tab.value === value || (!tabs.some(t => t.value === value) && index === 0) ? 0 : -1}
               title={tab.title ?? tab.label} onClick={() => onValueChange(tab.value)}
@@ -84,7 +98,8 @@ export function TabRow({
                 scrollRef.current?.querySelectorAll<HTMLButtonElement>('[role="tab"]')[next]?.focus();
                 onValueChange(tabs[next].value);
               }}>
-              {tab.label}
+              {hasIcon && <span className="uikit-tab-row-item-icon" aria-hidden>{tab.icon}</span>}
+              {!iconOnly && tab.label}
             </button>
             {onClose && tab.closable !== false && <button type="button"
               className="uikit-tab-row-item-x" aria-label={`Close ${tab.label}`}
@@ -92,7 +107,8 @@ export function TabRow({
               <X size={10} strokeWidth={3} />
             </button>}
           </div>
-        ))}
+          );
+        })}
       </div>
       {trailing != null && <div className="uikit-tab-row-controls">{trailing}</div>}
       <style>{CSS}</style>
@@ -103,6 +119,9 @@ export function TabRow({
 const RED = "oklch(59% .18 25)";
 const OPEN = "160ms cubic-bezier(.2,.7,.3,1)";
 const CSS =
+  '.uikit-tab-row-item-icon{display:inline-flex;vertical-align:middle;margin-right:6px}' +
+  '.uikit-tab-row-item[data-icon-only]{flex-shrink:0}' +
+  '.uikit-tab-row-item[data-icon-only] .uikit-tab-row-item-icon{margin-right:0}' +
   '.uikit-tab-row{position:relative;display:flex;align-items:flex-end;gap:6px;width:100%;min-width:0}' +
   '.uikit-tab-row-line{position:absolute;left:0;right:0;bottom:0;height:1px;background:var(--faint);z-index:0}' +
   '.uikit-tab-row-controls{position:relative;z-index:1;flex:0 0 auto;margin-bottom:4px;display:flex;align-items:center;gap:2px}' +
@@ -127,6 +146,7 @@ const CSS =
   `transition:color 120ms ease,opacity 120ms ease,padding-right ${OPEN}}` +
   `.uikit-tab-row-item:hover .uikit-tab-row-item-label,.uikit-tab-row-item[data-active] .uikit-tab-row-item-label` +
   '{padding-right:4px}' +
+  '.uikit-tab-row-item[data-icon-only] .uikit-tab-row-item-label{display:flex;align-items:center;justify-content:center;padding:6px}' +
   '.uikit-tab-row-item:hover .uikit-tab-row-item-label{opacity:1}' +
   '.uikit-tab-row-item[data-active] .uikit-tab-row-item-label{color:var(--ink);opacity:1;font-weight:600}' +
   '.uikit-tab-row-item-x{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;' +

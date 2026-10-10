@@ -181,3 +181,19 @@ it('does not expose internal view descriptors as compact panel labels', () => {
   act(() => root.render(<PanelLayout root={tree} compact />))
   expect(tabs()[0].textContent).toBe(`Panel ${leaf.n}`)
 })
+
+
+it('uses the existing leading slot and named icon tab without changing the desktop title', () => {
+  const leaf = panelLeaf({ title: 'Project title' })
+  act(() => root.render(<PanelLayout root={leaf} compact compactLeading={<button>Menu</button>}
+    compactPanelLabel={() => 'List'} compactPanelIcon={() => <svg data-list-icon />} closable={() => false} />))
+  const row = container.querySelector<HTMLElement>('.uikit-tab-row')!
+  expect(row.querySelector('.uikit-tab-row-controls')?.textContent).toBe('Menu')
+  expect(tabs()).toHaveLength(1)
+  expect(tabs()[0].getAttribute('aria-label')).toBe('List')
+  expect(tabs()[0].title).toBe('List')
+  expect(tabs()[0].querySelector('[data-list-icon]')).toBeTruthy()
+  expect(tabs()[0].textContent).toBe('')
+  expect(row.style.getPropertyValue('--tab-row-min-height')).toBe('')
+  expect(leaf.title).toBe('Project title')
+})

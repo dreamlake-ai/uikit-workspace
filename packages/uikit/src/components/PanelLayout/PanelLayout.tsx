@@ -131,6 +131,10 @@ export interface PanelLayoutProps {
   compact?: boolean
   /** Accessible name for the compact panel selector. Default "Workspace panels". */
   compactLabel?: string
+  /** Fixed controls before compact tabs, using TabRow’s existing leading slot. */
+  compactLeading?: ReactNode
+  /** An icon makes this compact panel an icon-only tab with its label retained. */
+  compactPanelIcon?: (leaf: LeafNode) => ReactNode
   /** Product-specific compact names, independent of desktop panel titles. */
   compactPanelLabel?: (leaf: LeafNode) => string
   /** Layout-owned tabs; keep view DOM connected across moves. */
@@ -228,6 +232,8 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
     compact,
     compactLabel = 'Workspace panels',
     compactPanelLabel,
+    compactLeading,
+    compactPanelIcon,
     showSingleTab,
     onRequestClose,
     root: rootProp,
@@ -284,7 +290,7 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
   }
   collect(root)
   const activeId = findLeaf(root, focusedId) ? focusedId : firstLeafId(root)
-  const hasCompactSelector = !!compact && leaves.length > 1
+  const hasCompactSelector = !!compact && (leaves.length > 1 || compactLeading != null)
   // Active drag: the floating surrogate + where it would dock. `target` is null
   // while the cursor is over the source panel or empty space (the surrogate just
   // tracks the cursor at the panel's own size).
@@ -731,14 +737,19 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
         <div ref={compactSelectorRef} data-compact-selector className="shrink-0 min-w-0">
           <TabRow
             aria-label={compactLabel}
-            minTabHeight={44}
-            tabs={leaves.map(leaf => ({
-              value: leaf.id,
-              id: tabDomId(leaf.id),
-              label: compactPanelLabel?.(leaf)?.trim() || leaf.title || `Panel ${leaf.n}`,
-              panelId: tabPanelDomId(leaf.id),
-              closable: closable?.(leaf) ?? true,
-            }))}
+            leading={compactLeading}
+            tabs={leaves.map(leaf => {
+              const icon = compactPanelIcon?.(leaf)
+              return {
+                value: leaf.id,
+                id: tabDomId(leaf.id),
+                label: compactPanelLabel?.(leaf)?.trim() || leaf.title || `Panel ${leaf.n}`,
+                icon,
+                iconOnly: icon != null,
+                panelId: tabPanelDomId(leaf.id),
+                closable: closable?.(leaf) ?? true,
+              }
+            })}
             value={activeId}
             onValueChange={focus}
             onClose={requestClose}
