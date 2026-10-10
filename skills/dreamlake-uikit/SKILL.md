@@ -53,7 +53,7 @@ file that matches the question; each is a self-contained markdown page.
 - `reference/components-drawer.md` — Drawer: Edge-anchored panel (sheet) that slides in from any side.
 - `reference/components-toast.md` — Toast: Transient notifications via an imperative toast() API and a Toaster.
 - `reference/components-uikit-badge.md` — UIKit Badge: Version chip showing the @dreamlake/uikit package name and version.
-- `reference/components-use-is-mobile.md` — useIsMobile: Hook returning true when the viewport is narrower than 768px.
+- `reference/components-use-is-mobile.md` — useIsMobile: SSR-safe viewport hook with a configurable breakpoint (768px by default).
 - `reference/components-label.md` — Label: Form label with size variants, associated via htmlFor.
 - `reference/components-toggle.md` — Toggle: Two-state toggle button, a segmented ToggleButtons group, and the outlined pill rows.
 - `reference/components-toolbar.md` — Toolbar: Horizontal container for grouped actions, with separators.
