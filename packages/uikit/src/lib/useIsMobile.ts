@@ -1,22 +1,20 @@
 import { useEffect, useState } from 'react'
 
-const MOBILE_BREAKPOINT = 768
-
 /**
- * `true` when the viewport is narrower than 768px. SSR-safe (returns `false`
- * until mounted). Ported verbatim from the legacy `@vuer-ai/vuer-uikit`.
+ * `true` when the viewport is narrower than `breakpoint` CSS pixels (768 by
+ * default). SSR-safe: server and first client render both return `false`.
  */
-export function useIsMobile() {
-  const [isMobile, setIsMobile] = useState<boolean | undefined>(undefined)
+export function useIsMobile(breakpoint = 768) {
+  const [isMobile, setIsMobile] = useState(false)
 
   useEffect(() => {
     if (typeof window === 'undefined') return
-    const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`)
-    const onChange = () => setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
+    const mql = window.matchMedia(`(max-width: ${breakpoint - 1}px)`)
+    const onChange = () => setIsMobile(mql.matches)
     mql.addEventListener('change', onChange)
-    setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
+    onChange()
     return () => mql.removeEventListener('change', onChange)
-  }, [])
+  }, [breakpoint])
 
-  return !!isMobile
+  return isMobile
 }
