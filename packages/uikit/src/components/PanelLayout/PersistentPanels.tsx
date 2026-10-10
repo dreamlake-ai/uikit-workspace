@@ -9,12 +9,14 @@ import type { LeafNode, PanelNode } from './panel-tree'
  */
 export function PersistentPanels({
   root,
+  compactId,
   rootBox,
   draggingId,
   onFocus,
   onClose,
   onHandleDown,
 }: {
+  compactId?: string
   root: PanelNode
   rootBox: PanelBox
   draggingId: string | null
@@ -22,16 +24,16 @@ export function PersistentPanels({
   onClose: (id: string) => void
   onHandleDown: (leaf: LeafNode, event: PointerEvent) => void
 }) {
-  const { showSingleTab } = usePanelConfig()
+  const { showSingleTab, tabbed } = usePanelConfig()
   const layer = useRef<HTMLDivElement>(null)
   const mountOrder = useRef(new Map<string, number>())
   const sequence = useRef(0)
   const leaves: { leaf: LeafNode; box: PanelBox; inGroup: boolean; multiple: boolean }[] = []
   const walk = (node: PanelNode, box: PanelBox) => {
-    if (node.kind === 'leaf') leaves.push({ leaf: node, box, inGroup: !!showSingleTab?.(node), multiple: false })
+    if (node.kind === 'leaf') leaves.push({ leaf: node, box, inGroup: !!tabbed && !!showSingleTab?.(node), multiple: false })
     else if (node.kind === 'group')
       node.children.forEach((leaf) =>
-        leaves.push({ leaf, box, inGroup: node.children.length > 1 || !!showSingleTab?.(leaf), multiple: node.children.length > 1 })
+        leaves.push({ leaf, box, inGroup: node.children.length > 1 || (!!tabbed && !!showSingleTab?.(leaf)), multiple: node.children.length > 1 })
       )
     else
       node.children.forEach((child, i) => walk(child, splitChildBox(box, node.sizes, i, node.dir)))
@@ -51,12 +53,15 @@ export function PersistentPanels({
     const toolbars = Array.from(el.querySelectorAll<HTMLElement>('[data-panel-toolbar]'))
     const measure = () => {
       const origin = area.getBoundingClientRect()
+      const focused = document.activeElement
+      let hidingFocus = false
       const rects = new Map(
         slots.map((slot) => [slot.dataset.panelSlot, slot.getBoundingClientRect()])
       )
       Array.from(el.children).forEach((child) => {
         const surface = child as HTMLElement
         const rect = rects.get(surface.dataset.surface)
+        if (!rect && focused && surface.contains(focused)) hidingFocus = true
         surface.hidden = !rect
         surface.inert = !rect
         surface.style.display = rect ? 'block' : 'none'
@@ -68,6 +73,13 @@ export function PersistentPanels({
             height: `${rect.height}px`,
           })
       })
+      // A breakpoint can hide the focused editor (e.g. restoring a group's
+      // original desktop tab). Move focus to visible content, never leave it in
+      // an inert surface. Switching via the selector keeps focus on its tab.
+      if (hidingFocus) {
+        const firstVisible = Array.from(el.children).find(child => !(child as HTMLElement).hidden)
+        firstVisible?.querySelector<HTMLElement>('[data-leaf-id]')?.focus({ preventScroll: true })
+      }
       for (const tabSlot of tabSlots) {
         const toolbar = toolbars.find(node => node.dataset.panelToolbar === tabSlot.dataset.panelTabSlot)
         // The header's trailing gutter plus a gap separates scrollable tabs
@@ -81,7 +93,7 @@ export function PersistentPanels({
     slots.forEach((slot) => observer.observe(slot))
     toolbars.forEach((toolbar) => observer.observe(toolbar))
     return () => observer.disconnect()
-  }, [root, showSingleTab])
+  }, [root, showSingleTab, compactId, tabbed])
   return (
     <div ref={layer} style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
       {leaves.map(({ leaf, box, inGroup, multiple }) => (
@@ -92,9 +104,9 @@ export function PersistentPanels({
         >
           <PanelLeaf
             leaf={leaf}
-            box={box}
-            inGroup={inGroup}
-            tabRole={multiple}
+            box={compactId ? rootBox : box}
+            inGroup={compactId ? false : inGroup}
+            tabRole={compactId ? true : multiple}
             dragging={draggingId === leaf.id}
             onFocus={() => onFocus(leaf.id)}
             onClose={() => onClose(leaf.id)}

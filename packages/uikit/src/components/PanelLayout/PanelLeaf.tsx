@@ -86,6 +86,8 @@ export function PanelLeaf({
 }) {
   const {
     tabbed,
+    compact,
+    compactTabs,
     renderBody,
     renderHeader,
     leafClassName,
@@ -155,9 +157,11 @@ export function PanelLeaf({
       data-leaf-id={leaf.id}
       // The other half of the tab relationship: a grouped panel IS the tabpanel
       // its tab controls, and takes its accessible name from that tab.
-      {...(inGroup
+      tabIndex={-1}
+      {...(inGroup || compactTabs
         ? { id: tabPanelDomId(leaf.id), role: tabRole ? 'tabpanel' : 'region', 'aria-labelledby': tabDomId(leaf.id) }
         : {})}
+      onFocusCapture={onFocus}
       onPointerDown={onFocus}
       // OCCLUSION HYGIENE: `bg-uikit-bg` makes every panel opaque. On a flat
       // background that is pixel-identical to leaving it transparent, but it is
@@ -196,7 +200,7 @@ export function PanelLeaf({
           {/* Centered grab handle — drag to dock. `data-dock-handle` gives a host's
             gesture guards a stable selector, so a horizontal DRAG of this handle
             can be told apart from a swipe on the panel body. */}
-          {!(tabbed && inGroup) && <span
+          {!compact && !(tabbed && inGroup) && <span
             onPointerDown={onHandleDown}
             data-dock-handle
             title="Drag to dock this panel beside another"
@@ -240,7 +244,7 @@ export function PanelLeaf({
               </span>
             </>
           ) : null}
-          {canClose && !inGroup && (
+          {canClose && !inGroup && !compactTabs && (
             <HeaderBtn label="Close panel" onClick={onClose} className="uikit-panel-header-close ml-auto shrink-0">
               <CloseIcon />
             </HeaderBtn>

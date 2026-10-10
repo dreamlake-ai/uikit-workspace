@@ -10,6 +10,9 @@ import type { ClosablePredicate, LeafClassName, LeafRenderer } from './types'
  * Internal: not exported from the package.
  */
 export interface PanelConfig {
+  compact?: boolean
+  compactTabs?: boolean
+  persistent?: boolean
   tabbed?: boolean
   showSingleTab?: ClosablePredicate
   renderTab?: LeafRenderer

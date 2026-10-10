@@ -34,6 +34,29 @@ Escape cancels a drag in flight.
 > **Note:** `PanelLayout` fills its container. Without an ancestor that has a real height it collapses to
 >   nothing — the demos here sit in a fixed-height box.
 
+## Narrow screens
+
+Pass `compact={isNarrow}` at both viewport widths. A shared `TabRow` selects one
+full-width panel from every leaf, including inactive group tabs. Arrow keys,
+Home, End and Delete work as they do in other UIKit tab rows; `closable` and
+`onRequestClose` still govern dismissal. `compactLabel` names the selector for
+assistive technology (default: “Workspace panels”). `compactPanelLabel(leaf)` can
+provide shorter product-specific names without changing desktop titles. Hosts
+choose the breakpoint.
+
+Compact selection and resizing do not rewrite the desktop tree, group selection,
+or saved split sizes. Every view stays connected and mounted across panel changes
+and breakpoint transitions, preserving drafts and iframe/editor state. Hidden
+surfaces are inert. `focusLeaf(id)` reveals that leaf in compact mode without
+changing the desktop layout. Drag handles, dividers and desktop split shortcuts
+are suppressed while compact; explicit host split requests remain available and
+select the new panel.
+
+Supplying `compact` keeps surfaces mounted on the wide layout while preserving
+its existing header and tab chrome. A lone panel needs no selector. Keep passing
+`false` on wide screens rather than removing the prop, so the renderer and view
+identities remain stable.
+
 ## Tab groups
 
 A `group` is a flat tab bar of panels sharing one region. By default, only the
