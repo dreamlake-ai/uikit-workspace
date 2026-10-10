@@ -6,6 +6,13 @@ A row of closable document tabs with a raised active tab. Tabs start at their pr
 
 Adjust the row width and tab limits below. Open more tabs with **+**, select a tab, or close one with **×**. Long labels truncate; their full text remains available on hover.
 
+## Icon tabs and leading controls
+
+Use the existing `leading` slot for a subdued navigation control beside the
+scrolling tabs. An item with `icon` and `iconOnly` occupies 32px; its `label`
+remains the accessible name and tooltip. A closable icon tab reserves another
+22px for its close control. Other tabs retain their normal width and appearance.
+
 ## Usage
 
 ```tsx
@@ -44,6 +51,8 @@ The caller owns the tab list, selection, and content. When closing the active ta
 | --- | --- | --- |
 | `value` | `string` | Unique tab identifier. |
 | `label` | `string` | Visible title and accessible name. |
+| `icon` | `ReactNode` | Optional visual beside the label. |
+| `iconOnly` | `boolean` | Display only the icon at compact width; preserve the text label for accessibility. |
 | `title` | `string` | Optional full tooltip, such as a path. |
 | `panelId` | `string` | Optional ID of the corresponding content panel, used as `aria-controls`. |
 | `closable` | `boolean` | Set to `false` to prevent closing this tab. |

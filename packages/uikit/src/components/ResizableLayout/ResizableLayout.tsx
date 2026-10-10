@@ -8,6 +8,8 @@ type CompactPanel = "left" | "middle" | "right";
 export interface ResizableLayoutProps {
   /** Show one full-width panel with tabs; the caller owns the breakpoint. */
   compact?: boolean;
+  /** Fixed controls before compact tabs, using TabRow’s existing leading slot. */
+  compactLeading?: ReactNode;
   /** Accessible product-specific names for the compact panel tabs. */
   compactLabels?: Partial<Record<CompactPanel, string>>;
   /** Controlled compact panel selection. Hidden panels use a visible fallback. */
@@ -95,6 +97,7 @@ function writeWidths(key: string | undefined, widths: StoredWidths) {
 
 export function ResizableLayout({
   compact = false,
+  compactLeading,
   compactLabels,
   compactPanel,
   defaultCompactPanel = "middle",
@@ -126,7 +129,7 @@ export function ResizableLayout({
   const visiblePanels = (["left", "middle", "right"] as const).filter(panel =>
     !(panel === "left" ? leftHidden : panel === "middle" ? middleHidden : rightHidden)
   );
-  const hasSelector = compact && visiblePanels.length > 1;
+  const hasSelector = compact && (visiblePanels.length > 1 || compactLeading != null);
   const requestedPanel = compactPanel ?? selectedPanel;
   const activePanel = visiblePanels.includes(requestedPanel)
     ? requestedPanel
@@ -346,7 +349,7 @@ export function ResizableLayout({
               value={activePanel!}
               onValueChange={selectPanel}
               aria-label="Layout panels"
-              minTabHeight={44}
+              leading={compactLeading}
             />
           </div>
         )}
