@@ -735,7 +735,7 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
             tabs={leaves.map(leaf => ({
               value: leaf.id,
               id: tabDomId(leaf.id),
-              label: compactPanelLabel?.(leaf)?.trim() || leaf.title || leaf.view || `Panel ${leaf.n}`,
+              label: compactPanelLabel?.(leaf)?.trim() || leaf.title || `Panel ${leaf.n}`,
               panelId: tabPanelDomId(leaf.id),
               closable: closable?.(leaf) ?? true,
             }))}

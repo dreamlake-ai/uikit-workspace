@@ -173,3 +173,11 @@ it('accepts product-specific compact labels without changing desktop titles', ()
   expect(tabs().map(tab => tab.textContent)).toEqual(['Browse', 'Draft', 'Terminal', 'Chat'])
   expect(list.title).toBe('Files')
 })
+
+
+it('does not expose internal view descriptors as compact panel labels', () => {
+  const leaf = panelLeaf({ view: 'internal:encoded:resource', title: '' })
+  const tree = panelSplit('row', [leaf, panelLeaf({ title: 'Content' })])
+  act(() => root.render(<PanelLayout root={tree} compact />))
+  expect(tabs()[0].textContent).toBe(`Panel ${leaf.n}`)
+})
