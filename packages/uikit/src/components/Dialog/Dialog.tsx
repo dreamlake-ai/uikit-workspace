@@ -1,32 +1,53 @@
-import { ReactNode, useEffect, useState } from 'react'
-import { createPortal } from 'react-dom'
-import { X } from 'lucide-react'
-import { cn } from '../../lib/utils'
+import {
+  type ReactNode,
+  type ComponentProps,
+  useEffect,
+  useId,
+  useState,
+} from "react";
+import {
+  FloatingFocusManager,
+  FloatingPortal,
+  useDismiss,
+  useFloating,
+  useInteractions,
+} from "@floating-ui/react";
+import { createPortal } from "react-dom";
+import { X } from "lucide-react";
+import { cn } from "../../lib/utils";
 
 export interface DialogProps {
   /** Controlled open state. */
-  open: boolean
+  open: boolean;
   /** Fires when the dialog requests dismissal (Esc key, backdrop click, or
    *  any explicit close / cancel affordance). Caller must flip `open` to false. */
-  onClose: () => void
+  onClose: () => void;
   /** Heading shown at the top-left of the panel. */
-  title?: ReactNode
+  title?: ReactNode;
   /** Small uppercase mono label rendered next to the title — e.g. "freeze a bindr → vN". */
-  eyebrow?: string
+  eyebrow?: string;
   /** Footer content. Typically a row of action buttons aligned right. */
-  footer?: ReactNode
+  footer?: ReactNode;
   /** Panel width in px. Default 480. */
-  width?: number
+  width?: number;
   /** Show the close (×) button in the header. Default true. (Named for the
    *  "esc" text hint it used to render; kept for API compatibility.) */
-  showEscHint?: boolean
+  showEscHint?: boolean;
   /** Dismiss when the user clicks the dimmed backdrop. Default true. */
-  dismissOnBackdropClick?: boolean
+  dismissOnBackdropClick?: boolean;
   /** Dismiss when the user presses Escape. Default true. */
-  dismissOnEsc?: boolean
+  dismissOnEsc?: boolean;
   /** Extra classes on the panel element. */
-  className?: string
-  children: ReactNode
+  className?: string;
+  /** Opt in to modal keyboard focus management. Existing dialogs retain their behavior. */
+  managedFocus?: boolean;
+  /** Initial tabbable index or an explicit element ref (managedFocus only). */
+  initialFocus?: ComponentProps<typeof FloatingFocusManager>["initialFocus"];
+  /** Restore the opener, or an explicit trigger ref (managedFocus only). */
+  returnFocus?: ComponentProps<typeof FloatingFocusManager>["returnFocus"];
+  /** Accessible name when no visible title is supplied. */
+  "aria-label"?: string;
+  children: ReactNode;
 }
 
 // Own component so its hover state unmounts with the dialog content. Clicking
@@ -38,7 +59,7 @@ export interface DialogProps {
 // Tailwind pass, and a new arbitrary-value class here could silently miss
 // older content configs.
 function CloseButton({ onClose }: { onClose: () => void }) {
-  const [hov, setHov] = useState(false)
+  const [hov, setHov] = useState(false);
   return (
     <button
       type="button"
@@ -47,28 +68,28 @@ function CloseButton({ onClose }: { onClose: () => void }) {
       onMouseEnter={() => setHov(true)}
       onMouseLeave={() => setHov(false)}
       style={{
-        appearance: 'none',
+        appearance: "none",
         border: 0,
         padding: 0,
-        cursor: 'pointer',
+        cursor: "pointer",
         width: 22,
         height: 22,
         borderRadius: 5,
-        alignSelf: 'center',
-        display: 'inline-flex',
-        alignItems: 'center',
-        justifyContent: 'center',
+        alignSelf: "center",
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
         // Colour-only hover (muted → ink), no fill — matches the design's close
         // affordance. (Previously painted an ink-tinted chip on hover.)
-        background: 'transparent',
-        color: hov ? 'var(--ink)' : 'var(--uikit-muted)',
+        background: "transparent",
+        color: hov ? "var(--ink)" : "var(--uikit-muted)",
         opacity: hov ? 1 : 0.65,
-        transition: 'color 120ms ease, opacity 120ms ease',
+        transition: "color 120ms ease, opacity 120ms ease",
       }}
     >
       <X size={15} strokeWidth={2} />
     </button>
-  )
+  );
 }
 
 export function Dialog({
@@ -82,54 +103,75 @@ export function Dialog({
   dismissOnBackdropClick = true,
   dismissOnEsc = true,
   className,
+  managedFocus = false,
+  initialFocus,
+  returnFocus,
+  "aria-label": ariaLabel,
   children,
 }: DialogProps) {
+  const titleId = useId();
+  const { refs, context } = useFloating({
+    open,
+    onOpenChange: (value) => {
+      if (!value) onClose();
+    },
+  });
+  const dismiss = useDismiss(context, {
+    enabled: managedFocus,
+    escapeKey: dismissOnEsc,
+    outsidePress: false,
+  });
+  const { getFloatingProps } = useInteractions([dismiss]);
   // Esc to dismiss.
   useEffect(() => {
-    if (!open || !dismissOnEsc) return
+    if (!open || !dismissOnEsc || managedFocus) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-    }
-    document.addEventListener('keydown', onKey)
-    return () => document.removeEventListener('keydown', onKey)
-  }, [open, dismissOnEsc, onClose])
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open, dismissOnEsc, onClose, managedFocus]);
 
   // Lock body scroll while the dialog is open so the page doesn't move under the dim layer.
   useEffect(() => {
-    if (!open) return
-    const prev = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     return () => {
-      document.body.style.overflow = prev
-    }
-  }, [open])
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
 
-  if (!open || typeof document === 'undefined') return null
+  if (!open || typeof document === "undefined") return null;
 
-  return createPortal(
+  const content = (
     <div
       role="presentation"
       onClick={dismissOnBackdropClick ? onClose : undefined}
       className={cn(
-        'fixed inset-0 z-[100] flex items-center justify-center font-uikit-ui',
-        'bg-[rgba(0,0,0,0.55)]'
+        "fixed inset-0 z-[100] flex items-center justify-center font-uikit-ui",
+        "bg-[rgba(0,0,0,0.55)]",
       )}
     >
       <div
+        ref={managedFocus ? refs.setFloating : undefined}
+        {...(managedFocus ? getFloatingProps() : {})}
         role="dialog"
+        aria-label={ariaLabel}
+        aria-labelledby={!ariaLabel && title ? titleId : undefined}
         aria-modal="true"
         onClick={(e) => e.stopPropagation()}
         className={cn(
-          'p-6 rounded-[14px] flex flex-col gap-4',
-          'max-h-[85vh] overflow-y-auto',
-          'bg-uikit-bg text-uikit-ink shadow-uikit-deep',
-          className
+          "p-6 rounded-[14px] flex flex-col gap-4",
+          "max-h-[85vh] overflow-y-auto",
+          "bg-uikit-bg text-uikit-ink shadow-uikit-deep",
+          className,
         )}
         // `lineHeight: normal` resets the app's ambient Tailwind-preflight 1.5 for
         // all dialog content, so fields/chips/buttons match the design's compact
         // vertical rhythm (the design inherits the browser default). One rule at
         // the panel root — no per-element height/padding overrides.
-        style={{ width, lineHeight: 'normal' }}
+        style={{ width, lineHeight: "normal" }}
       >
         {(title || eyebrow || showEscHint) && (
           <div className="flex items-baseline gap-2.5">
@@ -137,7 +179,10 @@ export function Dialog({
               // Truncate a long title (ellipsis) rather than wrapping; `min-w-0`
               // lets it shrink so the eyebrow keeps its room instead of being
               // pushed out of the panel.
-              <h3 className="m-0 min-w-0 truncate font-uikit-ui text-uikit-17 font-semibold leading-[1.2] tracking-uikit-tight text-uikit-ink">
+              <h3
+                id={titleId}
+                className="m-0 min-w-0 truncate font-uikit-ui text-uikit-17 font-semibold leading-[1.2] tracking-uikit-tight text-uikit-ink"
+              >
                 {title}
               </h3>
             )}
@@ -154,9 +199,26 @@ export function Dialog({
 
         {children}
 
-        {footer && <div className="flex items-center gap-3 justify-end">{footer}</div>}
+        {footer && (
+          <div className="flex items-center gap-3 justify-end">{footer}</div>
+        )}
       </div>
-    </div>,
-    document.body
-  )
+    </div>
+  );
+  return managedFocus ? (
+    <FloatingPortal>
+      <FloatingFocusManager
+        context={context}
+        initialFocus={initialFocus}
+        returnFocus={returnFocus}
+        modal
+        restoreFocus
+        outsideElementsInert
+      >
+        {content}
+      </FloatingFocusManager>
+    </FloatingPortal>
+  ) : (
+    createPortal(content, document.body)
+  );
 }
