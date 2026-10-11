@@ -76,6 +76,21 @@ controls such as a subdued navigation menu; it keeps the row available even
 with one panel. Compact rows use the standard TabRow height and appearance.
 Hosts choose the breakpoint.
 
+Functional panels such as a resource list can use
+`compactPanelAsAction={leaf => leaf.view === 'list'}`. Those panels appear as
+standard UIKit action buttons in the same leading-controls group as Menu,
+using `compactPanelLabel` for their text and accessible name. Optional
+`compactPanelIcon` supplies an icon instead. Both forms have 32px height; the
+utility has `aria-pressed`, controls a named region, and has no tab/close affordance.
+Only the remaining document panels appear in the tab list. Selection preserves
+the same mounted panel and desktop tree.
+
+Compact content uses the shared `.uikit-panel-enter` class: the existing small
+horizontal entry runs for 180ms, with reduced motion respected. Apply the class
+only to an active retained panel and remove it while inactive to replay entry
+without remounting content. Applications can reuse it for navigation and legacy
+panel surfaces; it does not change scrolling or animate the tab row.
+
 Compact selection and resizing do not rewrite the desktop tree, group selection,
 or saved split sizes. Every view stays connected and mounted across panel changes
 and breakpoint transitions, preserving drafts and iframe/editor state. Hidden

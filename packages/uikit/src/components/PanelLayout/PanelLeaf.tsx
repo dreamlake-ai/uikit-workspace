@@ -88,6 +88,8 @@ export function PanelLeaf({
     tabbed,
     compact,
     compactTabs,
+    compactPanelAsAction,
+    compactPanelLabel,
     renderBody,
     renderHeader,
     leafClassName,
@@ -98,6 +100,7 @@ export function PanelLeaf({
     palette,
   } = usePanelConfig()
 
+  const utilityPanel = !!compact && !!compactPanelAsAction?.(leaf)
   const tint = tintFor(leaf.n, palette)
   // A panel the host will not let go of shows no close button. This is the
   // affordance half only: the refusal itself lives in one place, next to the
@@ -158,9 +161,11 @@ export function PanelLeaf({
       // The other half of the tab relationship: a grouped panel IS the tabpanel
       // its tab controls, and takes its accessible name from that tab.
       tabIndex={-1}
-      {...(inGroup || compactTabs
-        ? { id: tabPanelDomId(leaf.id), role: tabRole ? 'tabpanel' : 'region', 'aria-labelledby': tabDomId(leaf.id) }
-        : {})}
+      {...(utilityPanel
+        ? { id: tabPanelDomId(leaf.id), role: 'region', 'aria-label': compactPanelLabel?.(leaf)?.trim() || leaf.title || `Panel ${leaf.n}` }
+        : inGroup || compactTabs
+          ? { id: tabPanelDomId(leaf.id), role: tabRole ? 'tabpanel' : 'region', 'aria-labelledby': tabDomId(leaf.id) }
+          : {})}
       onFocusCapture={onFocus}
       onPointerDown={onFocus}
       // OCCLUSION HYGIENE: `bg-uikit-bg` makes every panel opaque. On a flat

@@ -62,7 +62,7 @@ export function TabRow({
     } as CSSProperties}>
       <div className="uikit-tab-row-line" aria-hidden />
       {leading != null && <div className="uikit-tab-row-controls">{leading}</div>}
-      <div className="uikit-tab-row-scroll" ref={scrollRef} role="tablist" aria-label={ariaLabel}>
+      <div className="uikit-tab-row-scroll" ref={scrollRef} role={tabs.length ? "tablist" : undefined} aria-label={tabs.length ? ariaLabel : undefined}>
         {tabs.map((tab, index) => {
           const hasIcon = tab.icon != null && typeof tab.icon !== "boolean";
           const iconOnly = !!tab.iconOnly && hasIcon;

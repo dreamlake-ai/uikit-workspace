@@ -1,4 +1,5 @@
 import { createContext, useContext } from 'react'
+import type { LeafNode } from './panel-tree'
 import type { ClosablePredicate, LeafClassName, LeafRenderer } from './types'
 
 /**
@@ -12,6 +13,8 @@ import type { ClosablePredicate, LeafClassName, LeafRenderer } from './types'
 export interface PanelConfig {
   compact?: boolean
   compactTabs?: boolean
+  compactPanelAsAction?: (leaf: LeafNode) => boolean
+  compactPanelLabel?: (leaf: LeafNode) => string
   persistent?: boolean
   tabbed?: boolean
   showSingleTab?: ClosablePredicate

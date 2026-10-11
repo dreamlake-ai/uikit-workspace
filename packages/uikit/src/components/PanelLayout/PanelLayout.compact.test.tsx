@@ -197,3 +197,62 @@ it('uses the existing leading slot and named icon tab without changing the deskt
   expect(row.style.getPropertyValue('--tab-row-min-height')).toBe('')
   expect(leaf.title).toBe('Project title')
 })
+
+it('keeps utility actions beside leading controls and document tabs, preserving panel state and names', () => {
+  const { tree, list, editor } = fixture()
+  const ref = createRef<PanelLayoutHandle>()
+  const changed = vi.fn()
+  const render = (compact: boolean) => act(() => root.render(<PanelLayout ref={ref} root={tree}
+    compact={compact} compactLeading={<button aria-label="Menu">Menu</button>}
+    compactPanelAsAction={leaf => leaf.id === list.id}
+    compactPanelLabel={leaf => leaf.id === list.id ? 'List' : leaf.title!}
+    onChange={changed} renderBody={leaf => <textarea data-editor={leaf.id} />} />))
+  render(true)
+  const listButton = container.querySelector<HTMLButtonElement>('button[aria-label="List"]')!
+  const draft = surface(editor.id).querySelector('textarea')!
+  draft.value = 'Still writing'
+  draft.scrollTop = 42
+  expect(listButton.textContent).toBe('List')
+  expect(listButton.className).toContain('h-8')
+  expect(listButton.parentElement).toBe(container.querySelector('button[aria-label="Menu"]')!.parentElement)
+  expect(listButton.getAttribute('aria-pressed')).toBe('true')
+  expect(listButton.getAttribute('role')).toBeNull()
+  expect(tabs().map(tab => tab.textContent)).toEqual(['Draft', 'Terminal', 'Chat'])
+  const utilityPanel = document.getElementById(listButton.getAttribute('aria-controls')!)!
+  expect(utilityPanel.getAttribute('role')).toBe('region')
+  expect(utilityPanel.getAttribute('aria-label')).toBe('List')
+  expect(utilityPanel.hasAttribute('aria-labelledby')).toBe(false)
+  expect(container.querySelector('[aria-label="Close List"]')).toBeNull()
+  expect(surface(list.id).querySelector('[aria-label="Close panel"]')).toBeNull()
+  expect(surface(list.id).classList.contains('uikit-panel-enter')).toBe(true)
+  act(() => tabs()[0].click())
+  expect(listButton.getAttribute('aria-pressed')).toBe('false')
+  expect(surface(list.id).hidden).toBe(true)
+  expect(surface(list.id).classList.contains('uikit-panel-enter')).toBe(false)
+  expect(surface(editor.id).classList.contains('uikit-panel-enter')).toBe(true)
+  act(() => listButton.click())
+  expect(surface(list.id).hidden).toBe(false)
+  expect(listButton.getAttribute('aria-pressed')).toBe('true')
+  act(() => tabs()[0].click())
+  expect(surface(editor.id).querySelector('textarea')).toBe(draft)
+  expect(draft.value).toBe('Still writing')
+  expect(draft.scrollTop).toBe(42)
+  expect(ref.current!.getRoot()).toBe(tree)
+  expect(changed).not.toHaveBeenCalled()
+  render(false)
+  expect(container.querySelector('.uikit-panel-enter')).toBeNull()
+  expect(ref.current!.getRoot()).toBe(tree)
+})
+
+it('keeps a lone utility action available without manufacturing a document tab', () => {
+  const leaf = panelLeaf({ title: 'List' })
+  act(() => root.render(<PanelLayout root={leaf} compact compactPanelAsAction={() => true}
+    compactPanelIcon={() => <svg data-list-icon />} />))
+  const button = container.querySelector<HTMLButtonElement>('button[aria-label="List"]')!
+  expect(button).toBeTruthy()
+  expect(button.className).toContain('size-8')
+  expect(button.getAttribute('aria-pressed')).toBe('true')
+  expect(tabs()).toHaveLength(0)
+  expect(container.querySelector('[role="tablist"]')).toBeNull()
+  expect(container.querySelector('[role="tabpanel"]')).toBeNull()
+})
