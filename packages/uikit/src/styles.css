@@ -477,6 +477,21 @@ html[data-theme="dark"] {
   }
 }
 
+/* Anchored Tooltip/Popover entry. Independent translate leaves Floating UI's
+   transform-based coordinates intact; actual placement controls the direction. */
+@keyframes uikit-overlay-enter {
+  from { opacity: 0; translate: var(--uikit-overlay-enter-x, 0px) var(--uikit-overlay-enter-y, 0px); }
+  to { opacity: 1; translate: 0 0; }
+}
+.uikit-overlay-enter { animation: uikit-overlay-enter 160ms ease-out; }
+.uikit-overlay-enter[data-side="top"] { --uikit-overlay-enter-y: 4px; }
+.uikit-overlay-enter[data-side="bottom"] { --uikit-overlay-enter-y: -4px; }
+.uikit-overlay-enter[data-side="left"] { --uikit-overlay-enter-x: 4px; }
+.uikit-overlay-enter[data-side="right"] { --uikit-overlay-enter-x: -4px; }
+@media (prefers-reduced-motion: reduce) {
+  .uikit-overlay-enter { animation: none; }
+}
+
 /* ── Scrollbar utilities ────────────────────────────────────────── */
 
 .uikit-no-scrollbar {

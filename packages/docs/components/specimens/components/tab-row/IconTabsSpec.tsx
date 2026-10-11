@@ -10,7 +10,9 @@ export function IconTabsSpec() {
       value={value}
       onValueChange={setValue}
       aria-label="Workspace panels"
-      leading={<Button variant="ghost" icon size="sm" className="size-6 text-uikit-muted"
+      className="uikit-tab-row-compact"
+      minTabHeight={30}
+      leading={<Button variant="action" tone="muted" icon size="md"
         aria-label="Menu" aria-expanded={navigation} onClick={() => setNavigation(!navigation)}>
         <Menu size={14} />
       </Button>}

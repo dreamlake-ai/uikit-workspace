@@ -752,6 +752,8 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
         <div ref={compactSelectorRef} data-compact-selector className="shrink-0 min-w-0">
           <TabRow
             aria-label={compactLabel}
+            className="uikit-tab-row-compact"
+            minTabHeight={30}
             leading={utilityLeaves.length > 0 ? <>
               {compactLeading}
               {utilityLeaves.map(leaf => {

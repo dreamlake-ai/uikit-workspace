@@ -53,7 +53,8 @@ Notes catalog tab and false when active to retain the normal selected width.
 `compactPanelIcon(leaf)` makes that panel an icon-only tab while retaining its
 accessible label. `compactLeading` uses the existing TabRow leading slot for
 controls such as a subdued navigation menu; it keeps the row available even
-with one panel. Compact rows use the standard TabRow height and appearance.
+with one panel. Compact rows center their labels against 32px navigation controls while
+preserving the standard TabRow appearance.
 Hosts choose the breakpoint.
 
 Functional panels such as a resource list can use

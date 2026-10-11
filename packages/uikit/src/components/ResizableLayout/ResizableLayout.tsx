@@ -349,6 +349,8 @@ export function ResizableLayout({
               value={activePanel!}
               onValueChange={selectPanel}
               aria-label="Layout panels"
+              className="uikit-tab-row-compact"
+              minTabHeight={30}
               leading={compactLeading}
             />
           </div>

@@ -194,7 +194,8 @@ it('uses the existing leading slot and named icon tab without changing the deskt
   expect(tabs()[0].title).toBe('List')
   expect(tabs()[0].querySelector('[data-list-icon]')).toBeTruthy()
   expect(tabs()[0].textContent).toBe('')
-  expect(row.style.getPropertyValue('--tab-row-min-height')).toBe('')
+  expect(row.style.getPropertyValue('--tab-row-min-height')).toBe('30px')
+  expect(row.classList.contains('uikit-tab-row-compact')).toBe(true)
   expect(leaf.title).toBe('Project title')
 })
 

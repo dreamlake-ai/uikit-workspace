@@ -9,7 +9,9 @@ Adjust the row width and tab limits below. Open more tabs with **+**, select a t
 ## Icon tabs and leading controls
 
 Use the existing `leading` slot for a subdued navigation control beside the
-scrolling tabs. An item with `icon` and `iconOnly` occupies 32px; its `label`
+scrolling tabs. Compact layouts use `minTabHeight={30}` and the
+`uikit-tab-row-compact` class to center 32px controls against the 30px labels
+plus their tab borders. The default desktop row spacing is unchanged. An item with `icon` and `iconOnly` occupies 32px; its `label`
 remains the accessible name and tooltip. A closable icon tab reserves another
 22px for its close control. Other tabs retain their normal width and appearance.
 
