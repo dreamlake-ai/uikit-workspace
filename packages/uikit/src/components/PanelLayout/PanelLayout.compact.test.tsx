@@ -256,3 +256,57 @@ it('keeps a lone utility action available without manufacturing a document tab',
   expect(container.querySelector('[role="tablist"]')).toBeNull()
   expect(container.querySelector('[role="tabpanel"]')).toBeNull()
 })
+
+it('updates selected compact labels and accessible names without replacing tabs or editor state', () => {
+  const notes = panelLeaf({ view: 'notes', title: 'Desktop notes title' })
+  const document = panelLeaf({ title: 'Draft' })
+  const tree = panelSplit('row', [notes, document])
+  const changed = vi.fn()
+  const label = vi.fn((leaf: LeafNode, active: boolean) =>
+    leaf.id === notes.id ? active ? '@workspace/notes' : 'notes' : leaf.title!)
+  const ref = createRef<PanelLayoutHandle>()
+  act(() => root.render(<PanelLayout ref={ref} root={tree} compact onChange={changed}
+    compactPanelLabel={label} renderBody={leaf => <textarea data-editor={leaf.id} />} />))
+  const notesTab = tabs()[0]
+  const panel = container.querySelector<HTMLElement>(`[data-leaf-id="${notes.id}"]`)!
+  const editor = panel.querySelector('textarea')!
+  editor.value = 'Unsaved notes'
+  editor.scrollTop = 30
+  expect(notesTab.textContent).toBe('@workspace/notes')
+  expect(notesTab.title).toBe('@workspace/notes')
+  expect(notesTab.getAttribute('aria-selected')).toBe('true')
+  expect(panel.getAttribute('aria-labelledby')).toBe(notesTab.id)
+  expect(notesTab.getAttribute('aria-controls')).toBe(panel.id)
+  act(() => tabs()[1].click())
+  expect(tabs()[0]).toBe(notesTab)
+  expect(notesTab.textContent).toBe('notes')
+  expect(notesTab.title).toBe('notes')
+  expect(notesTab.getAttribute('aria-selected')).toBe('false')
+  expect(notesTab.parentElement!.hasAttribute('data-active')).toBe(false)
+  expect(label).toHaveBeenCalledWith(notes, false)
+  act(() => notesTab.click())
+  expect(notesTab.textContent).toBe('@workspace/notes')
+  expect(notesTab.parentElement!.hasAttribute('data-active')).toBe(true)
+  expect(panel.querySelector('textarea')).toBe(editor)
+  expect(editor.value).toBe('Unsaved notes')
+  expect(editor.scrollTop).toBe(30)
+  expect(label).toHaveBeenCalledWith(notes, true)
+  expect(notes.title).toBe('Desktop notes title')
+  expect(ref.current!.getRoot()).toBe(tree)
+  expect(changed).not.toHaveBeenCalled()
+})
+
+it('keeps active-aware utility labels and their region names synchronized', () => {
+  const { tree, list } = fixture()
+  act(() => root.render(<PanelLayout root={tree} compact
+    compactPanelAsAction={leaf => leaf.id === list.id}
+    compactPanelLabel={(leaf, active) => leaf.id === list.id ? active ? 'Browsing files' : 'Files' : leaf.title!} />))
+  const button = container.querySelector<HTMLButtonElement>('button[aria-pressed="true"]')!
+  const panel = container.querySelector<HTMLElement>(`[data-leaf-id="${list.id}"]`)!
+  expect(button.getAttribute('aria-label')).toBe('Browsing files')
+  expect(panel.getAttribute('aria-label')).toBe('Browsing files')
+  act(() => tabs()[0].click())
+  expect(button.getAttribute('aria-label')).toBe('Files')
+  expect(panel.getAttribute('aria-label')).toBe('Files')
+  expect(button.getAttribute('aria-pressed')).toBe('false')
+})

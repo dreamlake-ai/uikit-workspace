@@ -139,8 +139,9 @@ export interface PanelLayoutProps {
   /** Present utility panels as leading action buttons instead of document tabs.
    * Their icon/name come from compactPanelIcon/compactPanelLabel. */
   compactPanelAsAction?: (leaf: LeafNode) => boolean
-  /** Product-specific compact names, independent of desktop panel titles. */
-  compactPanelLabel?: (leaf: LeafNode) => string
+  /** Product-specific compact names, independent of desktop titles. The second
+   * argument identifies the selected compact panel. One-argument callbacks work. */
+  compactPanelLabel?: (leaf: LeafNode, active: boolean) => string
   /** Layout-owned tabs; keep view DOM connected across moves. */
   tabbed?: boolean
   /** Show a tab for a lone view only when its content opts in. Groups always show tabs. */
@@ -298,7 +299,7 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
   const utilityLeaves = compact ? leaves.filter(leaf => compactPanelAsAction?.(leaf)) : []
   const utilityIds = new Set(utilityLeaves.map(leaf => leaf.id))
   const documentLeaves = leaves.filter(leaf => !utilityIds.has(leaf.id))
-  const compactName = (leaf: LeafNode) => compactPanelLabel?.(leaf)?.trim() || leaf.title || `Panel ${leaf.n}`
+  const compactName = (leaf: LeafNode) => compactPanelLabel?.(leaf, leaf.id === activeId)?.trim() || leaf.title || `Panel ${leaf.n}`
   const hasCompactSelector = !!compact && (leaves.length > 1 || compactLeading != null || utilityLeaves.length > 0)
   // Active drag: the floating surrogate + where it would dock. `target` is null
   // while the cursor is over the source panel or empty space (the surrogate just
@@ -689,7 +690,7 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
     compact,
     compactTabs: hasCompactSelector,
     compactPanelAsAction,
-    compactPanelLabel,
+    compactPanelLabel: compactName,
     persistent,
     tabbed,
     showSingleTab,

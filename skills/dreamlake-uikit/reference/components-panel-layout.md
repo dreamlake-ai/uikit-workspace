@@ -40,8 +40,12 @@ Pass `compact={isNarrow}` at both viewport widths. A shared `TabRow` selects one
 full-width panel from every leaf, including inactive group tabs. Arrow keys,
 Home, End and Delete work as they do in other UIKit tab rows; `closable` and
 `onRequestClose` still govern dismissal. `compactLabel` names the selector for
-assistive technology (default: “Workspace panels”). `compactPanelLabel(leaf)` can
-provide shorter product-specific names without changing desktop titles.
+assistive technology (default: “Workspace panels”). `compactPanelLabel(leaf, active)` can
+provide product-specific names without changing desktop titles. `active` is true
+only for the selected compact panel, so a Notes tab can show `@workspace/notes`
+when selected and `notes` otherwise. Existing one-argument callbacks continue to
+work. Labels, tooltips and accessible names update together; the existing tab
+shape and mounted content are unchanged.
 `compactPanelIcon(leaf)` makes that panel an icon-only tab while retaining its
 accessible label. `compactLeading` uses the existing TabRow leading slot for
 controls such as a subdued navigation menu; it keeps the row available even

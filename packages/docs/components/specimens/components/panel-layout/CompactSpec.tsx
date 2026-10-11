@@ -5,7 +5,7 @@ import { PanelStage } from './PanelStage'
 
 const initial = () => panelSplit('row', [
   panelLeaf({ view: 'list', title: 'Files' }),
-  panelGroup([panelLeaf({ title: 'Draft' }), panelLeaf({ title: 'Preview' })]),
+  panelGroup([panelLeaf({ view: 'notes', title: 'Notes' }), panelLeaf({ title: 'Preview' })]),
   panelLeaf({ title: 'Chat' }),
 ], [22, 53, 25])
 
@@ -27,7 +27,9 @@ export function CompactSpec() {
           <Menu size={14} />
         </Button>}
         compactPanelAsAction={leaf => leaf.view === 'list'}
-        compactPanelLabel={leaf => leaf.view === 'list' ? 'List' : leaf.title ?? 'Document'}
+        compactPanelLabel={(leaf, active) => leaf.view === 'list' ? 'List'
+          : leaf.view === 'notes' ? (active ? '@workspace/notes' : 'notes')
+          : leaf.title ?? 'Document'}
         closable={() => false}
         renderBody={leaf => <textarea
           aria-label={`${leaf.title} draft`}
