@@ -464,6 +464,19 @@ html[data-theme="dark"] {
   }
 }
 
+/* A retained panel receives this class only while active. Removing it from an
+   inactive panel replays entry on the next selection without replacing its DOM.
+   Reuse the existing small horizontal entry; no fill keeps fixed descendants
+   free of a permanent transformed containing block after the animation. */
+.uikit-panel-enter {
+  animation: uikit-row-in 180ms ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .uikit-panel-enter {
+    animation: none;
+  }
+}
+
 /* ── Scrollbar utilities ────────────────────────────────────────── */
 
 .uikit-no-scrollbar {

@@ -100,6 +100,7 @@ export function PersistentPanels({
         <div
           key={leaf.id}
           data-surface={leaf.id}
+          className={compactId === leaf.id ? 'uikit-panel-enter' : undefined}
           style={{ position: 'absolute', pointerEvents: 'auto' }}
         >
           <PanelLeaf

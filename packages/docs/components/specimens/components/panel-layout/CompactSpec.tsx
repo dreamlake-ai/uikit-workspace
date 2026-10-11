@@ -1,24 +1,33 @@
 import { useState } from 'react'
-import { PanelLayout, panelGroup, panelLeaf, panelSplit } from '@dreamlake/uikit'
+import { Menu } from 'lucide-react'
+import { Button, PanelLayout, panelGroup, panelLeaf, panelSplit } from '@dreamlake/uikit'
 import { PanelStage } from './PanelStage'
 
 const initial = () => panelSplit('row', [
-  panelLeaf({ title: 'Files' }),
+  panelLeaf({ view: 'list', title: 'Files' }),
   panelGroup([panelLeaf({ title: 'Draft' }), panelLeaf({ title: 'Preview' })]),
   panelLeaf({ title: 'Chat' }),
 ], [22, 53, 25])
 
 export function CompactSpec() {
   const [compact, setCompact] = useState(false)
+  const [navigation, setNavigation] = useState(false)
   return <>
     <label className="flex items-center gap-2 mb-3 text-sm">
       <input type="checkbox" checked={compact} onChange={event => setCompact(event.target.checked)} />
       Narrow screen: one panel at a time
     </label>
+    {navigation && <p className="mb-3 text-sm text-uikit-muted">Navigation is open.</p>}
     <PanelStage>
       <PanelLayout
         initial={initial}
         compact={compact}
+        compactLeading={<Button variant="action" tone="muted" icon size="md"
+          aria-label="Menu" aria-pressed={navigation} onClick={() => setNavigation(!navigation)}>
+          <Menu size={14} />
+        </Button>}
+        compactPanelAsAction={leaf => leaf.view === 'list'}
+        compactPanelLabel={leaf => leaf.view === 'list' ? 'List' : leaf.title ?? 'Document'}
         closable={() => false}
         renderBody={leaf => <textarea
           aria-label={`${leaf.title} draft`}

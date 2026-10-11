@@ -17,6 +17,7 @@ import {
   tintFor,
   type PanelConfig,
 } from './config'
+import { Button } from '../Button/Button'
 import { TabRow } from '../TabRow/TabRow'
 import { tabDomId, tabPanelDomId } from './GroupTabBar'
 import { RenderNode } from './RenderNode'
@@ -135,6 +136,9 @@ export interface PanelLayoutProps {
   compactLeading?: ReactNode
   /** An icon makes this compact panel an icon-only tab with its label retained. */
   compactPanelIcon?: (leaf: LeafNode) => ReactNode
+  /** Present utility panels as leading action buttons instead of document tabs.
+   * Their icon/name come from compactPanelIcon/compactPanelLabel. */
+  compactPanelAsAction?: (leaf: LeafNode) => boolean
   /** Product-specific compact names, independent of desktop panel titles. */
   compactPanelLabel?: (leaf: LeafNode) => string
   /** Layout-owned tabs; keep view DOM connected across moves. */
@@ -234,6 +238,7 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
     compactPanelLabel,
     compactLeading,
     compactPanelIcon,
+    compactPanelAsAction,
     showSingleTab,
     onRequestClose,
     root: rootProp,
@@ -290,7 +295,11 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
   }
   collect(root)
   const activeId = findLeaf(root, focusedId) ? focusedId : firstLeafId(root)
-  const hasCompactSelector = !!compact && (leaves.length > 1 || compactLeading != null)
+  const utilityLeaves = compact ? leaves.filter(leaf => compactPanelAsAction?.(leaf)) : []
+  const utilityIds = new Set(utilityLeaves.map(leaf => leaf.id))
+  const documentLeaves = leaves.filter(leaf => !utilityIds.has(leaf.id))
+  const compactName = (leaf: LeafNode) => compactPanelLabel?.(leaf)?.trim() || leaf.title || `Panel ${leaf.n}`
+  const hasCompactSelector = !!compact && (leaves.length > 1 || compactLeading != null || utilityLeaves.length > 0)
   // Active drag: the floating surrogate + where it would dock. `target` is null
   // while the cursor is over the source panel or empty space (the surrogate just
   // tracks the cursor at the panel's own size).
@@ -679,6 +688,8 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
   const config: PanelConfig = {
     compact,
     compactTabs: hasCompactSelector,
+    compactPanelAsAction,
+    compactPanelLabel,
     persistent,
     tabbed,
     showSingleTab,
@@ -737,13 +748,25 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
         <div ref={compactSelectorRef} data-compact-selector className="shrink-0 min-w-0">
           <TabRow
             aria-label={compactLabel}
-            leading={compactLeading}
-            tabs={leaves.map(leaf => {
+            leading={utilityLeaves.length > 0 ? <>
+              {compactLeading}
+              {utilityLeaves.map(leaf => {
+                const icon = compactPanelIcon?.(leaf)
+                const hasIcon = icon != null && typeof icon !== 'boolean'
+                return <Button key={leaf.id} variant="action" tone="muted" icon={hasIcon} size="md" className="h-8"
+                  value={activeId === leaf.id} aria-pressed={activeId === leaf.id}
+                  aria-label={compactName(leaf)} title={compactName(leaf)}
+                  aria-controls={tabPanelDomId(leaf.id)} onClick={() => focus(leaf.id)}>
+                  {hasIcon ? icon : compactName(leaf)}
+                </Button>
+              })}
+            </> : compactLeading}
+            tabs={documentLeaves.map(leaf => {
               const icon = compactPanelIcon?.(leaf)
               return {
                 value: leaf.id,
                 id: tabDomId(leaf.id),
-                label: compactPanelLabel?.(leaf)?.trim() || leaf.title || `Panel ${leaf.n}`,
+                label: compactName(leaf),
                 icon,
                 iconOnly: icon != null,
                 panelId: tabPanelDomId(leaf.id),
