@@ -1,6 +1,7 @@
 import { Popover, PopoverTrigger, PopoverContent, PopoverClose, Button } from '@dreamlake/uikit'
 
 export const BasicSpec = () => (
+  <div className="flex items-center gap-3">
   <Popover>
     <PopoverTrigger asChild>
       <Button size="sm" variant="secondary">
@@ -19,4 +20,9 @@ export const BasicSpec = () => (
       </div>
     </PopoverContent>
   </Popover>
+  <Popover showArrow={false}>
+    <PopoverTrigger asChild><Button size="sm" variant="ghost">Without wedge</Button></PopoverTrigger>
+    <PopoverContent>A surface that does not need a pointer.</PopoverContent>
+  </Popover>
+  </div>
 )

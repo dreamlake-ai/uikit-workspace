@@ -7,12 +7,14 @@ import {
   isValidElement,
   useContext,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import {
   FloatingFocusManager,
   FloatingPortal,
   autoUpdate,
+  arrow as arrowMiddleware,
   flip,
   offset,
   shift,
@@ -22,6 +24,7 @@ import {
   useInteractions,
   useRole,
 } from "@floating-ui/react";
+import { OverlayArrow } from "../../lib/overlay-arrow";
 import { cn } from "../../lib/utils";
 import {
   type LegacyOverlayContentProps,
@@ -32,6 +35,8 @@ type Side = "top" | "right" | "bottom" | "left";
 type Align = "start" | "center" | "end";
 
 interface PopoverContextValue {
+  showArrow: boolean;
+  arrowRef: React.RefObject<HTMLSpanElement | null>;
   open: boolean;
   setOpen: (open: boolean) => void;
   refs: ReturnType<typeof useFloating>["refs"];
@@ -52,6 +57,8 @@ function usePopoverContext(name: string) {
 }
 
 export interface PopoverProps {
+  /** Show the trigger wedge. Default true; opt out for unanchored-looking content. */
+  showArrow?: boolean;
   open?: boolean;
   defaultOpen?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -77,8 +84,10 @@ export function Popover({
   side = "bottom",
   align = "center",
   sideOffset = 6,
+  showArrow = true,
   children,
 }: PopoverProps) {
+  const arrowRef = useRef<HTMLSpanElement>(null);
   const [uncontrolled, setUncontrolled] = useState(defaultOpen);
   const isControlled = controlledOpen !== undefined;
   const open = isControlled ? controlledOpen : uncontrolled;
@@ -95,15 +104,15 @@ export function Popover({
     open,
     onOpenChange: setOpen,
     placement,
-    // Position via top/left, not transform — the panel's `uikit-panel-in`
-    // entrance animation owns `transform`, which would otherwise clobber
-    // floating-ui's transform-based positioning (panel jumps to 0,0).
+    // Preserve the established top/left positioning. Shared overlay entry uses
+    // the independent CSS translate property, so it cannot replace anchoring.
     transform: false,
     whileElementsMounted: autoUpdate,
     middleware: [
-      offset(sideOffset),
+      offset(sideOffset + (showArrow ? 4 : 0)),
       flip({ padding: 8 }),
       shift({ padding: 8 }),
+      ...(showArrow ? [arrowMiddleware({ element: arrowRef, padding: 8 })] : []),
     ],
   });
 
@@ -118,6 +127,8 @@ export function Popover({
 
   const value = useMemo<PopoverContextValue>(
     () => ({
+      showArrow,
+      arrowRef,
       open,
       setOpen,
       refs,
@@ -128,7 +139,7 @@ export function Popover({
     }),
     // setOpen identity isn't memoized but is safe to omit; openness drives renders
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [open, refs, floatingStyles, context, getReferenceProps, getFloatingProps],
+    [open, refs, floatingStyles, context, getReferenceProps, getFloatingProps, showArrow],
   );
 
   return (
@@ -176,15 +187,18 @@ export function PopoverContent({
       <FloatingFocusManager context={ctx.context} modal={false}>
         <div
           ref={ctx.refs.setFloating as never}
+          data-uikit-overlay="popover"
+          data-side={ctx.context.placement.split("-")[0]}
           style={{ ...ctx.floatingStyles, ...style }}
           className={cn(
-            "uikit-panel-in z-[200] min-w-[180px] rounded-[var(--radius)] p-2 font-uikit-ui",
+            "uikit-overlay-enter z-[200] min-w-[180px] rounded-[var(--radius)] p-2 font-uikit-ui",
             "bg-uikit-panel text-uikit-ink shadow-uikit-soft outline-none",
             className,
           )}
           {...ctx.getFloatingProps(rest)}
         >
           {children}
+          {ctx.showArrow && <OverlayArrow arrowRef={ctx.arrowRef} context={ctx.context} />}
         </div>
       </FloatingFocusManager>
     </FloatingPortal>

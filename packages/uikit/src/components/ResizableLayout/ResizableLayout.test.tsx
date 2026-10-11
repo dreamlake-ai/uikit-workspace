@@ -117,13 +117,14 @@ it('omits the selector and tab relationships when only one panel is visible', ()
 })
 
 
-it('uses standard tab height and supplies meaningful names for blank labels', () => {
+it('aligns compact tab height with controls and supplies meaningful names for blank labels', () => {
   render({ compact: true, compactLabels: { left: '', middle: '  ', right: 'Results' } })
   expect(tab('Navigation')).toBeDefined()
   expect(tab('Content')).toBeDefined()
   expect(tab('Results')).toBeDefined()
   const row = host.querySelector<HTMLElement>('.uikit-tab-row')!
-  expect(row.style.getPropertyValue('--tab-row-min-height')).toBe('')
+  expect(row.style.getPropertyValue('--tab-row-min-height')).toBe('30px')
+  expect(row.classList.contains('uikit-tab-row-compact')).toBe(true)
 })
 
 it('restores focus to visible content when the compact selector disappears', () => {

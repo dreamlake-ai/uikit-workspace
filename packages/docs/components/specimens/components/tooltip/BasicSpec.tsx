@@ -18,5 +18,9 @@ export const BasicSpec = () => (
       </TooltipTrigger>
       <TooltipContent>Opens to the right; flips if it would clip.</TooltipContent>
     </Tooltip>
+    <Tooltip showArrow={false}>
+      <TooltipTrigger asChild><Button size="sm" variant="ghost">No wedge</Button></TooltipTrigger>
+      <TooltipContent>Wedges can be omitted when they do not suit the content.</TooltipContent>
+    </Tooltip>
   </div>
 )

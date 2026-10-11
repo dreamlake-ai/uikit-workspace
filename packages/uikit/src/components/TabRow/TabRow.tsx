@@ -128,6 +128,7 @@ const CSS =
   '.uikit-tab-row{position:relative;display:flex;align-items:flex-end;gap:6px;width:100%;min-width:0}' +
   '.uikit-tab-row-line{position:absolute;left:0;right:0;bottom:0;height:1px;background:var(--faint);z-index:0}' +
   '.uikit-tab-row-controls{position:relative;z-index:1;flex:0 0 auto;margin-bottom:4px;display:flex;align-items:center;gap:2px}' +
+  '.uikit-tab-row-compact .uikit-tab-row-controls{margin-bottom:0;align-self:center}' +
   '.uikit-tab-row-item:focus-within .uikit-tab-row-item-x{width:16px;margin-right:5px;opacity:.55}' +
   '.uikit-tab-row-item button:focus-visible{outline:2px solid var(--uikit-accent);outline-offset:-2px}' +
   '.uikit-tab-row-scroll{position:relative;z-index:1;display:flex;align-items:flex-end;gap:2px;' +

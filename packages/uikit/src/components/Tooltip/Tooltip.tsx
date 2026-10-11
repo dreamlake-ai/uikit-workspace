@@ -8,11 +8,13 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import {
   FloatingPortal,
   autoUpdate,
+  arrow as arrowMiddleware,
   flip,
   offset,
   shift,
@@ -23,14 +25,18 @@ import {
   useInteractions,
   useRole,
 } from "@floating-ui/react";
+import { OverlayArrow } from "../../lib/overlay-arrow";
 import { cn } from "../../lib/utils";
 
 type Side = "top" | "right" | "bottom" | "left";
 
 interface TooltipContextValue {
+  showArrow: boolean;
+  arrowRef: React.RefObject<HTMLSpanElement | null>;
   open: boolean;
   refs: ReturnType<typeof useFloating>["refs"];
   floatingStyles: ReturnType<typeof useFloating>["floatingStyles"];
+  context: ReturnType<typeof useFloating>["context"];
   getReferenceProps: (
     props?: Record<string, unknown>,
   ) => Record<string, unknown>;
@@ -66,6 +72,8 @@ export function TooltipProvider({
 }
 
 export interface TooltipProps {
+  /** Show the trigger wedge. Default true; opt out for unanchored-looking content. */
+  showArrow?: boolean;
   open?: boolean;
   defaultOpen?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -91,10 +99,12 @@ export function Tooltip({
   delayDuration,
   side = "top",
   sideOffset = 6,
+  showArrow = true,
   children,
 }: TooltipProps) {
   const providerDelay = useContext(DelayContext);
   const delay = delayDuration ?? providerDelay;
+  const arrowRef = useRef<HTMLSpanElement>(null);
   const [uncontrolled, setUncontrolled] = useState(defaultOpen);
   const isControlled = controlledOpen !== undefined;
   const open = isControlled ? controlledOpen : uncontrolled;
@@ -113,7 +123,7 @@ export function Tooltip({
     placement,
     whileElementsMounted: autoUpdate,
     middleware: [
-      offset(sideOffset),
+      offset(sideOffset + (showArrow ? 4 : 0)),
       // `crossAxis: false` so flip judges only the axis the placement is ON.
       // With the default (true) a wide tooltip on a control near a viewport
       // edge was rejected for sticking out SIDEWAYS, and flip — running before
@@ -123,6 +133,7 @@ export function Tooltip({
       // lets `shift()` do the job it is there for and slide it back into view.
       flip({ fallbackAxisSideDirection: "start", crossAxis: false }),
       shift({ padding: 6 }),
+      ...(showArrow ? [arrowMiddleware({ element: arrowRef, padding: 8 })] : []),
     ],
   });
 
@@ -142,14 +153,17 @@ export function Tooltip({
 
   const value = useMemo<TooltipContextValue>(
     () => ({
+      showArrow,
+      arrowRef,
       open,
       refs,
       floatingStyles,
+      context,
       getReferenceProps,
       getFloatingProps,
       setPlacement,
     }),
-    [open, refs, floatingStyles, getReferenceProps, getFloatingProps],
+    [open, refs, floatingStyles, context, getReferenceProps, getFloatingProps, showArrow],
   );
 
   return (
@@ -200,6 +214,8 @@ export function TooltipTrigger({
 }
 
 export interface TooltipContentProps extends ComponentProps<"div"> {
+  /** Short sliding entry; disabled automatically for reduced motion. Default true. */
+  motion?: boolean;
   /** Override the side set on `Tooltip` (drop-in parity with the Radix API). */
   side?: Side;
   /** Accepted for Radix parity; gap is controlled on `Tooltip`. */
@@ -213,6 +229,7 @@ export function TooltipContent({
   style,
   side,
   sideOffset: _sideOffset,
+  motion = true,
   align: _align,
   ...props
 }: TooltipContentProps) {
@@ -225,8 +242,11 @@ export function TooltipContent({
     <FloatingPortal>
       <div
         ref={ctx.refs.setFloating as never}
+        data-uikit-overlay="tooltip"
+        data-side={ctx.context.placement.split("-")[0]}
         style={{ ...ctx.floatingStyles, ...style }}
         className={cn(
+          motion && "uikit-overlay-enter",
           "z-[200] max-w-[260px] rounded-md px-2 py-1 font-uikit-ui text-uikit-11 leading-uikit-snug",
           // The kit's floating-overlay surface — the SAME one Popover and
           // DropdownMenu use. This used to be an inverted chip
@@ -243,6 +263,7 @@ export function TooltipContent({
         {...ctx.getFloatingProps(props)}
       >
         {children}
+        {ctx.showArrow && <OverlayArrow arrowRef={ctx.arrowRef} context={ctx.context} />}
       </div>
     </FloatingPortal>
   );

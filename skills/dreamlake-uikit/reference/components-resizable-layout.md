@@ -32,7 +32,8 @@ fullscreen prop because two hidden columns already express the intent.
 ## Compact panels
 
 Compact layouts accept `compactLeading` for controls in the existing TabRow
-leading slot, including with one visible panel, and use standard UIKit tab height.
+leading slot, including with one visible panel. Compact labels align vertically
+with 32px navigation controls while desktop row spacing is unchanged.
 
 Use `compact` at the application's narrow-screen breakpoint to present one panel
 at full width. The shared `TabRow` lets users reach every non-hidden panel with

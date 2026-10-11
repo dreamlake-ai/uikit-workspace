@@ -87,3 +87,22 @@ it('caps a long fitted label using preferredTabWidth and retains its ellipsis an
   expect(tab.textContent).toBe(label)
   expect(tab.title).toBe(label)
 })
+
+it('centers compact controls without changing default desktop alignment', () => {
+  const render = (compact: boolean) => act(() => root.render(<TabRow value="notes" onValueChange={() => {}}
+    className={compact ? 'uikit-tab-row-compact' : undefined} minTabHeight={compact ? 30 : undefined}
+    leading={<button style={{ height: 32 }} aria-label="Menu">Menu</button>}
+    trailing={<button aria-label="Share">Share</button>}
+    tabs={[{ value: 'notes', label: '@workspace/notes' }]} />))
+  render(true)
+  const row = container.querySelector<HTMLElement>('.uikit-tab-row')!
+  expect(row.style.getPropertyValue('--tab-row-min-height')).toBe('30px')
+  for (const controls of row.querySelectorAll<HTMLElement>('.uikit-tab-row-controls')) {
+    expect(getComputedStyle(controls).alignSelf).toBe('center')
+    expect(getComputedStyle(controls).marginBottom).toBe('0px')
+  }
+  render(false)
+  expect(row.style.getPropertyValue('--tab-row-min-height')).toBe('')
+  expect(getComputedStyle(row).alignItems).toBe('flex-end')
+  expect(getComputedStyle(row.querySelector<HTMLElement>('.uikit-tab-row-controls')!).marginBottom).toBe('4px')
+})
