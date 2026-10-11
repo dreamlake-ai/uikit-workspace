@@ -27,9 +27,10 @@ export function CompactSpec() {
           <Menu size={14} />
         </Button>}
         compactPanelAsAction={leaf => leaf.view === 'list'}
-        compactPanelLabel={(leaf, active) => leaf.view === 'list' ? 'List'
-          : leaf.view === 'notes' ? (active ? '@workspace/notes' : 'notes')
+        compactPanelLabel={leaf => leaf.view === 'list' ? 'List'
+          : leaf.view === 'notes' ? '@workspace/notes'
           : leaf.title ?? 'Document'}
+        compactPanelFitContent={(leaf, active) => leaf.view === 'notes' && !active}
         closable={() => false}
         renderBody={leaf => <textarea
           aria-label={`${leaf.title} draft`}

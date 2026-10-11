@@ -74,6 +74,10 @@ only for the selected compact panel, so a Notes tab can show `@workspace/notes`
 when selected and `notes` otherwise. Existing one-argument callbacks continue to
 work. Labels, tooltips and accessible names update together; the existing tab
 shape and mounted content are unchanged.
+`compactPanelFitContent(leaf, active)` opts individual text tabs into intrinsic
+width without changing their padding. The existing preferred width (170px by
+default) remains the maximum, with long labels ellipsized. Return true for an inactive
+Notes catalog tab and false when active to retain the normal selected width.
 `compactPanelIcon(leaf)` makes that panel an icon-only tab while retaining its
 accessible label. `compactLeading` uses the existing TabRow leading slot for
 controls such as a subdued navigation menu; it keeps the row available even

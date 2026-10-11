@@ -51,3 +51,39 @@ it('retains icon-and-text labels and accessible close actions for compact icon t
   expect(close).toHaveBeenCalledWith('list')
   expect(container.querySelector('[aria-label="Close List"]')).toBeTruthy()
 })
+
+it('fits opted-in text tabs intrinsically while retaining padding and keyboard navigation', () => {
+  const change = vi.fn()
+  act(() => root.render(<TabRow value="draft" onValueChange={change} tabs={[
+    { value: 'notes', label: 'notes', fitContent: true },
+    { value: 'draft', label: 'Draft' },
+  ]} />))
+  const tabs = container.querySelectorAll<HTMLButtonElement>('[role="tab"]')
+  const fitted = getComputedStyle(tabs[0].parentElement!)
+  expect(fitted.flexBasis).toBe('auto')
+  expect(fitted.flexShrink).toBe('0')
+  expect(fitted.minWidth).toBe('0px')
+  expect(fitted.maxWidth).toBe('var(--tab-row-preferred-width)')
+  expect(getComputedStyle(tabs[0]).paddingLeft).toBe('10px')
+  expect(tabs[1].parentElement?.hasAttribute('data-fit-content')).toBe(false)
+  act(() => tabs[1].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true })))
+  expect(change).toHaveBeenCalledWith('notes')
+  expect(document.activeElement).toBe(tabs[0])
+})
+
+
+it('caps a long fitted label using preferredTabWidth and retains its ellipsis and full accessible text', () => {
+  const label = '@a-very-long-workspace-name/notes-and-project-documents'
+  act(() => root.render(<TabRow value="draft" onValueChange={() => {}} preferredTabWidth={150} tabs={[
+    { value: 'notes', label, fitContent: true },
+    { value: 'draft', label: 'Draft' },
+  ]} />))
+  const tab = container.querySelector<HTMLButtonElement>('[role="tab"]')!
+  expect(container.querySelector<HTMLElement>('.uikit-tab-row')!.style.getPropertyValue('--tab-row-preferred-width')).toBe('150px')
+  expect(getComputedStyle(tab.parentElement!).maxWidth).toBe('var(--tab-row-preferred-width)')
+  expect(getComputedStyle(tab).minWidth).toBe('0px')
+  expect(getComputedStyle(tab).textOverflow).toBe('ellipsis')
+  expect(getComputedStyle(tab).overflow).toBe('hidden')
+  expect(tab.textContent).toBe(label)
+  expect(tab.title).toBe(label)
+})

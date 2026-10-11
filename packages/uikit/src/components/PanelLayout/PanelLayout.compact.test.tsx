@@ -310,3 +310,28 @@ it('keeps active-aware utility labels and their region names synchronized', () =
   expect(panel.getAttribute('aria-label')).toBe('Files')
   expect(button.getAttribute('aria-pressed')).toBe('false')
 })
+
+it('fits only opted-in inactive tabs while preserving active width policy and editor identity', () => {
+  const notes = panelLeaf({ title: 'Notes' })
+  const draft = panelLeaf({ title: 'Draft' })
+  const tree = panelSplit('row', [notes, draft])
+  const fit = vi.fn((leaf: LeafNode, active: boolean) => leaf.id === notes.id && !active)
+  act(() => root.render(<PanelLayout root={tree} compact compactPanelFitContent={fit}
+    renderBody={() => <textarea />} />))
+  const notesTab = tabs()[0]
+  const editor = surface(notes.id).querySelector('textarea')!
+  editor.value = 'Unsaved text'
+  editor.scrollTop = 26
+  expect(notesTab.parentElement!.hasAttribute('data-fit-content')).toBe(false)
+  act(() => tabs()[1].click())
+  expect(tabs()[0]).toBe(notesTab)
+  expect(notesTab.parentElement!.getAttribute('data-fit-content')).toBe('true')
+  expect(fit).toHaveBeenCalledWith(notes, false)
+  expect(tabs()[1].parentElement!.hasAttribute('data-fit-content')).toBe(false)
+  act(() => notesTab.click())
+  expect(notesTab.parentElement!.hasAttribute('data-fit-content')).toBe(false)
+  expect(fit).toHaveBeenCalledWith(notes, true)
+  expect(surface(notes.id).querySelector('textarea')).toBe(editor)
+  expect(editor.value).toBe('Unsaved text')
+  expect(editor.scrollTop).toBe(26)
+})

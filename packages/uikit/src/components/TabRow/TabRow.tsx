@@ -11,6 +11,8 @@ export interface TabRowItem {
   icon?: ReactNode;
   /** Compact icon tab; label remains the accessible name and default tooltip. */
   iconOnly?: boolean;
+  /** Size this text tab to content, capped by preferredTabWidth. */
+  fitContent?: boolean;
   title?: string;
   /** Optional ID of the panel controlled by this tab. */
   panelId?: string;
@@ -71,6 +73,7 @@ export function TabRow({
           <div key={tab.value} className="uikit-tab-row-item" role="presentation"
             data-active={tab.value === value || undefined} data-enter={tab.entering || undefined}
             data-icon-only={iconOnly || undefined}
+            data-fit-content={tab.fitContent || undefined}
             style={iconOnly ? {
               "--tab-row-min-width": `${iconWidth}px`,
               "--tab-row-preferred-width": `${iconWidth}px`,
@@ -133,6 +136,7 @@ const CSS =
   '.uikit-tab-row-item{display:flex;align-items:center;flex:0 1 var(--tab-row-preferred-width);overflow:hidden;' +
   'box-sizing:border-box;min-width:var(--tab-row-min-width);max-width:var(--tab-row-preferred-width);' +
   'border:1px solid transparent;border-radius:8px 8px 0 0;transition:background 120ms ease}' +
+  '.uikit-tab-row-item[data-fit-content]:not([data-icon-only]){flex:0 0 auto;min-width:0;max-width:var(--tab-row-preferred-width)}' +
   '@keyframes uikit-tab-row-item-in{from{min-width:0;max-width:0;opacity:0;transform:translateY(3px)}' +
   'to{min-width:var(--tab-row-min-width);max-width:var(--tab-row-preferred-width);opacity:1;transform:none}}' +
   '.uikit-tab-row-item[data-enter]{animation:uikit-tab-row-item-in 220ms cubic-bezier(.2,.7,.3,1)}' +
