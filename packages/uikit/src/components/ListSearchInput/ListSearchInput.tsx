@@ -6,7 +6,7 @@ export interface ListSearchInputProps {
   onQuery: (query: string) => void
   placeholder?: string
   searchRef?: RefObject<HTMLInputElement | null>
-  /** Strong underline while the field is active. The input never becomes a badge. */
+  /** Ink underline while the field is active or holds a query. The input never becomes a badge. */
   strongUnderline?: boolean
   /** Active filter. Omit for the unfiltered state. */
   filter?: { label: string; onRemove: () => void }

@@ -695,8 +695,10 @@ html[data-theme="dark"] {
   color: var(--muted);
 }
 .uikit-search-input:focus {
-  /* Match the category tabs' active indicator. */
-  box-shadow: inset 0 -2px var(--ink);
+  /* Focus darkens the hairline rather than doubling it: the same 1px rule,
+     now in ink. A 2px bar under a single-line field read heavier than the
+     text it underlines. */
+  box-shadow: inset 0 -1px var(--ink);
 }
 
 .uikit-search-input[data-has-query] {
@@ -711,7 +713,7 @@ html[data-theme="dark"] {
 .uikit-list-search { font-family: var(--f-mono); }
 .uikit-list-search[data-strong]:focus-within .uikit-search-input,
 .uikit-list-search[data-strong][data-has-query] .uikit-search-input {
-  box-shadow: inset 0 -2px var(--ink); }
+  box-shadow: inset 0 -1px var(--ink); }
 
 /* Reveal panel dismissal alongside the header's dock handle. Keep its space
    reserved so the breadcrumb does not shift, and expose it to keyboard focus. */
