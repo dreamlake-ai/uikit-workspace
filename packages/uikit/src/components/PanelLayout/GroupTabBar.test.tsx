@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client'
 import { afterEach, expect, it, vi } from 'vitest'
 import { GroupTabBar } from './GroupTabBar'
 import { panelGroup, panelLeaf, type PanelNode } from './panel-tree'
+import { PanelConfigContext, DEFAULT_PALETTE } from './config'
 
 afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals() })
 it('reveals selected tabs on open and resize without scrolling the document or changing focus', () => {
@@ -41,4 +42,47 @@ it('reveals selected tabs on open and resize without scrolling the document or c
     expect(window.scrollY).toBe(0)
   } finally { act(()=>root.unmount());host.remove() }
   expect(disconnect).toHaveBeenCalled()
+})
+
+it('focuses the clicked tab before hiding a retained iframe and leaves nested actions independent', () => {
+  ;(globalThis as any).IS_REACT_ACT_ENVIRONMENT = true
+  vi.stubGlobal('ResizeObserver', class { observe() {}; disconnect() {} })
+  const host = document.createElement('div')
+  const frame = document.createElement('iframe')
+  document.body.append(host, frame)
+  const root = createRoot(host)
+  const first = panelLeaf({ title: 'First' }), second = panelLeaf({ title: 'Second' })
+  const group = panelGroup([first, second]) as Extract<PanelNode, {kind:'group'}>
+  const onActivate = vi.fn((id: string) => {
+    expect(document.activeElement).toBe(host.querySelector(`[data-tab-id="${id}"]`))
+  })
+  const action = vi.fn()
+  const close = vi.fn()
+  try {
+    act(() => root.render(
+      <PanelConfigContext.Provider value={{ palette: DEFAULT_PALETTE, tabbed: true,
+        renderTab: leaf => <><span data-label>{leaf.title}</span><button onClick={action}>Pin</button></>,
+      }}>
+        <GroupTabBar group={group} onActivate={onActivate} onCloseTab={close} onHandleDown={(_leaf, event) => event.preventDefault()} />
+      </PanelConfigContext.Provider>
+    ))
+    const tab = host.querySelector<HTMLElement>(`[data-tab-id="${second.id}"]`)!
+    frame.focus()
+    expect(document.activeElement).toBe(frame)
+    // Synthetic click has no native focus default: the handler must transfer
+    // focus before activation can make the previously focused surface inert.
+    act(() => tab.querySelector<HTMLElement>('[data-label]')!.click())
+    expect(onActivate).toHaveBeenCalledExactlyOnceWith(second.id)
+    onActivate.mockClear()
+    const pin = tab.querySelector<HTMLButtonElement>('button')!
+    pin.focus()
+    act(() => pin.click())
+    expect(action).toHaveBeenCalledOnce()
+    expect(onActivate).not.toHaveBeenCalled()
+    expect(document.activeElement).toBe(pin)
+    const closer = tab.querySelector<HTMLElement>('[role="button"]')!
+    act(() => closer.click())
+    expect(close).toHaveBeenCalledExactlyOnceWith(second.id)
+    expect(onActivate).not.toHaveBeenCalled()
+  } finally { act(() => root.unmount()); host.remove(); frame.remove() }
 })
