@@ -160,7 +160,13 @@ export function GroupTabBar({
               if (renderTab && (e.target as HTMLElement).closest('button, a, [role=button]')) return
               if (e.button === 0) onHandleDown(leaf, e, TAB_DRAG_THRESHOLD_PX)
             }}
-            onClick={e => { if (!(e.target as HTMLElement).closest('button, a, [role=button]') || !renderTab) onActivate(leaf.id) }}
+            onClick={e => {
+              if (renderTab && (e.target as HTMLElement).closest('button, a, [role=button]')) return
+              // Drag handling cancels pointerdown's native focus. Move DOM focus
+              // off the old panel before activation hides its retained iframe.
+              e.currentTarget.focus({ preventScroll: true })
+              onActivate(leaf.id)
+            }}
             className={cn(
               'group/tab inline-flex items-center gap-1.5 px-2.5 rounded-t-[8px] cursor-pointer border-none',
               'font-uikit-ui text-[12px] whitespace-nowrap [transition:background_120ms_ease,color_120ms_ease]',
