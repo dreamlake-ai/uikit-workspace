@@ -144,6 +144,8 @@ export interface PanelLayoutProps {
   compactPanelLabel?: (leaf: LeafNode, active: boolean) => string
   /** Fit individual compact text tabs to content; others keep standard widths. */
   compactPanelFitContent?: (leaf: LeafNode, active: boolean) => boolean
+  /** Content beside each compact label, outside its tab button. */
+  compactPanelTrailing?: (leaf: LeafNode) => ReactNode
   /** Layout-owned tabs; keep view DOM connected across moves. */
   tabbed?: boolean
   /** Show a tab for a lone view only when its content opts in. Groups always show tabs. */
@@ -240,6 +242,7 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
     compactLabel = 'Workspace panels',
     compactPanelLabel,
     compactPanelFitContent,
+    compactPanelTrailing,
     compactLeading,
     compactPanelIcon,
     compactPanelAsAction,
@@ -774,6 +777,7 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
                 id: tabDomId(leaf.id),
                 label: compactName(leaf),
                 fitContent: compactPanelFitContent?.(leaf, leaf.id === activeId),
+                trailing: compactPanelTrailing?.(leaf),
                 icon,
                 iconOnly: icon != null,
                 panelId: tabPanelDomId(leaf.id),

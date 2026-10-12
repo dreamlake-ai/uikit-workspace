@@ -13,6 +13,8 @@ export interface TabRowItem {
   iconOnly?: boolean;
   /** Size this text tab to content, capped by preferredTabWidth. */
   fitContent?: boolean;
+  /** Content beside the label button, such as a persistent reference action. */
+  trailing?: ReactNode;
   title?: string;
   /** Optional ID of the panel controlled by this tab. */
   panelId?: string;
@@ -104,6 +106,7 @@ export function TabRow({
               {hasIcon && <span className="uikit-tab-row-item-icon" aria-hidden>{tab.icon}</span>}
               {!iconOnly && tab.label}
             </button>
+            {tab.trailing != null && <span className="uikit-tab-row-item-trailing">{tab.trailing}</span>}
             {onClose && tab.closable !== false && <button type="button"
               className="uikit-tab-row-item-x" aria-label={`Close ${tab.label}`}
               title="Close tab" onClick={() => onClose(tab.value)}>
@@ -122,6 +125,7 @@ export function TabRow({
 const RED = "oklch(59% .18 25)";
 const OPEN = "160ms cubic-bezier(.2,.7,.3,1)";
 const CSS =
+  '.uikit-tab-row-item-trailing{display:inline-flex;align-items:center;flex:none;margin-right:5px}' +
   '.uikit-tab-row-item-icon{display:inline-flex;vertical-align:middle;margin-right:6px}' +
   '.uikit-tab-row-item[data-icon-only]{flex-shrink:0}' +
   '.uikit-tab-row-item[data-icon-only] .uikit-tab-row-item-icon{margin-right:0}' +

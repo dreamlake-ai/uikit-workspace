@@ -106,3 +106,21 @@ it('centers compact controls without changing default desktop alignment', () => 
   expect(getComputedStyle(row).alignItems).toBe('flex-end')
   expect(getComputedStyle(row.querySelector<HTMLElement>('.uikit-tab-row-controls')!).marginBottom).toBe('4px')
 })
+
+it('keeps trailing actions outside the tab button and preserves keyboard selection', () => {
+  const select = vi.fn()
+  const copy = vi.fn()
+  act(() => root.render(<TabRow value="notes" onValueChange={select} tabs={[
+    { value: 'notes', label: 'Notes' },
+    { value: 'draft', label: 'Draft', trailing: <button onClick={copy}>Copy reference</button> },
+  ]} />))
+  const tabs = container.querySelectorAll<HTMLButtonElement>('[role="tab"]')
+  const action = container.querySelector<HTMLButtonElement>('.uikit-tab-row-item-trailing button')!
+  expect(action.closest('[role="tab"]')).toBeNull()
+  act(() => action.click())
+  expect(copy).toHaveBeenCalledOnce()
+  expect(select).not.toHaveBeenCalled()
+  act(() => tabs[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true })))
+  expect(select).toHaveBeenCalledWith('draft')
+  expect(document.activeElement).toBe(tabs[1])
+})
