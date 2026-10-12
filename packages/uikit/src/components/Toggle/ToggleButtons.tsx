@@ -118,10 +118,11 @@ export function ToggleButtons({
   const [highlight, setHighlight] = useState<CSSProperties>({ opacity: 0 });
 
   const registerItem = useCallback((v: string, el: HTMLElement) => {
-    setItems((prev) => new Map(prev).set(v, el));
+    setItems((prev) => (prev.get(v) === el ? prev : new Map(prev).set(v, el)));
   }, []);
   const unregisterItem = useCallback((v: string) => {
     setItems((prev) => {
+      if (!prev.has(v)) return prev;
       const next = new Map(prev);
       next.delete(v);
       return next;
@@ -149,7 +150,7 @@ export function ToggleButtons({
       return () => cancelAnimationFrame(raf);
     }
     setHighlight((p) => ({ ...p, opacity: 0 }));
-  }, [value, items, padding]);
+  }, [value, items, padding, size, variant]);
 
   // Memoize so the context identity is stable — otherwise every render makes a
   // new object, re-running each ToggleButton's register effect and churning the
@@ -250,13 +251,17 @@ export function ToggleButton({
     [externalRef],
   );
 
+  const { registerItem, unregisterItem } = ctx;
+  // Selection, theme and caller callback changes do not change the measured
+  // element. Re-registering on every context update feeds state updates back
+  // into continuously rendering parents (for example, a canvas zoom control).
   useEffect(() => {
     const el = itemRef.current;
     if (el) {
-      ctx.registerItem(value, el);
-      return () => ctx.unregisterItem(value);
+      registerItem(value, el);
+      return () => unregisterItem(value);
     }
-  }, [value, ctx]);
+  }, [value, registerItem, unregisterItem]);
 
   const classes = cn(
     "relative z-10 inline-flex items-center justify-center font-normal whitespace-nowrap transition-colors outline-none cursor-pointer",
