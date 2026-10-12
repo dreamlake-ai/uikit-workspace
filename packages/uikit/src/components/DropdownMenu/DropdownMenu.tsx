@@ -66,7 +66,8 @@ export interface DropdownMenuProps {
   side?: Side;
   align?: Align;
   sideOffset?: number;
-  /** Show a trigger-facing wedge that follows the resolved placement. */
+  /** Show a trigger-facing wedge that follows the resolved placement. Default
+   *  true, like Menu, Popover and Tooltip; pass false for a bare panel. */
   arrow?: boolean;
   children: ReactNode;
 }
@@ -79,7 +80,7 @@ function useMenuFloating(
   align: Align,
   sideOffset: number,
   isSubmenu: boolean,
-  arrow = false,
+  arrow = true,
 ) {
   const [uncontrolled, setUncontrolled] = useState(defaultOpen);
   const isControlled = controlledOpen !== undefined;
@@ -165,7 +166,7 @@ export function DropdownMenu({
   side = "bottom",
   align = "start",
   sideOffset = 4,
-  arrow = false,
+  arrow = true,
   children,
 }: DropdownMenuProps) {
   const value = useMenuFloating(

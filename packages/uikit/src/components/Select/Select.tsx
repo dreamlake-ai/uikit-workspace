@@ -97,7 +97,7 @@ export interface SelectOption {
 }
 
 export interface SelectProps {
-  /** Show a trigger-pointing wedge, matching Menu. Default false. */
+  /** Show a trigger-pointing wedge, matching Menu. Default true; pass false for a bare panel. */
   arrow?: boolean;
   value?: string;
   defaultValue?: string;
@@ -137,7 +137,7 @@ export interface SelectProps {
  * come from `@floating-ui/react`; the panel matches the trigger width.
  */
 export function Select({
-  arrow = false,
+  arrow = true,
   value: controlledValue,
   defaultValue,
   onValueChange,
