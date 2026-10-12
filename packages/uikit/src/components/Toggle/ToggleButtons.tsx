@@ -150,7 +150,7 @@ export function ToggleButtons({
       return () => cancelAnimationFrame(raf);
     }
     setHighlight((p) => ({ ...p, opacity: 0 }));
-  }, [value, items, padding]);
+  }, [value, items, padding, size, variant]);
 
   // Memoize so the context identity is stable — otherwise every render makes a
   // new object, re-running each ToggleButton's register effect and churning the
