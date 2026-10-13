@@ -2,6 +2,7 @@ import {
   type ComponentProps,
   type ReactElement,
   type ReactNode,
+  type Ref,
   cloneElement,
   createContext,
   isValidElement,
@@ -23,6 +24,7 @@ import {
   useFocus,
   useHover,
   useInteractions,
+  useMergeRefs,
   useRole,
 } from "@floating-ui/react";
 import { OverlayArrow } from "../../lib/overlay-arrow";
@@ -181,6 +183,15 @@ export function TooltipTrigger({
 }: TooltipTriggerProps) {
   const ctx = useTooltipContext("TooltipTrigger");
   const refProps = ctx.getReferenceProps(props);
+  // asChild must KEEP the child's own ref. Cloning with only floating-ui's
+  // reference ref replaced it, so a component holding a ref to its button
+  // (to measure it, focus it, dock a panel beside it) got null the moment the
+  // button was wrapped in a tooltip. React 19 carries the ref on props.
+  const childRef =
+    asChild && isValidElement(children)
+      ? ((children.props as { ref?: Ref<unknown> }).ref ?? null)
+      : null;
+  const triggerRef = useMergeRefs([ctx.refs.setReference, childRef]);
 
   if (asChild && isValidElement(children)) {
     const child = children as ReactElement<Record<string, unknown>>;
@@ -204,7 +215,7 @@ export function TooltipTrigger({
         };
       }
     }
-    return cloneElement(child, { ref: ctx.refs.setReference, ...merged });
+    return cloneElement(child, { ref: triggerRef, ...merged });
   }
   return (
     <button ref={ctx.refs.setReference as never} type="button" {...refProps}>
