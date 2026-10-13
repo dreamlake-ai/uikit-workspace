@@ -81,8 +81,23 @@ async function render(
     ),
   );
 }
-it("preserves the existing default menu without a wedge or extra gap", async () => {
-  await render();
+it("shows the wedge by default, like Menu", async () => {
+  await act(async () =>
+    root.render(
+      <DropdownMenu defaultOpen>
+        <DropdownMenuTrigger data-trigger="">View</DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <DropdownMenuItem asChild>
+            <button>Machines</button>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>,
+    ),
+  );
+  expect(document.querySelector("[data-dropdown-menu-arrow]")).not.toBeNull();
+});
+it("omits the wedge and its gap when arrow is false", async () => {
+  await render(false);
   expect(document.querySelector("[data-dropdown-menu-arrow]")).toBeNull();
   expect(
     (document.querySelector('[role="menu"]') as HTMLElement).style.top,

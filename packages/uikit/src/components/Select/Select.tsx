@@ -53,6 +53,7 @@ function mergeRefs<T>(
 interface SelectContextValue {
   arrow: boolean;
   arrowRef: React.RefObject<HTMLSpanElement | null>;
+  chevronRef: React.RefObject<SVGSVGElement | null>;
   open: boolean;
   setOpen: (open: boolean) => void;
   value: string | undefined;
@@ -97,7 +98,7 @@ export interface SelectOption {
 }
 
 export interface SelectProps {
-  /** Show a trigger-pointing wedge, matching Menu. Default false. */
+  /** Show a trigger-pointing wedge, matching Menu. Default true; pass false for a bare panel. */
   arrow?: boolean;
   value?: string;
   defaultValue?: string;
@@ -137,7 +138,7 @@ export interface SelectProps {
  * come from `@floating-ui/react`; the panel matches the trigger width.
  */
 export function Select({
-  arrow = false,
+  arrow = true,
   value: controlledValue,
   defaultValue,
   onValueChange,
@@ -202,6 +203,7 @@ export function Select({
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
   const arrowRef = useRef<HTMLSpanElement>(null);
+  const chevronRef = useRef<SVGSVGElement>(null);
   const { refs, floatingStyles, context } = useFloating({
     open,
     onOpenChange: setOpen,
@@ -247,6 +249,7 @@ export function Select({
     () => ({
       arrow,
       arrowRef,
+      chevronRef,
       open,
       setOpen,
       value,
@@ -341,6 +344,7 @@ export const SelectTrigger = forwardRef<HTMLButtonElement, SelectTriggerProps>(
             An inline `transform` + `transition` needs no build step to reach
             it, and `ctx.open` is already the state the class was reading. */}
         <ChevronDown
+          ref={ctx.chevronRef}
           size={13}
           className="ml-0.5 shrink-0 opacity-55"
           style={{
@@ -371,6 +375,28 @@ export function SelectValue({ placeholder, className }: SelectValueProps) {
 
 export interface SelectContentProps
   extends ComponentProps<"div">, LegacyOverlayContentProps {}
+/**
+ * Where the wedge sits: under the trigger's chevron, not the trigger's centre.
+ *
+ * Floating UI's arrow middleware centres on the reference, which for a
+ * "label ⌄" trigger is the middle of the label — a reader's eye goes to the
+ * chevron, the part that turns when the panel opens. The middleware's x is
+ * shifted by the chevron's offset from that centre and kept clear of the
+ * panel's rounded corners by the same 16px padding the middleware uses.
+ */
+function wedgeLeft(ctx: SelectContextValue): number | undefined {
+  const x = ctx.context.middlewareData.arrow?.x;
+  if (x == null) return undefined;
+  const reference = ctx.refs.reference.current;
+  const chevron = ctx.chevronRef.current;
+  const panel = ctx.refs.floating.current;
+  if (!(reference instanceof Element) || !chevron || !panel) return x;
+  const r = reference.getBoundingClientRect();
+  const c = chevron.getBoundingClientRect();
+  const shifted = x + (c.left + c.width / 2) - (r.left + r.width / 2);
+  return Math.min(Math.max(shifted, 16), panel.offsetWidth - 16 - 7);
+}
+
 export function SelectContent({
   className,
   children,
@@ -403,36 +429,39 @@ export function SelectContent({
               aria-hidden="true"
               data-select-arrow=""
               style={{
-                position: 'absolute',
+                position: "absolute",
                 width: 7,
                 height: 7,
-                left: ctx.context.middlewareData.arrow?.x,
-                ...(ctx.context.placement.startsWith('top')
+                left: wedgeLeft(ctx),
+                ...(ctx.context.placement.startsWith("top")
                   ? {
                       bottom: -0.5,
-                      borderBottom: '1px solid var(--faint)',
-                      borderRight: '1px solid var(--faint)',
+                      borderBottom: "1px solid var(--faint)",
+                      borderRight: "1px solid var(--faint)",
                       borderBottomRightRadius: 2,
-                      translate: '0 50%',
+                      translate: "0 50%",
                     }
                   : {
                       top: -0.5,
-                      borderTop: '1px solid var(--faint)',
-                      borderLeft: '1px solid var(--faint)',
+                      borderTop: "1px solid var(--faint)",
+                      borderLeft: "1px solid var(--faint)",
                       borderTopLeftRadius: 2,
-                      translate: '0 -50%',
+                      translate: "0 -50%",
                     }),
-                transform: 'rotate(45deg)',
-                background: 'inherit',
-                pointerEvents: 'none',
+                transform: "rotate(45deg)",
+                background: "inherit",
+                pointerEvents: "none",
               }}
             />
           )}
           <div
             className="flex flex-col gap-px overflow-y-auto p-1"
-            style={{ maxHeight: 'inherit' }}
+            style={{ maxHeight: "inherit" }}
           >
-            <FloatingList elementsRef={ctx.elementsRef} labelsRef={ctx.labelsRef}>
+            <FloatingList
+              elementsRef={ctx.elementsRef}
+              labelsRef={ctx.labelsRef}
+            >
               {children}
             </FloatingList>
           </div>
