@@ -69,11 +69,12 @@ const VARIANTS: Record<ButtonVariant, string> = {
     "disabled:bg-[color-mix(in_oklab,var(--uikit-accent)_38%,var(--bg))] disabled:opacity-55",
   secondary:
     "bg-transparent border border-uikit-faint text-uikit-ink hover:bg-uikit-ink-5",
-  // The action you take by NOT acting — the cancel beside a primary. A bare
-  // muted mono label: no fill, no border, no hover chrome, just opacity. Two
-  // buttons in a footer make the reader compare two boxes; one button and one
-  // label say which is the way forward.
-  ghost: "text-uikit-muted opacity-80 hover:opacity-100 bg-transparent",
+  // The action you take by NOT acting — the cancel beside a primary. A muted
+  // mono label with no fill or border at rest, so a footer reads as one
+  // button and one label; under the pointer it fills with the ink wash, as
+  // every other quiet control does, so it still answers like a button.
+  ghost:
+    "text-uikit-muted opacity-80 hover:opacity-100 bg-transparent hover:bg-uikit-ink-5",
   // Chrome action — the borderless mono pill in a toolbar or detail header
   // (+ publish, + import, ← back). MONO and denser than `ghost` on purpose:
   // these sit in rows of metadata, not in a dialog footer. `rounded-uikit-badge`
