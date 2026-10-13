@@ -237,7 +237,11 @@ export function ProfileCard({
         <div
           onClick={(e) => e.stopPropagation()}
           className={cn(
-            'absolute right-3 top-3 z-10 inline-flex items-center gap-1',
+            // Centred on the header row, not parked 12px down: the box starts
+            // at the content's top padding and is the header row's height
+            // (~20px: the 14px title on snug leading, beside 11px meta), so a
+            // 28px button centres on the name's line.
+            'absolute right-3 top-3.5 z-10 inline-flex items-center gap-1 h-5',
             revealOnHover,
           )}
         >
