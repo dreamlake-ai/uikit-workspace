@@ -91,7 +91,10 @@ const VARIANTS: Record<ButtonVariant, string> = {
   destructive:
     "bg-uikit-danger text-white " +
     "hover:bg-[color-mix(in_oklab,var(--color-uikit-danger)_88%,#000)]",
-  link: "bg-transparent text-uikit-ink underline-offset-4 hover:underline !px-0",
+  // A colour change under the pointer, not an underline: an underline on a mono
+  // label reads as a rule beneath the line, and every other control in the kit
+  // answers hover with colour or fill.
+  link: "bg-transparent text-uikit-ink no-underline transition-colors duration-[120ms] hover:text-uikit-accent !px-0",
 };
 
 // A real ladder: heights 24.5 / 30.5 / 36.5, side padding 10 / 14 / 18.
