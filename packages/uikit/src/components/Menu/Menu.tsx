@@ -8,6 +8,7 @@ import {
 } from 'react'
 import { createPortal } from 'react-dom'
 import { cn } from '../../lib/utils'
+import { useHoverSlider } from '../../lib/useHoverSlider'
 
 /** Wedge side length in px, pre-rotation. */
 const ARROW_SIZE = 7
@@ -96,6 +97,7 @@ export function Menu({
   }
 
   const triggerRef = useRef<HTMLSpanElement>(null)
+  const hover = useHoverSlider()
   const panelRef = useRef<HTMLDivElement>(null)
   const [coords, setCoords] = useState<{
     /** Distance from the viewport top ('down') or bottom ('up'). */
@@ -276,9 +278,13 @@ export function Menu({
                 must keep `overflow: visible` for the wedge, so content that
                 outgrows the trigger-to-edge space scrolls in here instead. */}
             <div
-              className="flex flex-col px-1.5 py-1.5 overflow-y-auto"
+              ref={hover.ref}
+              data-uikit-hover-host=""
+              {...hover.pointerHandlers}
+              className="relative isolate flex flex-col px-1.5 py-1.5 overflow-y-auto"
               style={coords.maxHeight > 0 ? { maxHeight: coords.maxHeight } : undefined}
             >
+              {hover.slider}
               {children}
             </div>
           </div>,
