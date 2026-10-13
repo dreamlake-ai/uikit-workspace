@@ -39,6 +39,7 @@ function render() {
           Current
         </button>
         <MenuItem label="Off" disabled />
+        <MenuItem label="Delete" danger />
       </Menu>,
     ),
   );
@@ -64,5 +65,12 @@ it("steps aside on the selected row, so grey never mixes into the accent fill", 
 it("gives a disabled row no hover", () => {
   render();
   move(document.querySelector("[data-disabled]")!);
+  expect(slider().hasAttribute("data-ready")).toBe(false);
+});
+
+it("steps aside on a danger row, which paints its own red hover", () => {
+  render();
+  move(document.querySelector('[role="menuitem"]')!);
+  move(document.querySelector("[data-danger]")!);
   expect(slider().hasAttribute("data-ready")).toBe(false);
 });

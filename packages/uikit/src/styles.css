@@ -488,7 +488,8 @@ html[data-theme="dark"] {
     [data-selected="true"],
     [aria-checked="true"],
     [aria-current],
-    [data-active-row]
+    [data-active-row],
+    [data-danger]
   ) {
   background-color: transparent;
 }

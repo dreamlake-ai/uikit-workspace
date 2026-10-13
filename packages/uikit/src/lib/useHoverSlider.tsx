@@ -9,9 +9,11 @@ import {
 export const HOVER_SLIDER_ROWS =
   '[role="option"], [role^="menuitem"], button, a[href]';
 
-/** A row already wearing the selected (accent) fill. */
+/** A row that paints its own fill: selected (accent) or danger (red). Grey
+ *  under either mixes into a colour neither state owns, so the slider steps
+ *  aside on these. */
 export const HOVER_SLIDER_SELECTED =
-  '[aria-selected="true"], [data-selected="true"], [aria-checked="true"], [aria-current]:not([aria-current="false"]), [data-active-row]';
+  '[aria-selected="true"], [data-selected="true"], [aria-checked="true"], [aria-current]:not([aria-current="false"]), [data-active-row], [data-danger]';
 
 /**
  * Hover for a list of rows, painted ONCE and moved rather than once per row —
