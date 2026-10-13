@@ -8,6 +8,7 @@
 export * from "./components";
 export { cn } from "./lib/utils";
 export { useIsMobile } from "./lib/useIsMobile";
+export { useHoverSlider } from "./lib/useHoverSlider";
 // TreeDataItem / TreeDataItemWithMeta come from the TreeView component (./components).
 export type {
   DialSchema,

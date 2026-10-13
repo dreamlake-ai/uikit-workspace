@@ -24,8 +24,9 @@ export function MenuItem({ icon, label, danger, disabled, onClick }: MenuItemPro
         'flex items-center gap-2.5 px-2 py-[7px] select-none cursor-pointer',
         'font-uikit-ui text-[12.5px] font-medium leading-uikit-snug tracking-uikit-snug',
         'text-uikit-ink transition-colors duration-[120ms] ease-out',
-        // Rounded hover chip — the panel's px-1.5 supplies the side inset.
-        'rounded-uikit-badge hover:bg-uikit-ink-4',
+        // Hover is the panel's travelling slider (useHoverSlider), not a fill
+        // per row; the radius here is what the slider takes on.
+        'rounded-uikit-badge',
         // danger variant
         'data-[danger]:text-uikit-danger data-[danger]:hover:bg-uikit-danger-8',
         // disabled overrides everything else

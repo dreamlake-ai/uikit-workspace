@@ -1,4 +1,5 @@
 import {
+  useLayoutEffect,
   Children,
   type ComponentProps,
   type ReactElement,
@@ -33,6 +34,7 @@ import {
   useTypeahead,
 } from "@floating-ui/react";
 import { cn } from "../../lib/utils";
+import { useHoverSlider } from "../../lib/useHoverSlider";
 import {
   type LegacyOverlayContentProps,
   stripLegacyOverlayProps,
@@ -404,6 +406,16 @@ export function SelectContent({
   ...props
 }: SelectContentProps) {
   const ctx = useSelectContext("SelectContent");
+  const hover = useHoverSlider();
+  const activeRow =
+    ctx.open && ctx.activeIndex != null
+      ? (ctx.elementsRef.current[ctx.activeIndex] ?? null)
+      : null;
+  // Aim the slider at the active row — floating-ui moves it for the pointer
+  // and the arrow keys alike, so both drive the one fill.
+  useLayoutEffect(() => {
+    hover.track(activeRow);
+  }, [activeRow]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!ctx.open) return null;
   const rest = stripLegacyOverlayProps(props);
   return (
@@ -455,9 +467,12 @@ export function SelectContent({
             />
           )}
           <div
-            className="flex flex-col gap-px overflow-y-auto p-1"
+            ref={hover.ref}
+            data-uikit-hover-host=""
+            className="relative isolate flex flex-col gap-px overflow-y-auto p-1"
             style={{ maxHeight: "inherit" }}
           >
+            {hover.slider}
             <FloatingList
               elementsRef={ctx.elementsRef}
               labelsRef={ctx.labelsRef}
@@ -523,8 +538,9 @@ export function SelectItem({
         // used to render muted at 85% — 3.3:1 on the panel in dark, under AA —
         // which made an open dropdown read as a list of disabled rows. Muted
         // stays right for the GROUP LABEL below, which is a label.
-        "bg-transparent text-uikit-ink hover:bg-uikit-ink-4",
-        "data-[active=true]:bg-uikit-ink-4",
+        // Hover and keyboard focus are one fill that travels between rows —
+        // SelectContent's slider, aimed at the active row — not a fill per row.
+        "bg-transparent text-uikit-ink",
         // The selected row is accent-tinted, the treatment consuming apps already
         // use for "this is the one you are on" (the account switcher and the
         // version/run pickers that mirror it). ink-5 read as another hover.

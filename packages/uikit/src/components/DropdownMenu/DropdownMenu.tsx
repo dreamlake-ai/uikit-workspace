@@ -1,4 +1,5 @@
 import {
+  useLayoutEffect,
   type ComponentProps,
   type ReactElement,
   type ReactNode,
@@ -30,6 +31,7 @@ import {
   safePolygon,
 } from "@floating-ui/react";
 import { cn } from "../../lib/utils";
+import { useHoverSlider } from "../../lib/useHoverSlider";
 import {
   type LegacyOverlayContentProps,
   stripLegacyOverlayProps,
@@ -215,6 +217,16 @@ export function DropdownMenuContent({
   ...props
 }: DropdownMenuContentProps) {
   const ctx = useMenuContext("DropdownMenuContent");
+  const hover = useHoverSlider();
+  const activeRow =
+    ctx.open && ctx.activeIndex != null
+      ? (ctx.elementsRef.current[ctx.activeIndex] ?? null)
+      : null;
+  // The one travelling hover fill, aimed at floating-ui's active row so the
+  // pointer and the arrow keys move the same thing.
+  useLayoutEffect(() => {
+    hover.track(activeRow);
+  }, [activeRow]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!ctx.open) return null;
   const rest = stripLegacyOverlayProps(props);
   return (
@@ -235,7 +247,14 @@ export function DropdownMenuContent({
           {...ctx.getFloatingProps(rest)}
         >
           <DropdownMenuArrow />
-          <FloatingList elementsRef={ctx.elementsRef}>{children}</FloatingList>
+          <div
+            ref={hover.ref}
+            data-uikit-hover-host=""
+            className="relative isolate flex flex-col"
+          >
+            {hover.slider}
+            <FloatingList elementsRef={ctx.elementsRef}>{children}</FloatingList>
+          </div>
         </div>
       </FloatingFocusManager>
     </FloatingPortal>
@@ -299,7 +318,7 @@ function DropdownMenuArrow() {
 }
 
 const itemClass =
-  "flex w-full items-center gap-2 rounded-uikit-badge px-2 py-1.5 text-uikit-12 leading-uikit-snug cursor-pointer select-none outline-none data-[active=true]:bg-uikit-ink-5 disabled:opacity-50 disabled:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-3.5";
+  "flex w-full items-center gap-2 rounded-uikit-badge px-2 py-1.5 text-uikit-12 leading-uikit-snug cursor-pointer select-none outline-none disabled:opacity-50 disabled:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-3.5";
 
 export interface DropdownMenuItemProps extends Omit<
   ComponentProps<"div">,
