@@ -1,4 +1,5 @@
 import {
+  useEffect,
   useLayoutEffect,
   useRef,
   useState,
@@ -60,6 +61,21 @@ export function useHoverSlider<T extends HTMLElement = HTMLDivElement>() {
         ? prev
         : next,
     );
+  }, [target]);
+
+  // A row can leave while the pointer rests on it — a button that turns into
+  // the field it opens (the note version menu's "Name and save"), a row a
+  // filter drops. No pointer event says so, and the slider stayed painted
+  // where the row used to be until the pointer moved again. Watch the host
+  // for the tracked row going away, and step aside when it does.
+  useEffect(() => {
+    const host = ref.current;
+    if (!host || !target || typeof MutationObserver === "undefined") return;
+    const observer = new MutationObserver(() => {
+      if (!target.isConnected || !host.contains(target)) setTarget(null);
+    });
+    observer.observe(host, { childList: true, subtree: true });
+    return () => observer.disconnect();
   }, [target]);
 
   // A row that cannot be chosen gets no hover, same as before.
