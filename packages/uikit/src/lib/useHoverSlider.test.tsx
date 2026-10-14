@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act } from "react";
+import { act, useState } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, expect, it } from "vitest";
 import { Menu } from "../components/Menu/Menu";
@@ -72,5 +72,35 @@ it("steps aside on a danger row, which paints its own red hover", () => {
   render();
   move(document.querySelector('[role="menuitem"]')!);
   move(document.querySelector("[data-danger]")!);
+  expect(slider().hasAttribute("data-ready")).toBe(false);
+});
+
+it("steps aside when the hovered row leaves without the pointer moving", async () => {
+  // A row that turns into something else under a resting pointer — the note
+  // version menu's "Name and save" becoming its name field.
+  function Swap() {
+    const [editing, setEditing] = useState(false);
+    return (
+      <Menu open onOpenChange={() => {}} trigger={() => <button>open</button>}>
+        {editing ? (
+          <input aria-label="Name" />
+        ) : (
+          <button role="menuitem" onClick={() => setEditing(true)}>
+            Name and save
+          </button>
+        )}
+      </Menu>
+    );
+  }
+  act(() => root.render(<Swap />));
+  const row = document.querySelector<HTMLElement>('[role="menuitem"]')!;
+  move(row);
+  expect(slider().hasAttribute("data-ready")).toBe(true);
+  await act(async () => {
+    row.click();
+    // MutationObserver callbacks are microtasks.
+    await Promise.resolve();
+  });
+  expect(document.querySelector('[aria-label="Name"]')).not.toBeNull();
   expect(slider().hasAttribute("data-ready")).toBe(false);
 });
