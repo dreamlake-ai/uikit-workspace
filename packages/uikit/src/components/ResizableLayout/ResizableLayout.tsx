@@ -1,3 +1,4 @@
+import { useIsMobile } from '../../lib/useIsMobile'
 import { ReactNode, useState, useEffect, useRef, useCallback, useId, useLayoutEffect } from "react";
 import { cn } from "../../lib/utils";
 import { TabRow } from "../TabRow";
@@ -8,6 +9,8 @@ type CompactPanel = "left" | "middle" | "right";
 export interface ResizableLayoutProps {
   /** Show one full-width panel with tabs; the caller owns the breakpoint. */
   compact?: boolean;
+  /** Collapse below this viewport width in CSS px. Explicit compact takes precedence. */
+  compactBreakpoint?: number;
   /** Fixed controls before compact tabs, using TabRow’s existing leading slot. */
   compactLeading?: ReactNode;
   /** Accessible product-specific names for the compact panel tabs. */
@@ -96,7 +99,8 @@ function writeWidths(key: string | undefined, widths: StoredWidths) {
 }
 
 export function ResizableLayout({
-  compact = false,
+  compact: compactProp,
+  compactBreakpoint,
   compactLeading,
   compactLabels,
   compactPanel,
@@ -121,6 +125,8 @@ export function ResizableLayout({
   middleFixedPx,
   className,
 }: ResizableLayoutProps) {
+  const responsiveCompact = useIsMobile(compactBreakpoint ?? 0);
+  const compact = compactProp ?? responsiveCompact;
   const panelId = useId();
   const selectorRef = useRef<HTMLDivElement>(null);
   const selectorHadFocus = useRef(false);

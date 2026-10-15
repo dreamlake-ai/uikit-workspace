@@ -142,3 +142,23 @@ it('keeps leading controls in the same existing row even for a single visible pa
   expect(row.querySelectorAll('[role="tab"]')).toHaveLength(1)
   expect(tab('Editor').getAttribute('aria-controls')).toBe(activePanels()[0].id)
 })
+
+it('uses a configurable breakpoint, lets compact override it, and keeps drafts mounted', () => {
+  let listener = () => {}
+  const media = { matches: false, addEventListener: (_: string, fn: () => void) => { listener = fn }, removeEventListener: vi.fn() }
+  vi.stubGlobal('matchMedia', vi.fn(() => media))
+  render({ compactBreakpoint: 768 })
+  expect(window.matchMedia).toHaveBeenCalledWith('(max-width: 767px)')
+  const draft = host.querySelector('textarea')!
+  draft.value = 'preserve this'
+  expect(host.querySelector('[role="tablist"]')).toBeNull()
+  act(() => { media.matches = true; listener() })
+  expect(activePanels()).toHaveLength(1)
+  render({ compactBreakpoint: 768, compact: false })
+  expect(host.querySelector('[role="tablist"]')).toBeNull()
+  expect(host.querySelector('textarea')).toBe(draft)
+  expect(draft.value).toBe('preserve this')
+  render({ compactBreakpoint: 600 })
+  expect(window.matchMedia).toHaveBeenCalledWith('(max-width: 599px)')
+  vi.unstubAllGlobals()
+})

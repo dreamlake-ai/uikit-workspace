@@ -27,6 +27,7 @@
   /* ── Ink / muted ─────────────────────────────────────────────── */
   --ink: #1a1a1a;
   --uikit-muted: #6b6b6b;
+  --uikit-axis: #525252;
 
   /* ── Hairlines, chips, search ────────────────────────────────── */
   --faint: rgba(0, 0, 0, 0.08);
@@ -149,6 +150,7 @@ html[data-theme="dark"] {
 
   --ink: #ececec;
   --uikit-muted: #8a8a8a;
+  --uikit-axis: #cccccc;
   --faint: rgba(255, 255, 255, 0.09);
   --faint-dashed: rgba(255, 255, 255, 0.22);
   --chip-bg: rgba(255, 255, 255, 0.05);
@@ -205,6 +207,7 @@ html[data-theme="dark"] {
 
     --ink: #ececec;
     --uikit-muted: #8a8a8a;
+  --uikit-axis: #cccccc;
     --faint: rgba(255, 255, 255, 0.09);
     --faint-dashed: rgba(255, 255, 255, 0.22);
     --chip-bg: rgba(255, 255, 255, 0.05);
@@ -259,6 +262,7 @@ html[data-theme="dark"] {
      the :root / [data-theme] cascade above, so dark mode "just works". */
   --color-uikit-ink: var(--ink);
   --color-uikit-muted: var(--uikit-muted);
+  --color-uikit-axis: var(--uikit-axis);
   --color-uikit-bg: var(--bg);
   --color-uikit-panel: var(--panel-bg);
   --color-uikit-rail: var(--rail-bg);

@@ -427,3 +427,7 @@ object — and a split that lost no children is rebuilt all the same. Compare by
 | `normalizeTree` · `normalizeGroup` · `wrapLayout` · `unwrapLayout`                             | Migration and the persistence envelope.                                           |
 | `dockSideFromPoint` · `dockRect`                                                               | Drag geometry: which edge a cursor is nearest, and the rect a drop would produce. |
 | `reseedCounters`                                                                               | Lift the id counters past a restored tree so new nodes cannot collide.            |
+
+## Responsive collapse threshold
+
+Set `compactBreakpoint={768}` to keep adjacent panels visible on tablets and show one panel below 768 CSS pixels. The default is no automatic collapse; `compact` overrides the breakpoint when supplied. Hidden panels stay mounted across the transition.

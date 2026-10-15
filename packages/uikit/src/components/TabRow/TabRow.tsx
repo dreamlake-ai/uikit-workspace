@@ -129,7 +129,7 @@ const CSS =
   '.uikit-tab-row-item-icon{display:inline-flex;vertical-align:middle;margin-right:6px}' +
   '.uikit-tab-row-item[data-icon-only]{flex-shrink:0}' +
   '.uikit-tab-row-item[data-icon-only] .uikit-tab-row-item-icon{margin-right:0}' +
-  '.uikit-tab-row{position:relative;display:flex;align-items:flex-end;gap:6px;width:100%;min-width:0}' +
+  '.uikit-tab-row{-webkit-user-select:none;user-select:none;position:relative;display:flex;align-items:flex-end;gap:6px;width:100%;min-width:0}' +
   '.uikit-tab-row-line{position:absolute;left:0;right:0;bottom:0;height:1px;background:var(--faint);z-index:0}' +
   '.uikit-tab-row-controls{position:relative;z-index:1;flex:0 0 auto;margin-bottom:4px;display:flex;align-items:center;gap:2px}' +
   '.uikit-tab-row-compact .uikit-tab-row-controls{margin-bottom:0;align-self:center}' +

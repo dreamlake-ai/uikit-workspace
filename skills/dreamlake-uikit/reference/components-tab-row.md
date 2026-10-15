@@ -66,3 +66,5 @@ The caller owns the tab list, selection, and content. When closing the active ta
 Tab focuses the selected tab. Left/Right arrows select adjacent tabs; Home/End select the first/last tab. Delete requests closing the focused tab. Close buttons are keyboard accessible and appear when their tab contains focus. Selection scrolls into view.
 
 Use [Tabs](reference/components-tabs.md) for underline and segmented switches. Use Tab Row for open documents or pages that need close controls and width compression.
+
+Tab labels and controls do not select text during pointer drags or repeated taps. Text inside the associated content panels remains selectable.
