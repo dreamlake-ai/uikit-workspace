@@ -88,6 +88,7 @@ export function PanelLeaf({
     tabbed,
     compact,
     compactTabs,
+    compactHeaderInTabRow,
     compactPanelAsAction,
     compactPanelLabel,
     renderBody,
@@ -107,7 +108,8 @@ export function PanelLeaf({
   // close handler, so a path that never touches a button (Delete on a tab) is
   // covered by the same rule — see ClosablePredicate.
   const canClose = closable?.(leaf) ?? true
-  const customHeader = renderHeader?.(leaf)
+  const headerInTabRow = compactTabs && compactHeaderInTabRow?.(leaf)
+  const customHeader = headerInTabRow ? undefined : renderHeader?.(leaf)
   const [headerHovered, setHeaderHovered] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
 
@@ -129,7 +131,7 @@ export function PanelLeaf({
   // three — two close buttons for one panel. A CUSTOM header still renders: it
   // holds controls the tab cannot (a breadcrumb, a mode switch), which is a
   // deliberate choice by the host rather than redundancy.
-  const showHeader = !inGroup || !!customHeader || tabbed
+  const showHeader = !headerInTabRow && (!inGroup || !!customHeader || tabbed)
 
   // Only a leaf that opts in (a custom header AND a `contentMax`) gets the
   // host's centered-gutter header treatment; the rest keep a plain flush-left

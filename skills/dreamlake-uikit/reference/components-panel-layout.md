@@ -373,3 +373,5 @@ object — and a split that lost no children is rebuilt all the same. Compare by
 ## Responsive collapse threshold
 
 Set `compactBreakpoint={768}` to keep adjacent panels visible on tablets and show one panel below 768 CSS pixels. The default is no automatic collapse; `compact` overrides the breakpoint when supplied. Hidden panels stay mounted across the transition.
+
+Use `compactHeaderInTabRow={(leaf) => leaf.view === "note"}` to place that panel’s `renderHeader` controls beside the compact tabs. Only the active panel’s controls appear, and its separate header row is removed; the editor stays mounted.
