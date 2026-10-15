@@ -103,3 +103,7 @@ source.
 - **Outliers get caught at review.** A `grep '#[0-9a-f]\{6\}'` across `*.jsx` should
   return only these six values plus surface tokens. Anything else is either a typo, a
   leftover from prototyping, or a missed alignment.
+
+### Chart axes
+
+Use `--uikit-axis` (or `text-uikit-axis`) for numeric axes and tick labels: `#525252` in light mode and `#cccccc` in dark mode. Render at full opacity; reserve faint ink for background gridlines.

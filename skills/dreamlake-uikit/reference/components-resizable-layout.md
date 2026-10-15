@@ -75,3 +75,7 @@ visible panel if a breakpoint change would hide the focused editor.
 | `leftResizable` | `boolean` | `true` | Enable drag-to-resize on the left divider. |
 | `rightResizable` | `boolean` | `true` | Enable drag-to-resize on the right divider. |
 | `className` | `string` | — | Extra classes on the root element. |
+
+## Responsive collapse threshold
+
+Set `compactBreakpoint={768}` to keep adjacent panels visible on tablets and show one panel below 768 CSS pixels. The default is no automatic collapse; `compact` overrides the breakpoint when supplied. Hidden panels stay mounted across the transition.

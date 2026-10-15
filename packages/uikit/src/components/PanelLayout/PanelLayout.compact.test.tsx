@@ -336,3 +336,25 @@ it('fits only opted-in inactive tabs while preserving active width policy and ed
   expect(editor.value).toBe('Unsaved text')
   expect(editor.scrollTop).toBe(26)
 })
+
+it('collapses at the configured breakpoint and preserves mounted panel state', () => {
+  let change = () => {}
+  const media = { matches: false, addEventListener: (_: string, fn: () => void) => { change = fn }, removeEventListener: vi.fn() }
+  vi.stubGlobal('matchMedia', vi.fn(() => media))
+  const { tree, editor } = fixture()
+  const render = (compact?: boolean) => act(() => root.render(
+    <PanelLayout initial={() => tree} compactBreakpoint={768} compact={compact}
+      renderBody={leaf => <input aria-label={leaf.id} defaultValue={leaf.id} />} />
+  ))
+  render()
+  const input = container.querySelector<HTMLInputElement>(`input[aria-label="${editor.id}"]`)!
+  input.value = 'unsaved'
+  expect(window.matchMedia).toHaveBeenCalledWith('(max-width: 767px)')
+  expect(container.querySelector('[data-compact-selector]')).toBeNull()
+  act(() => { media.matches = true; change() })
+  expect(container.querySelector('[data-compact-selector]')).not.toBeNull()
+  render(false)
+  expect(container.querySelector('[data-compact-selector]')).toBeNull()
+  expect(container.querySelector(`input[aria-label="${editor.id}"]`)).toBe(input)
+  expect(input.value).toBe('unsaved')
+})

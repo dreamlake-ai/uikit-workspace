@@ -1,3 +1,4 @@
+import { useIsMobile } from '../../lib/useIsMobile'
 import {
   forwardRef,
   useEffect,
@@ -130,6 +131,8 @@ export interface PanelLayoutProps {
    * group tabs. Pass a boolean at both widths to keep all view DOM mounted.
    * Selection and breakpoint changes leave the desktop tree/sizes untouched. */
   compact?: boolean
+  /** Collapse below this viewport width in CSS px. Explicit compact takes precedence. */
+  compactBreakpoint?: number
   /** Accessible name for the compact panel selector. Default "Workspace panels". */
   compactLabel?: string
   /** Fixed controls before compact tabs, using TabRow’s existing leading slot. */
@@ -238,7 +241,8 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
     initial,
     initialSingle = false,
     tabbed = false,
-    compact,
+    compact: compactProp,
+    compactBreakpoint,
     compactLabel = 'Workspace panels',
     compactPanelLabel,
     compactPanelFitContent,
@@ -272,6 +276,8 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
   }: PanelLayoutProps,
   ref: ForwardedRef<PanelLayoutHandle>
 ) {
+  const responsiveCompact = useIsMobile(compactBreakpoint ?? 0)
+  const compact = compactProp ?? (compactBreakpoint === undefined ? undefined : responsiveCompact)
   const controlled = rootProp !== undefined
   const [internalRoot, setInternalRoot] = useState<PanelNode>(() => {
     const seed = rootProp ?? (initial ? initial() : buildInitial(initialSingle))

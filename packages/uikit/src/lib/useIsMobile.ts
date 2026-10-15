@@ -8,7 +8,10 @@ export function useIsMobile(breakpoint = 768) {
   const [isMobile, setIsMobile] = useState(false)
 
   useEffect(() => {
-    if (typeof window === 'undefined') return
+    if (typeof window === 'undefined' || breakpoint <= 0) {
+      setIsMobile(false)
+      return
+    }
     const mql = window.matchMedia(`(max-width: ${breakpoint - 1}px)`)
     const onChange = () => setIsMobile(mql.matches)
     mql.addEventListener('change', onChange)
