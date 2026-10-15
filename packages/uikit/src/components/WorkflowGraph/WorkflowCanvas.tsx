@@ -42,6 +42,7 @@ import {
 } from './spec'
 import { WF_KIND_ICON, WF_STATE_COLOR } from './nodes/chrome'
 import { Tooltip, TooltipContent, TooltipTrigger } from '../Tooltip'
+import { Tabs } from '../Tabs'
 import { StageNode } from './nodes/StageNode'
 import {
   AgentInstanceCard, ComputeNodeCard, ControlNodeCard, NodeKindIcon, SamplerNodeCard, UdaNodeCard,
@@ -1331,7 +1332,7 @@ export function WorkflowCanvas({
 // `network` glyph, inlined + rotated so embeds don't need the peer dep).
 function OrientIcon({ o }: { o: WfOrientation }) {
   return (
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
       <g transform={o === 'horizontal' ? 'rotate(-90 12 12)' : undefined}>
         <rect x="9" y="2" width="6" height="6" rx="1.5" />
         <rect x="2" y="16" width="6" height="6" rx="1.5" />
@@ -1366,13 +1367,11 @@ function CanvasControls({ orientation, onOrientationChange, canReset, onReset }:
         // stretch this bar across the canvas.
         position: 'absolute', top: 12, right: 12, left: 'auto', bottom: 'auto', zIndex: 6,
         width: 'max-content',
-        display: 'inline-flex', alignItems: 'center', gap: 2, padding: 2,
-        border: '1px solid color-mix(in oklab, var(--color-uikit-faint) 70%, transparent)',
-        borderRadius: 8,
-        background: 'color-mix(in oklab, var(--color-uikit-panel) 88%, transparent)',
-        backdropFilter: 'blur(8px) saturate(1.05)',
-        WebkitBackdropFilter: 'blur(8px) saturate(1.05)',
-        boxShadow: '0 1px 2px rgba(0,0,0,.06)',
+        // No glass card of its own: the orientation switch is the kit's
+        // segmented control (Tabs variant="segment", the profile pages'
+        // list/grid toggle), whose track is the surface. A second frame around
+        // it read as a different control from every other segment toggle.
+        display: 'inline-flex', alignItems: 'center', gap: 6,
       }}
     >
       {canReset && (
@@ -1392,7 +1391,9 @@ function CanvasControls({ orientation, onOrientationChange, canReset, onReset }:
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
               width: 24, height: 24, padding: 0, border: 'none', borderRadius: 6, cursor: 'pointer',
               color: resetHov ? 'var(--color-uikit-ink)' : 'var(--color-uikit-muted)',
-              background: resetHov ? 'color-mix(in oklab, var(--color-uikit-ink) 8%, transparent)' : 'transparent',
+              // On the segment track's ground, so it reads as a control over
+              // the canvas dots the way the switch beside it does.
+              background: resetHov ? 'color-mix(in oklab, var(--color-uikit-ink) 8%, transparent)' : 'var(--color-uikit-ink-5)',
               transition: 'background 120ms ease, color 120ms ease',
             }}
           >
@@ -1404,36 +1405,19 @@ function CanvasControls({ orientation, onOrientationChange, canReset, onReset }:
           </TooltipTrigger>
           <TooltipContent>Reset layout — restore the default node &amp; tag positions</TooltipContent>
           </Tooltip>
-          <span aria-hidden style={{ width: 1, height: 13, background: 'color-mix(in oklab, var(--color-uikit-faint) 70%, transparent)', margin: '0 1px' }} />
         </>
       )}
-      {(['vertical', 'horizontal'] as const).map((o) => {
-        const active = o === orientation
-        const label = o === 'vertical' ? 'Vertical layout (top → bottom)' : 'Horizontal layout (left → right)'
-        return (
-          <Tooltip key={o}>
-          <TooltipTrigger asChild>
-          <button
-            type="button"
-            onClick={() => onOrientationChange(o)}
-            aria-label={label}
-            aria-pressed={active}
-            style={{
-              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-              width: 24, height: 24, border: 'none', borderRadius: 6, cursor: 'pointer', padding: 0,
-              color: active ? 'var(--color-uikit-ink)' : 'var(--color-uikit-muted)',
-              opacity: active ? 1 : 0.6,
-              background: active ? 'color-mix(in oklab, var(--color-uikit-ink) 8%, transparent)' : 'transparent',
-              transition: 'background 120ms ease, color 120ms ease, opacity 120ms ease',
-            }}
-          >
-            <OrientIcon o={o} />
-          </button>
-          </TooltipTrigger>
-          <TooltipContent>{label}</TooltipContent>
-          </Tooltip>
-        )
-      })}
+      <Tabs
+        variant="segment"
+        size="md"
+        value={orientation}
+        onChange={(v) => onOrientationChange(v as WfOrientation)}
+        tabs={(['vertical', 'horizontal'] as const).map((o) => ({
+          value: o,
+          title: o === 'vertical' ? 'Vertical layout (top → bottom)' : 'Horizontal layout (left → right)',
+          label: <OrientIcon o={o} />,
+        }))}
+      />
     </div>
   )
 }
