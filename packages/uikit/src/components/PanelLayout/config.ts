@@ -12,6 +12,7 @@ import type { ClosablePredicate, LeafClassName, LeafRenderer } from './types'
  */
 export interface PanelConfig {
   compact?: boolean
+  compactHeaderInTabRow?: (leaf: LeafNode) => boolean
   compactTabs?: boolean
   compactPanelAsAction?: (leaf: LeafNode) => boolean
   compactPanelLabel?: (leaf: LeafNode) => string

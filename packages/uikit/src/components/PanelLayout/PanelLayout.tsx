@@ -134,6 +134,8 @@ export interface PanelLayoutProps {
   /** Collapse below this viewport width in CSS px. Explicit compact takes precedence. */
   compactBreakpoint?: number
   /** Accessible name for the compact panel selector. Default "Workspace panels". */
+  /** Put opted-in panel headers in the compact tab row instead of a second row. */
+  compactHeaderInTabRow?: (leaf: LeafNode) => boolean
   compactLabel?: string
   /** Fixed controls before compact tabs, using TabRow’s existing leading slot. */
   compactLeading?: ReactNode
@@ -244,6 +246,7 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
     compact: compactProp,
     compactBreakpoint,
     compactLabel = 'Workspace panels',
+    compactHeaderInTabRow,
     compactPanelLabel,
     compactPanelFitContent,
     compactPanelTrailing,
@@ -701,6 +704,7 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
   const config: PanelConfig = {
     compact,
     compactTabs: hasCompactSelector,
+    compactHeaderInTabRow,
     compactPanelAsAction,
     compactPanelLabel: compactName,
     persistent,
@@ -763,6 +767,10 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
             aria-label={compactLabel}
             className="uikit-tab-row-compact"
             minTabHeight={30}
+            trailing={(() => {
+              const active = leaves.find(leaf => leaf.id === activeId)
+              return active && compactHeaderInTabRow?.(active) ? renderHeader?.(active) : undefined
+            })()}
             leading={utilityLeaves.length > 0 ? <>
               {compactLeading}
               {utilityLeaves.map(leaf => {

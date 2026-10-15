@@ -358,3 +358,27 @@ it('collapses at the configured breakpoint and preserves mounted panel state', (
   expect(container.querySelector(`input[aria-label="${editor.id}"]`)).toBe(input)
   expect(input.value).toBe('unsaved')
 })
+
+it('places only the active panel controls in the compact tab row with no extra header', () => {
+  const { tree, editor, list } = fixture()
+  const ref = createRef<PanelLayoutHandle>()
+  const render = (compact: boolean) => act(() => root.render(
+    <PanelLayout ref={ref} initial={() => tree} compact={compact}
+      compactHeaderInTabRow={leaf => leaf.id === editor.id}
+      renderHeader={leaf => <button>{leaf.id} actions</button>}
+      renderBody={leaf => <input aria-label={leaf.id} defaultValue="draft" />} />
+  ))
+  render(true)
+  act(() => ref.current!.focusLeaf(editor.id))
+  const selector = container.querySelector('[data-compact-selector]')!
+  expect(selector.textContent).toContain(`${editor.id} actions`)
+  expect(surface(editor.id).querySelector('.uikit-panel-header')).toBeNull()
+  const input = surface(editor.id).querySelector('input')!
+  input.value = 'keep me'
+  act(() => ref.current!.focusLeaf(list.id))
+  expect(selector.textContent).not.toContain(`${editor.id} actions`)
+  render(false)
+  expect(surface(editor.id).querySelector('.uikit-panel-header')?.textContent).toContain(`${editor.id} actions`)
+  expect(surface(editor.id).querySelector('input')).toBe(input)
+  expect(input.value).toBe('keep me')
+})
