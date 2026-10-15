@@ -8,6 +8,7 @@ import {
   useState,
 } from "react";
 import { cn } from "../../lib/utils";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../Tooltip";
 
 // ── Compound (Radix-style) API ───────────────────────────────────────────────
 // `Tabs` supports two shapes: the data-driven one below (`tabs` prop), and a
@@ -342,14 +343,16 @@ function TabsData({
         }
 
         // segment
-        return (
+        const segment = (
           <button
             key={tab.value}
             ref={(el) => {
               tabRefs.current[tab.value] = el;
             }}
             type="button"
-            title={tab.title}
+            // The title is the kit tooltip below, not the browser's — and the
+            // accessible name, since a segment is usually an icon alone.
+            aria-label={tab.title}
             aria-pressed={active}
             data-active={active || undefined}
             onClick={() => handleTabClick(tab.value)}
@@ -368,6 +371,13 @@ function TabsData({
           >
             {tab.label}
           </button>
+        );
+        if (!tab.title) return segment;
+        return (
+          <Tooltip key={tab.value}>
+            <TooltipTrigger asChild>{segment}</TooltipTrigger>
+            <TooltipContent>{tab.title}</TooltipContent>
+          </Tooltip>
         );
       })}
     </div>
