@@ -215,14 +215,27 @@ export function Select({
     transform: false,
     whileElementsMounted: autoUpdate,
     middleware: [
-      offset(8),
+      // The options' text lines up under the trigger's text. A panel pinned
+      // edge-to-edge with the trigger put every option 14px to the right of
+      // the value it replaces — the panel's 4px inset plus a row's 10px — so
+      // the eye stepped sideways going from the value to the list. The panel
+      // is pulled left by that inset, less any left padding the trigger has
+      // of its own (an `asChild` pill), so text meets text either way.
+      offset(({ elements }) => ({
+        mainAxis: 8,
+        crossAxis: -pullLeft(elements.reference as Element),
+      })),
       flip({ padding: 8 }),
       shift({ padding: 8 }),
       ...(arrow ? [arrowMiddleware({ element: arrowRef, padding: 16 })] : []),
       sizeMiddleware({
         apply({ rects, elements }) {
+          // Pulled left, the panel must still reach past the trigger's right
+          // end by the wedge's corner clearance, or the wedge — which sits
+          // under the chevron — is clamped short of it.
+          const pull = pullLeft(elements.reference as Element);
           Object.assign(elements.floating.style, {
-            minWidth: `${rects.reference.width}px`,
+            minWidth: `${rects.reference.width + (pull > 0 ? pull + 16 : 0)}px`,
           });
         },
       }),
@@ -372,6 +385,20 @@ export function SelectValue({ placeholder, className }: SelectValueProps) {
     <span className={cn("truncate", !has && "opacity-65", className)}>
       {has ? display : placeholder}
     </span>
+  );
+}
+
+/** An option's text inset from the panel edge: the list's `p-1` (4px) plus a
+ *  row's `px-2.5` (10px). Kept in step with those two classes. */
+const OPTION_TEXT_INSET = 14;
+
+/** How far the panel moves left so an option's text meets the trigger's text:
+ *  the option inset, less any left padding the trigger has of its own. */
+function pullLeft(reference: Element): number {
+  const padding = parseFloat(getComputedStyle(reference).paddingLeft);
+  return Math.max(
+    0,
+    OPTION_TEXT_INSET - (Number.isFinite(padding) ? padding : 0),
   );
 }
 
