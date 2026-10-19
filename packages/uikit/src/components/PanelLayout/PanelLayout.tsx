@@ -670,6 +670,19 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isDragging])
 
+  // An iframe (artifact, embedded page) swallows pointer events, so the window
+  // listeners above go silent once the cursor crosses one and the surrogate
+  // freezes. Make every iframe transparent to the pointer for the gesture's
+  // lifetime — unlike a full-page overlay, this keeps `elementFromPoint`
+  // resolving the panel underneath for the dock hit-test.
+  useEffect(() => {
+    if (!isDragging) return
+    const style = document.createElement('style')
+    style.textContent = 'iframe { pointer-events: none !important; }'
+    document.head.appendChild(style)
+    return () => style.remove()
+  }, [isDragging])
+
   // Grab cursor + selection lock, keyed on ARMED rather than on the pointer
   // merely being down — otherwise a plain tab click would flick the cursor to
   // `grabbing` for as long as the button was held.
