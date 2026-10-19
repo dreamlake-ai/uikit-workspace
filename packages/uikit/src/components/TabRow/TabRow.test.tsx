@@ -124,3 +124,59 @@ it('keeps trailing actions outside the tab button and preserves keyboard selecti
   expect(select).toHaveBeenCalledWith('draft')
   expect(document.activeElement).toBe(tabs[1])
 })
+
+it('reveals the active tab together with its trailing and close controls', () => {
+  const previous = Object.getOwnPropertyDescriptor(Element.prototype, 'scrollIntoView')
+  const revealed: Element[] = []
+  Object.defineProperty(Element.prototype, 'scrollIntoView', {
+    configurable: true,
+    value: function (this: Element) { revealed.push(this) },
+  })
+  try {
+    act(() => root.render(<TabRow value="draft" onValueChange={() => {}} onClose={() => {}}
+      tabs={[
+        { value: 'notes', label: 'Notes' },
+        { value: 'draft', label: 'Long draft title', trailing: <button>Copy reference</button> },
+      ]} />))
+    const active = container.querySelector('[aria-selected="true"]')!
+    const visible = revealed.at(-1)!
+    expect(visible.contains(active)).toBe(true)
+    expect(visible.querySelector('.uikit-tab-row-item-trailing button')?.textContent).toBe('Copy reference')
+    expect(visible.querySelector('[aria-label="Close Long draft title"]')).toBeTruthy()
+  } finally {
+    if (previous) Object.defineProperty(Element.prototype, 'scrollIntoView', previous)
+    else Reflect.deleteProperty(Element.prototype, 'scrollIntoView')
+  }
+})
+
+it('keeps the complete active tab visible when its viewport narrows and disconnects on unmount', () => {
+  let resized!: ResizeObserverCallback
+  const observe = vi.fn(), disconnect = vi.fn()
+  const previous = Object.getOwnPropertyDescriptor(Element.prototype, 'scrollIntoView')
+  const revealed: Element[] = []
+  vi.stubGlobal('ResizeObserver', class {
+    constructor(callback: ResizeObserverCallback) { resized = callback }
+    observe = observe
+    disconnect = disconnect
+  })
+  Object.defineProperty(Element.prototype, 'scrollIntoView', {
+    configurable: true, value: function (this: Element) { revealed.push(this) },
+  })
+  try {
+    act(() => root.render(<TabRow value="draft" onValueChange={() => {}} onClose={() => {}}
+      tabs={[{ value: 'draft', label: 'Draft', trailing: <button>Copy reference</button> }]} />))
+    expect(observe).toHaveBeenCalledWith(container.querySelector('.uikit-tab-row-scroll'))
+    revealed.length = 0
+    act(() => resized([], {} as ResizeObserver))
+    const visible = revealed.at(-1)!
+    expect(visible.contains(container.querySelector('[aria-selected="true"]'))).toBe(true)
+    expect(visible.querySelector('.uikit-tab-row-item-trailing button')).toBeTruthy()
+    expect(visible.querySelector('[aria-label="Close Draft"]')).toBeTruthy()
+    act(() => root.render(null))
+    expect(disconnect).toHaveBeenCalledOnce()
+  } finally {
+    vi.unstubAllGlobals()
+    if (previous) Object.defineProperty(Element.prototype, 'scrollIntoView', previous)
+    else Reflect.deleteProperty(Element.prototype, 'scrollIntoView')
+  }
+})

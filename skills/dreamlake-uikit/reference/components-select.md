@@ -2,7 +2,12 @@
 
 A single-select with the kit's compact mono trigger. The panel flips and shifts
 to stay within the viewport, supports keyboard list navigation and typeahead,
-and matches the trigger width.
+and is at least as wide as the trigger.
+
+The options' text lines up under the trigger's text: the panel sits 14px left of
+the trigger (the list's 4px inset plus a row's 10px), less any left padding an
+`asChild` trigger has of its own, so the eye goes straight down from the value
+to the list rather than stepping sideways.
 
 It comes in two forms.
 
@@ -22,8 +27,9 @@ have written — so the label map, the floating list and the typeahead all behav
 identically either way, and nothing downstream knows which form you used.
 
 Like `Menu`, the panel shows a wedge by default (`arrow={false}` turns it off):
-it points toward the trigger and follows the panel when it flips. Options scroll inside the panel so
-the wedge remains visible.
+it points at the trigger's chevron and follows the panel when it flips. The
+panel is widened by the same pull so the wedge still reaches the chevron.
+Options scroll inside the panel so the wedge remains visible.
 
 ## Reading the panel
 

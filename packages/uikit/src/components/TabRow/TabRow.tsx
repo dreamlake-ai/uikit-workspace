@@ -52,10 +52,21 @@ export function TabRow({
   const minimum = Number.isFinite(minTabWidth) ? Math.max(48, minTabWidth) : 80;
   const preferred = Number.isFinite(preferredTabWidth) ? Math.max(minimum, preferredTabWidth) : Math.max(minimum, 170);
   useEffect(() => {
-    scrollRef.current?.querySelector('[aria-selected="true"]')?.scrollIntoView?.({
+    scrollRef.current?.querySelector('[aria-selected="true"]')?.closest('.uikit-tab-row-item')?.scrollIntoView?.({
       inline: "nearest", block: "nearest", behavior: "smooth",
     });
   }, [value, tabs.length]);
+  useEffect(() => {
+    const area = scrollRef.current;
+    if (!area || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(() => {
+      area.querySelector('[aria-selected="true"]')?.closest('.uikit-tab-row-item')?.scrollIntoView?.({
+        inline: "nearest", block: "nearest", behavior: "auto",
+      });
+    });
+    observer.observe(area);
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <div className={cn("uikit-tab-row", className)} style={{
