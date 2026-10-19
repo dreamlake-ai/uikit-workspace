@@ -17,6 +17,9 @@ A row of closable document tabs with a raised active tab. Tabs start at their pr
 ## Compression and overflow
 
 Adjust the row width and tab limits below. Open more tabs with **+**, select a tab, or close one with **×**. Long labels truncate; their full text remains available on hover.
+Selection and row resizing reveal the whole active tab, including its trailing
+action and close button. Reduce the example width and select the last tab to check that the close
+button remains inside the scrolling area, beside the truncated title.
 
 <Preview source={tabRowSrc} filename="TabRowSpec.tsx">
   <TabRowSpec />
@@ -77,6 +80,7 @@ The caller owns the tab list, selection, and content. When closing the active ta
 | `iconOnly` | `boolean` | Display only the icon at compact width; preserve the text label for accessibility. |
 | `fitContent` | `boolean` | Size a text tab to its label and controls, preserving padding and capping width at `preferredTabWidth`; longer labels use the existing ellipsis. Icon-only tabs retain their compact width. |
 | `title` | `string` | Optional full tooltip, such as a path. |
+| `trailing` | `ReactNode` | A fixed control after the title, outside the tab button; selection reveals it together with the close control. |
 | `panelId` | `string` | Optional ID of the corresponding content panel, used as `aria-controls`. |
 | `closable` | `boolean` | Set to `false` to prevent closing this tab. |
 | `entering` | `boolean` | Animate a newly opened tab; respects reduced motion. |
