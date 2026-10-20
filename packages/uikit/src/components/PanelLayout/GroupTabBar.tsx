@@ -4,6 +4,7 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
 } from 'react'
+import { Button } from '../Button'
 import { cn } from '../../lib/utils'
 import { TAB_DRAG_THRESHOLD_PX, usePanelConfig } from './config'
 import { CloseIcon } from './PanelLeaf'
@@ -46,7 +47,7 @@ export function GroupTabBar({
   const barRef = useRef<HTMLDivElement>(null)
   // Affordances only — see the Delete case below for why the strip does not
   // enforce this itself.
-  const { closable, renderTab, tabbed } = usePanelConfig()
+  const { closable, renderTab, tabbed, panelAsAction } = usePanelConfig()
   // Keep programmatically opened/selected tabs reachable when their panel
   // narrows. Scroll only this strip: scrollIntoView can move the document or
   // another docked panel and steal the reader's place.
@@ -69,23 +70,31 @@ export function GroupTabBar({
     observer.observe(active)
     return () => observer.disconnect()
   }, [group.activeId, group.children.length, tabbed])
+  const actionLeaves = group.children.filter(leaf => leaf.id !== group.activeId && panelAsAction?.(leaf))
+  const tabs = group.children.filter(leaf => !actionLeaves.includes(leaf))
+  const pendingFocus = useRef<string | null>(null)
+  useLayoutEffect(() => {
+    if (pendingFocus.current !== group.activeId) return
+    barRef.current?.querySelector<HTMLElement>('[aria-selected="true"]')?.focus({ preventScroll: true })
+    pendingFocus.current = null
+  }, [group.activeId])
   const Tab = renderTab ? 'div' : 'button'
   const canClose = (leaf: LeafNode) => closable?.(leaf) ?? true
 
   const moveFocus = (from: number, to: number) => {
-    const tabs = barRef.current?.querySelectorAll<HTMLButtonElement>('[role="tab"]')
-    if (!tabs || tabs.length === 0) return
+    const tabElements = barRef.current?.querySelectorAll<HTMLButtonElement>('[role="tab"]')
+    if (!tabElements || tabs.length === 0) return
     const i = ((to % tabs.length) + tabs.length) % tabs.length
     if (i === from) return
-    tabs[i].focus()
+    tabElements[i].focus()
     // Selection follows focus — the expected behaviour for a tablist whose
     // panels are already there and cheap to switch between.
-    onActivate(group.children[i].id)
+    onActivate(tabs[i].id)
   }
 
   const onKeyDown = (e: ReactKeyboardEvent<HTMLElement>, index: number) => {
     if (e.target !== e.currentTarget) return
-    if (renderTab && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onActivate(group.children[index].id); return }
+    if (renderTab && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onActivate(tabs[index].id); return }
     switch (e.key) {
       case 'ArrowLeft':
         e.preventDefault()
@@ -101,7 +110,7 @@ export function GroupTabBar({
         break
       case 'End':
         e.preventDefault()
-        moveFocus(index, group.children.length - 1)
+        moveFocus(index, tabs.length - 1)
         break
       case 'Delete':
       case 'Backspace':
@@ -110,7 +119,7 @@ export function GroupTabBar({
         // layout decides what may actually go, in one place, so the two cannot
         // drift into disagreeing. Sending the request either way is what keeps
         // that single point of enforcement load-bearing.
-        onCloseTab(group.children[index].id)
+        onCloseTab(tabs[index].id)
         break
     }
   }
@@ -130,13 +139,20 @@ export function GroupTabBar({
   return (
     // `bg-uikit-bg`: occlusion hygiene for the same reason as PanelLeaf's root —
     // the 28px tab-bar band must not composite whatever a host stacked beneath.
+    <div className="flex min-w-0 shrink-0 items-stretch" data-panel-tab-controls>
+      {actionLeaves.map(leaf => <Button key={leaf.id} variant="action" tone="muted" size="sm"
+        id={tabDomId(leaf.id)} data-panel-action={leaf.id} className="shrink-0"
+        aria-controls={tabPanelDomId(leaf.id)} onClick={() => {
+          pendingFocus.current = leaf.id
+          onActivate(leaf.id)
+        }}>{leaf.title ?? `Panel ${leaf.n}`}</Button>)}
     <div
       ref={barRef}
       role="tablist"
       aria-orientation="horizontal"
-      className={cn("flex items-stretch gap-[2px] shrink-0 overflow-x-auto select-none bg-uikit-bg", tabbed ? "h-[26px]" : "h-[28px] px-1")}
+      className={cn("flex min-w-0 flex-1 items-stretch gap-[2px] overflow-x-auto select-none bg-uikit-bg", tabbed ? "h-[26px]" : "h-[28px] px-1")}
     >
-      {group.children.map((leaf, index) => {
+      {tabs.map((leaf, index) => {
         const active = leaf.id === group.activeId
         const label = leaf.title ?? `Panel ${leaf.n}`
         return (
@@ -199,6 +215,7 @@ export function GroupTabBar({
           </Tab>
         )
       })}
+    </div>
     </div>
   )
 }

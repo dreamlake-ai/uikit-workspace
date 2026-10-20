@@ -14,6 +14,7 @@ export interface PanelConfig {
   compact?: boolean
   compactHeaderInTabRow?: (leaf: LeafNode) => boolean
   compactTabs?: boolean
+  panelAsAction?: (leaf: LeafNode) => boolean
   compactPanelAsAction?: (leaf: LeafNode) => boolean
   compactPanelLabel?: (leaf: LeafNode) => string
   persistent?: boolean
