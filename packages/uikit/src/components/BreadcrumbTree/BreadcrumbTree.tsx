@@ -924,6 +924,10 @@ export function BreadcrumbTree({
               "uikit-panel-in fixed z-[1000] flex flex-col overflow-hidden origin-top-left",
               "bg-uikit-bg text-uikit-ink font-uikit-ui",
               "rounded-[calc(var(--radius)+2px)]",
+              // A picker, not a document: a double-click or a drag across rows
+              // selected their names in blue (and a row drag dragged the text).
+              // A text field placed inside stays selectable.
+              "select-none [&_input]:select-text [&_textarea]:select-text",
             )}
             style={{
               top: panelTop,
