@@ -642,11 +642,13 @@ html[data-theme="dark"] {
 /*
  * Narrow card: the title line keeps the identity, and the meta drops beneath.
  *
- * 22rem (352px) sits between the two grid widths this app actually renders:
- * a two-column card is ~394px at 1440 and ~270px at 900. The first has room
- * for the name and its meta on one line and must keep it; only the second is
- * genuinely out of room. A higher threshold reads as "narrow" and is not —
- * 26rem caught the 1440 grid too, and rewrapped a layout that had no problem.
+ * 20rem (320px) sits between the two-column widths the app renders. Since
+ * dreamlake-ai caps both list densities at one 825px column, a two-column
+ * card's content box is 351px at every desktop width — room for the name and
+ * its meta on one line, which it must keep. The old 22rem (352px) missed that
+ * by one pixel and dropped every grid card's meta to a second line; 26rem
+ * before it caught the 1440 grid too. Only a genuinely narrow card (≲320px,
+ * e.g. a 900px two-column grid at ~270px) is out of room.
  *
  * `titleRight` is `shrink-0`, so on one line it takes what it needs and the
  * title absorbs every shortfall — a 30-character name was rendering as one
@@ -657,7 +659,7 @@ html[data-theme="dark"] {
  * `white-space: normal` because the meta no longer has to fit beside a title
  * — once it owns a line, wrapping is better than overflowing it.
  */
-@container (max-width: 22rem) {
+@container (max-width: 20rem) {
   [data-uikit-header] {
     flex-wrap: wrap;
   }
