@@ -3,7 +3,7 @@ import { act, createRef } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { PanelLayout, type PanelLayoutHandle } from './PanelLayout'
-import { panelLeaf, panelSplit, type LeafNode, type PanelNode } from './panel-tree'
+import { panelLeaf, panelSplit, panelGroup, type LeafNode, type PanelNode } from './panel-tree'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // The tree mutators are unit-tested without a renderer in panel-tree.test.ts.
@@ -671,4 +671,22 @@ it.each(['header', 'own-header', 'foreign-header', 'not-tabbable'])('resolves a 
   expect(draft.isConnected).toBe(true)
   expect(draft.value).toBe('unsent')
   foreign.remove()
+})
+
+
+it('does not reorder an inactive tab dropped on its own group header', () => {
+  vi.stubGlobal('ResizeObserver', class { observe() {} disconnect() {} })
+  const ref = createRef<PanelLayoutHandle>()
+  const first = panelLeaf({ title: 'Background session' })
+  const second = panelLeaf({ title: 'Active session' })
+  render(<PanelLayout ref={ref} initial={() => panelGroup([first, second], 1)} tabbed />)
+  const inactive = container.querySelector<HTMLElement>(`[data-tab-id="${first.id}"]`)!
+  const header = container.querySelector<HTMLElement>('[data-panel-tab-slot]')!
+  document.elementFromPoint = () => header
+  act(() => inactive.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, button: 0, clientX: 20, clientY: 10 })))
+  act(() => window.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, clientX: 200, clientY: 10 })))
+  act(() => window.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, clientX: 200, clientY: 10 })))
+  const result = ref.current!.getRoot()
+  expect(result.kind).toBe('group')
+  if (result.kind === 'group') expect(result.children.map(leaf => leaf.id)).toEqual([first.id, second.id])
 })

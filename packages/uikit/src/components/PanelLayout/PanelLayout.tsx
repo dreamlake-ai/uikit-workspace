@@ -609,7 +609,10 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
       // Ignore a panel belonging to another layout on the same page.
       const panelEl = hit && containerRef.current?.contains(hit) ? hit : null
       let tid = panelEl ? header?.getAttribute('data-panel-tab-slot') || panelEl.getAttribute('data-leaf-id') : null
-      const ownRegion = tid === d.srcId
+      const sharesSourceGroup = (node: PanelNode): boolean => node.kind === 'group'
+        ? node.children.some(child => child.id === d.srcId) && node.children.some(child => child.id === tid)
+        : node.kind === 'split' && node.children.some(sharesSourceGroup)
+      const ownRegion = tid === d.srcId || (!!header && sharesSourceGroup(rootRef.current))
       if (ownRegion && d.wholeGroup) tid = null
       if (ownRegion && !d.wholeGroup) {
         // A tab may split away from its OWN group. The visible source occupies
