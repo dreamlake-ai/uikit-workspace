@@ -601,11 +601,18 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
         setDrag((prev) => (prev ? { ...prev, armed: true } : prev))
       }
       const el = document.elementFromPoint(x, y) as HTMLElement | null
-      const hit = el?.closest('[data-leaf-id]') as HTMLElement | null
+      // Tab strips are sibling overlays above retained leaf surfaces. Resolve
+      // their owning region explicitly: a header drop means "join these tabs",
+      // not a top-edge split and not an empty-space drop.
+      const header = el?.closest('[data-panel-tab-slot]') as HTMLElement | null
+      const hit = (header?.closest('[data-panel-region]') ?? el?.closest('[data-leaf-id]')) as HTMLElement | null
       // Ignore a panel belonging to another layout on the same page.
       const panelEl = hit && containerRef.current?.contains(hit) ? hit : null
-      let tid = panelEl?.getAttribute('data-leaf-id') || null
-      const ownRegion = tid === d.srcId
+      let tid = panelEl ? header?.getAttribute('data-panel-tab-slot') || panelEl.getAttribute('data-leaf-id') : null
+      const sharesSourceGroup = (node: PanelNode): boolean => node.kind === 'group'
+        ? node.children.some(child => child.id === d.srcId) && node.children.some(child => child.id === tid)
+        : node.kind === 'split' && node.children.some(sharesSourceGroup)
+      const ownRegion = tid === d.srcId || (!!header && sharesSourceGroup(rootRef.current))
       if (ownRegion && d.wholeGroup) tid = null
       if (ownRegion && !d.wholeGroup) {
         // A tab may split away from its OWN group. The visible source occupies
@@ -626,10 +633,10 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
         const srcLeaf = findLeaf(tree, d.srcId)
         const tgtLeaf = findLeaf(tree, tid)
         const allowCenter = !d.wholeGroup && !ownRegion && (!canTab || (canTab(srcLeaf?.view) && canTab(tgtLeaf?.view)))
-        if (!ownRegion || dockSideFromPoint(r, x, y, true) !== 'center') {
+        if (header ? allowCenter : (!ownRegion || dockSideFromPoint(r, x, y, true) !== 'center')) {
           target = {
             id: tid,
-            side: dockSideFromPoint(r, x, y, allowCenter),
+            side: header ? 'center' : dockSideFromPoint(r, x, y, allowCenter),
             rect: { left: r.left, top: r.top, width: r.width, height: r.height },
           }
         }
