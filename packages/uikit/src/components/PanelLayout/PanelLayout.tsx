@@ -141,10 +141,10 @@ export interface PanelLayoutProps {
   compactLeading?: ReactNode
   /** An icon makes this compact panel an icon-only tab with its label retained. */
   compactPanelIcon?: (leaf: LeafNode) => ReactNode
-  /** Present utility panels as leading action buttons instead of document tabs.
-   * Their icon/name come from compactPanelIcon/compactPanelLabel. */
   /** Show an inactive utility panel as a leading button; selection restores its tab at either width. */
   panelAsAction?: (leaf: LeafNode) => boolean
+  /** Present utility panels as leading action buttons instead of document tabs.
+   * Their icon/name come from compactPanelIcon/compactPanelLabel. */
   compactPanelAsAction?: (leaf: LeafNode) => boolean
   /** Product-specific compact names, independent of desktop titles. The second
    * argument identifies the selected compact panel. One-argument callbacks work. */

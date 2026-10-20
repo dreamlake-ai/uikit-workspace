@@ -139,7 +139,7 @@ export function GroupTabBar({
   return (
     // `bg-uikit-bg`: occlusion hygiene for the same reason as PanelLeaf's root —
     // the 28px tab-bar band must not composite whatever a host stacked beneath.
-    <div className="flex min-w-0 items-stretch" data-panel-tab-controls>
+    <div className="flex min-w-0 shrink-0 items-stretch" data-panel-tab-controls>
       {actionLeaves.map(leaf => <Button key={leaf.id} variant="action" tone="muted" size="sm"
         id={tabDomId(leaf.id)} data-panel-action={leaf.id} className="shrink-0"
         aria-controls={tabPanelDomId(leaf.id)} onClick={() => {
