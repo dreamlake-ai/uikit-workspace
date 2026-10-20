@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { act, createRef } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, expect, it } from 'vitest'
+import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { PanelLayout, type PanelLayoutHandle } from './PanelLayout'
 import { panelLeaf, panelSplit, type LeafNode, type PanelNode } from './panel-tree'
 
@@ -32,6 +32,7 @@ beforeEach(() => {
 afterEach(() => {
   act(() => root.unmount())
   container.remove()
+  vi.unstubAllGlobals()
 })
 
 function render(ui: React.ReactNode) {
@@ -640,4 +641,34 @@ it('resetTo overrides what Reset rebuilds; without it Reset still uses initial',
   act(() => ref.current!.closeLeaf(ref.current!.inspect()[1].id))
   act(() => reset().click())
   expect(ref.current!.inspect().map((i) => i.view)).toStrictEqual(['a', 'b'])
+})
+
+it.each(['header', 'own-header', 'foreign-header', 'not-tabbable'])('resolves a tab-strip pointer drop without splitting (%s)', mode => {
+  vi.stubGlobal('ResizeObserver', class { observe() {} disconnect() {} })
+  const ref = createRef<PanelLayoutHandle>()
+  const source = panelLeaf({ title: 'Session', view: 'session' })
+  const target = panelLeaf({ title: 'Note', view: 'note' })
+  render(<PanelLayout ref={ref} initial={() => panelSplit('row', [source, target])}
+    tabbed showSingleTab={() => true} isTabbable={() => mode !== 'not-tabbable'}
+    renderBody={leaf => <textarea data-draft={leaf.id} defaultValue="unsent" />} />)
+  const draft = container.querySelector<HTMLTextAreaElement>(`[data-draft="${source.id}"]`)!
+  const sourceHeader = container.querySelector<HTMLElement>(`[data-single-view-header="${source.id}"]`)!
+  const targetHeader = container.querySelector<HTMLElement>(`[data-panel-tab-slot="${target.id}"]`)!
+  const foreign = document.createElement('div')
+  foreign.innerHTML = `<div data-panel-region><div data-panel-tab-slot="${target.id}">Other workspace</div></div>`
+  document.body.append(foreign)
+  document.elementFromPoint = () => mode === 'foreign-header' ? foreign.querySelector('[data-panel-tab-slot]') : mode === 'own-header' ? sourceHeader : targetHeader
+  act(() => sourceHeader.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, button: 0, clientX: 20, clientY: 10 })))
+  act(() => window.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, clientX: 400, clientY: 10 })))
+  act(() => window.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, clientX: 400, clientY: 10 })))
+  const result = ref.current!.getRoot()
+  expect(result.kind).toBe(mode === 'header' ? 'group' : 'split')
+  if (result.kind === 'group') {
+    expect(result.children.map(leaf => leaf.id)).toEqual([target.id, source.id])
+    expect(result.activeId).toBe(source.id)
+  }
+  expect(container.querySelector(`[data-draft="${source.id}"]`)).toBe(draft)
+  expect(draft.isConnected).toBe(true)
+  expect(draft.value).toBe('unsent')
+  foreign.remove()
 })
