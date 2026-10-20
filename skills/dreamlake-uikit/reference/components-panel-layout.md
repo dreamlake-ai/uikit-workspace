@@ -57,6 +57,12 @@ with one panel. Compact rows center their labels against 32px navigation control
 preserving the standard TabRow appearance.
 Hosts choose the breakpoint.
 
+For a utility such as a Sessions library that should become a tab when selected,
+use `panelAsAction={leaf => leaf.view === 'sessions'}`. At both widths an inactive
+utility is a leading action button outside the tab list; selection restores its
+normal selected tab and transfers keyboard focus to it. Arrow keys navigate only
+the current tabs. Panel DOM and drafts remain mounted across this change.
+
 Functional panels such as a resource list can use
 `compactPanelAsAction={leaf => leaf.view === 'list'}`. Those panels appear as
 standard UIKit action buttons in the same leading-controls group as Menu,

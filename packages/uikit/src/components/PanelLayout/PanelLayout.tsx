@@ -143,6 +143,8 @@ export interface PanelLayoutProps {
   compactPanelIcon?: (leaf: LeafNode) => ReactNode
   /** Present utility panels as leading action buttons instead of document tabs.
    * Their icon/name come from compactPanelIcon/compactPanelLabel. */
+  /** Show an inactive utility panel as a leading button; selection restores its tab at either width. */
+  panelAsAction?: (leaf: LeafNode) => boolean
   compactPanelAsAction?: (leaf: LeafNode) => boolean
   /** Product-specific compact names, independent of desktop titles. The second
    * argument identifies the selected compact panel. One-argument callbacks work. */
@@ -252,6 +254,7 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
     compactPanelTrailing,
     compactLeading,
     compactPanelIcon,
+    panelAsAction,
     compactPanelAsAction,
     showSingleTab,
     onRequestClose,
@@ -311,7 +314,7 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
   }
   collect(root)
   const activeId = findLeaf(root, focusedId) ? focusedId : firstLeafId(root)
-  const utilityLeaves = compact ? leaves.filter(leaf => compactPanelAsAction?.(leaf)) : []
+  const utilityLeaves = compact ? leaves.filter(leaf => compactPanelAsAction?.(leaf) || (leaf.id !== activeId && panelAsAction?.(leaf))) : []
   const utilityIds = new Set(utilityLeaves.map(leaf => leaf.id))
   const documentLeaves = leaves.filter(leaf => !utilityIds.has(leaf.id))
   const compactName = (leaf: LeafNode) => compactPanelLabel?.(leaf, leaf.id === activeId)?.trim() || leaf.title || `Panel ${leaf.n}`
@@ -332,6 +335,12 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
   const containerRef = useRef<HTMLDivElement>(null)
   const selectorHadFocus = useRef(false)
   const compactSelectorRef = useRef<HTMLDivElement>(null)
+  const pendingActionFocus = useRef<string | null>(null)
+  useLayoutEffect(() => {
+    if (pendingActionFocus.current !== activeId) return
+    compactSelectorRef.current?.querySelector<HTMLElement>('[role="tab"][aria-selected="true"]')?.focus({ preventScroll: true })
+    pendingActionFocus.current = null
+  }, [activeId])
   const rootRef = useRef(root)
   rootRef.current = root
   const focusedLeafCallback = useRef(onFocusedLeafChange)
@@ -718,6 +727,7 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
     compact,
     compactTabs: hasCompactSelector,
     compactHeaderInTabRow,
+    panelAsAction,
     compactPanelAsAction,
     compactPanelLabel: compactName,
     persistent,
@@ -792,7 +802,10 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
                 return <Button key={leaf.id} variant="action" tone="muted" icon={hasIcon} size="md" className="h-8"
                   value={activeId === leaf.id} aria-pressed={activeId === leaf.id}
                   aria-label={compactName(leaf)} title={compactName(leaf)}
-                  aria-controls={tabPanelDomId(leaf.id)} onClick={() => focus(leaf.id)}>
+                  id={tabDomId(leaf.id)} aria-controls={tabPanelDomId(leaf.id)} onClick={() => {
+                    if (panelAsAction?.(leaf) && !compactPanelAsAction?.(leaf)) pendingActionFocus.current = leaf.id
+                    focus(leaf.id)
+                  }}>
                   {hasIcon ? icon : compactName(leaf)}
                 </Button>
               })}

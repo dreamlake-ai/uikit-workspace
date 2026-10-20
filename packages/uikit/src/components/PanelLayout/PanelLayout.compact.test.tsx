@@ -382,3 +382,33 @@ it('places only the active panel controls in the compact tab row with no extra h
   expect(surface(editor.id).querySelector('input')).toBe(input)
   expect(input.value).toBe('keep me')
 })
+
+it.each([false, true])('shows inactive utility as a button and active utility as a focused tab (compact=%s)', compact => {
+  const list = panelLeaf({ title: 'Sessions' })
+  const editor = panelLeaf({ title: 'Draft' })
+  const other = panelLeaf({ title: 'Other' })
+  const ref = createRef<PanelLayoutHandle>()
+  act(() => root.render(<PanelLayout ref={ref} initial={() => panelGroup([list, editor, other])}
+    compact={compact} tabbed panelAsAction={leaf => leaf.id === list.id}
+    closable={leaf => leaf.id !== list.id}
+    renderBody={leaf => <textarea data-editor={leaf.id} defaultValue="unsaved" />} />))
+  const draft = container.querySelector<HTMLTextAreaElement>(`[data-editor="${editor.id}"]`)!
+  draft.value = 'Keep me'
+  act(() => ref.current!.focusLeaf(editor.id))
+  expect(tabs().map(tab => tab.textContent)).toEqual(['Draft', 'Other'])
+  const action = container.querySelector<HTMLButtonElement>(`button[aria-controls="panel-${list.id}"]`)!
+  expect(action).toBeTruthy()
+  expect(action.closest('[role="tablist"]')).toBeNull()
+  act(() => action.click())
+  const selected = container.querySelector<HTMLElement>('[role="tab"][aria-selected="true"]')!
+  expect(selected.textContent).toBe('Sessions')
+  expect(document.activeElement).toBe(selected)
+  act(() => selected.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true })))
+  expect(container.querySelector('[role="tab"][aria-selected="true"]')?.textContent).toBe('Draft')
+  // With the utility removed from tab order, arrow navigation still targets Other.
+  act(() => container.querySelector('[role="tab"][aria-selected="true"]')!.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true })))
+  expect(container.querySelector('[role="tab"][aria-selected="true"]')?.textContent).toBe('Other')
+  expect(container.querySelector(`[data-editor="${editor.id}"]`)).toBe(draft)
+  expect(draft.isConnected).toBe(true)
+  expect(draft.value).toBe('Keep me')
+})
