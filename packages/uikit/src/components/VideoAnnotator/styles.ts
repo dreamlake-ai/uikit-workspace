@@ -98,12 +98,18 @@ export const CSS = `
    letterboxed video content. Never intercepts pointer events. */
 .va-overlay{position:absolute;left:0;top:0;pointer-events:none;z-index:2}
 
-/* 3-column grid with equal side tracks keeps the playback cluster on the true
+/* Equal side groups (flex 1 1 0) keep the playback cluster on the true
    horizontal center — aligned with the centered video above — regardless of
-   how wide the readout/speed (left) vs split/extract (right) groups are. */
-.va-transport{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);
-  align-items:center;gap:10px;flex:none;margin-top:-2px}
-.va-tp-left,.va-tp-right{display:flex;align-items:center;gap:8px;min-width:0}
+   how wide the readout/speed (left) vs split/extract (right) groups are.
+   A side group never goes below its own content (min-width:max-content):
+   with the old minmax(0,1fr) grid a narrow player (a labeling view beside its
+   episode list) let the readout + speed spill under the cluster, so the speed
+   button sat on top of Prev segment. Short of room, the cluster yields a
+   little off-center; shorter still, the right group wraps to a line of its
+   own, right-aligned, instead of being covered or running past the video. */
+.va-transport{display:flex;flex-wrap:wrap;align-items:center;column-gap:10px;row-gap:4px;
+  flex:none;margin-top:-2px}
+.va-tp-left,.va-tp-right{display:flex;align-items:center;gap:8px;flex:1 1 0;min-width:max-content}
 .va-tp-right{justify-content:flex-end}
 .va-tp-center{display:flex;align-items:center;gap:8px;flex:none}
 /* Transport controls are quiet square-ish buttons: a 6px rounded rectangle
