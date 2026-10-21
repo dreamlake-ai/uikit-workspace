@@ -4,11 +4,14 @@ A video player with an **editable, contiguous segment timeline** — the labelin
 surface for splitting a clip into consecutive phases and captioning each one.
 It owns the `<video>` element, a transport bar (prev/next segment, frame-step,
 play/pause, playback speed) and a percentage-positioned timeline strip with
-drag-to-move boundaries and click-to-scrub. The transport keeps its playback
-cluster centered under the video while both side groups (time readout + speed,
-split / merge / toggles) fit. In a narrower player the cluster moves slightly
-off-center, and narrower still the right group wraps to a second line. Controls
-never overlap and never run past the video. Segments always tile the whole clip
+drag-to-move boundaries and click-to-scrub. The transport is always one row,
+sized to the player's own width rather than the window's. While everything fits,
+the playback cluster sits centered under the video. As the player narrows it
+gives things up in order. First the time readout hides. Then speed, merge and
+the hand-pose toggle fold into a "⋯" menu, which repeats the readout at its
+top. Then frame step joins them, and last segment prev / next. Play / pause,
+split and "⋯" always stay. Keyboard shortcuts keep working for anything folded.
+Controls never overlap, wrap or run past the video. Segments always tile the whole clip
 with no gaps or overlaps (`end === next.start`); any structural edit resets the
 `verified` flag on the affected segments. Playback runs **continuously across
 segments** — the selection follows the playhead and stops at the last segment's

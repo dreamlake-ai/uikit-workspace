@@ -34,7 +34,7 @@ export function SpeedMenu({
   }, [open]);
 
   return (
-    <div ref={rootRef} className={cn("va-speedsel", open && "open")}>
+    <div ref={rootRef} className={cn("va-speedsel", open && "open")} data-va-measure="speed">
       <button
         type="button"
         className="va-speedbtn"
