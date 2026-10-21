@@ -15,7 +15,6 @@ import {
   DEFAULT_PALETTE,
   PanelConfigContext,
   TAB_DRAG_THRESHOLD_PX,
-  tintFor,
   type PanelConfig,
 } from './config'
 import { Button } from '../Button/Button'
@@ -80,7 +79,6 @@ type DragState = {
   srcId: string
   wholeGroup?: boolean
   label: string
-  tint: string
   grabDX: number // cursor offset within the source panel at grab time
   grabDY: number
   srcW: number
@@ -572,7 +570,6 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
       srcId: leaf.id,
       wholeGroup: from.hasAttribute('data-panel-group-handle'),
       label: leaf.title ?? `Panel ${leaf.n}`,
-      tint: tintFor(leaf.n, palette),
       grabDX: e.clientX - r.left,
       grabDY: e.clientY - r.top,
       srcW: r.width,
@@ -889,7 +886,6 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
                   : 'none',
               }}
             >
-              <span className="w-2 h-2 rounded-full" style={{ background: drag.tint }} />
               <span className="text-uikit-ink font-uikit-ui text-[13px] font-semibold">
                 {drag.label}
               </span>
