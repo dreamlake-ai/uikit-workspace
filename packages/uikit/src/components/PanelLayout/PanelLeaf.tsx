@@ -241,11 +241,6 @@ export function PanelLeaf({
             </div>
           ) : !inGroup ? (
             <>
-              {/* Runtime tint color stays inline. */}
-              <span
-                className="w-[7px] h-[7px] rounded-full shrink-0"
-                style={{ background: tint }}
-              />
               <span className="text-uikit-ink font-uikit-ui text-[12.5px] font-semibold tracking-[-0.005em] truncate flex-1 min-w-0">
                 {leaf.title ?? `Panel ${leaf.n}`}
               </span>
