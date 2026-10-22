@@ -1,5 +1,6 @@
 import {
   type ComponentProps,
+  type KeyboardEvent,
   type ReactNode,
   createContext,
   useContext,
@@ -128,12 +129,15 @@ function UnderlineTabItem({
   active,
   size,
   innerRef,
+  focusable,
   onClick,
 }: {
   tab: Tab;
   active: boolean;
   size: TabsSize;
   innerRef: (el: HTMLDivElement | null) => void;
+  /** The one tab in the row that Tab lands on (roving tabindex). */
+  focusable: boolean;
   onClick: () => void;
 }) {
   const isSmall = size === "xs" || size === "sm";
@@ -143,12 +147,27 @@ function UnderlineTabItem({
       ref={innerRef}
       role="tab"
       aria-selected={active}
+      // A div with a click handler is invisible to the keyboard. The row takes
+      // ONE Tab stop — the selected tab — and the arrow keys move between tabs
+      // (handled on the tablist), which is the WAI-ARIA tabs pattern.
+      tabIndex={focusable ? 0 : -1}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick();
+        }
+      }}
       data-active={active || undefined}
       data-small={isSmall || undefined}
       onClick={onClick}
       className={cn(
         "group/tab relative inline-flex items-center gap-1.5 cursor-pointer select-none whitespace-nowrap",
         "font-uikit-ui tracking-uikit-snug",
+        // Keyboard focus only — the pointer never sees it. The box hugs the
+        // label (no side padding), so an inset ring would cut the glyphs; it
+        // sits 2px out instead, which clears the label and lands just under
+        // the sliding indicator rather than on it.
+        "outline-none rounded-[2px] focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-uikit-accent focus-visible:outline-offset-2 focus-visible:opacity-100",
         "transition-[color,opacity] duration-[120ms]",
         underlineSizeMap[size],
         // Color: muted by default, ink when active.
@@ -258,10 +277,35 @@ function TabsData({
 
   const segCfg = segmentConfig[size];
   const tabList = tabs ?? [];
+  // Roving tabindex: Tab lands on the selected tab (or the first, if none is).
+  const focusValue = tabList.some((t) => t.value === activeValue)
+    ? activeValue
+    : tabList[0]?.value;
+
+  // Arrow keys move selection along the row and take focus with it —
+  // automatic activation, since switching a tab here is cheap and local.
+  const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (variant !== "underline" || !tabList.length) return;
+    const i = tabList.findIndex((t) => t.value === focusValue);
+    let next = -1;
+    if (e.key === "ArrowRight") next = (i + 1) % tabList.length;
+    else if (e.key === "ArrowLeft")
+      next = (i - 1 + tabList.length) % tabList.length;
+    else if (e.key === "Home") next = 0;
+    else if (e.key === "End") next = tabList.length - 1;
+    if (next === -1) return;
+    e.preventDefault();
+    const v = tabList[next].value;
+    handleTabClick(v);
+    tabRefs.current[v]?.focus();
+  };
 
   return (
     <div
-      role="tablist"
+      // A segment is a set of toggle buttons (each carries `aria-pressed`), not
+      // tabs — a tablist may only own `tab`s, so it is a plain group.
+      role={variant === "segment" ? "group" : "tablist"}
+      onKeyDown={handleKeyDown}
       className={cn(
         "relative font-uikit-ui",
         variant === "underline" && "flex items-end",
@@ -337,6 +381,7 @@ function TabsData({
               innerRef={(el) => {
                 tabRefs.current[tab.value] = el;
               }}
+              focusable={tab.value === focusValue}
               onClick={() => handleTabClick(tab.value)}
             />
           );
@@ -359,6 +404,7 @@ function TabsData({
             className={cn(
               "relative z-[1] inline-flex items-center justify-center cursor-pointer select-none",
               "appearance-none border-0 bg-transparent outline-none",
+              "focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-uikit-accent focus-visible:-outline-offset-2",
               "text-uikit-muted data-[active]:text-uikit-ink",
               "transition-colors duration-[160ms]",
             )}
