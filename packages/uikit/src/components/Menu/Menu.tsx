@@ -238,6 +238,17 @@ export function Menu({
               'bg-uikit-bg text-uikit-ink font-uikit-ui',
               className,
             )}
+            // Unfold from the corner at the trigger: under it and left-pinned
+            // grows top-left → bottom-right; `up` / right-pinned mirror it.
+            data-unfold={
+              placement === 'up'
+                ? align === 'left'
+                  ? 'bl'
+                  : 'br'
+                : align === 'left'
+                  ? 'tl'
+                  : 'tr'
+            }
             style={panelStyle}
           >
             {arrow && (
