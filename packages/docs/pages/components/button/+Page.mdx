@@ -53,6 +53,15 @@ button; `disabled` greys it out and blocks clicks.
   <StatesSpec />
 </Preview>
 
+### Keyboard focus
+
+Every variant shows the kit's focus ring — a 2px `--uikit-accent` outline — on
+**keyboard** focus only (`:focus-visible`); a click never paints it. It sits
+inset on the transparent variants, so icon buttons in a clipped toolbar row
+keep it, and 2px outside on `primary`, `danger` and `link`, where an inset
+accent ring would vanish into the fill or cut a padless label. A focused
+`ghost` or `action` also lifts to full opacity.
+
 ## Chrome actions
 
 `action` is the borderless mono pill the app wears in toolbars and detail
