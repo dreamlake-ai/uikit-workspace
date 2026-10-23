@@ -35,6 +35,14 @@ Supply a visible `title` or `aria-label` for the dialog's accessible name.
   if there are unsaved edits).
 - **Theme-aware** — the backdrop dims the page and the panel uses the surface
   and shadow tokens, so it flips automatically in dark mode.
+- **Spring pop** — the panel enters from its centre in 340ms (scale .85 →
+  1.035 → .995 → 1 while fading in) and exits in 160ms (scale 1 → .95, fading
+  out). The backdrop fades its colour in over 180ms and out over 150ms at the
+  same time. The panel stays in the DOM until its exit ends, showing the last
+  open title, body and footer; it is inert and hidden from assistive
+  technology meanwhile. Esc, scroll lock and focus return still release the
+  moment `open` turns false. Reduced motion fades without scaling. See
+  [Motion](reference/style-guide.md#motion).
 
 > **Opt-in focus management** — `managedFocus` defaults to false to preserve
 > existing consumers. Enable it for keyboard workflows instead of adding a

@@ -3,6 +3,7 @@ import { act, useRef, useState, type ReactNode } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { Dialog } from "./Dialog";
+import { MODAL_EXIT_FALLBACK_MS } from "../../lib/useModalPresence";
 import { Popover, PopoverContent, PopoverTrigger } from "../Popover/Popover";
 let host: HTMLDivElement;
 let root: Root;
@@ -57,6 +58,17 @@ async function click(element: HTMLElement) {
   await act(async () => element.click());
   await settleFocus();
 }
+// No animations in jsdom: the exit ends on the presence fallback timer.
+async function finishExit() {
+  await act(
+    () => new Promise((resolve) => setTimeout(resolve, MODAL_EXIT_FALLBACK_MS + 20)),
+  );
+}
+/** Dialogs still exposed: an exiting one is aria-hidden and inert. */
+const liveDialogs = () =>
+  Array.from(document.querySelectorAll('[role="dialog"]')).filter(
+    (el) => !el.closest('[aria-hidden="true"]'),
+  );
 async function render(children: ReactNode) {
   await act(async () => root.render(children));
   await settleFocus();
@@ -128,7 +140,10 @@ it("uses actual tabbable filtering, guards keyboard edges and returns to the exp
   await settleFocus();
   expect(document.activeElement).toBe(readonly);
   await click(button("Done"));
+  // Focus returns when closing starts, not after the exit animation.
   expect(document.activeElement).toBe(button("Open"));
+  expect(liveDialogs()).toHaveLength(0);
+  await finishExit();
   expect(document.querySelector('[role="dialog"]')).toBeNull();
 });
 it("accepts an explicit initial element and a name without a visible heading", async () => {
@@ -223,10 +238,13 @@ it("keeps a nested managed dialog separate and restores the parent control", asy
     ),
   );
   await settleFocus();
-  expect(document.querySelectorAll('[role="dialog"]').length).toBe(1);
+  expect(liveDialogs()).toHaveLength(1);
   expect(document.activeElement).toBe(button("Child"));
+  await finishExit();
+  expect(document.querySelectorAll('[role="dialog"]').length).toBe(1);
   await click(button("Child"));
   await click(button("Close child"));
   expect(document.activeElement).toBe(button("Child"));
+  await finishExit();
   expect(document.querySelectorAll('[role="dialog"]').length).toBe(1);
 });
