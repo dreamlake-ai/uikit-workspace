@@ -3,7 +3,7 @@
 A modal dialog that interrupts the user to confirm a consequential action.
 Unlike a plain [Dialog](reference/components-dialog.md), it **does not** dismiss on backdrop
 click — the user must choose `AlertDialogAction` or `AlertDialogCancel` (Esc also
-cancels).
+cancels). It opens and closes with Dialog's spring pop.
 
 Compose `AlertDialogTrigger` + `AlertDialogContent` (with `AlertDialogHeader`,
 `AlertDialogTitle`, `AlertDialogDescription`, `AlertDialogFooter`, and the

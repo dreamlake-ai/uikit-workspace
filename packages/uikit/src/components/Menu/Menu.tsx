@@ -162,7 +162,29 @@ export function Menu({
     update()
     window.addEventListener('scroll', update, true)
     window.addEventListener('resize', update)
+    // Opened while an ancestor is still animating into place (a modal's
+    // entry scale): re-measure each frame until those animations finish,
+    // then stop. Scroll / resize keep covering everything after that.
+    let frame = 0
+    const ancestorMoving = () =>
+      typeof document.getAnimations === 'function' &&
+      document.getAnimations().some((a) => {
+        const target = (a.effect as KeyframeEffect | null)?.target
+        return (
+          a.playState === 'running' &&
+          target instanceof Element &&
+          target !== panelRef.current &&
+          !!triggerRef.current &&
+          target.contains(triggerRef.current)
+        )
+      })
+    const follow = () => {
+      update()
+      frame = ancestorMoving() ? requestAnimationFrame(follow) : 0
+    }
+    if (ancestorMoving()) frame = requestAnimationFrame(follow)
     return () => {
+      cancelAnimationFrame(frame)
       window.removeEventListener('scroll', update, true)
       window.removeEventListener('resize', update)
     }
