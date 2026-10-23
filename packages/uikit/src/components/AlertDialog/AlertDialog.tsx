@@ -12,6 +12,7 @@ import {
 } from 'react'
 import { createPortal } from 'react-dom'
 import { cn } from '../../lib/utils'
+import { useComposedRef, useModalPresence } from '../../lib/useModalPresence'
 
 interface AlertDialogContextValue {
   open: boolean
@@ -81,8 +82,18 @@ export function AlertDialogTrigger({ asChild = false, onClick, children, ...prop
 }
 
 export type AlertDialogContentProps = ComponentProps<'div'>
-export function AlertDialogContent({ className, children, ...props }: AlertDialogContentProps) {
+export function AlertDialogContent({
+  className,
+  children,
+  ref,
+  style,
+  onAnimationEnd,
+  ...props
+}: AlertDialogContentProps) {
   const { open, setOpen } = useCtx('AlertDialogContent')
+  // Kept through its exit with the last open children; inert while closing.
+  const presence = useModalPresence(open, children)
+  const panelRef = useComposedRef(presence.panelRef, ref)
 
   useEffect(() => {
     if (!open) return
@@ -98,25 +109,37 @@ export function AlertDialogContent({ className, children, ...props }: AlertDialo
     }
   }, [open, setOpen])
 
-  if (!open || typeof document === 'undefined') return null
+  if (!presence.present || typeof document === 'undefined') return null
 
   return createPortal(
     <div
+      ref={presence.backdropRef}
       data-slot="alert-dialog-overlay"
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-[var(--scrim)] font-uikit-ui"
+      data-state={presence.state}
+      inert={!open}
+      aria-hidden={open ? undefined : true}
+      style={presence.backdropStyle}
+      className="uikit-modal-backdrop fixed inset-0 z-[100] flex items-center justify-center bg-[var(--scrim)] font-uikit-ui"
     >
       <div
         role="alertdialog"
         aria-modal="true"
         data-slot="alert-dialog-content"
         className={cn(
-          'uikit-panel-in flex flex-col gap-4 p-6 rounded-[14px] w-full max-w-[calc(100%-2rem)] sm:max-w-[440px]',
+          'uikit-modal-panel flex flex-col gap-4 p-6 rounded-[14px] w-full max-w-[calc(100%-2rem)] sm:max-w-[440px]',
           'max-h-[85vh] overflow-y-auto bg-uikit-bg text-uikit-ink shadow-uikit-deep',
           className,
         )}
         {...props}
+        ref={panelRef}
+        data-state={presence.state}
+        style={{ ...style, ...presence.panelStyle }}
+        onAnimationEnd={(e) => {
+          onAnimationEnd?.(e)
+          presence.onPanelAnimationEnd(e)
+        }}
       >
-        {children}
+        {presence.content}
       </div>
     </div>,
     document.body,

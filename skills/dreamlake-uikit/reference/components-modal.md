@@ -2,7 +2,9 @@
 
 A general-purpose modal. Compose `ModalTrigger` + `ModalContent` (with
 `ModalHeader`, `ModalTitle`, `ModalDescription`, `ModalFooter`). It closes on Esc
-and backdrop click and shows a close button by default.
+and backdrop click and shows a close button by default. It opens and closes
+with the same spring pop as [Dialog](reference/components-dialog.md), keeping the panel
+mounted through its exit.
 
 For a confirmation prompt that must **not** dismiss on outside click, use
 [Alert Dialog](reference/components-alert-dialog.md) instead. For a fully controlled,
