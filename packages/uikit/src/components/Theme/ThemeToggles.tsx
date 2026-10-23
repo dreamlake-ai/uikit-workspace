@@ -69,7 +69,9 @@ export function ThemeCycleToggle({
         "inline-flex shrink-0 items-center justify-center rounded-full",
         "border-0 bg-transparent p-0 text-uikit-muted opacity-80 hover:opacity-100",
         "cursor-pointer outline-none transition-opacity",
-        "focus-visible:outline-2 focus-visible:outline-uikit-accent focus-visible:outline-offset-2",
+        // `outline-solid`: `outline-none` zeroes Tailwind v4's outline-style
+        // variable, so `outline-2` alone paints nothing.
+        "focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-uikit-accent focus-visible:outline-offset-2",
         className,
       )}
       {...props}
@@ -80,7 +82,8 @@ export function ThemeCycleToggle({
 }
 
 const toggleClass =
-  "inline-flex items-center justify-center size-8 rounded-[var(--radius)] text-uikit-muted hover:bg-uikit-ink-5 hover:text-uikit-ink transition-colors cursor-pointer outline-none";
+  "inline-flex items-center justify-center size-8 rounded-[var(--radius)] text-uikit-muted hover:bg-uikit-ink-5 hover:text-uikit-ink transition-colors cursor-pointer outline-none " +
+  "focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-uikit-accent focus-visible:-outline-offset-2";
 
 function LiquidIcon({ on }: { on: boolean }) {
   return (
