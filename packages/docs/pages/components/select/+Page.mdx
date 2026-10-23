@@ -62,6 +62,13 @@ Both used to render muted at 85% opacity, which measured 3.3:1 against the panel
 in dark mode — under WCAG AA — and made an open dropdown read as a list of
 disabled rows.
 
+### Keyboard focus
+
+The trigger shows the kit's focus ring — a 2px `--uikit-accent` outline, 2px
+outside the label — on **keyboard** focus only (`:focus-visible`); a click
+never paints it. Outside, like Button's padless `link`: the trigger has no
+padding, so an inset ring would cut the glyphs.
+
 ## Props
 
 ### `Select`

@@ -265,6 +265,8 @@ export function ToggleButton({
 
   const classes = cn(
     "relative z-10 inline-flex items-center justify-center font-normal whitespace-nowrap transition-colors outline-none cursor-pointer",
+    // Keyboard focus: inset, so the ring stays inside the segment's track.
+    "focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-uikit-accent focus-visible:-outline-offset-2",
     "disabled:pointer-events-none disabled:opacity-50 rounded-uikit-badge",
     "[&_svg]:shrink-0 [&_svg]:pointer-events-none",
     BTN_VARIANT[ctx.variant],

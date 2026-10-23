@@ -45,6 +45,9 @@ export function toggleVariants({
 }: ToggleVariantsOptions = {}) {
   return cn(
     "inline-flex items-center justify-center shrink-0 whitespace-nowrap font-normal outline-none cursor-pointer",
+    // Keyboard focus: the kit's 2px accent ring, inset (as on Button's
+    // transparent variants), on `:focus-visible` only.
+    "focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-uikit-accent focus-visible:-outline-offset-2",
     "transition-all disabled:opacity-50 disabled:cursor-not-allowed",
     "[&_svg]:shrink-0 [&_svg]:pointer-events-none",
     VARIANTS[variant],

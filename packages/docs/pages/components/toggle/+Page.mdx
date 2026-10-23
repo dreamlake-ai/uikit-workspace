@@ -94,6 +94,14 @@ offset ring around a 24px pill collides with its neighbours in a wrapping row.
 
 Native `<div>` attributes are forwarded to the wrapping row on both.
 
+### Keyboard focus
+
+`Toggle` and each `ToggleButton` segment show the kit's focus ring — a 2px
+`--uikit-accent` outline, inset so it stays inside the segment track — on
+**keyboard** focus only (`:focus-visible`). The pill rows' outline needs
+`outline-solid` alongside `outline-2`: `outline-none` zeroes Tailwind v4's
+outline-style variable, and without it the ring painted nothing.
+
 ## Props
 
 ### `Toggle`
