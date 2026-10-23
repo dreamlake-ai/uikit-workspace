@@ -539,6 +539,94 @@ html[data-theme="dark"] {
   .uikit-overlay-enter { animation: none; }
 }
 
+/* Modal pop (Dialog, ModalContent, AlertDialogContent; see lib/useModalPresence).
+   Enter: a damped spring from .85 past 1.035 and back through .995 to 1, from
+   the centre the panel is positioned on. Exit: a short ease-in shrink to .95;
+   the panel stays mounted until it ends. The scrim fades its own colour in
+   step. Enter fills `backwards` only: a transform left on the panel at rest
+   would become the containing block for fixed-position pickers inside it.
+
+   --uikit-modal-from-* are set when a switch interrupts the running animation,
+   so the next one starts from the pose actually on screen instead of jumping. */
+:root {
+  --uikit-dur-modal-in: 340ms;
+  --uikit-dur-modal-out: 160ms;
+  --uikit-dur-scrim-in: 180ms;
+  --uikit-dur-scrim-out: 150ms;
+}
+@keyframes uikit-modal-in {
+  0% {
+    opacity: var(--uikit-modal-from-opacity, 0);
+    transform: var(--uikit-modal-from-transform, scale(0.85));
+    animation-timing-function: cubic-bezier(0.25, 0.7, 0.4, 1);
+  }
+  55% {
+    opacity: 1;
+    transform: scale(1.035);
+    animation-timing-function: ease-in-out;
+  }
+  80% {
+    transform: scale(0.995);
+    animation-timing-function: ease-in-out;
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes uikit-modal-out {
+  from {
+    opacity: var(--uikit-modal-from-opacity, 1);
+    transform: var(--uikit-modal-from-transform, none);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+/* Reduced motion: opacity only. These never read the transform variable. */
+@keyframes uikit-modal-fade-in {
+  from { opacity: var(--uikit-modal-from-opacity, 0); }
+  to { opacity: 1; }
+}
+@keyframes uikit-modal-fade-out {
+  from { opacity: var(--uikit-modal-from-opacity, 1); }
+  to { opacity: 0; }
+}
+/* The scrim fades its own background colour: `to`-less / `from`-less
+   keyframes resolve to the element's underlying value. */
+@keyframes uikit-modal-scrim-in {
+  from { background-color: var(--uikit-modal-scrim-from, transparent); }
+}
+@keyframes uikit-modal-scrim-out {
+  from { background-color: var(--uikit-modal-scrim-from); }
+  to { background-color: transparent; }
+}
+.uikit-modal-panel {
+  transform-origin: center;
+}
+.uikit-modal-panel[data-state="open"] {
+  animation: uikit-modal-in var(--uikit-dur-modal-in) backwards;
+}
+.uikit-modal-panel[data-state="closed"] {
+  animation: uikit-modal-out var(--uikit-dur-modal-out) cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+.uikit-modal-backdrop[data-state="open"] {
+  animation: uikit-modal-scrim-in var(--uikit-dur-scrim-in) ease-out backwards;
+}
+.uikit-modal-backdrop[data-state="closed"] {
+  animation: uikit-modal-scrim-out var(--uikit-dur-scrim-out) ease-in forwards;
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .uikit-modal-panel[data-state="open"] {
+    animation: uikit-modal-fade-in var(--uikit-dur-scrim-in) ease-out backwards;
+  }
+  .uikit-modal-panel[data-state="closed"] {
+    animation: uikit-modal-fade-out var(--uikit-dur-scrim-out) ease-in forwards;
+  }
+}
+
 /* ── Scrollbar utilities ────────────────────────────────────────── */
 
 .uikit-no-scrollbar {

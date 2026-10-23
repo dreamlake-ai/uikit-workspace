@@ -15,6 +15,7 @@ import {
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { cn } from "../../lib/utils";
+import { useComposedRef, useModalPresence } from "../../lib/useModalPresence";
 
 export interface DialogProps {
   /** Controlled open state. */
@@ -117,7 +118,7 @@ export function Dialog({
     },
   });
   const dismiss = useDismiss(context, {
-    enabled: managedFocus,
+    enabled: managedFocus && open,
     escapeKey: dismissOnEsc,
     outsidePress: false,
   });
@@ -142,27 +143,42 @@ export function Dialog({
     };
   }, [open]);
 
-  if (!open || typeof document === "undefined") return null;
+  // Keeps the panel through its exit; while closing, it shows the last open
+  // title/body/footer and is inert and hidden from assistive technology.
+  const presence = useModalPresence(open, { title, eyebrow, footer, children });
+  const panelRef = useComposedRef<HTMLDivElement>(
+    presence.panelRef,
+    managedFocus ? refs.setFloating : null,
+  );
+  if (!presence.present || typeof document === "undefined") return null;
+  const shown = presence.content;
 
   const content = (
     <div
+      ref={presence.backdropRef}
       role="presentation"
-      onClick={dismissOnBackdropClick ? onClose : undefined}
+      data-state={presence.state}
+      inert={!open}
+      aria-hidden={open ? undefined : true}
+      style={presence.backdropStyle}
+      onClick={dismissOnBackdropClick && open ? onClose : undefined}
       className={cn(
-        "fixed inset-0 z-[100] flex items-center justify-center font-uikit-ui",
+        "uikit-modal-backdrop fixed inset-0 z-[100] flex items-center justify-center font-uikit-ui",
         "bg-[rgba(0,0,0,0.55)]",
       )}
     >
       <div
-        ref={managedFocus ? refs.setFloating : undefined}
+        ref={panelRef}
         {...(managedFocus ? getFloatingProps() : {})}
         role="dialog"
+        data-state={presence.state}
+        onAnimationEnd={presence.onPanelAnimationEnd}
         aria-label={ariaLabel}
-        aria-labelledby={!ariaLabel && title ? titleId : undefined}
+        aria-labelledby={!ariaLabel && shown.title ? titleId : undefined}
         aria-modal="true"
         onClick={(e) => e.stopPropagation()}
         className={cn(
-          "p-6 rounded-[14px] flex flex-col gap-4",
+          "uikit-modal-panel p-6 rounded-[14px] flex flex-col gap-4",
           "max-h-[85vh] overflow-y-auto",
           "bg-uikit-bg text-uikit-ink shadow-uikit-deep",
           className,
@@ -171,11 +187,11 @@ export function Dialog({
         // all dialog content, so fields/chips/buttons match the design's compact
         // vertical rhythm (the design inherits the browser default). One rule at
         // the panel root — no per-element height/padding overrides.
-        style={{ width, lineHeight: "normal" }}
+        style={{ ...presence.panelStyle, width, lineHeight: "normal" }}
       >
-        {(title || eyebrow || showEscHint) && (
+        {(shown.title || shown.eyebrow || showEscHint) && (
           <div className="flex items-baseline gap-2.5">
-            {title && (
+            {shown.title && (
               // Truncate a long title (ellipsis) rather than wrapping; `min-w-0`
               // lets it shrink so the eyebrow keeps its room instead of being
               // pushed out of the panel.
@@ -183,13 +199,13 @@ export function Dialog({
                 id={titleId}
                 className="m-0 min-w-0 truncate font-uikit-ui text-uikit-17 font-semibold leading-[1.2] tracking-uikit-tight text-uikit-ink"
               >
-                {title}
+                {shown.title}
               </h3>
             )}
-            {eyebrow && (
+            {shown.eyebrow && (
               // Never wrap or shrink below its own width — the title yields first.
               <span className="shrink-0 whitespace-nowrap font-uikit-mono text-uikit-10 leading-uikit-snug text-uikit-muted opacity-60 tracking-uikit-wide uppercase">
-                {eyebrow}
+                {shown.eyebrow}
               </span>
             )}
             <span className="flex-1" />
@@ -197,10 +213,10 @@ export function Dialog({
           </div>
         )}
 
-        {children}
+        {shown.children}
 
-        {footer && (
-          <div className="flex items-center gap-3 justify-end">{footer}</div>
+        {shown.footer && (
+          <div className="flex items-center gap-3 justify-end">{shown.footer}</div>
         )}
       </div>
     </div>
@@ -211,6 +227,9 @@ export function Dialog({
         context={context}
         initialFocus={initialFocus}
         returnFocus={returnFocus}
+        // Disabling on close returns focus and lifts outside inertness at once,
+        // as unmounting did, while the panel finishes its exit.
+        disabled={!open}
         modal
         restoreFocus
         outsideElementsInert

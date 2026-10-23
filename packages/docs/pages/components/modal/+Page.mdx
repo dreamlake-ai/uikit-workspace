@@ -12,7 +12,9 @@ import basicSrc from '../../../components/specimens/components/modal/BasicSpec.t
 
 A general-purpose modal. Compose `ModalTrigger` + `ModalContent` (with
 `ModalHeader`, `ModalTitle`, `ModalDescription`, `ModalFooter`). It closes on Esc
-and backdrop click and shows a close button by default.
+and backdrop click and shows a close button by default. It opens and closes
+with the same spring pop as [Dialog](/components/dialog), keeping the panel
+mounted through its exit.
 
 For a confirmation prompt that must **not** dismiss on outside click, use
 [Alert Dialog](/components/alert-dialog) instead. For a fully controlled,
