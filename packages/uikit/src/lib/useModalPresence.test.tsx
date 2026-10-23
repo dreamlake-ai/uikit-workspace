@@ -207,6 +207,36 @@ it('mounts no children while closed, so an always-rendered Dialog loads nothing'
   expect(mounted).toHaveBeenCalledTimes(1)
 })
 
+it("runs a forwarded callback ref's returned cleanup on detach, as React 19 does", async () => {
+  const calls: (HTMLElement | null)[] = []
+  const cleanup = vi.fn()
+  const ref = (el: HTMLDivElement | null) => {
+    calls.push(el)
+    return cleanup
+  }
+  function Example() {
+    const [open, setOpen] = useState(true)
+    return (
+      <Modal open={open} onOpenChange={setOpen}>
+        <ModalContent ref={ref}>
+          <p>body</p>
+        </ModalContent>
+      </Modal>
+    )
+  }
+  await render(<Example />)
+  const el = panel()!
+  expect(calls).toEqual([el])
+  await act(async () =>
+    document.querySelector<HTMLButtonElement>('[data-slot="modal-close"]')!.click()
+  )
+  await wait(MODAL_EXIT_FALLBACK_MS + 20)
+  expect(panel()).toBeNull()
+  expect(cleanup).toHaveBeenCalledTimes(1)
+  // React 19 runs the cleanup instead of calling the ref with null.
+  expect(calls).toEqual([el])
+})
+
 it("ModalContent keeps the consumer's ref, style and animation callback", async () => {
   const ref = { current: null as HTMLDivElement | null }
   const onAnimationEnd = vi.fn()

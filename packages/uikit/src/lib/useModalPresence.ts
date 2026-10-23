@@ -35,13 +35,25 @@ export interface ModalPresence<T> {
 
 /** One stable callback ref feeding several refs (the panel's own, a
  *  consumer's, Floating UI's). Stable so callback refs don't detach and
- *  re-attach on every render. */
+ *  re-attach on every render. Follows React 19's ref contract: a callback
+ *  ref's returned cleanup runs on detach in place of calling it with null.
+ *  (Floating UI's useMergeRefs does the same, but its types clash with this
+ *  package's second @types/react copy.) */
 export function useComposedRef<T>(...refs: (Ref<T> | null | undefined)[]) {
   return useCallback((el: T | null) => {
-    for (const ref of refs) {
-      if (typeof ref === 'function') ref(el)
-      else if (ref) ref.current = el
-    }
+    const cleanups = refs.map((ref) => {
+      if (typeof ref === 'function') {
+        const cleanup = ref(el)
+        return typeof cleanup === 'function' ? cleanup : () => void ref(null)
+      }
+      if (ref) {
+        ref.current = el
+        return () => {
+          ref.current = null
+        }
+      }
+    })
+    return () => cleanups.forEach((cleanup) => cleanup?.())
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, refs)
 }
