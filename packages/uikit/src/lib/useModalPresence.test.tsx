@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { act, StrictMode, useState, type ReactNode } from 'react'
+import { act, StrictMode, useEffect, useState, type ReactNode } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { Dialog } from '../components/Dialog/Dialog'
@@ -177,6 +177,34 @@ it('enters on an initial-open mount under StrictMode and still completes its exi
   expect(panel()!.dataset.state).toBe('closed')
   await wait(MODAL_EXIT_FALLBACK_MS + 20)
   expect(panel()).toBeNull()
+})
+
+it('mounts no children while closed, so an always-rendered Dialog loads nothing', async () => {
+  const mounted = vi.fn()
+  function Loader() {
+    useEffect(() => mounted(), [])
+    return null
+  }
+  function Example() {
+    const [open, setOpen] = useState(false)
+    return (
+      <>
+        <button onClick={() => setOpen((v) => !v)}>Toggle</button>
+        <Dialog open={open} onClose={() => setOpen(false)}>
+          <Loader />
+        </Dialog>
+      </>
+    )
+  }
+  await render(<Example />)
+  expect(mounted).not.toHaveBeenCalled()
+  await act(async () => btn('Toggle').click())
+  expect(mounted).toHaveBeenCalledTimes(1)
+  // Closing keeps the same instance through the exit; no second load.
+  await act(async () => btn('Toggle').click())
+  await wait(MODAL_EXIT_FALLBACK_MS + 20)
+  expect(panel()).toBeNull()
+  expect(mounted).toHaveBeenCalledTimes(1)
 })
 
 it("ModalContent keeps the consumer's ref, style and animation callback", async () => {
