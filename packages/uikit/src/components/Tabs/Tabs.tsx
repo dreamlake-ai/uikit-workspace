@@ -264,15 +264,36 @@ function TabsData({
     if (value !== undefined) setInternalValue(value);
   }, [value]);
 
+  // The indicator is measured off the active tab — and re-measured whenever any
+  // tab changes size, not only when the selection changes. A label that grows
+  // after mount (web font arriving, a label edited, an icon+word label laid out
+  // late) used to leave the segment pill / underline at its first width, with
+  // the word running past its edge. Every tab is observed because a sibling
+  // growing moves the active tab's `left`.
   useEffect(() => {
-    const el = tabRefs.current[activeValue];
-    if (!el) return;
-    setBar({
-      left: el.offsetLeft,
-      width: el.offsetWidth,
-      height: el.offsetHeight,
-      ready: true,
-    });
+    const measure = () => {
+      const el = tabRefs.current[activeValue];
+      if (!el) return;
+      setBar((prev) =>
+        prev.ready &&
+        prev.left === el.offsetLeft &&
+        prev.width === el.offsetWidth &&
+        prev.height === el.offsetHeight
+          ? prev
+          : {
+              left: el.offsetLeft,
+              width: el.offsetWidth,
+              height: el.offsetHeight,
+              ready: true,
+            },
+      );
+    };
+    measure();
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(measure);
+    for (const el of Object.values(tabRefs.current))
+      if (el) observer.observe(el);
+    return () => observer.disconnect();
   }, [activeValue, tabs?.length]);
 
   const segCfg = segmentConfig[size];
