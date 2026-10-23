@@ -154,7 +154,7 @@ html[data-theme="dark"] {
   --code-bg: var(--code-bg-dark);
 
   --ink: #ececec;
-  --uikit-muted: #8a8a8a;
+  --uikit-muted: #999999; /* 4.73:1 on --bg-dark (#8a8a8a was 3.9) */
   --uikit-axis: #cccccc;
   --faint: rgba(255, 255, 255, 0.09);
   --faint-dashed: rgba(255, 255, 255, 0.22);
@@ -212,7 +212,7 @@ html[data-theme="dark"] {
     --code-bg: var(--code-bg-dark);
 
     --ink: #ececec;
-    --uikit-muted: #8a8a8a;
+    --uikit-muted: #999999; /* 4.73:1 on --bg-dark (#8a8a8a was 3.9) */
   --uikit-axis: #cccccc;
     --faint: rgba(255, 255, 255, 0.09);
     --faint-dashed: rgba(255, 255, 255, 0.22);

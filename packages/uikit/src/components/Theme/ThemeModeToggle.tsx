@@ -223,6 +223,8 @@ export function ThemeModeToggle({
               "relative z-10 inline-flex items-center justify-center rounded-full",
               "text-uikit-muted hover:text-uikit-ink aria-pressed:text-uikit-ink",
               "cursor-pointer outline-none transition-colors duration-[250ms]",
+              // Keyboard focus: inset, inside the pill track.
+              "focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-uikit-accent focus-visible:-outline-offset-2",
               "[&>svg]:block [&>svg]:size-[13px]",
               "[&>svg]:transition-opacity [&>svg]:duration-[250ms]",
               "motion-reduce:[&>svg]:transition-none",
