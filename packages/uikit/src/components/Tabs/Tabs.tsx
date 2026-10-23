@@ -365,7 +365,7 @@ function TabsData({
           aria-hidden
           // Style Guide §Elevation tint-1 — the resting-panel tint.
           // Theme-aware via `--shadow-tint-1` so dark mode darkens.
-          className="absolute pointer-events-none bg-uikit-bg shadow-[0_1px_2px_var(--shadow-tint-1)]"
+          className="absolute pointer-events-none bg-[var(--uikit-segment-thumb,var(--bg))] shadow-[0_1px_2px_var(--shadow-tint-1)]"
           style={{
             top: segCfg.inset,
             bottom: segCfg.inset,
