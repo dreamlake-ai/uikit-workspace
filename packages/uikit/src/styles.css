@@ -239,7 +239,6 @@ html[data-theme="dark"] {
 
     --shadow-tint-1: rgba(0, 0, 0, 0.45);
     --uikit-segment-thumb: color-mix(in srgb, var(--ink) 14%, var(--bg));
-  --uikit-segment-thumb: color-mix(in srgb, var(--ink) 14%, var(--bg));
     --shadow-tint-2: rgba(0, 0, 0, 0.6);
     --shadow-tint-3: rgba(0, 0, 0, 0.75);
     --shadow-inset: rgba(0, 0, 0, 0.5);
