@@ -35,3 +35,12 @@ Two breakpoints in current use, both for the docs shell:
 
 No "mobile-first" set of named breakpoints. Everything is desktop-first; the two
 overrides are the only places the layout changes.
+
+### Touch: card headers stay on one line
+
+A card header with always-visible actions on a touch device (`hover: none`) is
+one line: title, meta, buttons, centred on the title. The title truncates first;
+below roughly six characters of title the meta is dropped, never wrapped under
+the buttons. This overrides the narrow-card rule (meta on its own line below
+`20rem`) for touch cards with top-right actions only — pointer cards keep it.
+See [ProfileCard](/components/profile-card).
