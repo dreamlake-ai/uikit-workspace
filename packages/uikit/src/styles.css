@@ -833,7 +833,8 @@ html[data-theme="dark"] {
  * — once it owns a line, wrapping is better than overflowing it.
  */
 @container (max-width: 20rem) {
-  [data-uikit-header] {
+  [data-uikit-header],
+  [data-uikit-header-main] {
     flex-wrap: wrap;
   }
 
@@ -858,40 +859,56 @@ html[data-theme="dark"] {
 }
 
 /*
- * Touch: the top-right actions are always shown, so the meta moves out of
- * their way.
+ * Touch + top-right actions: the header is ONE line, at every width.
  *
- * On a pointer device the cluster is revealed on hover and `titleRight` fades
- * while it is up. A `(hover: none)` device has no hover to enter, so the kit
- * shows the cluster permanently — and the meta stayed where it was, drawn
- * through the buttons ("9/7/2025" behind edit/delete on a phone). Hiding it
- * would lose the timestamp for good on touch, so it takes the narrow-card
- * layout instead: its own line under the title, right-aligned, clear of the
- * 20px action row above it.
+ * On a pointer device the edit/delete cluster is laid over the header's right
+ * end and revealed on hover, while the meta fades out from under it. A
+ * `(hover: none)` device has no hover to enter, so the kit shows the cluster
+ * permanently — and there it has to be IN the row, not over it: title, then
+ * meta, then the buttons, all centred on the title's line. Overriding the
+ * narrow-card rule above too: on touch the meta does not drop to a second
+ * line, because a second line under always-visible buttons reads as a broken
+ * header ("2h ago" stranded under the icons on an iPad).
+ *
+ * When the row runs out of room the title truncates first. Once it is down to
+ * its floor — the title column's basis, ~6 characters of 14px type plus the
+ * ellipsis (more when a tag shares the column) — the meta goes rather than
+ * wrapping: it is the one item allowed onto a second flex line, and the row's
+ * fixed height clips that line away, so the title grows back into the space.
+ * No reserved gutter: the cluster is in flow, so the row is sized by what is
+ * actually in it.
  */
 @media (hover: none) {
-  /* Reserved rather than measured, like the bottom gutter below: 5rem clears
-     three 22px controls and their gaps. A wider cluster raises it. */
-  [data-uikit-card][data-uikit-top-actions] {
-    --uikit-card-top-action-gutter: 5rem;
-  }
-
   [data-uikit-card][data-uikit-top-actions] [data-uikit-header] {
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
   }
 
-  /* The title line runs alongside the always-visible cluster, so it keeps
-     out of it and truncates before it rather than under it. */
-  [data-uikit-card][data-uikit-top-actions] [data-uikit-header] > :first-child {
-    padding-right: var(--uikit-card-top-action-gutter);
+  [data-uikit-card][data-uikit-top-actions] [data-uikit-top-actions-slot] {
+    position: static;
+    flex-shrink: 0;
+  }
+
+  [data-uikit-card][data-uikit-top-actions] [data-uikit-header-main] {
+    flex-wrap: wrap;
+    align-content: flex-start;
+    height: 1.25rem;
+    overflow: hidden;
+  }
+
+  [data-uikit-card][data-uikit-top-actions] [data-uikit-title-col] {
+    flex-basis: 3.5rem;
+  }
+
+  [data-uikit-card][data-uikit-top-actions] [data-uikit-title-col]:has(> [data-uikit-tag]) {
+    flex-basis: 7rem;
   }
 
   [data-uikit-card][data-uikit-top-actions] [data-uikit-title-right] {
-    flex-basis: 100%;
-    display: flex;
-    justify-content: flex-end;
-    white-space: normal;
-    margin-top: 2px;
+    flex-basis: auto;
+    display: block;
+    white-space: nowrap;
+    margin-top: 0;
+    padding-right: 0;
   }
 }
 

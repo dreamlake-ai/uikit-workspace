@@ -1,9 +1,12 @@
 // @vitest-environment jsdom
 // The top-right action cluster must never be drawn over `titleRight`.
 // Pointer: the meta fades while the cluster is revealed — on hover and on
-// keyboard focus. Touch (`hover: none`): the cluster is always shown, so the
-// meta takes its own line, keyed on `data-uikit-top-actions` in styles.css.
-// Before this, a phone drew "9/7/2025" straight through edit/delete.
+// keyboard focus. Touch (`hover: none`): the cluster is always shown and joins
+// the title row — title · meta · buttons on ONE line, keyed on
+// `data-uikit-top-actions` in styles.css. Before this, a phone drew "9/7/2025"
+// straight through edit/delete. The real geometry (one line, no overlap, the
+// meta dropped rather than wrapped on a narrow card) is asserted on WebKit with
+// the iPad / iPhone descriptors in packages/docs/e2e/profile-card-touch.spec.ts.
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { act } from "react";
@@ -59,13 +62,38 @@ it("fades the meta on keyboard focus as well as on hover", () => {
   );
 });
 
-it("moves the meta to its own line on touch instead of hiding it", () => {
+it("puts the action cluster in the header row, after the meta", () => {
+  render(true);
+  const header = container.querySelector("[data-uikit-header]")!;
+  const slot = header.querySelector("[data-uikit-top-actions-slot]")!;
+  expect(slot).not.toBeNull();
+  // Order on the line: title column, meta, then the cluster.
+  const main = header.querySelector("[data-uikit-header-main]")!;
+  expect(main.nextElementSibling).toBe(slot);
+  expect(main.lastElementChild!.hasAttribute("data-uikit-title-right")).toBe(
+    true,
+  );
+});
+
+it("keeps the touch header on one line instead of wrapping the meta", () => {
   const css = readFileSync(join(__dirname, "../../styles.css"), "utf8");
-  const touch = css.slice(css.indexOf("@media (hover: none) {\n  /* Reserved"));
-  expect(touch).toMatch(
-    /\[data-uikit-card\]\[data-uikit-top-actions\] \[data-uikit-title-right\] \{\s*flex-basis: 100%;/,
+  const touch = css.slice(
+    css.indexOf(
+      "@media (hover: none) {\n  [data-uikit-card][data-uikit-top-actions]",
+    ),
   );
-  expect(touch).toMatch(
-    /\[data-uikit-card\]\[data-uikit-top-actions\] \[data-uikit-header\] \{\s*flex-wrap: wrap;/,
+  const rule = (sel: string) =>
+    touch.match(
+      new RegExp(sel.replace(/[[\]]/g, "\\$&") + " \\{([^}]*)\\}"),
+    )?.[1] ?? "";
+  const scope = "[data-uikit-card][data-uikit-top-actions] ";
+  expect(rule(scope + "[data-uikit-header]")).toMatch(/flex-wrap: nowrap/);
+  expect(rule(scope + "[data-uikit-top-actions-slot]")).toMatch(
+    /position: static/,
   );
+  // The meta never gets its own line: no 100% basis, and the row is clipped
+  // to one line so an overflowing meta is dropped, not wrapped.
+  expect(rule(scope + "[data-uikit-title-right]")).toMatch(/flex-basis: auto/);
+  expect(rule(scope + "[data-uikit-header-main]")).toMatch(/overflow: hidden/);
+  expect(touch).not.toMatch(/--uikit-card-top-action-gutter/);
 });
