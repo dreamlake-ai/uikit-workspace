@@ -23,7 +23,9 @@ const PILL = [
   "hover:bg-uikit-ink-5 hover:opacity-100",
   // Inset, matching TabRow — an offset ring around a 24px pill in a wrapping
   // row collides with its neighbours.
-  "outline-none focus-visible:outline-2 focus-visible:outline-uikit-accent focus-visible:-outline-offset-2",
+  // `outline-solid`: `outline-none` zeroes Tailwind v4's outline-style
+  // variable, so `outline-2` alone paints nothing.
+  "outline-none focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-uikit-accent focus-visible:-outline-offset-2",
   "disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:opacity-40",
 ].join(" ");
 

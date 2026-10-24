@@ -107,6 +107,11 @@
   --radius: 10px;
 
   --shadow-tint-1: rgba(0, 0, 0, 0.06);
+  /* The segment control's selected pill: the page surface lifted off the ink-5
+     track. In light the page colour already reads raised (lighter than the
+     track); in dark the page colour is DARKER than the ink-5 track, so the pill
+     looked sunken and the selection vanished — dark gets its own lifted value. */
+  --uikit-segment-thumb: var(--bg);
   --shadow-tint-2: rgba(0, 0, 0, 0.1);
   --shadow-tint-3: rgba(0, 0, 0, 0.16);
   --shadow-inset: rgba(0, 0, 0, 0.08);
@@ -149,7 +154,7 @@ html[data-theme="dark"] {
   --code-bg: var(--code-bg-dark);
 
   --ink: #ececec;
-  --uikit-muted: #8a8a8a;
+  --uikit-muted: #999999; /* 4.73:1 on --bg-dark (#8a8a8a was 3.9) */
   --uikit-axis: #cccccc;
   --faint: rgba(255, 255, 255, 0.09);
   --faint-dashed: rgba(255, 255, 255, 0.22);
@@ -181,6 +186,7 @@ html[data-theme="dark"] {
   --row-selected-fg: #ffffff;
 
   --shadow-tint-1: rgba(0, 0, 0, 0.45);
+  --uikit-segment-thumb: color-mix(in srgb, var(--ink) 14%, var(--bg));
   --shadow-tint-2: rgba(0, 0, 0, 0.6);
   --shadow-tint-3: rgba(0, 0, 0, 0.75);
   --shadow-inset: rgba(0, 0, 0, 0.5);
@@ -206,7 +212,7 @@ html[data-theme="dark"] {
     --code-bg: var(--code-bg-dark);
 
     --ink: #ececec;
-    --uikit-muted: #8a8a8a;
+    --uikit-muted: #999999; /* 4.73:1 on --bg-dark (#8a8a8a was 3.9) */
   --uikit-axis: #cccccc;
     --faint: rgba(255, 255, 255, 0.09);
     --faint-dashed: rgba(255, 255, 255, 0.22);
@@ -232,6 +238,7 @@ html[data-theme="dark"] {
     --row-selected-fg: #ffffff;
 
     --shadow-tint-1: rgba(0, 0, 0, 0.45);
+    --uikit-segment-thumb: color-mix(in srgb, var(--ink) 14%, var(--bg));
     --shadow-tint-2: rgba(0, 0, 0, 0.6);
     --shadow-tint-3: rgba(0, 0, 0, 0.75);
     --shadow-inset: rgba(0, 0, 0, 0.5);
@@ -455,6 +462,84 @@ html[data-theme="dark"] {
   animation: uikit-panel-in 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+/* Dropdown-like panels (Select, DropdownMenu, Menu, ContextMenu, BreadcrumbTree)
+   carry `data-unfold` = the corner nearest their trigger (lib/unfold.ts, from
+   the resolved placement). They UNFOLD from that corner toward the opposite
+   one: a clip-path reveal that starts as the corner and opens to the whole
+   panel, with a slight scale from the same corner so the content settles into
+   place rather than being wiped. Dialogs and toasts keep the plain rise above.
+
+   - Clip is OUTSET by 40px at rest so the shadow and the trigger-facing wedge
+     (which sit outside the panel box) are never cut once open; the wedge is on
+     the trigger edge, so it is among the first things revealed.
+   - Fast out, slow in: 320ms on (0.2, 0.8, 0.2, 1) — about half the reveal
+     in the first 60ms, ~90% by 140ms, then a gentle settle. A steeper curve
+     finished the reveal before the eye could see it unfold. Opacity arrives
+     early (120ms) so the growing edge never reads as a hard wipe.
+   - `backwards` fill: the start state holds for the first frame, and nothing
+     is left clipping the panel after the animation ends. */
+.uikit-panel-in[data-unfold] {
+  transform-origin: var(--uikit-unfold-origin);
+  animation:
+    uikit-unfold 320ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards,
+    uikit-unfold-fade 120ms linear backwards;
+}
+.uikit-panel-in[data-unfold="tl"] {
+  --uikit-unfold-from: inset(-40px 100% 100% -40px);
+  --uikit-unfold-origin: top left;
+}
+.uikit-panel-in[data-unfold="tr"] {
+  --uikit-unfold-from: inset(-40px -40px 100% 100%);
+  --uikit-unfold-origin: top right;
+}
+.uikit-panel-in[data-unfold="bl"] {
+  --uikit-unfold-from: inset(100% 100% -40px -40px);
+  --uikit-unfold-origin: bottom left;
+}
+.uikit-panel-in[data-unfold="br"] {
+  --uikit-unfold-from: inset(100% -40px -40px 100%);
+  --uikit-unfold-origin: bottom right;
+}
+.uikit-panel-in[data-unfold="t"] {
+  --uikit-unfold-from: inset(-40px -40px 100% -40px);
+  --uikit-unfold-origin: top center;
+}
+.uikit-panel-in[data-unfold="b"] {
+  --uikit-unfold-from: inset(100% -40px -40px -40px);
+  --uikit-unfold-origin: bottom center;
+}
+.uikit-panel-in[data-unfold="l"] {
+  --uikit-unfold-from: inset(-40px 100% -40px -40px);
+  --uikit-unfold-origin: center left;
+}
+.uikit-panel-in[data-unfold="r"] {
+  --uikit-unfold-from: inset(-40px -40px -40px 100%);
+  --uikit-unfold-origin: center right;
+}
+@keyframes uikit-unfold {
+  from {
+    clip-path: var(--uikit-unfold-from);
+    transform: scale(0.96);
+  }
+  to {
+    clip-path: inset(-40px);
+    transform: scale(1);
+  }
+}
+@keyframes uikit-unfold-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .uikit-panel-in[data-unfold] {
+    animation: uikit-unfold-fade 120ms linear backwards;
+  }
+}
+
 /* One hover fill per menu-like panel, moved between rows rather than painted
    per row — the sidebar nav's hover, everywhere a list opens. See
    lib/useHoverSlider. The host is `relative isolate`, so z-index -1 lands the
@@ -537,6 +622,94 @@ html[data-theme="dark"] {
 .uikit-overlay-enter[data-side="right"] { --uikit-overlay-enter-x: -4px; }
 @media (prefers-reduced-motion: reduce) {
   .uikit-overlay-enter { animation: none; }
+}
+
+/* Modal pop (Dialog, ModalContent, AlertDialogContent; see lib/useModalPresence).
+   Enter: a damped spring from .85 past 1.035 and back through .995 to 1, from
+   the centre the panel is positioned on. Exit: a short ease-in shrink to .95;
+   the panel stays mounted until it ends. The scrim fades its own colour in
+   step. Enter fills `backwards` only: a transform left on the panel at rest
+   would become the containing block for fixed-position pickers inside it.
+
+   --uikit-modal-from-* are set when a switch interrupts the running animation,
+   so the next one starts from the pose actually on screen instead of jumping. */
+:root {
+  --uikit-dur-modal-in: 340ms;
+  --uikit-dur-modal-out: 160ms;
+  --uikit-dur-scrim-in: 180ms;
+  --uikit-dur-scrim-out: 150ms;
+}
+@keyframes uikit-modal-in {
+  0% {
+    opacity: var(--uikit-modal-from-opacity, 0);
+    transform: var(--uikit-modal-from-transform, scale(0.85));
+    animation-timing-function: cubic-bezier(0.25, 0.7, 0.4, 1);
+  }
+  55% {
+    opacity: 1;
+    transform: scale(1.035);
+    animation-timing-function: ease-in-out;
+  }
+  80% {
+    transform: scale(0.995);
+    animation-timing-function: ease-in-out;
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes uikit-modal-out {
+  from {
+    opacity: var(--uikit-modal-from-opacity, 1);
+    transform: var(--uikit-modal-from-transform, none);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+/* Reduced motion: opacity only. These never read the transform variable. */
+@keyframes uikit-modal-fade-in {
+  from { opacity: var(--uikit-modal-from-opacity, 0); }
+  to { opacity: 1; }
+}
+@keyframes uikit-modal-fade-out {
+  from { opacity: var(--uikit-modal-from-opacity, 1); }
+  to { opacity: 0; }
+}
+/* The scrim fades its own background colour: `to`-less / `from`-less
+   keyframes resolve to the element's underlying value. */
+@keyframes uikit-modal-scrim-in {
+  from { background-color: var(--uikit-modal-scrim-from, transparent); }
+}
+@keyframes uikit-modal-scrim-out {
+  from { background-color: var(--uikit-modal-scrim-from); }
+  to { background-color: transparent; }
+}
+.uikit-modal-panel {
+  transform-origin: center;
+}
+.uikit-modal-panel[data-state="open"] {
+  animation: uikit-modal-in var(--uikit-dur-modal-in) backwards;
+}
+.uikit-modal-panel[data-state="closed"] {
+  animation: uikit-modal-out var(--uikit-dur-modal-out) cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+.uikit-modal-backdrop[data-state="open"] {
+  animation: uikit-modal-scrim-in var(--uikit-dur-scrim-in) ease-out backwards;
+}
+.uikit-modal-backdrop[data-state="closed"] {
+  animation: uikit-modal-scrim-out var(--uikit-dur-scrim-out) ease-in forwards;
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .uikit-modal-panel[data-state="open"] {
+    animation: uikit-modal-fade-in var(--uikit-dur-scrim-in) ease-out backwards;
+  }
+  .uikit-modal-panel[data-state="closed"] {
+    animation: uikit-modal-fade-out var(--uikit-dur-scrim-out) ease-in forwards;
+  }
 }
 
 /* ── Scrollbar utilities ────────────────────────────────────────── */

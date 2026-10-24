@@ -133,6 +133,13 @@ const TONES: Record<ButtonTone, string> = {
   danger: "hover:text-uikit-danger",
 };
 
+const FOCUS_OUTSIDE: Partial<Record<ButtonVariant, string>> = {
+  primary: "focus-visible:outline-offset-2",
+  danger: "focus-visible:outline-offset-2",
+  destructive: "focus-visible:outline-offset-2",
+  link: "focus-visible:outline-offset-2",
+};
+
 export interface ButtonVariantsOptions {
   variant?: ButtonVariant;
   size?: ButtonSize;
@@ -160,6 +167,14 @@ export function buttonVariants({
     // Mono, because that is the app's button vocabulary: the dialog footer, the
     // toolbar pill and the chrome actions are all set in it.
     "rounded-uikit-badge font-uikit-mono font-medium tracking-uikit-snug cursor-pointer outline-none",
+    // Keyboard focus: the kit's 2px accent ring, on `:focus-visible` only, so
+    // the pointer never sees it. Inset by default — a toolbar's icon buttons
+    // sit in clipped rows. Filled variants and the padless `link` move it
+    // outside (FOCUS_OUTSIDE): an accent ring inside an accent fill vanishes,
+    // and an inset ring on a padless label cuts the glyphs. `outline-solid` is
+    // required: `outline-none` zeroes Tailwind v4's outline-style variable, so
+    // `outline-2` alone paints nothing.
+    "focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-uikit-accent focus-visible:-outline-offset-2 focus-visible:opacity-100",
     "transition-[background-color,opacity,border-color,color] duration-[120ms]",
     "disabled:opacity-50 disabled:cursor-not-allowed",
     "[&_svg]:shrink-0 [&_svg]:pointer-events-none",
@@ -172,6 +187,7 @@ export function buttonVariants({
     variant === "ghost" && "text-[11.5px]!",
     icon && ICON_SIZES[size],
     VARIANTS[variant],
+    FOCUS_OUTSIDE[variant],
     TONES[tone],
     // An accent label takes an accent hover wash. A grey one under blue text
     // reads as two unrelated decisions — see `hoverBg`, which this sets the

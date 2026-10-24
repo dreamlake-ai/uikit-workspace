@@ -18,6 +18,11 @@ recedes into a deeper plane.
 
 <SurfaceTokens />
 
+`--uikit-segment-thumb` is the selected pill in segmented controls (Tabs
+`segment`, ToggleButtons `primary`/`secondary`). It equals `--bg` in light; in dark
+it is `color-mix(in srgb, var(--ink) 14%, var(--bg))`, because the dark page colour
+sits *below* the chip-tinted track and a `--bg` pill looked sunken.
+
 #### Lines that cross rows
 
 `--faint` is translucent, which is what you want for a hairline that should sit
@@ -56,14 +61,19 @@ a darker selection fill, or the accent ring a multi-row run already carries.
 ### Ink
 
 Two text colors carry every glyph on the page: `--ink` for primary content, `--muted`
-for secondary. There is no third gray — anything paler is achieved with opacity on
-`--ink`, not by introducing another token. Both flip in dark mode against the inverted
-surface stack.
+for secondary. There is no third gray, and no paler text: both meet WCAG AA (4.5:1) on
+the page background, and opacity on top of them drops text below it (`--muted` at 0.6
+is under 3:1). Rank secondary text by size, weight and case instead. Only a purely
+decorative glyph (a `/`, `·` or `@` separator, `aria-hidden`) may be faded. Both flip
+in dark mode against the inverted surface stack.
 
 | Token | Light | Dark | Used on |
 |---|---|---|---|
 | `--ink` | `#1a1a1a` | `#ececec` | Body copy, titles, ledger rows, kbd glyphs |
-| `--muted` | `#6b6b6b` | `#8a8a8a` | Eyebrows, meta cells, placeholder text, neutral status |
+| `--muted` | `#6b6b6b` | `#999999` | Eyebrows, meta cells, placeholder text, neutral status |
+
+Contrast on `--bg`: `--ink` 17.2 / 11.4, `--muted` 5.28 / 4.73 (light / dark).
+Dark `--muted` was `#8a8a8a` until 2026-10, which measured 3.9:1.
 
 ### Semantic palette
 

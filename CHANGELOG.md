@@ -15,6 +15,8 @@
 
 ## Unreleased
 
+- Dark `--uikit-muted` `#8a8a8a` → `#999999`, so secondary text meets WCAG AA on the dark page (3.9:1 → 4.73:1). The color guide now says not to put opacity on `--ink` / `--muted` text.
+- `Dialog`, `ModalContent` and `AlertDialogContent` share one spring-pop motion (`lib/useModalPresence`): a 340ms centred spring in, a 160ms shrink-and-fade out, and a backdrop fade alongside. The panel stays mounted, inert and hidden from assistive technology through its exit with its last open content; Esc, scroll lock and focus return still release when `open` turns false. A close or reopen mid-animation starts from the pose on screen. Reduced motion fades only. `Modal` and `AlertDialog` no longer use the top-anchored `uikit-panel-in`. Tests that expect a closed dialog to leave the DOM at once should wait for the exit or query by role.
 - `BreadcrumbTree` gains a second panel layout and a toggle between them. `columns` is the existing Miller browser; `tree` is the whole expanded tree in one flow that wraps into columns, so several branches stay on screen at once. `view` / `defaultView` / `onViewChange` / `hideViewToggle` control it.
 - `BreadcrumbTree` applies a drag to its own cache and no longer refetches to confirm it, so a re-parent no longer collapses the rest of the panel. `onMove` reports failure by rejecting; hosts should stop bumping `refreshToken` on a successful move. `BreadcrumbMove` gains `fromPath`.
 - The panel flips above its trigger when there is not enough room below, instead of hanging off the bottom of the window where a fixed element cannot be scrolled back into view.

@@ -17,10 +17,24 @@ Three tiers, two custom easings, one prohibition.
   swap, palette panel slide. Uses `cubic-bezier(.4, .7, .3, 1)` — a soft ease-out with
   a settled tail.
 
+**Dropdown unfold (320ms)**
+- `320ms` on `cubic-bezier(0.2, 0.8, 0.2, 1)`, opacity over the first `120ms` — dropdown-like
+  panels (Select, DropdownMenu, Menu, ContextMenu, BreadcrumbTree) unfold from the corner
+  nearest their trigger (`data-unfold="tl" | "tr" | "bl" | "br" | "t" | "b"`): a clip-path
+  reveal outset 40px so the shadow and wedge are never cut, plus a slight scale from the same
+  corner. Dialogs and toasts keep the plain rise.
+
 **Tier 3 — spring (420ms)**
 - `420ms` — theme-toggle puck. Uses `cubic-bezier(.34, 1.45, .55, 1)` for an overshoot
-  that reads as a button-press, not a crossfade. The only animation in the kit that
-  doesn't return-to-rest by 250ms.
+  that reads as a button-press, not a crossfade.
+- `340ms` in / `160ms` out — modal pop (Dialog, Modal, AlertDialog). Enter is a damped
+  spring from the panel's centre: scale `.85 → 1.035 → .995 → 1`, opacity reaching 1 at
+  the overshoot. Exit is `scale(1 → .95)` with a fade, `cubic-bezier(.4, 0, 1, 1)`. The
+  backdrop fades its colour over `180ms` in / `150ms` out alongside it. A close or reopen
+  mid-animation starts from the pose already on screen. The enter leaves no transform on
+  the panel at rest, so fixed-position pickers inside it are unaffected. Tokens:
+  `--uikit-dur-modal-in`, `--uikit-dur-modal-out`, `--uikit-dur-scrim-in`,
+  `--uikit-dur-scrim-out`.
 
 ### When not to animate
 
@@ -30,4 +44,5 @@ meant to be invisible after first paint.
 
 Honor `prefers-reduced-motion` everywhere. The theme toggle's spring puck and any
 slide-in chrome collapse to instant transitions when the user has reduced-motion set;
-nothing else moves under that media query.
+modals keep only their opacity fade (no scaling, no spring); nothing else moves under
+that media query.

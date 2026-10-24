@@ -146,7 +146,9 @@ export function CollectionEntry({
         "hover:bg-[color-mix(in_srgb,var(--ink)_5%,var(--bg))]",
         "hover:[--uikit-stack-fan:1]",
         "transition-colors duration-150",
-        "outline-none focus-visible:outline-2 focus-visible:outline-uikit-accent focus-visible:-outline-offset-2",
+        // `outline-solid`: `outline-none` zeroes Tailwind v4's outline-style
+        // variable, so `outline-2` alone paints nothing.
+        "outline-none focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-uikit-accent focus-visible:-outline-offset-2",
         SIZES[size],
         className,
       )}

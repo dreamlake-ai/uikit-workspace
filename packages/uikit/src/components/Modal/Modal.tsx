@@ -12,6 +12,7 @@ import {
 } from 'react'
 import { createPortal } from 'react-dom'
 import { cn } from '../../lib/utils'
+import { useComposedRef, useModalPresence } from '../../lib/useModalPresence'
 
 interface ModalContextValue {
   open: boolean
@@ -85,8 +86,19 @@ export function ModalTrigger({ asChild = false, onClick, children, ...props }: M
 export interface ModalContentProps extends ComponentProps<'div'> {
   showCloseButton?: boolean
 }
-export function ModalContent({ className, children, showCloseButton = true, ...props }: ModalContentProps) {
+export function ModalContent({
+  className,
+  children,
+  showCloseButton = true,
+  ref,
+  style,
+  onAnimationEnd,
+  ...props
+}: ModalContentProps) {
   const { open, setOpen } = useCtx('ModalContent')
+  // Kept through its exit with the last open children; inert while closing.
+  const presence = useModalPresence(open, children)
+  const panelRef = useComposedRef(presence.panelRef, ref)
 
   useEffect(() => {
     if (!open) return
@@ -102,13 +114,18 @@ export function ModalContent({ className, children, showCloseButton = true, ...p
     }
   }, [open, setOpen])
 
-  if (!open || typeof document === 'undefined') return null
+  if (!presence.present || typeof document === 'undefined') return null
 
   return createPortal(
     <div
+      ref={presence.backdropRef}
       data-slot="modal-overlay"
-      onClick={() => setOpen(false)}
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-[var(--scrim)] font-uikit-ui"
+      data-state={presence.state}
+      inert={!open}
+      aria-hidden={open ? undefined : true}
+      style={presence.backdropStyle}
+      onClick={open ? () => setOpen(false) : undefined}
+      className="uikit-modal-backdrop fixed inset-0 z-[100] flex items-center justify-center bg-[var(--scrim)] font-uikit-ui"
     >
       <div
         role="dialog"
@@ -116,13 +133,20 @@ export function ModalContent({ className, children, showCloseButton = true, ...p
         data-slot="modal-content"
         onClick={(e) => e.stopPropagation()}
         className={cn(
-          'uikit-panel-in relative flex flex-col gap-4 p-6 rounded-[14px] w-full max-w-[calc(100%-2rem)] sm:max-w-[480px]',
+          'uikit-modal-panel relative flex flex-col gap-4 p-6 rounded-[14px] w-full max-w-[calc(100%-2rem)] sm:max-w-[480px]',
           'max-h-[85vh] overflow-y-auto bg-uikit-bg text-uikit-ink shadow-uikit-deep',
           className,
         )}
         {...props}
+        ref={panelRef}
+        data-state={presence.state}
+        style={{ ...style, ...presence.panelStyle }}
+        onAnimationEnd={(e) => {
+          onAnimationEnd?.(e)
+          presence.onPanelAnimationEnd(e)
+        }}
       >
-        {children}
+        {presence.content}
         {showCloseButton && (
           <button
             type="button"
