@@ -18,10 +18,15 @@ recedes into a deeper plane.
 
 <SurfaceTokens />
 
-`--uikit-segment-thumb` is the selected pill in segmented controls (Tabs
-`segment`, ToggleButtons `primary`/`secondary`). It equals `--bg` in light; in dark
-it is `color-mix(in srgb, var(--ink) 14%, var(--bg))`, because the dark page colour
-sits *below* the chip-tinted track and a `--bg` pill looked sunken.
+`--uikit-segment-thumb` and `--uikit-segment-track` are the two surfaces of a
+segmented control (Tabs `segment`, ToggleButtons `primary`/`secondary`). Both themes
+use one recipe: the thumb **is** the page (`--bg`), and the track is a recess
+*below* the page. In light the controls' own tint (Tabs ink-5, ToggleButtons chip)
+already is that recess, so `--uikit-segment-track` is left unset there. In dark,
+ink-5 sits *above* the page, so the track becomes
+`color-mix(in srgb, #000 32%, var(--bg))` — and the thumb stays `--bg` instead of
+being lifted to a grey. Dark text contrast: selected `--ink` on the thumb 11.4:1,
+unselected `--uikit-muted` on the track 5.8:1.
 
 #### Lines that cross rows
 

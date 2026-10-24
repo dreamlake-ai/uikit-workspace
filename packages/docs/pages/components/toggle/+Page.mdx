@@ -37,8 +37,9 @@ on/off affordances. Controlled (`pressed` + `onPressedChange`) or uncontrolled
 `ToggleButtons` is a single-select segmented control: a sliding highlight
 animates to the active `ToggleButton`. Drive it with `value` + `onValueChange`.
 The `primary` and `secondary` highlight shares Tabs' `segment` pill token,
-`--uikit-segment-thumb`: the page colour in light, a lifted ink-tinted surface in
-dark so the selected segment stays visible on the track.
+`--uikit-segment-thumb` — the page colour in both themes — and the same track
+recipe: the chip tint in light, `--uikit-segment-track` (a recess darker than the
+page) in dark, so the selected segment reads raised the same way in both.
 
 <Preview source={segmentedSrc} filename="SegmentedSpec.tsx">
   <SegmentedSpec />

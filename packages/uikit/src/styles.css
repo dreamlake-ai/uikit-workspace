@@ -107,10 +107,14 @@
   --radius: 10px;
 
   --shadow-tint-1: rgba(0, 0, 0, 0.06);
-  /* The segment control's selected pill: the page surface lifted off the ink-5
-     track. In light the page colour already reads raised (lighter than the
-     track); in dark the page colour is DARKER than the ink-5 track, so the pill
-     looked sunken and the selection vanished — dark gets its own lifted value. */
+  /* Segmented controls (Tabs `segment`, ToggleButtons primary/secondary): the
+     selected thumb IS the page colour, and the track is a recess cut into the
+     page. Same recipe in both themes — only the track token changes.
+     `--uikit-segment-track` is deliberately NOT set in light: each control
+     falls back to the track it always had (Tabs ink-5, ToggleButtons chip), so
+     light stays pixel-identical. Dark sets it to a recess darker than the page,
+     because ink-5 / chip are LIGHTER than the dark page and would leave a
+     page-coloured thumb looking sunken. */
   --uikit-segment-thumb: var(--bg);
   --shadow-tint-2: rgba(0, 0, 0, 0.1);
   --shadow-tint-3: rgba(0, 0, 0, 0.16);
@@ -186,7 +190,10 @@ html[data-theme="dark"] {
   --row-selected-fg: #ffffff;
 
   --shadow-tint-1: rgba(0, 0, 0, 0.45);
-  --uikit-segment-thumb: color-mix(in srgb, var(--ink) 14%, var(--bg));
+  /* Dark mirrors light: the thumb is the page, the track a recess below it
+     (not ink-5, which sits ABOVE the dark page). */
+  --uikit-segment-thumb: var(--bg);
+  --uikit-segment-track: color-mix(in srgb, #000 32%, var(--bg));
   --shadow-tint-2: rgba(0, 0, 0, 0.6);
   --shadow-tint-3: rgba(0, 0, 0, 0.75);
   --shadow-inset: rgba(0, 0, 0, 0.5);
@@ -238,7 +245,8 @@ html[data-theme="dark"] {
     --row-selected-fg: #ffffff;
 
     --shadow-tint-1: rgba(0, 0, 0, 0.45);
-    --uikit-segment-thumb: color-mix(in srgb, var(--ink) 14%, var(--bg));
+    --uikit-segment-thumb: var(--bg);
+    --uikit-segment-track: color-mix(in srgb, #000 32%, var(--bg));
     --shadow-tint-2: rgba(0, 0, 0, 0.6);
     --shadow-tint-3: rgba(0, 0, 0, 0.75);
     --shadow-inset: rgba(0, 0, 0, 0.5);
