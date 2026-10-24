@@ -41,14 +41,15 @@ import {
  * It is always ONE row. As the player narrows it gives things up in order,
  * instead of wrapping (a second row pushed the timeline down and split the
  * controls from each other):
- *   1. the time readout hides once it would push the playback cluster off
- *      the centre under the video (the "⋯" menu repeats it later, and the
+ *   1. the time readout hides first (the "⋯" menu repeats it later, and the
  *      timeline's playhead still says where you are);
  *   2. speed, merge and the hand-pose toggle fold into one "⋯" menu, which
  *      also repeats the readout at its top;
  *   3. frame step joins them (← / → still step);
  *   4. segment prev / next join them too (, / . still jump).
- * Play / pause, split and "⋯" never fold. The level is chosen from the bar's
+ * Play / pause, split and "⋯" never fold. At every level play / pause sits
+ * on the bar's exact centre (a `1fr auto 1fr` grid, see styles.ts), so a
+ * level only fits when the wider side group fits beside the cluster. The level is chosen from the bar's
  * OWN width (ResizeObserver), not the viewport's: a labeling view beside an
  * episode list is narrow on a wide screen.
  */
@@ -59,7 +60,7 @@ const ICON = 30; // .va-icon
 const PLAY = 36; // .va-icon.va-play
 
 /** Width the bar needs at `level`, from measured item widths. */
-function needed(
+export function needed(
   level: Level,
   w: Record<string, number>,
   hasHandpose: boolean,
@@ -85,12 +86,12 @@ function needed(
   if (w.extra) right.push(w.extra);
   if (level >= 2) right.push(ICON); // ⋯
   const [l, c, r] = [sum(left), sum(center), sum(right)];
-  // With the readout showing, the cluster must sit on the true centre (under
-  // the centered video): both sides take the wider side's width. Past that the
-  // readout is what goes; once it has, a few px off-centre is fine.
-  if (level === 0) return 2 * Math.max(l, r) + c + 2 * GROUP_GAP;
-  const groups = [l, c, r].filter((g) => g > 0);
-  return groups.reduce((a, b) => a + b, 0) + GROUP_GAP * (groups.length - 1);
+  // The bar is a `1fr auto 1fr` grid: both side columns get the same width,
+  // so play sits on the bar's exact centre (under the centred video and the
+  // timeline's centre pill) at every level. Each side column must hold its
+  // own group, so the WIDER side decides: a level fits only when
+  // 2 × max(left, right) + cluster + the two column gaps fits.
+  return 2 * Math.max(l, r) + c + 2 * GROUP_GAP;
 }
 
 function useTransportLevel(hasHandpose: boolean) {
@@ -101,7 +102,7 @@ function useTransportLevel(hasHandpose: boolean) {
     const el = root.current;
     // Until the annotator's stylesheet applies, nothing has its real size
     // (an unstyled speed menu measured the whole row): wait for it.
-    if (!el || getComputedStyle(el).display !== "flex") return;
+    if (!el || getComputedStyle(el).display !== "grid") return;
     // Remember what is on screen now; hidden items keep their last width.
     for (const item of el.querySelectorAll<HTMLElement>("[data-va-measure]")) {
       const r = item.getBoundingClientRect();

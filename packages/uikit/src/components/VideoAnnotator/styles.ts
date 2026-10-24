@@ -98,17 +98,20 @@ export const CSS = `
    letterboxed video content. Never intercepts pointer events. */
 .va-overlay{position:absolute;left:0;top:0;pointer-events:none;z-index:2}
 
-/* One row, always. Equal side groups (flex 1 1 0) keep the playback cluster
-   on the true horizontal center — aligned with the centered video above —
-   while both sides fit; a side never goes below its content
-   (min-width:max-content), so short of room the cluster yields a little
-   off-center rather than being covered. Narrower than that, Transport hides
-   the readout, then folds secondary controls into "⋯" (see Transport.tsx) —
-   it never wraps a second line. */
-.va-transport{display:flex;flex-wrap:nowrap;align-items:center;column-gap:10px;
-  flex:none;margin-top:-2px;min-width:0}
-.va-tp-left,.va-tp-right{display:flex;align-items:center;gap:8px;flex:1 1 0;min-width:max-content}
-.va-tp-right{justify-content:flex-end}
+/* One row, always. A 3-column grid with equal side tracks puts play / pause
+   on the bar's exact centre — under the centred video and the timeline's
+   centre pill — at every width; the cluster's step buttons are symmetric
+   around it. The left group starts at the left edge, the right group ends at
+   the right edge, and neither can push the cluster. Transport picks a fold
+   level so the WIDER side group fits its track (hide the readout, then fold
+   secondary controls into "⋯", see Transport.tsx) — it never wraps. */
+.va-transport{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);
+  align-items:center;column-gap:10px;flex:none;margin-top:-2px;min-width:0}
+.va-tp-left,.va-tp-right{display:flex;flex-wrap:nowrap;align-items:center;gap:8px;min-width:0}
+/* End-aligned with an auto margin rather than justify-content:flex-end, so a
+   group that ever overflowed would run off the right edge, never back over
+   the centred cluster. */
+.va-tp-right>:first-child{margin-left:auto}
 .va-extrawrap{display:inline-flex;align-items:center;gap:8px}
 /* "⋯" menu: readout repeated as its header, key hints right-aligned. */
 .va-moremenu-readout{font-family:var(--f-mono, ui-monospace, Menlo, monospace);text-transform:none;letter-spacing:0}

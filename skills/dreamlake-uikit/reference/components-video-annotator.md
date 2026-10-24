@@ -5,9 +5,11 @@ surface for splitting a clip into consecutive phases and captioning each one.
 It owns the `<video>` element, a transport bar (prev/next segment, frame-step,
 play/pause, playback speed) and a percentage-positioned timeline strip with
 drag-to-move boundaries and click-to-scrub. The transport is always one row,
-sized to the player's own width rather than the window's. While everything fits,
-the playback cluster sits centered under the video. As the player narrows it
-gives things up in order. First the time readout hides. Then speed, merge and
+sized to the player's own width rather than the window's. Play / pause always
+sits on the bar's exact centre, under the centred video and the timeline's zoom
+pill, with the step buttons symmetric around it; the left and right groups sit
+at the edges and never push it. As the player narrows it gives things up in
+order, as soon as the wider side group no longer fits beside the centred cluster. First the time readout hides. Then speed, merge and
 the hand-pose toggle fold into a "⋯" menu, which repeats the readout at its
 top. Then frame step joins them, and last segment prev / next. Play / pause,
 split and "⋯" always stay. Keyboard shortcuts keep working for anything folded.
