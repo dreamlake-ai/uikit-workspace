@@ -19,8 +19,10 @@ export type ToggleButtonsVariant = "primary" | "secondary" | "ghost";
 export type ToggleButtonSize = "sm" | "md" | "lg";
 
 const CONTAINER: Record<ToggleButtonsVariant, string> = {
-  primary: "bg-uikit-chip",
-  secondary: "bg-uikit-chip",
+  // Light: the chip tint it always had. Dark: `--uikit-segment-track`, a recess
+  // darker than the page, so the page-coloured thumb reads raised (as in light).
+  primary: "bg-[var(--uikit-segment-track,var(--chip-bg))]",
+  secondary: "bg-[var(--uikit-segment-track,var(--chip-bg))]",
   ghost: "bg-transparent",
 };
 
@@ -29,7 +31,7 @@ const CONTAINER: Record<ToggleButtonsVariant, string> = {
 // flooded with accent. Colour stays available for genuine status elsewhere.
 //
 // `--bg` + a small shadow is not a choice made here; it is the shell all three
-// segmented controls already share. Tabs' `segment` pill is `--uikit-segment-thumb` (the page colour in light, lifted in dark) with
+// segmented controls already share. Tabs' `segment` pill is `--uikit-segment-thumb` (the page colour, in both themes) with
 // the same shadow, and the app's own theme toggle (`.dl-theme-toggle`) says so
 // out loud: "Same shell as the kit's segmented controls (ToggleButtons / Tabs
 // `segment`): a chip-tinted frame with an elevated thumb riding inside it."

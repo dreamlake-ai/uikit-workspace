@@ -57,9 +57,10 @@ Use `size="sm"` for a compact 12px tab bar.
 ## Segment variant
 
 A classic segmented control: tinted container background, active tab gets a
-raised pill filled with `--uikit-segment-thumb` — the page background in light,
-and a lifted surface (`--ink` 14% over `--bg`) in dark, where the page colour is
-darker than the track and the pill would otherwise read as sunken. The pill is
+raised pill filled with `--uikit-segment-thumb` — the page background, in both
+themes. The track is a recess below the page: ink-5 in light, and in dark
+`--uikit-segment-track` (32% black over `--bg`), since a dark ink-5 tint would sit
+*above* the page and leave the pill looking sunken. The pill is
 re-measured whenever a tab changes size (a label that loads late, a font swap, a
 container resize), so it never lags behind the tab it marks. `label` accepts any
 `ReactNode` — pass icons or text.
