@@ -929,6 +929,8 @@ export function BreadcrumbTree({
               // A text field placed inside stays selectable.
               "select-none [&_input]:select-text [&_textarea]:select-text",
             )}
+            // Opens under the crumbs, left-pinned: unfolds top-left → bottom-right.
+            data-unfold="tl"
             style={{
               top: panelTop,
               left: anchorRect.left - 14,

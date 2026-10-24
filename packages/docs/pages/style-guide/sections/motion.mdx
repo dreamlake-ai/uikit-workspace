@@ -17,6 +17,13 @@ Three tiers, two custom easings, one prohibition.
   swap, palette panel slide. Uses `cubic-bezier(.4, .7, .3, 1)` — a soft ease-out with
   a settled tail.
 
+**Dropdown unfold (320ms)**
+- `320ms` on `cubic-bezier(0.2, 0.8, 0.2, 1)`, opacity over the first `120ms` — dropdown-like
+  panels (Select, DropdownMenu, Menu, ContextMenu, BreadcrumbTree) unfold from the corner
+  nearest their trigger (`data-unfold="tl" | "tr" | "bl" | "br" | "t" | "b"`): a clip-path
+  reveal outset 40px so the shadow and wedge are never cut, plus a slight scale from the same
+  corner. Dialogs and toasts keep the plain rise.
+
 **Tier 3 — spring (420ms)**
 - `420ms` — theme-toggle puck. Uses `cubic-bezier(.34, 1.45, .55, 1)` for an overshoot
   that reads as a button-press, not a crossfade.

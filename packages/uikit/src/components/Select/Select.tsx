@@ -40,6 +40,7 @@ import {
   stripLegacyOverlayProps,
 } from "../../lib/legacy-overlay-props";
 import { ChevronDown } from "lucide-react";
+import { unfoldFrom } from "../../lib/unfold";
 
 function mergeRefs<T>(
   ...refs: (Ref<T> | undefined | ((n: T | null) => void))[]
@@ -466,6 +467,7 @@ export function SelectContent({
             "bg-uikit-bg shadow-uikit-soft outline-none",
             className,
           )}
+          data-unfold={unfoldFrom(ctx.context.placement)}
           {...ctx.getFloatingProps(rest)}
         >
           {ctx.arrow && (

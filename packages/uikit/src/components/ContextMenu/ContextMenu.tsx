@@ -31,6 +31,7 @@ import {
   type LegacyOverlayContentProps,
   stripLegacyOverlayProps,
 } from "../../lib/legacy-overlay-props";
+import { unfoldFrom } from "../../lib/unfold";
 
 interface MenuCtx {
   open: boolean;
@@ -219,6 +220,7 @@ export function ContextMenuContent({
             "bg-uikit-panel text-uikit-ink shadow-uikit-soft outline-none",
             className,
           )}
+          data-unfold={unfoldFrom(ctx.context.placement)}
           {...ctx.getFloatingProps(rest)}
         >
           <FloatingList elementsRef={ctx.elementsRef}>{children}</FloatingList>
