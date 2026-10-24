@@ -46,8 +46,8 @@
      Prefixed like `--uikit-accent` / `--uikit-muted`: the bare words
      are too generic to claim in a consumer's cascade. */
   --uikit-rail-stroke: #d8d4c8;
-  --uikit-handle: #8a8a8a;
-  --uikit-handle-active: #4a4a4a;
+  --uikit-handle: #c8c8c8; /* grip hint, 1.66:1 on --bg-light */
+  --uikit-handle-active: #8a8a8a; /* grabbed, 3.42:1 */
 
   /* ── Selection / accent ──────────────────────────────────────── */
   --selected-bg: #d9e6f7;
@@ -162,8 +162,8 @@ html[data-theme="dark"] {
   --search-bg: #36363c;
 
   --uikit-rail-stroke: #45454d;
-  --uikit-handle: #e2e2e2;
-  --uikit-handle-active: #ffffff;
+  --uikit-handle: #5c5c5c; /* grip hint, 2.02:1 on --bg-dark */
+  --uikit-handle-active: #9a9a9a; /* grabbed, 4.79:1 */
 
   --selected-bg: #3d4856;
   --tree-hover: #37373d;
@@ -220,8 +220,8 @@ html[data-theme="dark"] {
     --search-bg: #36363c;
 
     --uikit-rail-stroke: #45454d;
-    --uikit-handle: #e2e2e2;
-    --uikit-handle-active: #ffffff;
+    --uikit-handle: #5c5c5c; /* grip hint, 2.02:1 on --bg-dark */
+    --uikit-handle-active: #9a9a9a; /* grabbed, 4.79:1 */
 
     --selected-bg: #3d4856;
     --tree-hover: #37373d;

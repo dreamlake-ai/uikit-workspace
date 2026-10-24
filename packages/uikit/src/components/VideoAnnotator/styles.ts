@@ -98,13 +98,25 @@ export const CSS = `
    letterboxed video content. Never intercepts pointer events. */
 .va-overlay{position:absolute;left:0;top:0;pointer-events:none;z-index:2}
 
-/* 3-column grid with equal side tracks keeps the playback cluster on the true
-   horizontal center — aligned with the centered video above — regardless of
-   how wide the readout/speed (left) vs split/extract (right) groups are. */
+/* One row, always. A 3-column grid with equal side tracks puts play / pause
+   on the bar's exact centre — under the centred video and the timeline's
+   centre pill — at every width; the cluster's step buttons are symmetric
+   around it. The left group starts at the left edge, the right group ends at
+   the right edge, and neither can push the cluster. Transport picks a fold
+   level so the WIDER side group fits its track (hide the readout, then fold
+   secondary controls into "⋯", see Transport.tsx) — it never wraps. */
 .va-transport{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);
-  align-items:center;gap:10px;flex:none;margin-top:-2px}
-.va-tp-left,.va-tp-right{display:flex;align-items:center;gap:8px;min-width:0}
-.va-tp-right{justify-content:flex-end}
+  align-items:center;column-gap:10px;flex:none;margin-top:-2px;min-width:0}
+.va-tp-left,.va-tp-right{display:flex;flex-wrap:nowrap;align-items:center;gap:8px;min-width:0}
+/* End-aligned with an auto margin rather than justify-content:flex-end, so a
+   group that ever overflowed would run off the right edge, never back over
+   the centred cluster. */
+.va-tp-right>:first-child{margin-left:auto}
+.va-extrawrap{display:inline-flex;align-items:center;gap:8px}
+/* "⋯" menu: readout repeated as its header, key hints right-aligned. */
+.va-moremenu-readout{font-family:var(--f-mono, ui-monospace, Menlo, monospace);text-transform:none;letter-spacing:0}
+.va-moremenu [role^="menuitem"] svg{flex:none;opacity:.75}
+.va-moremenu-key{margin-left:auto;padding-left:16px;font-family:var(--f-mono, ui-monospace, Menlo, monospace);opacity:.5}
 .va-tp-center{display:flex;align-items:center;gap:8px;flex:none}
 /* Transport controls are quiet square-ish buttons: a 6px rounded rectangle
    matching the kit's small radius, transparent, resting at .75 opacity → ink
