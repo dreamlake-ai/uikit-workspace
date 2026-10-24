@@ -858,6 +858,44 @@ html[data-theme="dark"] {
 }
 
 /*
+ * Touch: the top-right actions are always shown, so the meta moves out of
+ * their way.
+ *
+ * On a pointer device the cluster is revealed on hover and `titleRight` fades
+ * while it is up. A `(hover: none)` device has no hover to enter, so the kit
+ * shows the cluster permanently — and the meta stayed where it was, drawn
+ * through the buttons ("9/7/2025" behind edit/delete on a phone). Hiding it
+ * would lose the timestamp for good on touch, so it takes the narrow-card
+ * layout instead: its own line under the title, right-aligned, clear of the
+ * 20px action row above it.
+ */
+@media (hover: none) {
+  /* Reserved rather than measured, like the bottom gutter below: 5rem clears
+     three 22px controls and their gaps. A wider cluster raises it. */
+  [data-uikit-card][data-uikit-top-actions] {
+    --uikit-card-top-action-gutter: 5rem;
+  }
+
+  [data-uikit-card][data-uikit-top-actions] [data-uikit-header] {
+    flex-wrap: wrap;
+  }
+
+  /* The title line runs alongside the always-visible cluster, so it keeps
+     out of it and truncates before it rather than under it. */
+  [data-uikit-card][data-uikit-top-actions] [data-uikit-header] > :first-child {
+    padding-right: var(--uikit-card-top-action-gutter);
+  }
+
+  [data-uikit-card][data-uikit-top-actions] [data-uikit-title-right] {
+    flex-basis: 100%;
+    display: flex;
+    justify-content: flex-end;
+    white-space: normal;
+    margin-top: 2px;
+  }
+}
+
+/*
  * Keep the content slots clear of the bottom-right action cluster.
  *
  * The cluster is absolutely positioned, so it is outside the flow that lays

@@ -109,6 +109,7 @@ export function ProfileCard({
       // must keep out of its way. Declared here rather than measured, because
       // CSS cannot ask how wide the cluster is — see `styles.css`.
       data-uikit-bottom-actions={bottomRightActions ? '' : undefined}
+      data-uikit-top-actions={topRightActions ? '' : undefined}
       onClick={onClick}
       className={cn(
         'group relative rounded-xl border border-uikit-faint',
@@ -172,10 +173,14 @@ export function ProfileCard({
               // meta here, and a pseudo-element covering it would swallow the
               // tooltip. The trade is that this small strip does not navigate.
               'relative z-10',
-              // When topRightActions are also present, fade titleRight on
-              // hover so the hover-revealed cluster doesn't collide with
-              // the meta (e.g. timestamp behind edit/delete buttons).
-              topRightActions && 'transition-opacity duration-[120ms] group-hover:opacity-0',
+              // When topRightActions are also present, fade titleRight
+              // whenever the cluster is revealed over it — on hover, and on
+              // keyboard focus, which reveals it too — so the meta (e.g. the
+              // timestamp) is never drawn behind the edit/delete buttons.
+              // A touch device shows the cluster all the time, so there the
+              // meta moves to its own line instead (see `styles.css`).
+              topRightActions &&
+                'transition-opacity duration-[120ms] group-hover:opacity-0 [@media(hover:hover)]:group-focus-within:opacity-0',
             )}
           >
             {titleRight}
