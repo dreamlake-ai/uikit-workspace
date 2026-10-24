@@ -18,6 +18,11 @@ recedes into a deeper plane.
 
 <SurfaceTokens />
 
+`--uikit-segment-thumb` is the selected pill in segmented controls (Tabs
+`segment`, ToggleButtons `primary`/`secondary`). It equals `--bg` in light; in dark
+it is `color-mix(in srgb, var(--ink) 14%, var(--bg))`, because the dark page colour
+sits *below* the chip-tinted track and a `--bg` pill looked sunken.
+
 #### Lines that cross rows
 
 `--faint` is translucent, which is what you want for a hairline that should sit
