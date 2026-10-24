@@ -70,6 +70,23 @@ in dark mode against the inverted surface stack.
 Contrast on `--bg`: `--ink` 17.2 / 11.4, `--muted` 5.28 / 4.73 (light / dark).
 Dark `--muted` was `#8a8a8a` until 2026-10, which measured 3.9:1.
 
+#### Drag affordances
+
+`--uikit-handle` and `--uikit-handle-active` colour the grab pills: the
+PanelLayout divider and the dock handles in panel headers. The pill shows on
+hover in `--uikit-handle`, painted as-is with no extra opacity, and switches to
+`--uikit-handle-active` while held. Both tones stay in the grey band, well away
+from ink.
+
+| Token | Light | Dark | On `--bg` (light / dark) |
+|---|---|---|---|
+| `--uikit-handle` | `#c8c8c8` | `#5c5c5c` | 1.66 / 2.02, a hint, not a control |
+| `--uikit-handle-active` | `#8a8a8a` | `#9a9a9a` | 3.42 / 4.79, meets the 3:1 UI-component floor while dragged |
+
+Until 2026-10 these were `#8a8a8a` / `#4a4a4a` light and `#e2e2e2` / `#ffffff`
+dark. A grabbed divider was near-black in light (8.8:1), glaring white in dark
+(13.5:1), and heavier than the seam it sits on.
+
 ### Semantic palette
 
 All domain coloring — pipeline kinds, run statuses, transform types, event types,

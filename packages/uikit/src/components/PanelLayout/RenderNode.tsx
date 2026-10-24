@@ -56,7 +56,7 @@ export function RenderNode({
         }}
         style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: 64, height: 8, zIndex: 3, cursor: 'grab', touchAction: 'none', display: 'flex', justifyContent: 'center', alignItems: 'center' }}
       >
-        <span style={{ width: 28, height: 3, borderRadius: 2, background: 'var(--uikit-handle)', opacity: 0.45, pointerEvents: 'none' }} />
+        <span style={{ width: 28, height: 3, borderRadius: 2, background: 'var(--uikit-handle)', pointerEvents: 'none' }} />
       </div>
       {(group.children.length > 1 || showSingleTab?.(group.children[0])) && (
         <div data-panel-tab-slot={group.activeId} style={{ position: 'absolute', left: 10, right: 56, top: 8, zIndex: 2, minWidth: 0 }}>

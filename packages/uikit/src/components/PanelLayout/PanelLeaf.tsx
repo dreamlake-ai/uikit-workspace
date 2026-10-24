@@ -216,9 +216,11 @@ export function PanelLeaf({
             <span
               className={cn(
                 'w-7 h-[3px] rounded-full pointer-events-none [transition:opacity_280ms_ease,background_140ms_ease]',
+                // Same tones as the divider pill: the token is the hover tone
+                // (no extra fade), the active token while it is held.
                 dragging
                   ? 'bg-uikit-handle-active opacity-100'
-                  : cn('bg-uikit-handle', headerHovered ? 'opacity-60' : 'opacity-0')
+                  : cn('bg-uikit-handle', headerHovered ? 'opacity-100' : 'opacity-0')
               )}
             />
           </span>}
