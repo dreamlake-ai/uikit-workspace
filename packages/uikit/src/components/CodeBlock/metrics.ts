@@ -1,14 +1,14 @@
 import type { CSSProperties } from 'react'
 
 /**
- * Type metrics shared by the CodeMirror kernel and the plain `<pre>` the shell
+ * Type metrics shared by the Monaco kernel and the plain `<pre>` the shell
  * shows while that kernel is still loading. Both must agree exactly, or the
  * block reflows the moment the editor arrives.
  *
- * This module deliberately imports nothing from CodeMirror. The shell needs the
+ * This module deliberately imports nothing from Monaco. The shell needs the
  * metrics, the kernel needs the metrics, and if they lived alongside the theme
  * extensions the bundler would hoist them into a chunk the shell reaches
- * statically — dragging `@codemirror/view` back into every consumer's graph and
+ * statically — dragging `monaco-editor` back into every consumer's graph and
  * defeating the lazy boundary.
  */
 export const CODE_METRICS = {

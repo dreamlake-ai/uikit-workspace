@@ -7,7 +7,7 @@ function readTheme(): ResolvedTheme {
   if (typeof document === 'undefined') return 'light'
   const attr = document.documentElement.getAttribute('data-theme')
   // `liquid-dark` / `liquid-light` are ThemeProvider's glass variants — the
-  // only bit CodeMirror cares about is which end of the palette we're on.
+  // only bit Monaco cares about is which end of the palette we're on.
   if (attr) return attr.includes('dark') ? 'dark' : 'light'
   return typeof window !== 'undefined' &&
     window.matchMedia?.('(prefers-color-scheme: dark)').matches

@@ -135,19 +135,19 @@
   --wf-stage-border: rgba(255, 255, 255, 0.85);
 
   /* ── Typography ─────────────────────────────────────────────── */
-  --f-ui: "Inter Tight", ui-sans-serif, system-ui, sans-serif;
-  --f-mono: "JetBrains Mono", ui-monospace, monospace;
-  --f-hand: "JetBrains Mono", ui-monospace, monospace;
+  --f-ui: 'Inter Tight', ui-sans-serif, system-ui, sans-serif;
+  --f-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --f-hand: 'JetBrains Mono', ui-monospace, monospace;
 }
 
-html[data-theme="light"] {
+html[data-theme='light'] {
   --bg: var(--bg-light);
   --panel-bg: var(--panel-bg-light);
   --rail-bg: var(--rail-bg-light);
   --code-bg: var(--code-bg-light);
 }
 
-html[data-theme="dark"] {
+html[data-theme='dark'] {
   --bg: var(--bg-dark);
   --panel-bg: var(--panel-bg-dark);
   --rail-bg: var(--rail-bg-dark);
@@ -205,7 +205,7 @@ html[data-theme="dark"] {
    Lower specificity than the explicit `[data-theme]` rules above, so an
    explicit user choice always wins. */
 @media (prefers-color-scheme: dark) {
-  html:not([data-theme="light"]) {
+  html:not([data-theme='light']) {
     --bg: var(--bg-dark);
     --panel-bg: var(--panel-bg-dark);
     --rail-bg: var(--rail-bg-dark);
@@ -213,7 +213,7 @@ html[data-theme="dark"] {
 
     --ink: #ececec;
     --uikit-muted: #999999; /* 4.73:1 on --bg-dark (#8a8a8a was 3.9) */
-  --uikit-axis: #cccccc;
+    --uikit-axis: #cccccc;
     --faint: rgba(255, 255, 255, 0.09);
     --faint-dashed: rgba(255, 255, 255, 0.22);
     --chip-bg: rgba(255, 255, 255, 0.05);
@@ -324,19 +324,11 @@ html[data-theme="dark"] {
   --color-uikit-ink-8: color-mix(in srgb, var(--ink) 8%, transparent);
   --color-uikit-ink-12: color-mix(in srgb, var(--ink) 12%, transparent);
   --color-uikit-ink-50: color-mix(in srgb, var(--ink) 50%, transparent);
-  --color-uikit-accent-12: color-mix(
-    in srgb,
-    var(--uikit-accent) 12%,
-    transparent
-  );
+  --color-uikit-accent-12: color-mix(in srgb, var(--uikit-accent) 12%, transparent);
   /* Search-match wash — `HighlightedText`. Mixed in oklab, not srgb: this one
      sits UNDER text that must stay readable in both themes, and a perceptual
      mix keeps the wash at the same apparent lightness as the accent moves. */
-  --color-uikit-accent-22: color-mix(
-    in oklab,
-    var(--uikit-accent) 22%,
-    transparent
-  );
+  --color-uikit-accent-22: color-mix(in oklab, var(--uikit-accent) 22%, transparent);
 
   /* Opaque twin of `ink-5`: the same 5% ink, but mixed over `--bg` rather
      than transparent, so a chip filled with it reads identically on any
@@ -419,11 +411,9 @@ html[data-theme="dark"] {
      the reference the same card casts almost nothing: peak delta 3, gone within
      4px, held off the page by its ring and its fill instead.
      So: the hairline does the work, and the pool is short and light. */
-  --shadow-uikit-soft:
-    0 0 0 1px var(--faint), 0 2px 8px -4px var(--shadow-panel-2);
+  --shadow-uikit-soft: 0 0 0 1px var(--faint), 0 2px 8px -4px var(--shadow-panel-2);
   --shadow-uikit-deep:
-    0 1px 2px var(--shadow-tint-1), 0 24px 60px var(--shadow-tint-3),
-    inset 0 0 0 1px var(--faint);
+    0 1px 2px var(--shadow-tint-1), 0 24px 60px var(--shadow-tint-3), inset 0 0 0 1px var(--faint);
 }
 
 /* ── Animations ─────────────────────────────────────────────────── */
@@ -484,35 +474,35 @@ html[data-theme="dark"] {
     uikit-unfold 320ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards,
     uikit-unfold-fade 120ms linear backwards;
 }
-.uikit-panel-in[data-unfold="tl"] {
+.uikit-panel-in[data-unfold='tl'] {
   --uikit-unfold-from: inset(-40px 100% 100% -40px);
   --uikit-unfold-origin: top left;
 }
-.uikit-panel-in[data-unfold="tr"] {
+.uikit-panel-in[data-unfold='tr'] {
   --uikit-unfold-from: inset(-40px -40px 100% 100%);
   --uikit-unfold-origin: top right;
 }
-.uikit-panel-in[data-unfold="bl"] {
+.uikit-panel-in[data-unfold='bl'] {
   --uikit-unfold-from: inset(100% 100% -40px -40px);
   --uikit-unfold-origin: bottom left;
 }
-.uikit-panel-in[data-unfold="br"] {
+.uikit-panel-in[data-unfold='br'] {
   --uikit-unfold-from: inset(100% -40px -40px 100%);
   --uikit-unfold-origin: bottom right;
 }
-.uikit-panel-in[data-unfold="t"] {
+.uikit-panel-in[data-unfold='t'] {
   --uikit-unfold-from: inset(-40px -40px 100% -40px);
   --uikit-unfold-origin: top center;
 }
-.uikit-panel-in[data-unfold="b"] {
+.uikit-panel-in[data-unfold='b'] {
   --uikit-unfold-from: inset(100% -40px -40px -40px);
   --uikit-unfold-origin: bottom center;
 }
-.uikit-panel-in[data-unfold="l"] {
+.uikit-panel-in[data-unfold='l'] {
   --uikit-unfold-from: inset(-40px 100% -40px -40px);
   --uikit-unfold-origin: center left;
 }
-.uikit-panel-in[data-unfold="r"] {
+.uikit-panel-in[data-unfold='r'] {
   --uikit-unfold-from: inset(-40px -40px -40px 100%);
   --uikit-unfold-origin: center right;
 }
@@ -572,10 +562,10 @@ html[data-theme="dark"] {
    (the slider's and the row's) read darker than every other hover. Selection
    keeps its fill. Unlayered, so it wins over the rows' `hover:bg-*` utilities. */
 [data-uikit-hover-host]
-  :is([role="option"], [role^="menuitem"], button, a[href]):hover:not(
-    [aria-selected="true"],
-    [data-selected="true"],
-    [aria-checked="true"],
+  :is([role='option'], [role^='menuitem'], button, a[href]):hover:not(
+    [aria-selected='true'],
+    [data-selected='true'],
+    [aria-checked='true'],
     [aria-current],
     [data-active-row],
     [data-danger]
@@ -612,16 +602,34 @@ html[data-theme="dark"] {
 /* Anchored Tooltip/Popover entry. Independent translate leaves Floating UI's
    transform-based coordinates intact; actual placement controls the direction. */
 @keyframes uikit-overlay-enter {
-  from { opacity: 0; translate: var(--uikit-overlay-enter-x, 0px) var(--uikit-overlay-enter-y, 0px); }
-  to { opacity: 1; translate: 0 0; }
+  from {
+    opacity: 0;
+    translate: var(--uikit-overlay-enter-x, 0px) var(--uikit-overlay-enter-y, 0px);
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
 }
-.uikit-overlay-enter { animation: uikit-overlay-enter 160ms ease-out; }
-.uikit-overlay-enter[data-side="top"] { --uikit-overlay-enter-y: 4px; }
-.uikit-overlay-enter[data-side="bottom"] { --uikit-overlay-enter-y: -4px; }
-.uikit-overlay-enter[data-side="left"] { --uikit-overlay-enter-x: 4px; }
-.uikit-overlay-enter[data-side="right"] { --uikit-overlay-enter-x: -4px; }
+.uikit-overlay-enter {
+  animation: uikit-overlay-enter 160ms ease-out;
+}
+.uikit-overlay-enter[data-side='top'] {
+  --uikit-overlay-enter-y: 4px;
+}
+.uikit-overlay-enter[data-side='bottom'] {
+  --uikit-overlay-enter-y: -4px;
+}
+.uikit-overlay-enter[data-side='left'] {
+  --uikit-overlay-enter-x: 4px;
+}
+.uikit-overlay-enter[data-side='right'] {
+  --uikit-overlay-enter-x: -4px;
+}
 @media (prefers-reduced-motion: reduce) {
-  .uikit-overlay-enter { animation: none; }
+  .uikit-overlay-enter {
+    animation: none;
+  }
 }
 
 /* Modal pop (Dialog, ModalContent, AlertDialogContent; see lib/useModalPresence).
@@ -671,43 +679,57 @@ html[data-theme="dark"] {
 }
 /* Reduced motion: opacity only. These never read the transform variable. */
 @keyframes uikit-modal-fade-in {
-  from { opacity: var(--uikit-modal-from-opacity, 0); }
-  to { opacity: 1; }
+  from {
+    opacity: var(--uikit-modal-from-opacity, 0);
+  }
+  to {
+    opacity: 1;
+  }
 }
 @keyframes uikit-modal-fade-out {
-  from { opacity: var(--uikit-modal-from-opacity, 1); }
-  to { opacity: 0; }
+  from {
+    opacity: var(--uikit-modal-from-opacity, 1);
+  }
+  to {
+    opacity: 0;
+  }
 }
 /* The scrim fades its own background colour: `to`-less / `from`-less
    keyframes resolve to the element's underlying value. */
 @keyframes uikit-modal-scrim-in {
-  from { background-color: var(--uikit-modal-scrim-from, transparent); }
+  from {
+    background-color: var(--uikit-modal-scrim-from, transparent);
+  }
 }
 @keyframes uikit-modal-scrim-out {
-  from { background-color: var(--uikit-modal-scrim-from); }
-  to { background-color: transparent; }
+  from {
+    background-color: var(--uikit-modal-scrim-from);
+  }
+  to {
+    background-color: transparent;
+  }
 }
 .uikit-modal-panel {
   transform-origin: center;
 }
-.uikit-modal-panel[data-state="open"] {
+.uikit-modal-panel[data-state='open'] {
   animation: uikit-modal-in var(--uikit-dur-modal-in) backwards;
 }
-.uikit-modal-panel[data-state="closed"] {
+.uikit-modal-panel[data-state='closed'] {
   animation: uikit-modal-out var(--uikit-dur-modal-out) cubic-bezier(0.4, 0, 1, 1) forwards;
 }
-.uikit-modal-backdrop[data-state="open"] {
+.uikit-modal-backdrop[data-state='open'] {
   animation: uikit-modal-scrim-in var(--uikit-dur-scrim-in) ease-out backwards;
 }
-.uikit-modal-backdrop[data-state="closed"] {
+.uikit-modal-backdrop[data-state='closed'] {
   animation: uikit-modal-scrim-out var(--uikit-dur-scrim-out) ease-in forwards;
   pointer-events: none;
 }
 @media (prefers-reduced-motion: reduce) {
-  .uikit-modal-panel[data-state="open"] {
+  .uikit-modal-panel[data-state='open'] {
     animation: uikit-modal-fade-in var(--uikit-dur-scrim-in) ease-out backwards;
   }
-  .uikit-modal-panel[data-state="closed"] {
+  .uikit-modal-panel[data-state='closed'] {
     animation: uikit-modal-fade-out var(--uikit-dur-scrim-out) ease-in forwards;
   }
 }
@@ -932,10 +954,13 @@ html[data-theme="dark"] {
   -webkit-appearance: none;
 }
 
-.uikit-list-search { font-family: var(--f-mono); }
+.uikit-list-search {
+  font-family: var(--f-mono);
+}
 .uikit-list-search[data-strong]:focus-within .uikit-search-input,
 .uikit-list-search[data-strong][data-has-query] .uikit-search-input {
-  box-shadow: inset 0 -1px var(--ink); }
+  box-shadow: inset 0 -1px var(--ink);
+}
 
 /* Reveal panel dismissal alongside the header's dock handle. Keep its space
    reserved so the breadcrumb does not shift, and expose it to keyboard focus. */
@@ -975,36 +1000,82 @@ html[data-theme="dark"] {
   font: inherit;
   cursor: pointer;
 }
-.uikit-search-filter-remove:hover { color: var(--ink); }
-.uikit-search-filter-remove:focus-visible { outline: 1px solid var(--ink); border-radius: 2px; }
+.uikit-search-filter-remove:hover {
+  color: var(--ink);
+}
+.uikit-search-filter-remove:focus-visible {
+  outline: 1px solid var(--ink);
+  border-radius: 2px;
+}
 
 /* TabbedContainer: generalized CodeTabs geometry, with neutral theme tokens. */
-.uikit-tabbed-container { border-radius: 6px; min-width: 0; }
-.uikit-tabbed-container-header { min-height: 30px; background: var(--bg); }
+.uikit-tabbed-container {
+  border-radius: 6px;
+  min-width: 0;
+}
+.uikit-tabbed-container-header {
+  min-height: 30px;
+  background: var(--bg);
+}
 .uikit-tabbed-container .uikit-tabbed-container-tabs {
-  overflow-x: auto; min-height: 30px; gap: 2px; border: 0;
+  overflow-x: auto;
+  min-height: 30px;
+  gap: 2px;
+  border: 0;
 }
 .uikit-tabbed-container-tabs [role='tab'] {
-  flex-shrink: 0; margin: 0 1px; padding: 3px 9px 4px;
-  border: 1px solid transparent; border-radius: 6px 6px 0 0;
-  background: transparent; line-height: 18px;
-  font-family: var(--f-mono, monospace); font-size: 12px;
-  color: var(--uikit-muted); font-weight: 500;
+  flex-shrink: 0;
+  margin: 0 1px;
+  padding: 3px 9px 4px;
+  border: 1px solid transparent;
+  border-radius: 6px 6px 0 0;
+  background: transparent;
+  line-height: 18px;
+  font-family: var(--f-mono, monospace);
+  font-size: 12px;
+  color: var(--uikit-muted);
+  font-weight: 500;
 }
-.uikit-tabbed-container-tabs [role='tab']:first-child { margin-left: 0; }
+.uikit-tabbed-container-tabs [role='tab']:first-child {
+  margin-left: 0;
+}
 .uikit-tabbed-container-tabs [role='tab'][aria-selected='false']:hover {
-  border-color: var(--faint); border-bottom-color: transparent; color: var(--ink);
+  border-color: var(--faint);
+  border-bottom-color: transparent;
+  color: var(--ink);
 }
 .uikit-tabbed-container-tabs [role='tab'][aria-selected='true'] {
-  position: relative; z-index: 1; border-color: var(--faint);
-  border-bottom-color: var(--code-bg); background: var(--code-bg);
-  color: var(--ink); font-weight: 600;
+  position: relative;
+  z-index: 1;
+  border-color: var(--faint);
+  border-bottom-color: var(--code-bg);
+  background: var(--code-bg);
+  color: var(--ink);
+  font-weight: 600;
 }
 .uikit-tabbed-container-content {
-  border: 1px solid var(--faint); margin-top: -1px; border-radius: 6px;
-  background: var(--code-bg); padding: 16px; min-width: 0;
+  border: 1px solid var(--faint);
+  margin-top: -1px;
+  border-radius: 6px;
+  background: var(--code-bg);
+  padding: 16px;
+  min-width: 0;
 }
-.uikit-tabbed-container[data-first-active='true'] > div > .uikit-tabbed-container-content { border-top-left-radius: 0; }
-.uikit-tabbed-container-content[hidden] { display: none; }
+.uikit-tabbed-container[data-first-active='true'] > div > .uikit-tabbed-container-content {
+  border-top-left-radius: 0;
+}
+.uikit-tabbed-container-content[hidden] {
+  display: none;
+}
 .uikit-tabbed-container-tabs [role='tab']:focus-visible,
-.uikit-tabbed-container-content:focus-visible { outline: 2px solid var(--ink); outline-offset: -3px; }
+.uikit-tabbed-container-content:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: -3px;
+}
+
+/* CodeBlock owns its surface; retain that token behind Monaco in both modes. */
+[data-uikit-code-editor] .monaco-editor,
+[data-uikit-code-editor] .monaco-editor-background,
+[data-uikit-code-editor] .monaco-editor .margin {
+  background-color: transparent;
+}

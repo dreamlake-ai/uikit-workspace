@@ -12,10 +12,10 @@ import { cn } from '../../lib/utils'
 import { fallbackPreStyle } from './metrics'
 import { useHtmlTheme, type ResolvedTheme } from './useHtmlTheme'
 
-// The whole point of the lazy boundary: CodeMirror lives behind a dynamic
+// The whole point of the lazy boundary: Monaco lives behind a dynamic
 // import, so `import { Button }` — or a CodeBlock that's never scrolled into
 // view — costs nothing. tsup pins `splitting: true` to keep this a real chunk.
-const CodeMirrorKernel = lazy(() => import('./CodeMirrorKernel'))
+const MonacoKernel = lazy(() => import('./MonacoKernel'))
 
 export type CodeBlockEditable = boolean | 'toggle'
 
@@ -28,7 +28,7 @@ export interface CodeBlockProps {
 
   /**
    * Language name, alias, or extension (`'json'`, `'tsx'`, `'yaml'`, `'py'`…).
-   * Resolved against the 143-language CodeMirror registry; anything it doesn't
+   * Resolved against the Monaco language registry; anything it doesn't
    * recognise renders as plain text instead of throwing. Falls back to
    * `filename`'s extension when omitted.
    */
@@ -83,7 +83,7 @@ const sizeStyle = (maxHeight?: number | string, minHeight?: number | string): CS
 /**
  * A self-contained code surface: syntax-highlighted when read-only, editable
  * when asked. One shell, one engine — read-only and editing are the same
- * CodeMirror view reconfigured, so switching between them doesn't shift the
+ * Monaco view reconfigured, so switching between them doesn't shift the
  * layout or recolor the code.
  */
 export function CodeBlock({
@@ -170,7 +170,7 @@ export function CodeBlock({
   }, [code])
 
   // Same font, size, leading and padding as the kernel, so the swap when
-  // CodeMirror lands is a recolor rather than a reflow. Being a real <pre> also
+  // Monaco lands is a recolor rather than a reflow. Being a real <pre> also
   // means the code is present in server-rendered HTML.
   const placeholder = (
     <pre
@@ -264,7 +264,7 @@ export function CodeBlock({
       <div style={sizeStyle(maxHeight, minHeight)} className="overflow-hidden">
         {mounted ? (
           <Suspense fallback={placeholder}>
-            <CodeMirrorKernel
+            <MonacoKernel
               value={code}
               onChange={handleChange}
               lang={lang}

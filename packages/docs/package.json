@@ -19,7 +19,8 @@
     "react": "latest",
     "react-dom": "latest",
     "vike": "^0.4.260",
-    "vike-react": "^0.5.0"
+    "vike-react": "^0.5.0",
+    "monaco-editor": "0.52.2"
   },
   "devDependencies": {
     "@types/node": "latest",

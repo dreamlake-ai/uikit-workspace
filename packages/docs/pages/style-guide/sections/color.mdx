@@ -134,3 +134,10 @@ source.
 ### Chart axes
 
 Use `--uikit-axis` (or `text-uikit-axis`) for numeric axes and tick labels: `#525252` in light mode and `#cccccc` in dark mode. Render at full opacity; reserve faint ink for background gridlines.
+
+### Code surfaces
+
+`CodeBlock` keeps its `bg-uikit-code` shell in both reading and editing modes.
+The Monaco content and gutter backgrounds are transparent, so switching modes
+or loading the editor preserves that surface. Syntax token colors follow
+Monaco's light or dark theme; they do not replace the surrounding surface tokens.
