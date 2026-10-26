@@ -31,6 +31,13 @@ drop it on another panel: near an edge it docks to that side, in the centre it
 merges as a tab. `⌘D` splits the focused panel to the right, `⌘⇧D` below.
 Escape cancels a drag in flight.
 
+The divider is invisible at rest. Under the cursor a slim pill appears in
+`--uikit-handle`, a quiet grey hint, and it steps up to `--uikit-handle-active`
+while the divider is held. Neither tone gets near ink: the seam should read as
+a hint, not a control. The dock handles at the top of a panel header use the
+same two tokens, so both grab affordances look alike. Values and contrast are in
+the [color tokens](reference/style-guide.md#drag-affordances).
+
 > **Note:** `PanelLayout` fills its container. Without an ancestor that has a real height it collapses to
 >   nothing — the demos here sit in a fixed-height box.
 

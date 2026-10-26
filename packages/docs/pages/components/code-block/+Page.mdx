@@ -94,7 +94,8 @@ does not enable language-server workers or download code from a CDN.
 
 ## Theming
 
-Colors use Monaco's built-in `vs` and `vs-dark` themes.
+Syntax colors use Monaco's built-in `vs` and `vs-dark` themes. The editor
+background stays transparent so the shell retains UIKit's code surface token.
 
 The block follows `<html data-theme>` on its own, so it tracks the app's theme
 whether or not a `ThemeProvider` is mounted above it. Pass `theme` to pin it.

@@ -12,6 +12,9 @@ on/off affordances. Controlled (`pressed` + `onPressedChange`) or uncontrolled
 
 `ToggleButtons` is a single-select segmented control: a sliding highlight
 animates to the active `ToggleButton`. Drive it with `value` + `onValueChange`.
+The `primary` and `secondary` highlight shares Tabs' `segment` pill token,
+`--uikit-segment-thumb`: the page colour in light, a lifted ink-tinted surface in
+dark so the selected segment stays visible on the track.
 
 ## PillRadio & ChipMulti (outlined pills)
 
@@ -61,6 +64,14 @@ offset ring around a 24px pill collides with its neighbours in a wrapping row.
 | `options` | `PillOption[]` | `{ value, label, disabled? }`. |
 
 Native `<div>` attributes are forwarded to the wrapping row on both.
+
+### Keyboard focus
+
+`Toggle` and each `ToggleButton` segment show the kit's focus ring — a 2px
+`--uikit-accent` outline, inset so it stays inside the segment track — on
+**keyboard** focus only (`:focus-visible`). The pill rows' outline needs
+`outline-solid` alongside `outline-2`: `outline-none` zeroes Tailwind v4's
+outline-style variable, and without it the ring painted nothing.
 
 ## Props
 

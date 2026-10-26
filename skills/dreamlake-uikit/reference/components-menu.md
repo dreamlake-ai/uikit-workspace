@@ -37,6 +37,13 @@ decision before that's been made.
   180deg` on open so it sweeps clockwise down toward the panel. Match the
   panel's own entry motion — `duration-[280ms]`,
   `ease-[cubic-bezier(0.2,0.8,0.2,1)]` — so chevron and panel move as one.
+- **Unfolds from the trigger's corner** — the panel opens from the corner
+  nearest its trigger toward the opposite one (under a left-pinned trigger:
+  top-left → bottom-right; `up` or right-pinned mirror it). It is a clip-path
+  reveal plus a slight scale from that corner, 320ms on
+  `cubic-bezier(0.2,0.8,0.2,1)` — fast out, slow settle — with opacity arriving
+  in the first 120ms. Select, DropdownMenu, ContextMenu and BreadcrumbTree use
+  the same unfold (`data-unfold`, from `lib/unfold.ts`).
 - **Rows are inset chips** — the panel pads 6px on each side so `MenuItem`
   hover and any caller-composed selected state render as rounded 6px chips,
   never edge-to-edge bands. Caller-composed rows should use `px-2` +

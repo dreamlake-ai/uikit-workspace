@@ -95,6 +95,13 @@ Uncontrolled, it needs a `ThemeProvider` above it and throws a named error if
 there isn't one. With `enableSystem={false}` on the provider, the middle
 segment drops out on its own.
 
+### Keyboard focus
+
+Every theme toggle shows the kit's focus ring — a 2px `--uikit-accent`
+outline — on **keyboard** focus only (`:focus-visible`): inset on the
+`ThemeModeToggle` segments and `LiquidToggle`, 2px outside the round
+`ThemeCycleToggle`.
+
 ## `useTheme`
 
 Read or drive the theme from anywhere under the provider:

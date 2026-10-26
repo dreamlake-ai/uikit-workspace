@@ -48,6 +48,7 @@ export default function MonacoKernel(props: MonacoKernelProps) {
       scrollBeyondLastLine: false,
       automaticLayout: true,
       folding: false,
+      guides: { indentation: false, highlightActiveIndentation: false },
       glyphMargin: false,
       lineDecorationsWidth: 16,
       lineNumbersMinChars: 3,
