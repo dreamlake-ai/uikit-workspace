@@ -41,7 +41,10 @@ export default defineConfig({
     },
   },
   server: {
-    port: 3012,
-    strictPort: false,
+    // DOCS_PORT pins a port and refuses to drift off it — the Playwright
+    // device check starts its own server and must not end up talking to a
+    // different worktree's docs that happened to hold the default port.
+    port: Number(process.env.DOCS_PORT) || 3012,
+    strictPort: Boolean(process.env.DOCS_PORT),
   },
 })

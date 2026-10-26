@@ -18,8 +18,9 @@ export interface ProfileCardProps {
   tags?: ReactNode
   /** Hover-revealed actions anchored to the card's top-right. Use for the
    *  edit/delete pattern. When this slot is provided, `titleRight` auto-fades
-   *  on hover so the two don't visually collide. Clicks do not bubble to
-   *  `onClick`. */
+   *  on hover / keyboard focus so the two don't visually collide. On a touch
+   *  device (`hover: none`) the actions are always shown, in the title row
+   *  after `titleRight`. Clicks do not bubble to `onClick`. */
   topRightActions?: ReactNode
   /** Hover-revealed actions anchored to the card's bottom-right. Use for
    *  primary inline actions (fork, open, etc). Clicks do not bubble to
@@ -109,6 +110,9 @@ export function ProfileCard({
       // must keep out of its way. Declared here rather than measured, because
       // CSS cannot ask how wide the cluster is — see `styles.css`.
       data-uikit-bottom-actions={bottomRightActions ? '' : undefined}
+      // Same for the top-right cluster: on touch it is always shown and joins
+      // the title row (see `styles.css`).
+      data-uikit-top-actions={topRightActions ? '' : undefined}
       onClick={onClick}
       className={cn(
         'group relative rounded-xl border border-uikit-faint',
@@ -134,52 +138,97 @@ export function ProfileCard({
           one line, and these are a card's width apart. Centred, the two
           blocks balance. */}
       <div data-uikit-header="" className="flex items-center gap-2.5">
-        <div className="flex items-baseline gap-2.5 flex-1 min-w-0">
-          {href ? (
-            /* The overlay lives on the anchor, not on a wrapper, so the
-               accessible name of the link is the title itself.
-               `overflow` stays OFF this element — `truncate` here would clip
-               the `::after` to the title's own box and the card would stop
-               being clickable. The inner span does the truncating instead. */
-            <a
-              href={href}
-              className={cn(
-                'min-w-0 no-underline text-uikit-ink',
-                "after:absolute after:inset-0 after:rounded-xl after:content-['']",
-              )}
-            >
-              <span className="block text-uikit-14 font-medium tracking-uikit-tight leading-uikit-snug truncate">
+        {/* Title + meta. On a touch device with top-right actions this row
+            shares its line with the always-visible cluster and must stay ONE
+            line — `styles.css` makes it truncate the title first and then drop
+            the meta, never wrap. */}
+        <div data-uikit-header-main="" className="flex items-center gap-2.5 flex-1 min-w-0">
+          <div data-uikit-title-col="" className="flex items-baseline gap-2.5 flex-1 min-w-0">
+            {href ? (
+              /* The overlay lives on the anchor, not on a wrapper, so the
+                 accessible name of the link is the title itself.
+                 `overflow` stays OFF this element — `truncate` here would clip
+                 the `::after` to the title's own box and the card would stop
+                 being clickable. The inner span does the truncating instead. */
+              <a
+                href={href}
+                className={cn(
+                  'min-w-0 no-underline text-uikit-ink',
+                  "after:absolute after:inset-0 after:rounded-xl after:content-['']",
+                )}
+              >
+                <span className="block text-uikit-14 font-medium tracking-uikit-tight leading-uikit-snug truncate">
+                  {title}
+                </span>
+              </a>
+            ) : (
+              <span className="text-uikit-14 font-medium tracking-uikit-tight leading-uikit-snug truncate min-w-0">
                 {title}
               </span>
-            </a>
-          ) : (
-            <span className="text-uikit-14 font-medium tracking-uikit-tight leading-uikit-snug truncate min-w-0">
-              {title}
-            </span>
-          )}
-          {tag && (
-            <span className="font-uikit-mono text-[10.5px] opacity-80 whitespace-nowrap shrink-0">
-              {tag}
+            )}
+            {tag && (
+              <span
+                data-uikit-tag=""
+                className="font-uikit-mono text-[10.5px] opacity-80 whitespace-nowrap shrink-0"
+              >
+                {tag}
+              </span>
+            )}
+          </div>
+          {titleRight && (
+            <span
+              data-uikit-title-right=""
+              className={cn(
+                'font-uikit-mono text-uikit-11 text-uikit-muted opacity-65 tracking-uikit-snug whitespace-nowrap shrink-0',
+                // Above the stretched overlay. Consumers put `title`/`<time>`
+                // meta here, and a pseudo-element covering it would swallow the
+                // tooltip. The trade is that this small strip does not navigate.
+                'relative z-10',
+                // When topRightActions are also present, fade titleRight
+                // whenever the cluster is revealed over it — on hover, and on
+                // keyboard focus, which reveals it too — so the meta (e.g. the
+                // timestamp) is never drawn behind the edit/delete buttons.
+                // A touch device shows the cluster all the time, so there the
+                // cluster sits in the row after the meta instead (below).
+                topRightActions &&
+                  'transition-opacity duration-[120ms] group-hover:opacity-0 [@media(hover:hover)]:group-focus-within:opacity-0',
+              )}
+            >
+              {titleRight}
             </span>
           )}
         </div>
-        {titleRight && (
-          <span
-            data-uikit-title-right=""
+
+        {/*
+          Action slots — siblings of the card's link, never inside it.
+          `z-10` lifts them above the anchor's stretched `::after`, so a click
+          lands on the button. No `preventDefault` anywhere: the click never
+          reaches the anchor to begin with, which is the difference between a
+          structure that is right and one corrected after the fact.
+          `stopPropagation` stays, for the `onClick`-only (hrefless) card whose
+          container handler would otherwise also fire.
+
+          Pointer: laid over the header's right end (the card is the
+          containing block), revealed on hover / focus while the meta fades.
+          Touch: always shown, so `styles.css` takes it back into the row's
+          flow, after the meta — the row sizes around it instead of being
+          drawn under it.
+        */}
+        {topRightActions && (
+          <div
+            data-uikit-top-actions-slot=""
+            onClick={(e) => e.stopPropagation()}
             className={cn(
-              'font-uikit-mono text-uikit-11 text-uikit-muted opacity-65 tracking-uikit-snug whitespace-nowrap shrink-0',
-              // Above the stretched overlay. Consumers put `title`/`<time>`
-              // meta here, and a pseudo-element covering it would swallow the
-              // tooltip. The trade is that this small strip does not navigate.
-              'relative z-10',
-              // When topRightActions are also present, fade titleRight on
-              // hover so the hover-revealed cluster doesn't collide with
-              // the meta (e.g. timestamp behind edit/delete buttons).
-              topRightActions && 'transition-opacity duration-[120ms] group-hover:opacity-0',
+              // Centred on the header row, not parked 12px down: the box starts
+              // at the content's top padding and is the header row's height
+              // (~20px: the 14px title on snug leading, beside 11px meta), so a
+              // 28px button centres on the name's line.
+              'absolute right-3 top-3.5 z-10 inline-flex items-center gap-1 h-5',
+              revealOnHover,
             )}
           >
-            {titleRight}
-          </span>
+            {topRightActions}
+          </div>
         )}
       </div>
 
@@ -224,30 +273,9 @@ export function ProfileCard({
         </div>
       )}
 
-      {/*
-        Action slots — siblings of the card's link, never inside it.
-        `z-10` lifts them above the anchor's stretched `::after`, so a click
-        lands on the button. No `preventDefault` anywhere: the click never
-        reaches the anchor to begin with, which is the difference between a
-        structure that is right and one corrected after the fact.
-        `stopPropagation` stays, for the `onClick`-only (hrefless) card whose
-        container handler would otherwise also fire.
-      */}
-      {topRightActions && (
-        <div
-          onClick={(e) => e.stopPropagation()}
-          className={cn(
-            // Centred on the header row, not parked 12px down: the box starts
-            // at the content's top padding and is the header row's height
-            // (~20px: the 14px title on snug leading, beside 11px meta), so a
-            // 28px button centres on the name's line.
-            'absolute right-3 top-3.5 z-10 inline-flex items-center gap-1 h-5',
-            revealOnHover,
-          )}
-        >
-          {topRightActions}
-        </div>
-      )}
+      {/* Bottom-right action slot — same rules as the top-right one in the
+          header: a sibling of the card's link, lifted by `z-10`, clicks
+          stopped rather than navigation cancelled. */}
 
       {/*
         One corner, two reveal policies. The container is positioned and
