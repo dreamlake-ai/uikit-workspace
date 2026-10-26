@@ -115,3 +115,52 @@ it("a segment is a group of pressed-state buttons, never a tablist without tabs"
   for (const b of buttons)
     expect(b.className).toMatch(/focus-visible:outline-2/);
 });
+
+it("re-measures the segment pill when a tab grows after mount", () => {
+  // jsdom has no layout: drive offsetWidth and a ResizeObserver by hand.
+  const observers: Array<() => void> = [];
+  const original = globalThis.ResizeObserver;
+  globalThis.ResizeObserver = class {
+    constructor(cb: () => void) {
+      observers.push(cb);
+    }
+    observe() {}
+    disconnect() {}
+    unobserve() {}
+  } as unknown as typeof ResizeObserver;
+  let width = 60;
+  const desc = Object.getOwnPropertyDescriptor(
+    HTMLElement.prototype,
+    "offsetWidth",
+  );
+  Object.defineProperty(HTMLElement.prototype, "offsetWidth", {
+    configurable: true,
+    get() {
+      return width;
+    },
+  });
+  try {
+    act(() =>
+      root.render(
+        <TooltipProvider>
+          <Tabs
+            variant="segment"
+            value="a"
+            tabs={[
+              { value: "a", label: "Folders" },
+              { value: "b", label: "Waterfall" },
+            ]}
+          />
+        </TooltipProvider>,
+      ),
+    );
+    const pill = () => container.querySelector<HTMLElement>("[aria-hidden]")!;
+    expect(pill().style.width).toBe("60px");
+    width = 84; // the label laid out wider (font arrived, gap added…)
+    act(() => observers.forEach((cb) => cb()));
+    expect(pill().style.width).toBe("84px");
+  } finally {
+    globalThis.ResizeObserver = original;
+    if (desc) Object.defineProperty(HTMLElement.prototype, "offsetWidth", desc);
+  }
+});

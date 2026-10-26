@@ -212,13 +212,15 @@ export function Divider({
       }}
     >
       {lit && (
-        // Faint on hover; solid + the active token the moment it is grabbed
-        // (darker than the rest in light theme, brighter in dark).
+        // A quiet grey hint on hover (`--uikit-handle`, no extra opacity: the
+        // token IS the hover tone); one step stronger the moment it is grabbed
+        // (`--uikit-handle-active`). Neither goes near ink — a near-black (or,
+        // in dark, white) pill read as a heavier control than a seam should be.
         <div
           className={cn(
             'absolute rounded-full pointer-events-none [transition:opacity_140ms_ease,background_140ms_ease]',
             isRow ? 'left-1/2 -translate-x-1/2 -translate-y-1/2' : 'top-1/2 -translate-x-1/2 -translate-y-1/2',
-            active ? 'bg-uikit-handle-active opacity-100' : 'bg-uikit-handle opacity-70',
+            active ? 'bg-uikit-handle-active' : 'bg-uikit-handle',
           )}
           style={pillStyle}
         />

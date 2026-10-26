@@ -29,13 +29,13 @@ const CONTAINER: Record<ToggleButtonsVariant, string> = {
 // flooded with accent. Colour stays available for genuine status elsewhere.
 //
 // `--bg` + a small shadow is not a choice made here; it is the shell all three
-// segmented controls already share. Tabs' `segment` pill is `bg-uikit-bg` with
+// segmented controls already share. Tabs' `segment` pill is `--uikit-segment-thumb` (the page colour in light, lifted in dark) with
 // the same shadow, and the app's own theme toggle (`.dl-theme-toggle`) says so
 // out loud: "Same shell as the kit's segmented controls (ToggleButtons / Tabs
 // `segment`): a chip-tinted frame with an elevated thumb riding inside it."
 const HIGHLIGHT: Record<ToggleButtonsVariant, string> = {
-  primary: "bg-uikit-bg shadow-uikit-sm rounded-uikit-badge",
-  secondary: "bg-uikit-bg shadow-uikit-sm rounded-uikit-badge",
+  primary: "bg-[var(--uikit-segment-thumb,var(--bg))] shadow-uikit-sm rounded-uikit-badge",
+  secondary: "bg-[var(--uikit-segment-thumb,var(--bg))] shadow-uikit-sm rounded-uikit-badge",
   ghost: "bg-uikit-chip shadow-uikit-sm rounded-uikit-badge",
 };
 
@@ -265,6 +265,8 @@ export function ToggleButton({
 
   const classes = cn(
     "relative z-10 inline-flex items-center justify-center font-normal whitespace-nowrap transition-colors outline-none cursor-pointer",
+    // Keyboard focus: inset, so the ring stays inside the segment's track.
+    "focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-uikit-accent focus-visible:-outline-offset-2",
     "disabled:pointer-events-none disabled:opacity-50 rounded-uikit-badge",
     "[&_svg]:shrink-0 [&_svg]:pointer-events-none",
     BTN_VARIANT[ctx.variant],

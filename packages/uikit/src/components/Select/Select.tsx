@@ -40,6 +40,7 @@ import {
   stripLegacyOverlayProps,
 } from "../../lib/legacy-overlay-props";
 import { ChevronDown } from "lucide-react";
+import { unfoldFrom } from "../../lib/unfold";
 
 function mergeRefs<T>(
   ...refs: (Ref<T> | undefined | ((n: T | null) => void))[]
@@ -328,6 +329,12 @@ export const SelectTrigger = forwardRef<HTMLButtonElement, SelectTriggerProps>(
         type="button"
         className={cn(
           "group inline-flex w-fit items-center gap-1 cursor-pointer outline-none",
+          // Keyboard focus: the kit's 2px accent ring, on `:focus-visible`
+          // only. Outside the label (like Button's padless `link`): an inset
+          // ring on a trigger with no padding cuts the glyphs. `outline-solid`
+          // is required — `outline-none` zeroes Tailwind v4's outline-style
+          // variable, so `outline-2` alone paints nothing.
+          "rounded-[2px] focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-uikit-accent focus-visible:outline-offset-2",
           "font-uikit-mono text-uikit-11 font-medium tracking-uikit-snug",
           // Muted at rest, ink on hover and while open. A dropdown trigger is
           // a secondary control — a sort order, an account menu — and full ink
@@ -460,6 +467,7 @@ export function SelectContent({
             "bg-uikit-bg shadow-uikit-soft outline-none",
             className,
           )}
+          data-unfold={unfoldFrom(ctx.context.placement)}
           {...ctx.getFloatingProps(rest)}
         >
           {ctx.arrow && (

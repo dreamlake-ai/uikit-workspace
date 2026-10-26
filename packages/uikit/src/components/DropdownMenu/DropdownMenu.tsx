@@ -36,6 +36,7 @@ import {
   type LegacyOverlayContentProps,
   stripLegacyOverlayProps,
 } from "../../lib/legacy-overlay-props";
+import { unfoldFrom } from "../../lib/unfold";
 
 type Side = "top" | "right" | "bottom" | "left";
 type Align = "start" | "center" | "end";
@@ -244,6 +245,7 @@ export function DropdownMenuContent({
             "bg-uikit-panel text-uikit-ink shadow-uikit-soft outline-none",
             className,
           )}
+          data-unfold={unfoldFrom(ctx.context.placement)}
           {...ctx.getFloatingProps(rest)}
         >
           <DropdownMenuArrow />
@@ -253,7 +255,9 @@ export function DropdownMenuContent({
             className="relative isolate flex flex-col"
           >
             {hover.slider}
-            <FloatingList elementsRef={ctx.elementsRef}>{children}</FloatingList>
+            <FloatingList elementsRef={ctx.elementsRef}>
+              {children}
+            </FloatingList>
           </div>
         </div>
       </FloatingFocusManager>
@@ -551,6 +555,7 @@ export function DropdownMenuSubContent({
           "bg-uikit-panel text-uikit-ink shadow-uikit-soft outline-none",
           className,
         )}
+        data-unfold={unfoldFrom(ctx.context.placement)}
         {...ctx.getFloatingProps(rest)}
       >
         <FloatingList elementsRef={ctx.elementsRef}>{children}</FloatingList>
