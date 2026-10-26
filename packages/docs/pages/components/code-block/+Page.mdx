@@ -18,14 +18,14 @@ A self-contained code surface. Hand it a string and it highlights the string —
 no build-time pipeline, no pre-rendered markup to pass in. Set `editable` and
 the same surface becomes an editor.
 
-Read-only and editing are one CodeMirror view reconfigured, not two components
+Read-only and editing are one Monaco model and view reconfigured, not two components
 swapped, so toggling between them keeps the syntax colors, the layout and the
 scroll position exactly where they were.
 
 ## Read-only
 
 The default. `lang` accepts a language name, alias or extension and is resolved
-against CodeMirror's 143-language registry; each grammar loads on demand, so a
+against Monaco's language registry; each grammar loads on demand, so a
 JSON block never downloads the Rust parser. Anything the registry doesn't
 recognise renders as plain text rather than throwing — which is what you want
 for a viewer pointed at arbitrary user files.
@@ -70,18 +70,31 @@ To drop the tools as well, pass `header={false}`.
 
 ## Loading and bundle cost
 
-CodeMirror sits behind a dynamic import, so it never reaches the initial bundle
+Monaco sits behind a dynamic import, so it never reaches the initial bundle
 — importing `Button` from the kit costs nothing, and an app that renders no code
 never downloads the editor. While that chunk is in flight the block renders a
 plain `<pre>` with the same font, size, leading and padding, so its arrival is a
 recolor rather than a reflow. That fallback is real server-rendered markup, so
 the code is present in the HTML before any JavaScript runs.
 
+## Browser workers
+
+Configure Monaco's editor worker in your client entry point before mounting code
+blocks. With Vite:
+
+```ts
+import EditorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker'
+self.MonacoEnvironment = { getWorker: () => new EditorWorker() }
+```
+
+Keep this setup out of server entry points. If your app already configures
+`MonacoEnvironment`, reuse that configuration. Other bundlers should use their
+Monaco worker integration. The component uses basic language tokenizers; it
+does not enable language-server workers or download code from a CDN.
+
 ## Theming
 
-Colors come from CodeMirror's stock highlight styles — `defaultHighlightStyle`
-in light, one-dark's highlight style in dark — while everything around the
-tokens (surface, gutter, caret, selection) points at uikit tokens.
+Colors use Monaco's built-in `vs` and `vs-dark` themes.
 
 The block follows `<html data-theme>` on its own, so it tracks the app's theme
 whether or not a `ThemeProvider` is mounted above it. Pass `theme` to pin it.
