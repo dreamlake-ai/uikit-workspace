@@ -330,7 +330,10 @@ function TabsData({
       className={cn(
         "relative font-uikit-ui",
         variant === "underline" && "flex items-end",
-        variant === "segment" && "inline-flex bg-uikit-ink-5",
+        // Track: a recess under the page-coloured thumb. Dark sets
+        // `--uikit-segment-track`; light falls back to ink-5 (unchanged).
+        variant === "segment" &&
+          "inline-flex bg-[var(--uikit-segment-track,var(--color-uikit-ink-5))]",
         className,
       )}
       style={
@@ -359,7 +362,7 @@ function TabsData({
         />
       )}
 
-      {/* segment — elevated pill matching the page background */}
+      {/* segment — elevated pill IS the page background, in both themes */}
       {variant === "segment" && (
         <div
           aria-hidden
