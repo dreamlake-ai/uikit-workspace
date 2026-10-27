@@ -75,6 +75,7 @@ function CloseButton({ onClose }: { onClose: () => void }) {
         cursor: "pointer",
         width: 22,
         height: 22,
+        flexShrink: 0,
         borderRadius: 5,
         alignSelf: "center",
         display: "inline-flex",
@@ -192,19 +193,22 @@ export function Dialog({
         {(shown.title || shown.eyebrow || showEscHint) && (
           <div className="flex items-baseline gap-2.5">
             {shown.title && (
-              // Truncate a long title (ellipsis) rather than wrapping; `min-w-0`
-              // lets it shrink so the eyebrow keeps its room instead of being
-              // pushed out of the panel.
+              // The title is the dialog's name ("Move note") and keeps its words:
+              // it shrinks only once the eyebrow is gone, then ellipsizes rather
+              // than wrapping or pushing the close button out of the panel.
               <h3
                 id={titleId}
-                className="m-0 min-w-0 truncate font-uikit-ui text-uikit-17 font-semibold leading-[1.2] tracking-uikit-tight text-uikit-ink"
+                className="m-0 min-w-0 shrink truncate font-uikit-ui text-uikit-17 font-semibold leading-[1.2] tracking-uikit-tight text-uikit-ink"
               >
                 {shown.title}
               </h3>
             )}
             {shown.eyebrow && (
-              // Never wrap or shrink below its own width — the title yields first.
-              <span className="shrink-0 whitespace-nowrap font-uikit-mono text-uikit-10 leading-uikit-snug text-uikit-muted opacity-60 tracking-uikit-wide uppercase">
+              // The eyebrow is context — often a long resource name — so it yields
+              // first: one line, ellipsized, stopping at the gap before the close
+              // button. The heavy shrink weight spends the row's overflow here
+              // before the title gives up a single character.
+              <span className="min-w-0 shrink-[1000] truncate font-uikit-mono text-uikit-10 leading-uikit-snug text-uikit-muted opacity-60 tracking-uikit-wide uppercase">
                 {shown.eyebrow}
               </span>
             )}
