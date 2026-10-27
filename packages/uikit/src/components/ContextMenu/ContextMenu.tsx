@@ -32,6 +32,8 @@ import {
   stripLegacyOverlayProps,
 } from "../../lib/legacy-overlay-props";
 import { unfoldFrom } from "../../lib/unfold";
+import { usePanelPresence } from "../../lib/usePanelPresence";
+import { useComposedRef } from "../../lib/useModalPresence";
 
 interface MenuCtx {
   open: boolean;
@@ -203,7 +205,12 @@ export function ContextMenuContent({
   ...props
 }: ContextMenuContentProps) {
   const ctx = useCtx("ContextMenuContent");
-  if (!ctx.open) return null;
+  const presence = usePanelPresence(ctx.open);
+  const panelRef = useComposedRef<HTMLElement>(
+    ctx.refs.setFloating as never,
+    presence.ref,
+  );
+  if (!presence.present) return null;
   const rest = stripLegacyOverlayProps(props);
   return (
     <FloatingPortal>
@@ -211,9 +218,10 @@ export function ContextMenuContent({
         context={ctx.context}
         modal={false}
         initialFocus={-1}
+        disabled={!ctx.open}
       >
         <div
-          ref={ctx.refs.setFloating as never}
+          ref={panelRef}
           style={{ ...ctx.floatingStyles, ...style }}
           className={cn(
             "uikit-panel-in z-[200] min-w-[180px] rounded-[var(--radius)] p-1 font-uikit-ui",
@@ -222,6 +230,7 @@ export function ContextMenuContent({
           )}
           data-unfold={unfoldFrom(ctx.context.placement)}
           {...ctx.getFloatingProps(rest)}
+          {...presence.closingProps}
         >
           <FloatingList elementsRef={ctx.elementsRef}>{children}</FloatingList>
         </div>

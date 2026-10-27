@@ -538,6 +538,17 @@ html[data-theme='dark'] {
   }
 }
 
+/* Closing, the same panels FOLD back into that corner — the unfold played
+   backwards — rather than vanishing (lib/usePanelPresence: a Web Animation
+   from wherever the panel is, 220ms accelerating, opacity held for the first
+   third; reduced motion: a 100ms fade). The panel stays mounted for the fold but is already gone as far as
+   anything but the eye is concerned: `inert` + `aria-hidden` from the hook,
+   and it never takes the pointer, so a click that closed it — or the next
+   click — lands on whatever is underneath. */
+.uikit-panel-in[data-closing] {
+  pointer-events: none;
+}
+
 /* One hover fill per menu-like panel, moved between rows rather than painted
    per row — the sidebar nav's hover, everywhere a list opens. See
    lib/useHoverSlider. The host is `relative isolate`, so z-index -1 lands the
