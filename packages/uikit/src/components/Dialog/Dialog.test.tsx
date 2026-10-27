@@ -248,3 +248,30 @@ it("keeps a nested managed dialog separate and restores the parent control", asy
   await finishExit();
   expect(document.querySelectorAll('[role="dialog"]').length).toBe(1);
 });
+it("lets a long eyebrow yield before the title, and never squeezes the close button", async () => {
+  await render(
+    <Dialog
+      open
+      onClose={() => {}}
+      title="Move Note"
+      eyebrow="Agent setup: task-specific expectations without prompt bloat"
+    >
+      body
+    </Dialog>,
+  );
+  const title = document.querySelector("h3")!;
+  const eyebrow = Array.from(document.querySelectorAll("span")).find(
+    (el) => el.textContent?.startsWith("Agent setup"),
+  )!;
+  // The eyebrow only fills the room the title leaves (zero basis, grows),
+  // and is the one that ellipsizes.
+  expect(eyebrow.className).toMatch(/\bmin-w-0\b/);
+  expect(eyebrow.className).toMatch(/\bbasis-0\b/);
+  expect(eyebrow.className).toMatch(/\bgrow-\[1000\]/);
+  expect(eyebrow.className).toMatch(/\btruncate\b/);
+  expect(eyebrow.className).not.toMatch(/\bshrink-0\b/);
+  // The title truncates only as a last resort (a title wider than the row).
+  expect(title.className).toMatch(/\btruncate\b/);
+  const close = document.querySelector<HTMLButtonElement>('button[aria-label="Close"]')!;
+  expect(close.style.flexShrink).toBe("0");
+});
