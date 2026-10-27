@@ -1,5 +1,6 @@
 import { ProfileCard } from '@dreamlake/uikit'
 import { Pencil, Trash2 } from 'lucide-react'
+import { VisibilityTitle } from './VisibilityTitle'
 
 // Small square icon button mirroring the dreamlake-ai `ProfIconBtn` shape —
 // scoped here so the spec is self-contained and doesn't depend on app-side
@@ -39,13 +40,12 @@ export const TopRightActionsSpec = () => (
   <div className="w-full max-w-xl">
     <ProfileCard
       title={
-        <span>
+        <VisibilityTitle visibility="private">
           <span className="opacity-55 font-medium">acme</span>
           <span className="opacity-40 font-medium px-0.5">/</span>
           arm-bc-v2
-        </span>
+        </VisibilityTitle>
       }
-      tag="private"
       titleRight="2h ago"
       description="Behavioral cloning v2 — ResNet encoder, ego-teleop dataset."
       footer="3b · 1ds · 2pl · 1 active"

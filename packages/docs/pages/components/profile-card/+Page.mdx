@@ -45,10 +45,10 @@ the card. Clicks on it do not bubble to `onClick`.
 edit/delete pattern). When this slot is provided, `titleRight` auto-fades on
 hover and on keyboard focus so the meta (timestamp) doesn't visually collide
 with the action cluster. On a touch device (`hover: none`) the actions are
-always shown, so they join the title row instead: title, then the meta, then
-the buttons — one line, centred on the title, at every width. A long name
-truncates before the meta; on a card too narrow to keep about six characters of
-it, the meta is dropped rather than wrapped onto a second line.
+always shown, so they join the title row instead — title, then the buttons, on
+one line centred on the title — and the meta moves to the card's bottom-right
+corner, at the right end of the footer row. A long name truncates before the
+buttons. A card with no footer gets a footer row for the meta, on touch only.
 
 `footerRight` adds a right-aligned cluster next to the footer — typically
 ACL chips, member avatars, or status badges that should sit on the same row
@@ -63,13 +63,13 @@ as the left-side stats.
 | Prop | Type | Description |
 | --- | --- | --- |
 | `title` | `ReactNode` | Primary name in the header. Default: 14px medium. |
-| `tag` | `ReactNode` | Small badge immediately after the title. Default: mono 10.5px, 80% opacity. |
-| `titleRight` | `ReactNode` | Right-aligned header meta — timestamp, version, etc. Default: mono 11px, 65% opacity. Auto-fades on hover / keyboard focus when `topRightActions` is also set; on touch it sits between the title and the always-shown actions, and is hidden (not wrapped) when a narrow card has no room. |
+| `tag` | `ReactNode` | Small badge immediately after the title — a kind such as `python` or `git`. Default: mono 10.5px, 80% opacity. Not for visibility: that is an icon leading the title — a lock for private, a globe for public (13px, private muted, public accent), its meaning in the kit tooltip — never the word `private`. |
+| `titleRight` | `ReactNode` | Right-aligned header meta — timestamp, version, etc. Default: mono 11px, 65% opacity. Auto-fades on hover / keyboard focus when `topRightActions` is also set; on touch it moves to the bottom-right corner, at the end of the footer row. |
 | `description` | `ReactNode` | Optional body paragraph. Default: 13px, 75% opacity, 1.5 line-height. |
 | `footer` | `ReactNode` | Optional stats/meta row at the bottom-left. Default: mono 11px, 75% opacity, truncates. |
 | `footerRight` | `ReactNode` | Right-aligned cluster next to `footer` (ACL chips, badges). Shares the footer row. |
 | `tags` | `ReactNode` | Final row inside the card body — a horizontal, wrapping row of `<Tag>` chips (the "Pipelines tab" pattern). Pass an array of nodes or any flex-wrap-friendly subtree. |
-| `topRightActions` | `ReactNode` | Controls anchored top-right, revealed on hover or keyboard focus; on touch always shown, in the title row after `titleRight`. Used for the edit/delete pattern. Clicks do not bubble to `onClick`. |
+| `topRightActions` | `ReactNode` | Controls anchored top-right, revealed on hover or keyboard focus; on touch always shown, at the end of the title row. Used for the edit/delete pattern. Clicks do not bubble to `onClick`. |
 | `hoverActions` | `ReactNode` | Controls anchored bottom-right, revealed on hover. Clicks do not bubble to `onClick`. |
 | `onClick` | `() => void` | Makes the card clickable. Adds pointer cursor. |
 | `className` | `string` | Extra classes on the card root. |

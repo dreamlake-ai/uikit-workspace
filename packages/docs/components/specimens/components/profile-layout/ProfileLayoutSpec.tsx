@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { Sun, Moon } from 'lucide-react'
+import { VisibilityTitle } from '../profile-card/VisibilityTitle'
 import {
   ProfileLayout,
   ProfileCard,
@@ -135,8 +136,7 @@ function ProjectsTab({ cols }: { cols: 1 | 2 }) {
         {visible.map(p => (
           <ProfileCard
             key={p.name}
-            title={p.name}
-            tag={p.tag}
+            title={<VisibilityTitle visibility={p.tag}>{p.name}</VisibilityTitle>}
             titleRight={p.right}
             description={p.desc}
             footer={p.footer}
@@ -197,12 +197,12 @@ function OverviewTab({ stickyTop }: { stickyTop: number }) {
     <div className="pt-6 flex flex-col gap-9">
       <OverviewSection label="Pinned projects" right={`${PROJECTS.length} total`} stickyTop={stickyTop}>
         {PROJECTS.slice(0, 4).map(p => (
-          <ProfileCard key={p.name} title={p.name} tag={p.tag} titleRight={p.right} description={p.desc} footer={p.footer} onClick={() => {}} />
+          <ProfileCard key={p.name} title={<VisibilityTitle visibility={p.tag}>{p.name}</VisibilityTitle>} titleRight={p.right} description={p.desc} footer={p.footer} onClick={() => {}} />
         ))}
       </OverviewSection>
       <OverviewSection label="Recent datasets" right={`${DATASETS.length} total`} stickyTop={stickyTop}>
         {DATASETS.map(d => (
-          <ProfileCard key={d.name} title={d.name} tag={d.tag} titleRight={d.right} description={d.desc} footer={d.footer} onClick={() => {}} />
+          <ProfileCard key={d.name} title={<VisibilityTitle visibility={d.tag}>{d.name}</VisibilityTitle>} titleRight={d.right} description={d.desc} footer={d.footer} onClick={() => {}} />
         ))}
       </OverviewSection>
       <OverviewSection label="Recent pipelines" right={`${PIPELINES.length} total`} stickyTop={stickyTop}>

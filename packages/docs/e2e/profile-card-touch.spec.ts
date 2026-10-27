@@ -1,10 +1,12 @@
-// ProfileCard with top-right actions on a touch device: ONE header line.
+// ProfileCard with top-right actions on a touch device.
 //
-// `(hover: none)` shows edit/delete permanently, so they share the title's
-// line with the meta: `title …  2h ago  ✏ 🗑`. Before this, the timestamp was
-// drawn through the buttons (main), and then dropped to its own line under
-// them (first cut of #273). Asserted on the docs specimen at the device's own
-// width, then with a long name, then squeezed until the meta has to go.
+// `(hover: none)` shows edit/delete permanently, on the title's line. The meta
+// (timestamp) does not join them: it sits in the card's bottom-right corner, at
+// the end of the footer row — `title …  ✏ 🗑` over `stats ……  2h ago`. Before
+// #273 the timestamp was drawn through the buttons; #273 squeezed it between
+// title and buttons, and it moved to the corner after design review.
+// Asserted on the docs specimen at the device's own width, then with a long
+// name, then on a narrow card.
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
 type Box = { x: number; y: number; width: number; height: number };
@@ -14,9 +16,9 @@ async function boxes(card: Locator) {
   return {
     card: await get(card),
     header: await get(card.locator("[data-uikit-header]")),
-    main: await get(card.locator("[data-uikit-header-main]")),
+    footer: await get(card.locator("[data-uikit-footer]")),
     title: await get(card.locator("[data-uikit-title-col] > :first-child")),
-    meta: await get(card.locator("[data-uikit-title-right]")),
+    meta: await get(card.locator("[data-uikit-title-right-foot]")),
     edit: await get(card.getByRole("button", { name: "Edit project" })),
     del: await get(card.getByRole("button", { name: "Delete project" })),
   };
@@ -39,42 +41,36 @@ async function specimen(page: Page) {
   return card;
 }
 
-function expectOneLine(
-  b: Awaited<ReturnType<typeof boxes>>,
-  { meta }: { meta: boolean },
-) {
-  // Everything centred on the title's line (±2px). Boxes differ in height —
-  // 24px buttons, 18px title, 16px mono meta — so the centre is the shared line.
+async function expectLayout(card: Locator) {
+  const b = await boxes(card);
+  // Top line: title then edit/delete, centred on the title's line (±2px), no
+  // wrap, inside the card.
   const line = mid(b.title);
   expect(Math.abs(mid(b.edit) - line)).toBeLessThanOrEqual(2);
   expect(Math.abs(mid(b.del) - line)).toBeLessThanOrEqual(2);
-  // Nothing wrapped: the header is no taller than its tallest control.
   expect(b.header.height).toBeLessThanOrEqual(b.edit.height + 2);
-  // Left to right, no overlap: title · meta · edit · delete, inside the card.
   expect(b.edit.x).toBeGreaterThanOrEqual(right(b.title));
   expect(b.del.x).toBeGreaterThanOrEqual(right(b.edit));
   expect(right(b.del)).toBeLessThanOrEqual(right(b.card));
-  if (meta) {
-    expect(Math.abs(mid(b.meta) - line)).toBeLessThanOrEqual(2);
-    expect(b.meta.x).toBeGreaterThanOrEqual(right(b.title));
-    expect(b.edit.x).toBeGreaterThanOrEqual(right(b.meta));
-  } else {
-    // Dropped, not wrapped: it sits on the clipped second flex line.
-    expect(b.meta.y).toBeGreaterThanOrEqual(b.main.y + b.main.height);
-  }
+  // Meta: the bottom-right corner — on the footer row, right-aligned with the
+  // delete button's right edge (±2px), below the header.
+  expect(Math.abs(mid(b.meta) - mid(b.footer))).toBeLessThanOrEqual(2);
+  expect(b.meta.y).toBeGreaterThanOrEqual(b.header.y + b.header.height);
+  expect(Math.abs(right(b.meta) - right(b.del))).toBeLessThanOrEqual(2);
+  // The header copy is gone, not just faded — out of the accessibility tree.
+  await expect(card.locator("[data-uikit-header] [data-uikit-title-right]")).toBeHidden();
+  return b;
 }
 
-test("title, timestamp and edit/delete share one line at the specimen width", async ({
+test("the timestamp sits bottom-right; title and edit/delete share the top line", async ({
   page,
 }) => {
   const card = await specimen(page);
-  expectOneLine(await boxes(card), { meta: true });
-  await expect(card.locator("[data-uikit-title-right]")).toHaveText("2h ago");
+  await expectLayout(card);
+  await expect(card.locator("[data-uikit-title-right-foot]")).toHaveText("2h ago");
 });
 
-test("a long name truncates before the timestamp and the buttons", async ({
-  page,
-}) => {
+test("a long name truncates before the buttons", async ({ page }) => {
   const card = await specimen(page);
   await card.evaluate((el) => {
     const title = el.querySelector("[data-uikit-title-col] > :first-child")!;
@@ -82,26 +78,26 @@ test("a long name truncates before the timestamp and the buttons", async ({
     let n: Node | null;
     while ((n = walker.nextNode()))
       if (n.textContent === "arm-bc-v2")
-        n.textContent = "arm-bc-v2-ego-teleop-resnet-encoder-sweep-03";
+        n.textContent = "arm-bc-v2-ego-teleop-resnet-encoder-sweep-03-with-augmentations-v7";
   });
-  const b = await boxes(card);
-  expectOneLine(b, { meta: true });
+  await expectLayout(card);
+  // The title box or the text span inside it (the specimen leads the name with
+  // its visibility icon) carries the ellipsis.
   const truncated = await card
     .locator("[data-uikit-title-col] > :first-child")
-    .evaluate((t) => t.scrollWidth > t.clientWidth);
+    .evaluate((t) =>
+      [t, ...t.querySelectorAll("span")].some(
+        (e) => e.scrollWidth > e.clientWidth,
+      ),
+    );
   expect(truncated).toBe(true);
 });
 
-test("a narrow card hides the timestamp rather than wrapping", async ({
-  page,
-}) => {
+test("a narrow card keeps the timestamp in the corner", async ({ page }) => {
   const card = await specimen(page);
-  // 13rem: too narrow for title floor + tag + meta + buttons.
   await card.evaluate((el) => {
     (el.parentElement as HTMLElement).style.width = "13rem";
   });
-  const b = await boxes(card);
-  expectOneLine(b, { meta: false });
-  // The title keeps its floor (~6 characters) instead of collapsing to "…".
+  const b = await expectLayout(card);
   expect(b.title.width).toBeGreaterThanOrEqual(40);
 });
