@@ -193,22 +193,23 @@ export function Dialog({
         {(shown.title || shown.eyebrow || showEscHint) && (
           <div className="flex items-baseline gap-2.5">
             {shown.title && (
-              // The title is the dialog's name ("Move note") and keeps its words:
-              // it shrinks only once the eyebrow is gone, then ellipsizes rather
-              // than wrapping or pushing the close button out of the panel.
+              // The title is the dialog's name ("Move note") and keeps its words.
+              // Only a title longer than the whole row ellipsizes (rather than
+              // wrapping or pushing the close button out of the panel).
               <h3
                 id={titleId}
-                className="m-0 min-w-0 shrink truncate font-uikit-ui text-uikit-17 font-semibold leading-[1.2] tracking-uikit-tight text-uikit-ink"
+                className="m-0 min-w-0 truncate font-uikit-ui text-uikit-17 font-semibold leading-[1.2] tracking-uikit-tight text-uikit-ink"
               >
                 {shown.title}
               </h3>
             )}
             {shown.eyebrow && (
-              // The eyebrow is context — often a long resource name — so it yields
-              // first: one line, ellipsized, stopping at the gap before the close
-              // button. The heavy shrink weight spends the row's overflow here
-              // before the title gives up a single character.
-              <span className="min-w-0 shrink-[1000] truncate font-uikit-mono text-uikit-10 leading-uikit-snug text-uikit-muted opacity-60 tracking-uikit-wide uppercase">
+              // The eyebrow is context — often a long resource name — so it takes
+              // only the room the title leaves: a zero basis that grows into the
+              // free space (ahead of the spacer), one line, ellipsized at the gap
+              // before the close button. The row never overflows on its account,
+              // so the title is never asked to give up a character for it.
+              <span className="min-w-0 basis-0 grow-[1000] truncate font-uikit-mono text-uikit-10 leading-uikit-snug text-uikit-muted opacity-60 tracking-uikit-wide uppercase">
                 {shown.eyebrow}
               </span>
             )}
