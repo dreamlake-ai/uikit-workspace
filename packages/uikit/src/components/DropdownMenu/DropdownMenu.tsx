@@ -37,6 +37,8 @@ import {
   stripLegacyOverlayProps,
 } from "../../lib/legacy-overlay-props";
 import { unfoldFrom } from "../../lib/unfold";
+import { usePanelPresence } from "../../lib/usePanelPresence";
+import { useComposedRef } from "../../lib/useModalPresence";
 
 type Side = "top" | "right" | "bottom" | "left";
 type Align = "start" | "center" | "end";
@@ -219,26 +221,34 @@ export function DropdownMenuContent({
 }: DropdownMenuContentProps) {
   const ctx = useMenuContext("DropdownMenuContent");
   const hover = useHoverSlider();
+  const presence = usePanelPresence(ctx.open);
+  const panelRef = useComposedRef<HTMLElement>(
+    ctx.refs.setFloating as never,
+    presence.ref,
+  );
   const activeRow =
     ctx.open && ctx.activeIndex != null
       ? (ctx.elementsRef.current[ctx.activeIndex] ?? null)
       : null;
   // The one travelling hover fill, aimed at floating-ui's active row so the
   // pointer and the arrow keys move the same thing.
+  // While the menu folds away the fill stays on the row it was on.
   useLayoutEffect(() => {
-    hover.track(activeRow);
+    if (ctx.open) hover.track(activeRow);
   }, [activeRow]); // eslint-disable-line react-hooks/exhaustive-deps
-  if (!ctx.open) return null;
+  if (!presence.present) return null;
   const rest = stripLegacyOverlayProps(props);
   return (
     <FloatingPortal>
+      {/* Disabled the moment it closes: focus returns at the start of the fold. */}
       <FloatingFocusManager
         context={ctx.context}
         modal={false}
         initialFocus={-1}
+        disabled={!ctx.open}
       >
         <div
-          ref={ctx.refs.setFloating as never}
+          ref={panelRef}
           style={{ ...ctx.floatingStyles, ...style }}
           className={cn(
             "uikit-panel-in z-[200] min-w-[180px] rounded-[var(--radius)] p-1 font-uikit-ui",
@@ -247,6 +257,7 @@ export function DropdownMenuContent({
           )}
           data-unfold={unfoldFrom(ctx.context.placement)}
           {...ctx.getFloatingProps(rest)}
+          {...presence.closingProps}
         >
           <DropdownMenuArrow />
           <div
@@ -543,12 +554,17 @@ export function DropdownMenuSubContent({
   ...props
 }: DropdownMenuSubContentProps) {
   const ctx = useMenuContext("DropdownMenuSubContent");
-  if (!ctx.open) return null;
+  const presence = usePanelPresence(ctx.open);
+  const panelRef = useComposedRef<HTMLElement>(
+    ctx.refs.setFloating as never,
+    presence.ref,
+  );
+  if (!presence.present) return null;
   const rest = stripLegacyOverlayProps(props);
   return (
     <FloatingPortal>
       <div
-        ref={ctx.refs.setFloating as never}
+        ref={panelRef}
         style={{ ...ctx.floatingStyles, ...style }}
         className={cn(
           "uikit-panel-in z-[201] min-w-[160px] rounded-[var(--radius)] p-1 font-uikit-ui",
@@ -557,6 +573,7 @@ export function DropdownMenuSubContent({
         )}
         data-unfold={unfoldFrom(ctx.context.placement)}
         {...ctx.getFloatingProps(rest)}
+        {...presence.closingProps}
       >
         <FloatingList elementsRef={ctx.elementsRef}>{children}</FloatingList>
       </div>

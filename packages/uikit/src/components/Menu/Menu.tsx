@@ -9,6 +9,8 @@ import {
 import { createPortal } from 'react-dom'
 import { cn } from '../../lib/utils'
 import { useHoverSlider } from '../../lib/useHoverSlider'
+import { usePanelPresence } from '../../lib/usePanelPresence'
+import { useComposedRef } from '../../lib/useModalPresence'
 
 /** Wedge side length in px, pre-rotation. */
 const ARROW_SIZE = 7
@@ -99,6 +101,9 @@ export function Menu({
   const triggerRef = useRef<HTMLSpanElement>(null)
   const hover = useHoverSlider()
   const panelRef = useRef<HTMLDivElement>(null)
+  // Stays mounted while it folds back into the trigger after closing.
+  const presence = usePanelPresence(open)
+  const panelNodeRef = useComposedRef<HTMLDivElement>(panelRef, presence.ref)
   const [coords, setCoords] = useState<{
     /** Distance from the viewport top ('down') or bottom ('up'). */
     top: number
@@ -236,12 +241,13 @@ export function Menu({
       className="inline-flex items-center cursor-pointer"
     >
       {trigger(open)}
-      {open &&
+      {presence.present &&
         typeof document !== 'undefined' &&
         createPortal(
           <div
-            ref={panelRef}
+            ref={panelNodeRef}
             role="menu"
+            {...presence.closingProps}
             // Contain stray clicks so they don't reach whatever the menu is
             // mounted inside — but NEVER swallow a link click. Menus can hold
             // real <a href> rows (e.g. the account switcher); Vike's client

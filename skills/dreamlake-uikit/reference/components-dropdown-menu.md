@@ -18,6 +18,13 @@ placement when the menu flips or shifts near a viewport edge. It works on all
 four sides and adds four pixels to the configured `sideOffset` for clearance.
 Keyboard navigation and focus return are unchanged.
 
+The menu unfolds from the trigger's corner when it opens and **folds back into
+it** when it closes — on Escape, an outside click or a picked item — the unfold
+played backwards in 220ms. Focus returns to the trigger as the fold starts, and
+the folding menu is `inert`, `aria-hidden` and never takes the pointer.
+Reopening mid-fold animates the same menu back open; reduced motion makes the
+fold a 100ms fade. Submenus fold the same way.
+
 ## Props
 
 ### `DropdownMenu`
