@@ -8,6 +8,8 @@ description: Modal dialog with backdrop, Escape-to-dismiss, and a footer action 
 import { BasicSpec } from "../../../components/specimens/components/dialog/BasicSpec";
 import { PublishDatasetSpec } from "../../../components/specimens/components/dialog/PublishDatasetSpec";
 import { ManagedFocusSpec } from "../../../components/specimens/components/dialog/ManagedFocusSpec";
+import { LongEyebrowSpec } from "../../../components/specimens/components/dialog/LongEyebrowSpec";
+import longEyebrowSrc from "../../../components/specimens/components/dialog/LongEyebrowSpec.tsx?raw";
 import managedSrc from "../../../components/specimens/components/dialog/ManagedFocusSpec.tsx?raw";
 import basicSrc from "../../../components/specimens/components/dialog/BasicSpec.tsx?raw";
 import publishSrc from "../../../components/specimens/components/dialog/PublishDatasetSpec.tsx?raw";
@@ -24,6 +26,17 @@ A simple confirm dialog with title, eyebrow, body text, and an action footer.
 
 <Preview source={basicSrc} filename="BasicSpec.tsx">
   <BasicSpec />
+</Preview>
+
+## Long eyebrow
+
+The eyebrow often names the resource the dialog acts on, so it can be any
+length. It takes only the room the title leaves and ellipsizes before the close
+button; the title keeps its words and truncates only if it alone is wider than
+the row.
+
+<Preview source={longEyebrowSrc} filename="LongEyebrowSpec.tsx">
+  <LongEyebrowSpec />
 </Preview>
 
 ## Publish dataset
@@ -81,7 +94,7 @@ Supply a visible `title` or `aria-label` for the dialog's accessible name.
 | `open`                   | `boolean`                                   | —       | **Required.** Controlled open state.                                                                                                                                     |
 | `onClose`                | `() => void`                                | —       | **Required.** Fires when the user dismisses the dialog (Esc key, backdrop click, or any explicit close affordance the caller renders). Caller must flip `open` to false. |
 | `title`                  | `ReactNode`                                 | —       | Heading rendered top-left of the panel. 17px semibold ink.                                                                                                               |
-| `eyebrow`                | `string`                                    | —       | Small uppercase mono label rendered next to the title.                                                                                                                   |
+| `eyebrow`                | `string`                                    | —       | Small uppercase mono label rendered next to the title. Takes the room the title leaves and ellipsizes; the title never yields to it.                                     |
 | `footer`                 | `ReactNode`                                 | —       | Footer content. Typically a row of action buttons aligned right.                                                                                                         |
 | `width`                  | `number`                                    | `480`   | Panel width in px.                                                                                                                                                       |
 | `showEscHint`            | `boolean`                                   | `true`  | Show the muted "esc" hint in the header. Clicking it also calls `onClose`.                                                                                               |
