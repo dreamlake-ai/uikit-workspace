@@ -18,6 +18,13 @@ Use `ContextMenuLabel` for section captions, `ContextMenuGroup` to cluster
 related items, and `ContextMenuShortcut` to right-align a keyboard hint inside
 an item.
 
+## Opening and closing
+
+The menu unfolds from the pointer's corner and folds back into it when it
+closes — Escape, an outside click or a picked item — 220ms, the unfold played
+backwards. While it folds it is `inert`, `aria-hidden` and never takes the
+pointer. Reduced motion: a 100ms fade.
+
 ## Props
 
 ### ContextMenuItem

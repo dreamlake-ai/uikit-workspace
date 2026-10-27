@@ -23,6 +23,12 @@ Three tiers, two custom easings, one prohibition.
   nearest their trigger (`data-unfold="tl" | "tr" | "bl" | "br" | "t" | "b"`): a clip-path
   reveal outset 40px so the shadow and wedge are never cut, plus a slight scale from the same
   corner. Dialogs and toasts keep the plain rise.
+- `220ms` on `cubic-bezier(0.4, 0, 1, 1)` — the **fold** on close: the same panels fold back
+  into that corner, the unfold played backwards, opacity held for the first third. It starts
+  from the pose on screen (a close mid-unfold never jumps) and a reopen mid-fold animates
+  back open on the unfold's curve. The panel is `inert`, `aria-hidden` and pointer-transparent
+  for the fold, so focus return, Escape and the next click are never delayed by it.
+  `lib/usePanelPresence.ts`.
 
 **Tier 3 — spring (420ms)**
 - `420ms` — theme-toggle puck. Uses `cubic-bezier(.34, 1.45, .55, 1)` for an overshoot
@@ -44,5 +50,5 @@ meant to be invisible after first paint.
 
 Honor `prefers-reduced-motion` everywhere. The theme toggle's spring puck and any
 slide-in chrome collapse to instant transitions when the user has reduced-motion set;
-modals keep only their opacity fade (no scaling, no spring); nothing else moves under
-that media query.
+modals keep only their opacity fade (no scaling, no spring); dropdown panels unfold and
+fold as a plain fade (120ms in, 100ms out); nothing else moves under that media query.

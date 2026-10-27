@@ -106,7 +106,9 @@ loads the next page automatically.
 
 The panel floats above the content, so it is not clipped by `overflow: hidden`,
 `transform`, or sticky containers. It tracks the trigger as the page scrolls or
-resizes.
+resizes. It unfolds from the crumbs' corner when it opens and folds back into
+it when it closes (220ms; a 100ms fade under reduced motion). While folding it
+is `inert` and never takes the pointer.
 
 > **Controlled path** — `BreadcrumbTree` is fully controlled. Row clicks call
 > `onNavigate(node, newPath)`; the caller updates `path`. The panel stays open

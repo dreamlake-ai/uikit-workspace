@@ -64,6 +64,12 @@ decision before that's been made.
   `cubic-bezier(0.2,0.8,0.2,1)` — fast out, slow settle — with opacity arriving
   in the first 120ms. Select, DropdownMenu, ContextMenu and BreadcrumbTree use
   the same unfold (`data-unfold`, from `lib/unfold.ts`).
+- **Folds back on close** — closing plays the unfold backwards: 220ms on
+  `cubic-bezier(0.4, 0, 1, 1)`, opacity held for the first third, from
+  whatever pose the panel is in (`lib/usePanelPresence.ts`). The panel stays
+  mounted for the fold but is `inert`, `aria-hidden` and never takes the
+  pointer; reopening mid-fold animates it back open. Reduced motion: a 100ms
+  fade.
 - **Rows are inset chips** — the panel pads 6px on each side so `MenuItem`
   hover and any caller-composed selected state render as rounded 6px chips,
   never edge-to-edge bands. Caller-composed rows should use `px-2` +
