@@ -21,6 +21,10 @@ Click the chevron to open the panel. Drill into nodes by clicking rows. Click a
 breadcrumb item to navigate back (the panel closes). The toggle in the panel's
 bottom-right switches layouts, and rows can be dragged between parents.
 
+The crumbs and the chevron are buttons, so Tab reaches them; on keyboard focus
+each shows the kit's 2px accent ring (pointer clicks show none). The chevron is
+named "Browse folders" and reports `aria-expanded` while the panel is open.
+
 <Preview source={treeSrc} filename="BreadcrumbTreeSpec.tsx">
   <BreadcrumbTreeSpec />
 </Preview>
