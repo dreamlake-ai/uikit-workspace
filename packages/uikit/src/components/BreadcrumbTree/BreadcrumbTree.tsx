@@ -141,6 +141,9 @@ function BreadcrumbItem({
       data-leaf={isLeaf || undefined}
       className={cn(
         "appearance-none border-0 outline-none bg-transparent p-0 mr-1 cursor-pointer",
+        // Keyboard focus only (WCAG 2.4.7): `outline-none` above zeroes the
+        // style, so the ring needs `outline-solid` as well as a width.
+        "rounded-[2px] focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-uikit-accent focus-visible:outline-offset-2",
         "font-normal leading-[1.1]",
         // Inter Tight has heavy hhea metrics (ascent ~1.33em, descent ~0.33em),
         // which push the baseline to the bottom of any line box tighter than
@@ -171,9 +174,14 @@ function ChevronToggle({
     <button
       type="button"
       onClick={onClick}
+      // Icon-only: without a name a screen reader announces just "button"
+      // (WCAG 4.1.2); aria-expanded says whether the panel is open.
+      aria-label="Browse folders"
+      aria-expanded={open}
       data-open={open || undefined}
       className={cn(
         "group/chev appearance-none border-0 outline-none bg-transparent ml-px p-0.5 rounded cursor-pointer",
+        "focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-uikit-accent focus-visible:outline-offset-1",
         "inline-flex items-center transition-colors duration-[120ms]",
         "text-uikit-muted hover:text-uikit-accent data-[open]:text-uikit-accent",
       )}

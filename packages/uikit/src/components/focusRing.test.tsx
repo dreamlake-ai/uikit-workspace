@@ -8,6 +8,7 @@
 import { act, type ReactNode } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, expect, it } from "vitest";
+import { BreadcrumbTree } from "./BreadcrumbTree";
 import { CollectionEntry } from "./CollectionEntry";
 import { PillRadio } from "./PillSelect";
 import { Select, SelectTrigger, SelectValue } from "./Select";
@@ -36,6 +37,18 @@ beforeEach(() => {
     removeListener: () => {},
     dispatchEvent: () => false,
   })) as typeof window.matchMedia;
+  // BreadcrumbTree watches its trigger; jsdom has neither observer.
+  class NoopObserver {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+    takeRecords() {
+      return [];
+    }
+  }
+  const g = globalThis as Record<string, unknown>;
+  g.IntersectionObserver ??= NoopObserver;
+  g.ResizeObserver ??= NoopObserver;
   container = document.createElement("div");
   document.body.append(container);
   root = createRoot(container);
@@ -82,6 +95,17 @@ const CASES: [string, () => ReactNode][] = [
       />
     ),
   ],
+  [
+    "BreadcrumbTree crumbs and chevron",
+    () => (
+      <BreadcrumbTree
+        rootPath="dreamlake"
+        path={[{ id: "a", name: "notes" }]}
+        onNavigate={noop}
+        fetchChildren={async () => ({ items: [], totalPages: 1 })}
+      />
+    ),
+  ],
   ["CollectionEntry", () => <CollectionEntry label="All Bindrs" />],
   [
     "ThemeCycleToggle",
@@ -109,4 +133,24 @@ it.each(CASES)("%s paints a keyboard focus ring", (_name, render) => {
     const cls = b.className.split(/\s+/);
     for (const c of RING) expect(cls).toContain(c);
   }
+});
+
+it("BreadcrumbTree chevron is named and reports whether the panel is open", () => {
+  act(() =>
+    root.render(
+      <BreadcrumbTree
+        rootPath="dreamlake"
+        path={[]}
+        onNavigate={noop}
+        fetchChildren={async () => ({ items: [], totalPages: 1 })}
+      />,
+    ),
+  );
+  const chevron = container.querySelector<HTMLButtonElement>(
+    'button[aria-label="Browse folders"]',
+  );
+  expect(chevron).not.toBeNull();
+  expect(chevron!.getAttribute("aria-expanded")).toBe("false");
+  act(() => chevron!.click());
+  expect(chevron!.getAttribute("aria-expanded")).toBe("true");
 });
