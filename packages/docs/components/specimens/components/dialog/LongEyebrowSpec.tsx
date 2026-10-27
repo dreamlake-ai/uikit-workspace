@@ -23,7 +23,7 @@ export const LongEyebrowSpec = () => {
       <Dialog
         open={open}
         onClose={() => setOpen(false)}
-        title="Move note"
+        title="Move Note"
         eyebrow="Pick-and-place teleop session 14 — gripper calibration sweep and failure notes"
         width={520}
       >

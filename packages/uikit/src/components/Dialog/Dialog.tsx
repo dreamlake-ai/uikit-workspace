@@ -193,7 +193,7 @@ export function Dialog({
         {(shown.title || shown.eyebrow || showEscHint) && (
           <div className="flex items-baseline gap-2.5">
             {shown.title && (
-              // The title is the dialog's name ("Move note") and keeps its words.
+              // The title is the dialog's name ("Move Note") and keeps its words.
               // Only a title longer than the whole row ellipsizes (rather than
               // wrapping or pushing the close button out of the panel).
               <h3

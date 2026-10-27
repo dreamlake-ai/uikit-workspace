@@ -253,7 +253,7 @@ it("lets a long eyebrow yield before the title, and never squeezes the close but
     <Dialog
       open
       onClose={() => {}}
-      title="Move note"
+      title="Move Note"
       eyebrow="Agent setup: task-specific expectations without prompt bloat"
     >
       body
