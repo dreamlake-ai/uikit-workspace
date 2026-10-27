@@ -103,6 +103,27 @@ export function ProfileCard({
     '[@media(hover:none)]:opacity-100 [@media(hover:none)]:pointer-events-auto',
   )
 
+  /*
+   * Touch keeps the edit/delete cluster on screen all the time, in the title
+   * row. The meta (timestamp, version) does not squeeze in beside it: it moves
+   * to the bottom-right corner, at the end of the footer row, and the title
+   * gets the top line up to the buttons. Rendered twice and switched by
+   * `display` in `styles.css` — `display: none` also takes the hidden copy out
+   * of the accessibility tree, so it is never read twice.
+   */
+  const footMeta =
+    topRightActions && titleRight ? (
+      <span
+        data-uikit-title-right-foot=""
+        className={cn(
+          'font-uikit-mono text-uikit-11 text-uikit-muted opacity-65 tracking-uikit-snug whitespace-nowrap shrink-0',
+          'relative z-10',
+        )}
+      >
+        {titleRight}
+      </span>
+    ) : null
+
   return (
     <div
       data-uikit-card=""
@@ -243,10 +264,14 @@ export function ProfileCard({
         </div>
       )}
 
-      {/* footer (+ optional right-aligned cluster) */}
-      {(footer || footerRight) && (
+      {/* footer (+ optional right-aligned cluster). On a touch device with
+          top-right actions the header meta moves here, to the row's right end
+          — `footMeta` below — so a card with no footer still gets the row,
+          which `styles.css` shows only on touch. */}
+      {(footer || footerRight || footMeta) && (
         <div
           data-uikit-footer=""
+          data-uikit-footer-meta-only={footer || footerRight ? undefined : ''}
           className="mt-1.5 flex items-center gap-3 min-w-0 font-uikit-mono text-uikit-11 tracking-uikit-snug"
         >
           {footer ? (
@@ -259,6 +284,7 @@ export function ProfileCard({
               {footerRight}
             </div>
           )}
+          {footMeta}
         </div>
       )}
 

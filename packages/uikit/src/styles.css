@@ -900,25 +900,26 @@ html[data-theme='dark'] {
 }
 
 /*
- * Touch + top-right actions: the header is ONE line, at every width.
+ * Touch + top-right actions: title and buttons on the top line, the meta in
+ * the bottom-right corner.
  *
  * On a pointer device the edit/delete cluster is laid over the header's right
  * end and revealed on hover, while the meta fades out from under it. A
  * `(hover: none)` device has no hover to enter, so the kit shows the cluster
  * permanently — and there it has to be IN the row, not over it: title, then
- * meta, then the buttons, all centred on the title's line. Overriding the
- * narrow-card rule above too: on touch the meta does not drop to a second
- * line, because a second line under always-visible buttons reads as a broken
- * header ("2h ago" stranded under the icons on an iPad).
+ * the buttons, centred on the title's line. The meta does not join them: it
+ * moves to the right end of the footer row (`[data-uikit-title-right-foot]`,
+ * a copy ProfileCard renders for this), so it is never crowded against the
+ * icons or stranded on a second line under them. A card without a footer gets
+ * a footer row for it, shown only here.
  *
- * When the row runs out of room the title truncates first. Once it is down to
- * its floor — the title column's basis, ~6 characters of 14px type plus the
- * ellipsis (more when a tag shares the column) — the meta goes rather than
- * wrapping: it is the one item allowed onto a second flex line, and the row's
- * fixed height clips that line away, so the title grows back into the space.
- * No reserved gutter: the cluster is in flow, so the row is sized by what is
- * actually in it.
+ * The title truncates against the buttons; the row never wraps.
  */
+[data-uikit-title-right-foot],
+[data-uikit-footer-meta-only] {
+  display: none;
+}
+
 @media (hover: none) {
   [data-uikit-card][data-uikit-top-actions] [data-uikit-header] {
     flex-wrap: nowrap;
@@ -930,26 +931,20 @@ html[data-theme='dark'] {
   }
 
   [data-uikit-card][data-uikit-top-actions] [data-uikit-header-main] {
-    flex-wrap: wrap;
-    align-content: flex-start;
-    height: 1.25rem;
-    overflow: hidden;
+    flex-wrap: nowrap;
   }
 
-  [data-uikit-card][data-uikit-top-actions] [data-uikit-title-col] {
-    flex-basis: 3.5rem;
+  [data-uikit-card][data-uikit-top-actions] [data-uikit-header] [data-uikit-title-right] {
+    display: none;
   }
 
-  [data-uikit-card][data-uikit-top-actions] [data-uikit-title-col]:has(> [data-uikit-tag]) {
-    flex-basis: 7rem;
-  }
-
-  [data-uikit-card][data-uikit-top-actions] [data-uikit-title-right] {
-    flex-basis: auto;
+  [data-uikit-card][data-uikit-top-actions] [data-uikit-title-right-foot] {
     display: block;
-    white-space: nowrap;
-    margin-top: 0;
-    padding-right: 0;
+    margin-left: auto;
+  }
+
+  [data-uikit-card][data-uikit-top-actions] [data-uikit-footer-meta-only] {
+    display: flex;
   }
 }
 
