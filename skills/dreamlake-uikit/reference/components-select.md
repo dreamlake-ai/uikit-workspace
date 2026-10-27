@@ -42,6 +42,18 @@ Both used to render muted at 85% opacity, which measured 3.3:1 against the panel
 in dark mode — under WCAG AA — and made an open dropdown read as a list of
 disabled rows.
 
+### Opening and closing
+
+The list unfolds from the trigger's corner when it opens and **folds back into
+it** when it closes — the unfold played backwards, 220ms on an accelerating
+curve with the opacity held for the first third. A pick applies the moment it is
+clicked; the fold is only what the list looks like on its way out. While it
+folds it is already gone for everything else: focus is back on the trigger,
+the list is `inert` and `aria-hidden`, and it never takes the pointer, so the
+next click lands on what is underneath. Reopening mid-fold animates the same
+list back open from where it had got to. Under `prefers-reduced-motion` the
+fold is a 100ms fade.
+
 ### Keyboard focus
 
 The trigger shows the kit's focus ring — a 2px `--uikit-accent` outline, 2px

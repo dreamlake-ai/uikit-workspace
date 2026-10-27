@@ -18,6 +18,8 @@ import {
   Loader,
 } from "lucide-react";
 import { cn } from "../../lib/utils";
+import { usePanelPresence } from "../../lib/usePanelPresence";
+import { useComposedRef } from "../../lib/useModalPresence";
 import { ToggleButtons, ToggleButton } from "../Toggle/ToggleButtons";
 import { useBreadcrumbTree } from "./useBreadcrumbTree";
 import { TreeFlow } from "./TreeFlow";
@@ -359,6 +361,9 @@ export function BreadcrumbTree({
   } | null>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  // Stays mounted while it folds back toward the crumbs after closing.
+  const presence = usePanelPresence(open);
+  const panelNodeRef = useComposedRef<HTMLDivElement>(panelRef, presence.ref);
   const columnsRef = useRef<HTMLDivElement>(null);
 
   const [ownView, setOwnView] = useState<BreadcrumbView>(defaultView);
@@ -914,12 +919,13 @@ export function BreadcrumbTree({
       </div>
 
       {/* ── Panel (portaled to body so it floats above any clipping ancestor) ── */}
-      {open &&
+      {presence.present &&
         anchorRect &&
         typeof document !== "undefined" &&
         createPortal(
           <div
-            ref={panelRef}
+            ref={panelNodeRef}
+            {...presence.closingProps}
             className={cn(
               "uikit-panel-in fixed z-[1000] flex flex-col overflow-hidden origin-top-left",
               "bg-uikit-bg text-uikit-ink font-uikit-ui",

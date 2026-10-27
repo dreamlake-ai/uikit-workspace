@@ -41,6 +41,8 @@ import {
 } from "../../lib/legacy-overlay-props";
 import { ChevronDown } from "lucide-react";
 import { unfoldFrom } from "../../lib/unfold";
+import { usePanelPresence } from "../../lib/usePanelPresence";
+import { useComposedRef } from "../../lib/useModalPresence";
 
 function mergeRefs<T>(
   ...refs: (Ref<T> | undefined | ((n: T | null) => void))[]
@@ -441,22 +443,35 @@ export function SelectContent({
 }: SelectContentProps) {
   const ctx = useSelectContext("SelectContent");
   const hover = useHoverSlider();
+  const presence = usePanelPresence(ctx.open);
+  const panelRef = useComposedRef<HTMLElement>(
+    ctx.refs.setFloating as never,
+    presence.ref,
+  );
   const activeRow =
     ctx.open && ctx.activeIndex != null
       ? (ctx.elementsRef.current[ctx.activeIndex] ?? null)
       : null;
   // Aim the slider at the active row — floating-ui moves it for the pointer
   // and the arrow keys alike, so both drive the one fill.
+  // While the panel folds away the fill stays on the row it was on, rather
+  // than fading off the row the user just picked.
   useLayoutEffect(() => {
-    hover.track(activeRow);
+    if (ctx.open) hover.track(activeRow);
   }, [activeRow]); // eslint-disable-line react-hooks/exhaustive-deps
-  if (!ctx.open) return null;
+  if (!presence.present) return null;
   const rest = stripLegacyOverlayProps(props);
   return (
     <FloatingPortal>
-      <FloatingFocusManager context={ctx.context} modal={false}>
+      {/* Disabled the moment it closes, so focus goes back to the trigger at
+          the start of the fold, not the end of it. */}
+      <FloatingFocusManager
+        context={ctx.context}
+        modal={false}
+        disabled={!ctx.open}
+      >
         <div
-          ref={ctx.refs.setFloating as never}
+          ref={panelRef}
           style={{ ...ctx.floatingStyles, ...style }}
           className={cn(
             // A flex column so the rows do not touch. Each row paints its own rounded
@@ -469,6 +484,7 @@ export function SelectContent({
           )}
           data-unfold={unfoldFrom(ctx.context.placement)}
           {...ctx.getFloatingProps(rest)}
+          {...presence.closingProps}
         >
           {ctx.arrow && (
             <span
