@@ -78,12 +78,18 @@ test("a long name truncates before the buttons", async ({ page }) => {
     let n: Node | null;
     while ((n = walker.nextNode()))
       if (n.textContent === "arm-bc-v2")
-        n.textContent = "arm-bc-v2-ego-teleop-resnet-encoder-sweep-03";
+        n.textContent = "arm-bc-v2-ego-teleop-resnet-encoder-sweep-03-with-augmentations-v7";
   });
   await expectLayout(card);
+  // The title box or the text span inside it (the specimen leads the name with
+  // its visibility icon) carries the ellipsis.
   const truncated = await card
     .locator("[data-uikit-title-col] > :first-child")
-    .evaluate((t) => t.scrollWidth > t.clientWidth);
+    .evaluate((t) =>
+      [t, ...t.querySelectorAll("span")].some(
+        (e) => e.scrollWidth > e.clientWidth,
+      ),
+    );
   expect(truncated).toBe(true);
 });
 

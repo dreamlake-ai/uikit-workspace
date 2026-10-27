@@ -63,7 +63,7 @@ as the left-side stats.
 | Prop | Type | Description |
 | --- | --- | --- |
 | `title` | `ReactNode` | Primary name in the header. Default: 14px medium. |
-| `tag` | `ReactNode` | Small badge immediately after the title. Default: mono 10.5px, 80% opacity. |
+| `tag` | `ReactNode` | Small badge immediately after the title — a kind such as `python` or `git`. Default: mono 10.5px, 80% opacity. Not for visibility: that is an icon leading the title — a lock for private, a globe for public (13px, private muted, public accent), its meaning in the kit tooltip — never the word `private`. |
 | `titleRight` | `ReactNode` | Right-aligned header meta — timestamp, version, etc. Default: mono 11px, 65% opacity. Auto-fades on hover / keyboard focus when `topRightActions` is also set; on touch it moves to the bottom-right corner, at the end of the footer row. |
 | `description` | `ReactNode` | Optional body paragraph. Default: 13px, 75% opacity, 1.5 line-height. |
 | `footer` | `ReactNode` | Optional stats/meta row at the bottom-left. Default: mono 11px, 75% opacity, truncates. |
