@@ -1,3 +1,4 @@
+import { ChevronRight } from "lucide-react";
 import { type ComponentProps, type ReactNode } from "react";
 import { cn } from "../../lib/utils";
 
@@ -61,21 +62,14 @@ function CardStack({ layers }: { layers: number }) {
 
 function Chevron({ expanded }: { expanded: boolean }) {
   return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
+    <ChevronRight
+      size={14}
       aria-hidden
       className={cn(
         "shrink-0 transition-transform duration-150",
         expanded && "rotate-90",
       )}
-    >
-      <path d="M9 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
+    />
   );
 }
 

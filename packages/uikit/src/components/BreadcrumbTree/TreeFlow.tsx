@@ -830,7 +830,7 @@ function FlowRow({
                 expanded && "rotate-90",
               )}
             >
-              <ChevronRight size={11} strokeWidth={1.5} />
+              <ChevronRight size={11} />
             </button>
           )}
         </span>
@@ -846,7 +846,7 @@ function FlowRow({
             "group-data-[trail]/row:text-uikit-ink",
           )}
         >
-          {row.node.icon ?? <Folder size={14} strokeWidth={1.5} />}
+          {row.node.icon ?? <Folder size={14} />}
         </span>
 
         <span className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap pr-2">

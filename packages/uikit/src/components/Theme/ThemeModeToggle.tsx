@@ -1,64 +1,7 @@
+import { Monitor, Moon, Sun } from "lucide-react";
 import { type ComponentProps, type CSSProperties, type ReactNode } from "react";
 import { cn } from "../../lib/utils";
 import { type BaseTheme, useThemeOptional } from "./ThemeProvider";
-
-function SunIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <circle cx="12" cy="12" r="4" />
-      <path d="M12 2v2" />
-      <path d="M12 20v2" />
-      <path d="M4.93 4.93l1.41 1.41" />
-      <path d="M17.66 17.66l1.41 1.41" />
-      <path d="M2 12h2" />
-      <path d="M20 12h2" />
-      <path d="M4.93 19.07l1.41-1.41" />
-      <path d="M17.66 6.34l1.41-1.41" />
-    </svg>
-  );
-}
-
-function MonitorIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <rect x="3" y="4" width="18" height="13" rx="2" />
-      <path d="M8 21h8" />
-      <path d="M12 17v4" />
-    </svg>
-  );
-}
-
-function MoonIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-    </svg>
-  );
-}
 
 // Unselected glyphs differ from selected in OPACITY ONLY. They used to shrink
 // to .85 and counter-rotate 18°, which meant every switch shoved all three
@@ -72,17 +15,17 @@ const SEGMENTS: Record<
 > = {
   light: {
     label: "Light mode",
-    icon: <SunIcon />,
+    icon: <Sun aria-hidden />,
     rest: "[&>svg]:opacity-70",
   },
   system: {
     label: "System theme",
-    icon: <MonitorIcon />,
+    icon: <Monitor aria-hidden />,
     rest: "[&>svg]:opacity-70",
   },
   dark: {
     label: "Dark mode",
-    icon: <MoonIcon />,
+    icon: <Moon aria-hidden />,
     rest: "[&>svg]:opacity-70",
   },
 };

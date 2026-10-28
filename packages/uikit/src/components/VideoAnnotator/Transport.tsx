@@ -199,7 +199,7 @@ export function Transport({
             label="Prev frame (←)"
             onClick={() => stepFrame(-1, false)}
           >
-            <ChevronLeft size={15} strokeWidth={1.8} />
+            <ChevronLeft size={15} />
           </TipButton>
         )}
         <TipButton
@@ -215,7 +215,7 @@ export function Transport({
             label="Next frame (→)"
             onClick={() => stepFrame(1, false)}
           >
-            <ChevronRight size={15} strokeWidth={1.8} />
+            <ChevronRight size={15} />
           </TipButton>
         )}
         {level < 4 && (
@@ -236,7 +236,7 @@ export function Transport({
           label="Split at playhead (S)"
           onClick={doSplit}
         >
-          <Scissors size={15} strokeWidth={1.8} />
+          <Scissors size={15} />
         </TipButton>
         {!folded && (
           <TipButton
@@ -245,7 +245,7 @@ export function Transport({
             onClick={() => doMerge(sel)}
             disabled={sel <= 0}
           >
-            <ArrowLeftToLine size={15} strokeWidth={1.8} />
+            <ArrowLeftToLine size={15} />
           </TipButton>
         )}
         {!folded && hasHandpose && (
@@ -263,7 +263,7 @@ export function Transport({
             onClick={onToggleHands}
             disabled={handsLoading}
           >
-            <Hand size={15} strokeWidth={1.8} />
+            <Hand size={15} />
           </TipButton>
         )}
         {transportExtra != null && (
@@ -279,7 +279,7 @@ export function Transport({
                 className="va-icon va-more"
                 aria-label="More controls"
               >
-                <MoreHorizontal size={15} strokeWidth={1.8} />
+                <MoreHorizontal size={15} />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="va-moremenu">
@@ -307,11 +307,11 @@ export function Transport({
               {level >= 3 && (
                 <>
                   <DropdownMenuItem onSelect={() => stepFrame(-1, false)}>
-                    <ChevronLeft size={13} strokeWidth={1.8} /> Prev frame
+                    <ChevronLeft size={13} /> Prev frame
                     <span className="va-moremenu-key">←</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem onSelect={() => stepFrame(1, false)}>
-                    <ChevronRight size={13} strokeWidth={1.8} /> Next frame
+                    <ChevronRight size={13} /> Next frame
                     <span className="va-moremenu-key">→</span>
                   </DropdownMenuItem>
                 </>
@@ -321,8 +321,7 @@ export function Transport({
                 disabled={sel <= 0}
                 onSelect={() => doMerge(sel)}
               >
-                <ArrowLeftToLine size={13} strokeWidth={1.8} /> Merge into
-                previous
+                <ArrowLeftToLine size={13} /> Merge into previous
                 <span className="va-moremenu-key">⌫</span>
               </DropdownMenuItem>
               {hasHandpose && (
@@ -330,7 +329,7 @@ export function Transport({
                   disabled={handsLoading}
                   onSelect={onToggleHands}
                 >
-                  <Hand size={13} strokeWidth={1.8} />
+                  <Hand size={13} />
                   {handsLoading
                     ? "Loading hand pose…"
                     : showHands

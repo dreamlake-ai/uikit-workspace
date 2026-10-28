@@ -1,3 +1,4 @@
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { cn } from "../../lib/utils";
 
@@ -74,9 +75,7 @@ export function ZoomControl({
         onClick={() => onZoom(clamp(zoom / STEP_FACTOR))}
         disabled={zoom <= minZoom}
       >
-        <svg viewBox="0 0 24 24" width={12} height={12} fill="none" stroke="currentColor" strokeWidth={2.2}>
-          <polyline points="15 18 9 12 15 6" />
-        </svg>
+        <ChevronLeft size={12} aria-hidden />
       </button>
 
       <span
@@ -105,9 +104,7 @@ export function ZoomControl({
         onClick={() => onZoom(clamp(zoom * STEP_FACTOR))}
         disabled={zoom >= maxZoom}
       >
-        <svg viewBox="0 0 24 24" width={12} height={12} fill="none" stroke="currentColor" strokeWidth={2.2}>
-          <polyline points="9 18 15 12 9 6" />
-        </svg>
+        <ChevronRight size={12} aria-hidden />
       </button>
     </div>
   );

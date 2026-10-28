@@ -1,3 +1,4 @@
+import { X } from "lucide-react"
 import {
   useEffect,
   useRef,
@@ -11,21 +12,7 @@ import { tabDomId, tabPanelDomId } from './GroupTabBar'
 import type { PanelBox } from './panel-box'
 import type { LeafNode } from './panel-tree'
 
-const CloseIcon = () => (
-  <svg
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    aria-hidden
-    className="block w-[14px] h-[14px]"
-  >
-    <line x1="6" y1="6" x2="18" y2="18" />
-    <line x1="18" y1="6" x2="6" y2="18" />
-  </svg>
-)
+const CloseIcon = () => <X size={14} aria-hidden className="block" />
 
 function HeaderBtn({
   label,

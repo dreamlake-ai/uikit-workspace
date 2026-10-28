@@ -1,7 +1,7 @@
 import { type ComponentProps } from "react";
 import { cn } from "../../lib/utils";
 import { type BaseTheme, useTheme, useThemeOptional } from "./ThemeProvider";
-import { Moon, Sun, SunMoon } from "lucide-react";
+import { Droplet, Moon, Sun, SunMoon } from "lucide-react";
 
 export interface ThemeCycleToggleProps extends Omit<
   ComponentProps<"button">,
@@ -87,18 +87,12 @@ const toggleClass =
 
 function LiquidIcon({ on }: { on: boolean }) {
   return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
+    <Droplet
+      size={18}
+      strokeWidth={1.5}
       fill={on ? "currentColor" : "none"}
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinejoin="round"
       aria-hidden
-    >
-      <path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z" />
-    </svg>
+    />
   );
 }
 
