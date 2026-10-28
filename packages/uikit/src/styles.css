@@ -48,6 +48,12 @@
   --uikit-rail-stroke: #d8d4c8;
   --uikit-handle: #c8c8c8; /* grip hint, 1.66:1 on --bg-light */
   --uikit-handle-active: #8a8a8a; /* grabbed, 3.42:1 */
+  /* Resize grip pill (every splitter): a small frosted capsule with a hairline
+     edge and a soft drop shadow, so the seam needs no divider line of its own. */
+  --uikit-grip-fill: rgba(255, 255, 255, 0.65);
+  --uikit-grip-ring: rgba(0, 0, 0, 0.08);
+  --uikit-grip-ring-hover: rgba(0, 0, 0, 0.12);
+  --uikit-grip-shadow: 0 2px 10px rgba(0, 0, 0, 0.22);
 
   /* ── Selection / accent ──────────────────────────────────────── */
   --selected-bg: #d9e6f7;
@@ -168,6 +174,10 @@ html[data-theme='dark'] {
   --uikit-rail-stroke: #45454d;
   --uikit-handle: #5c5c5c; /* grip hint, 2.02:1 on --bg-dark */
   --uikit-handle-active: #9a9a9a; /* grabbed, 4.79:1 */
+  --uikit-grip-fill: rgba(78, 78, 86, 0.86);
+  --uikit-grip-ring: rgba(255, 255, 255, 0.12);
+  --uikit-grip-ring-hover: rgba(255, 255, 255, 0.22);
+  --uikit-grip-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
 
   --selected-bg: #3d4856;
   --tree-hover: #37373d;
@@ -229,6 +239,10 @@ html[data-theme='dark'] {
     --uikit-rail-stroke: #45454d;
     --uikit-handle: #5c5c5c; /* grip hint, 2.02:1 on --bg-dark */
     --uikit-handle-active: #9a9a9a; /* grabbed, 4.79:1 */
+    --uikit-grip-fill: rgba(78, 78, 86, 0.86);
+    --uikit-grip-ring: rgba(255, 255, 255, 0.12);
+    --uikit-grip-ring-hover: rgba(255, 255, 255, 0.22);
+    --uikit-grip-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
 
     --selected-bg: #3d4856;
     --tree-hover: #37373d;
@@ -1147,4 +1161,24 @@ html[data-theme='dark'] {
 [data-uikit-code-editor] .monaco-editor-background,
 [data-uikit-code-editor] .monaco-editor .margin {
   background-color: transparent;
+}
+
+/* ── Resize grip pill ─────────────────────────────────────────────────────
+   The one look every splitter shares (ResizeDivider, PanelLayout Divider,
+   Waterfall, and the app's column handles): a slim frosted capsule. Hover
+   sharpens its edge; while held the edge takes the accent. No line is drawn
+   along the seam — the pill alone marks it. */
+.uikit-grip-pill {
+  border-radius: 9999px;
+  background: var(--uikit-grip-fill);
+  box-shadow: 0 0 0 1px var(--uikit-grip-ring), var(--uikit-grip-shadow);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  pointer-events: none;
+}
+.uikit-grip-pill[data-grip='hover'] {
+  box-shadow: 0 0 0 1px var(--uikit-grip-ring-hover), var(--uikit-grip-shadow);
+}
+.uikit-grip-pill[data-grip='active'] {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--uikit-accent) 60%, transparent), var(--uikit-grip-shadow);
 }

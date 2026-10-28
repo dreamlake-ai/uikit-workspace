@@ -225,6 +225,8 @@ export function ResizeDivider({
       {!hideCapsule && (
         <div
           aria-hidden
+          className="uikit-grip-pill"
+          data-grip={dragging ? 'active' : lit ? 'hover' : undefined}
           style={{
             position: 'absolute',
             // Centered on the short axis; following cursor on the long axis.
@@ -245,14 +247,8 @@ export function ResizeDivider({
                   height: pillVisible ? PILL_THICKNESS : 0,
                   width: PILL_LENGTH,
                 }),
-            borderRadius: 9999,
-            background: 'rgba(255,255,255,0.65)',
-            boxShadow: '0 0 0 1px rgba(0,0,0,0.08), 0 2px 10px rgba(0,0,0,0.22)',
-            backdropFilter: 'blur(6px)',
-            WebkitBackdropFilter: 'blur(6px)',
             opacity: pillVisible ? 1 : 0,
-            transition: pillTransition,
-            pointerEvents: 'none',
+            transition: `${pillTransition}, box-shadow 140ms ease`,
             willChange: 'transform, top, left, width, height, opacity',
           }}
         />

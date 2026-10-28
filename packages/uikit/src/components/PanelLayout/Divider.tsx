@@ -172,8 +172,8 @@ export function Divider({
   const lit = active || hover
 
   const pillStyle: CSSProperties = isRow
-    ? { top: cur?.pos ?? 0, width: 3, height: 56 }
-    : { left: cur?.pos ?? 0, width: 56, height: 3 }
+    ? { top: cur?.pos ?? 0, width: 5, height: 56 }
+    : { left: cur?.pos ?? 0, width: 56, height: 5 }
 
   return (
     <div
@@ -218,10 +218,10 @@ export function Divider({
         // in dark, white) pill read as a heavier control than a seam should be.
         <div
           className={cn(
-            'absolute rounded-full pointer-events-none [transition:opacity_140ms_ease,background_140ms_ease]',
+            'uikit-grip-pill absolute [transition:opacity_140ms_ease,box-shadow_140ms_ease]',
             isRow ? 'left-1/2 -translate-x-1/2 -translate-y-1/2' : 'top-1/2 -translate-x-1/2 -translate-y-1/2',
-            active ? 'bg-uikit-handle-active' : 'bg-uikit-handle',
           )}
+          data-grip={active ? 'active' : 'hover'}
           style={pillStyle}
         />
       )}
