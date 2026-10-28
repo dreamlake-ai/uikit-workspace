@@ -7,7 +7,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { Pencil } from "lucide-react";
+import { LayoutGrid, List, Pencil } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { Tabs } from "../Tabs/Tabs";
 import { Avatar, AvatarHero, getInitials } from "../Avatar/Avatar";
@@ -193,30 +193,11 @@ function GridColsToggle({
               "transition-[opacity,color] duration-[120ms]",
             )}
           >
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 14 14"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.25"
-              strokeLinecap="round"
-            >
-              {cols === 1 ? (
-                <>
-                  <line x1="2.5" y1="4" x2="11.5" y2="4" />
-                  <line x1="2.5" y1="7" x2="11.5" y2="7" />
-                  <line x1="2.5" y1="10" x2="11.5" y2="10" />
-                </>
-              ) : (
-                <>
-                  <rect x="2.5" y="2.5" width="3.5" height="3.5" rx=".5" />
-                  <rect x="8" y="2.5" width="3.5" height="3.5" rx=".5" />
-                  <rect x="2.5" y="8" width="3.5" height="3.5" rx=".5" />
-                  <rect x="8" y="8" width="3.5" height="3.5" rx=".5" />
-                </>
-              )}
-            </svg>
+            {cols === 1 ? (
+              <List size={14} aria-hidden />
+            ) : (
+              <LayoutGrid size={14} aria-hidden />
+            )}
           </button>
         );
       })}

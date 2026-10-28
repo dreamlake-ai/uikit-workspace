@@ -1,3 +1,4 @@
+import { X } from "lucide-react"
 import {
   type ComponentProps,
   type MouseEvent,
@@ -158,9 +159,7 @@ export function ModalContent({
             onClick={() => setOpen(false)}
             className="absolute right-4 top-4 inline-flex size-6 items-center justify-center rounded-md text-uikit-muted hover:bg-uikit-ink-5 hover:text-uikit-ink transition-colors cursor-pointer"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
-              <path d="M18 6 6 18M6 6l12 12" />
-            </svg>
+            <X size={14} aria-hidden />
           </button>
         )}
       </div>

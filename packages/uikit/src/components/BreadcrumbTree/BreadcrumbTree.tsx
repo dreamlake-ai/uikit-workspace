@@ -193,7 +193,7 @@ function ChevronToggle({
           "group-data-[open]/chev:rotate-180",
         )}
       >
-        <ChevronDown size={10} strokeWidth={1.5} />
+        <ChevronDown size={10} />
       </span>
     </button>
   );
@@ -305,7 +305,6 @@ function TreeRow({
       {node.icon ?? (
         <Folder
           size={14}
-          strokeWidth={1.5}
           className={cn(
             "shrink-0 text-uikit-muted",
             // The glyph keeps the accent on a selected row. What made the panel
@@ -328,7 +327,6 @@ function TreeRow({
       {node.hasChildren !== false && (
         <ChevronRight
           size={11}
-          strokeWidth={1.5}
           className={cn(
             "shrink-0 text-uikit-muted opacity-50",
             "group-data-[drop=into]/row:!text-uikit-accent group-data-[drop=into]/row:opacity-70",
@@ -1236,10 +1234,10 @@ export function BreadcrumbTree({
                   padding={false}
                 >
                   <ToggleButton value="columns" icon aria-label="Column view">
-                    <Columns3 size={13} strokeWidth={1.5} />
+                    <Columns3 size={13} />
                   </ToggleButton>
                   <ToggleButton value="tree" icon aria-label="Tree view">
-                    <ListTree size={13} strokeWidth={1.5} />
+                    <ListTree size={13} />
                   </ToggleButton>
                 </ToggleButtons>
               </div>

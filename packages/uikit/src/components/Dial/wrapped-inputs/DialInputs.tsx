@@ -143,12 +143,9 @@ export const DialVec3Input: React.FC<DialWrapperProps> = ({
           }
         >
           {isLocked ? (
-            <LockKeyhole
-              strokeWidth={1.5}
-              className="text-uikit-muted size-2.5"
-            />
+            <LockKeyhole className="text-uikit-muted size-2.5" />
           ) : (
-            <LockOpen strokeWidth={1.5} className="text-uikit-muted size-2.5" />
+            <LockOpen className="text-uikit-muted size-2.5" />
           )}
         </Button>
       );
