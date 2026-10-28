@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Globe, Lock } from "lucide-react";
 import { ChipMulti, PillRadio, type PillOption } from "@dreamlake/uikit";
 
 const ROLES: PillOption[] = [
@@ -16,7 +17,13 @@ const TEAMS: PillOption[] = [
   { value: "data-platform", label: "data platform" },
 ];
 
+const VISIBILITY: PillOption[] = [
+  { value: "private", label: "private", icon: <Lock size={11} /> },
+  { value: "public", label: "public", icon: <Globe size={11} /> },
+];
+
 export const PillSelectSpec = () => {
+  const [visibility, setVisibility] = useState("private");
   const [role, setRole] = useState("member");
   const [teams, setTeams] = useState<string[]>(["perception", "fleet-ops"]);
 
@@ -29,6 +36,13 @@ export const PillSelectSpec = () => {
         maxWidth: 420,
       }}
     >
+      <Field label="visibility">
+        <PillRadio
+          value={visibility}
+          onValueChange={setVisibility}
+          options={VISIBILITY}
+        />
+      </Field>
       <Field label="role">
         <PillRadio value={role} onValueChange={setRole} options={ROLES} />
       </Field>
