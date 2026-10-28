@@ -73,6 +73,9 @@ interface SelectContextValue {
   activeIndex: number | null;
   elementsRef: React.MutableRefObject<Array<HTMLElement | null>>;
   labelsRef: React.MutableRefObject<Array<string | null>>;
+  /** True while a typeahead run is in progress — a Space then belongs to the
+   *  search ("name a–z"), not to choosing the active row. */
+  typingRef: React.MutableRefObject<boolean>;
 }
 const SelectContext = createContext<SelectContextValue | null>(null);
 function useSelectContext(name: string) {
@@ -206,6 +209,7 @@ export function Select({
   const elementsRef = useRef<Array<HTMLElement | null>>([]);
   const labelsRef = useRef<Array<string | null>>([]);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const typingRef = useRef(false);
 
   const arrowRef = useRef<HTMLSpanElement>(null);
   const chevronRef = useRef<SVGSVGElement>(null);
@@ -258,6 +262,9 @@ export function Select({
     listRef: labelsRef,
     activeIndex,
     onMatch: open ? setActiveIndex : undefined,
+    onTypingChange: (typing) => {
+      typingRef.current = typing;
+    },
   });
   const { getReferenceProps, getFloatingProps, getItemProps } = useInteractions(
     [click, dismiss, role, listNav, typeahead],
@@ -282,6 +289,7 @@ export function Select({
       activeIndex,
       elementsRef,
       labelsRef,
+      typingRef,
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
@@ -557,11 +565,25 @@ export function SelectItem({
   const active = ctx.activeIndex === index;
   const selected = ctx.value === value;
 
+  const choose = () => {
+    if (disabled) return;
+    ctx.setValue(value);
+    ctx.setOpen(false);
+  };
+  // Arrow keys move focus onto a row; Enter or Space on that row chooses it,
+  // as on a native <select> (WCAG 2.1.1). A row is a div, so it gets no
+  // keyboard click of its own — without this, Enter left the list open and
+  // the value unchanged.
   const itemProps = ctx.getItemProps({
-    onClick: () => {
-      if (disabled) return;
-      ctx.setValue(value);
-      ctx.setOpen(false);
+    onClick: choose,
+    onKeyDown: (event: React.KeyboardEvent) => {
+      if (
+        event.key === "Enter" ||
+        (event.key === " " && !ctx.typingRef.current)
+      ) {
+        event.preventDefault();
+        choose();
+      }
     },
   });
 
