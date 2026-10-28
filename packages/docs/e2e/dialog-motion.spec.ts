@@ -83,3 +83,22 @@ test("reduced motion: the section opens at once", async ({ page }) => {
   const after = (await dialog.boundingBox())!.height;
   expect(after - before).toBeGreaterThan(40);
 });
+
+test("a dialog taller than its cap scrolls only its body; the footer stays", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 900, height: 300 });
+  const dialog = await openGrowing(page);
+  await dialog.getByRole("button", { name: "Connection options" }).click();
+  await page.waitForTimeout(400);
+  const connect = dialog.getByRole("button", { name: "Connect", exact: true });
+  await expect(connect).toBeInViewport();
+  const body = dialog.locator('[data-slot="dialog-body"]');
+  const m = await body.evaluate((el) => ({
+    sh: el.scrollHeight,
+    ch: el.clientHeight,
+    fade: el.getAttribute("data-fade-bottom"),
+  }));
+  expect(m.sh).toBeGreaterThan(m.ch);
+  expect(m.fade).not.toBeNull();
+});

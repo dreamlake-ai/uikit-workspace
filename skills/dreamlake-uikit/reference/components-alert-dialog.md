@@ -10,6 +10,10 @@ Compose `AlertDialogTrigger` + `AlertDialogContent` (with `AlertDialogHeader`,
 `AlertDialogAction` / `AlertDialogCancel` buttons). Open state can be controlled
 (`open` + `onOpenChange`) or uncontrolled.
 
+## Growing content
+
+When the content changes height while open, the panel glides to its new height (220ms, quick then slow) instead of jumping, and stays centred — the same behaviour as `Dialog`. A `Collapsible` inside is followed as it animates. Reduced motion: no glide.
+
 ## Props
 
 ### `AlertDialog`

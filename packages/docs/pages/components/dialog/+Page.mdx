@@ -36,8 +36,9 @@ When the content changes height while the dialog is open — a section expands,
 an error line appears, a multi-step dialog moves to its next step — the panel
 glides to its new height (220ms, quick then slow) instead of jumping, and stays
 centred as it does. A `Collapsible` inside is followed as it animates, so the
-two never fight. The panel still caps at 85% of the viewport and scrolls inside
-past that. `Modal` and `AlertDialog` do the same. Reduced motion: no glide.
+two never fight. The panel still caps at 85% of the viewport; past that only the body
+scrolls — the title row and the footer stay in view — and the edge with more
+content fades over 12px so a cut line reads as "keep scrolling". `Modal` and `AlertDialog` do the same. Reduced motion: no glide.
 
 <Preview source={growingSrc} filename="GrowingSpec.tsx">
   <GrowingSpec />

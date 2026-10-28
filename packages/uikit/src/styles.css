@@ -767,6 +767,25 @@ html[data-theme='dark'] {
   }
 }
 
+/* ── Dialog body ─────────────────────────────────────────────────
+   When a Dialog's content is taller than its 85vh cap, only the body scrolls;
+   the edge that has more content fades over 12px. */
+.uikit-dialog-body[data-fade-top] {
+  mask-image: linear-gradient(to bottom, transparent 0, #000 12px);
+}
+.uikit-dialog-body[data-fade-bottom] {
+  mask-image: linear-gradient(to top, transparent 0, #000 12px);
+}
+.uikit-dialog-body[data-fade-top][data-fade-bottom] {
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 12px,
+    #000 calc(100% - 12px),
+    transparent 100%
+  );
+}
+
 /* ── Collapsible ─────────────────────────────────────────────────
    Height moves between 0 and the measured content height, quick then slow;
    the content fades in and settles 4px as it opens, and leaves faster than it

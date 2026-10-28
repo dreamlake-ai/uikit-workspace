@@ -36,11 +36,18 @@ export function useAnimatedPanelHeight(active: boolean) {
     // At rest the panel is at its natural (auto) height already; mid-glide the
     // natural height is the content's, capped at the panel's max-height.
     const max = parseFloat(getComputedStyle(el).maxHeight);
+    // Mid-glide the panel is clipped, and a scrolling child (the Dialog body)
+    // is squeezed to fit; add back what each child hides to get the height
+    // the content wants.
+    let wanted = el.scrollHeight;
+    for (const child of Array.from(el.children)) {
+      wanted += Math.max(0, child.scrollHeight - child.clientHeight);
+    }
     const natural = !anim.current
       ? onScreen
       : Number.isFinite(max)
-        ? Math.min(el.scrollHeight, max)
-        : el.scrollHeight;
+        ? Math.min(wanted, max)
+        : wanted;
     const from = anim.current ? onScreen : last.current;
     last.current = natural;
     if (from == null || Math.abs(natural - from) < 1) return;
