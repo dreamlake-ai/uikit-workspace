@@ -1,17 +1,28 @@
-import { type ComponentProps, type KeyboardEvent, useRef } from "react";
+import {
+  type ComponentProps,
+  type KeyboardEvent,
+  type ReactNode,
+  useRef,
+} from "react";
 import { cn } from "../../lib/utils";
 
 export interface PillOption {
   value: string;
   label: string;
   disabled?: boolean;
+  /**
+   * Optional glyph before the label — e.g. a lock / globe on a visibility
+   * row. Size it to the 11px label (an 11px lucide icon). Decorative: the
+   * label names the option.
+   */
+  icon?: ReactNode;
 }
 
 // Geometry is the app's, to the half-pixel. The line box is PINNED: the mono
 // face renders a ~16.5px default line, which makes the pill 26.5px tall;
 // 14.5px + 5 + 5 puts it back on the 24.5px the design draws.
 const PILL = [
-  "inline-flex items-center justify-center whitespace-nowrap select-none cursor-pointer",
+  "inline-flex items-center justify-center gap-[5px] whitespace-nowrap select-none cursor-pointer",
   "font-uikit-mono text-uikit-11 leading-[14.5px] tracking-uikit-snug",
   "px-2.5 py-[5px] rounded-uikit-badge",
   "transition-[background-color,box-shadow,opacity,color] duration-[120ms]",
@@ -43,6 +54,34 @@ const PILL = [
 // Single- and multi-select share it. What differs is how many are on at once,
 // which the control already shows.
 const SELECTED = "bg-uikit-chip text-uikit-ink shadow-none opacity-100";
+
+// The glyph trails the label's weight rather than matching it: at this size a
+// full-strength icon beside 11px mono reads as the louder half of the pair.
+// An icon makes the pill a flex line, so the glyph sits on the label's optical
+// centre rather than its baseline.
+const PillLabel = ({
+  option,
+  selected,
+}: {
+  option: PillOption;
+  selected: boolean;
+}) => (
+  <>
+    {option.icon && (
+      <span
+        aria-hidden
+        data-slot="pill-icon"
+        className={cn(
+          "inline-flex transition-opacity duration-[120ms]",
+          selected ? "opacity-75" : "opacity-50",
+        )}
+      >
+        {option.icon}
+      </span>
+    )}
+    {option.label}
+  </>
+);
 
 export interface PillRadioProps extends Omit<
   ComponentProps<"div">,
@@ -130,7 +169,7 @@ export function PillRadio({
             onClick={() => onValueChange(option.value)}
             className={cn(PILL, selected && SELECTED)}
           >
-            {option.label}
+            <PillLabel option={option} selected={selected} />
           </button>
         );
       })}
@@ -182,7 +221,7 @@ export function ChipMulti({
             onClick={() => toggle(option.value)}
             className={cn(PILL, selected && SELECTED)}
           >
-            {option.label}
+            <PillLabel option={option} selected={selected} />
           </button>
         );
       })}

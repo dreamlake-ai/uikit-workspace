@@ -61,7 +61,7 @@ offset ring around a 24px pill collides with its neighbours in a wrapping row.
 | --- | --- | --- |
 | `value` | `string` / `string[]` | The selected value, or values for `ChipMulti`. |
 | `onValueChange` | `(v) => void` | Called with the next selection. |
-| `options` | `PillOption[]` | `{ value, label, disabled? }`. |
+| `options` | `PillOption[]` | `{ value, label, disabled?, icon? }`. `icon` is a decorative glyph before the label (an 11px lucide icon), drawn at 50% — 75% when selected — so it trails the label. |
 
 Native `<div>` attributes are forwarded to the wrapping row on both.
 
