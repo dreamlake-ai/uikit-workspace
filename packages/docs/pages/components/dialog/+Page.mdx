@@ -13,6 +13,8 @@ import longEyebrowSrc from "../../../components/specimens/components/dialog/Long
 import managedSrc from "../../../components/specimens/components/dialog/ManagedFocusSpec.tsx?raw";
 import basicSrc from "../../../components/specimens/components/dialog/BasicSpec.tsx?raw";
 import publishSrc from "../../../components/specimens/components/dialog/PublishDatasetSpec.tsx?raw";
+import { GrowingSpec } from "../../../components/specimens/components/dialog/GrowingSpec";
+import growingSrc from "../../../components/specimens/components/dialog/GrowingSpec.tsx?raw";
 
 # Dialog
 
@@ -26,6 +28,19 @@ A simple confirm dialog with title, eyebrow, body text, and an action footer.
 
 <Preview source={basicSrc} filename="BasicSpec.tsx">
   <BasicSpec />
+</Preview>
+
+## Growing content
+
+When the content changes height while the dialog is open — a section expands,
+an error line appears, a multi-step dialog moves to its next step — the panel
+glides to its new height (220ms, quick then slow) instead of jumping, and stays
+centred as it does. A `Collapsible` inside is followed as it animates, so the
+two never fight. The panel still caps at 85% of the viewport and scrolls inside
+past that. `Modal` and `AlertDialog` do the same. Reduced motion: no glide.
+
+<Preview source={growingSrc} filename="GrowingSpec.tsx">
+  <GrowingSpec />
 </Preview>
 
 ## Long eyebrow

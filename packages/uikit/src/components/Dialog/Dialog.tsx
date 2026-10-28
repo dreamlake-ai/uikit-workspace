@@ -16,6 +16,7 @@ import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { useComposedRef, useModalPresence } from "../../lib/useModalPresence";
+import { useAnimatedPanelHeight } from "../../lib/useAnimatedPanelHeight";
 
 export interface DialogProps {
   /** Controlled open state. */
@@ -147,8 +148,11 @@ export function Dialog({
   // Keeps the panel through its exit; while closing, it shows the last open
   // title/body/footer and is inert and hidden from assistive technology.
   const presence = useModalPresence(open, { title, eyebrow, footer, children });
+  // Content height changes glide instead of jumping (open only).
+  const heightRef = useAnimatedPanelHeight(open);
   const panelRef = useComposedRef<HTMLDivElement>(
     presence.panelRef,
+    heightRef,
     managedFocus ? refs.setFloating : null,
   );
   if (!presence.present || typeof document === "undefined") return null;
