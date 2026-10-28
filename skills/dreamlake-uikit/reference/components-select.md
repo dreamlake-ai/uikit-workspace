@@ -61,6 +61,12 @@ outside the label — on **keyboard** focus only (`:focus-visible`); a click
 never paints it. Outside, like Button's padless `link`: the trigger has no
 padding, so an inset ring would cut the glyphs.
 
+In the open list, ↑ / ↓ move between rows (looping), typing jumps to the first
+row that starts with what was typed, and **Enter or Space chooses** the row and
+closes the list — as on a native `<select>` (WCAG 2.1.1). A Space typed in the
+middle of a typeahead run (`name a–z`) stays part of the search. Escape closes
+without choosing; focus goes back to the trigger either way.
+
 ## Props
 
 ### `Select`
