@@ -1,3 +1,4 @@
+import { X } from "lucide-react";
 import { type CSSProperties, type MouseEvent } from "react";
 import { cn } from "../../lib/utils";
 
@@ -246,14 +247,5 @@ export function Tag({
 }
 
 function CloseGlyph() {
-  return (
-    <svg width="10" height="10" viewBox="0 0 16 16" fill="none" aria-hidden>
-      <path
-        d="M4 4l8 8M12 4l-8 8"
-        stroke="currentColor"
-        strokeWidth="1.75"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
+  return <X size={10} strokeWidth={2.5} aria-hidden />;
 }

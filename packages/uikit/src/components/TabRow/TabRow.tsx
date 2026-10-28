@@ -121,7 +121,7 @@ export function TabRow({
             {onClose && tab.closable !== false && <button type="button"
               className="uikit-tab-row-item-x" aria-label={`Close ${tab.label}`}
               title="Close tab" onClick={() => onClose(tab.value)}>
-              <X size={10} strokeWidth={3} />
+              <X size={10} strokeWidth={2.5} />
             </button>}
           </div>
           );

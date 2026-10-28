@@ -482,7 +482,6 @@ export function TreeEntryItem<T extends TreeDataItem>({
                       "size-4 transition-transform",
                       item.disable && "text-uikit-muted",
                     )}
-                    strokeWidth={1.5}
                   />
                 ) : (
                   <ChevronDown
@@ -490,7 +489,6 @@ export function TreeEntryItem<T extends TreeDataItem>({
                       "size-4 transition-transform",
                       item.disable && "text-uikit-muted",
                     )}
-                    strokeWidth={1.5}
                   />
                 )}
               </button>
@@ -528,7 +526,6 @@ export function TreeEntryItem<T extends TreeDataItem>({
                         "size-4 transition-transform",
                         item.disable && "text-uikit-muted",
                       )}
-                      strokeWidth={1.5}
                     />
                   ) : (
                     <ChevronDown
@@ -536,7 +533,6 @@ export function TreeEntryItem<T extends TreeDataItem>({
                         "size-4 transition-transform",
                         item.disable && "text-uikit-muted",
                       )}
-                      strokeWidth={1.5}
                     />
                   )}
                 </button>
@@ -604,9 +600,9 @@ export function TreeEntryItem<T extends TreeDataItem>({
                     item.disable && "text-uikit-muted",
                   );
                   return expandedItems && !expandedItems?.has(item.id) ? (
-                    <ChevronRight className={chevronClass} strokeWidth={1.5} />
+                    <ChevronRight className={chevronClass} />
                   ) : (
-                    <ChevronDown className={chevronClass} strokeWidth={1.5} />
+                    <ChevronDown className={chevronClass} />
                   );
                 })()}
               </button>
