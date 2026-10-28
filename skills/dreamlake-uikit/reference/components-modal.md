@@ -10,6 +10,10 @@ For a confirmation prompt that must **not** dismiss on outside click, use
 [Alert Dialog](reference/components-alert-dialog.md) instead. For a fully controlled,
 trigger-less panel see [Dialog](reference/components-dialog.md).
 
+## Growing content
+
+When the content changes height while open, the panel glides to its new height (220ms, quick then slow) instead of jumping, and stays centred — the same behaviour as `Dialog`. A `Collapsible` inside is followed as it animates. Reduced motion: no glide.
+
 ## Props
 
 ### `Modal`

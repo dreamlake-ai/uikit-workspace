@@ -3,6 +3,7 @@ import {
   type ComponentProps,
   useEffect,
   useId,
+  useRef,
   useState,
 } from "react";
 import {
@@ -16,6 +17,7 @@ import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { useComposedRef, useModalPresence } from "../../lib/useModalPresence";
+import { useAnimatedPanelHeight } from "../../lib/useAnimatedPanelHeight";
 
 export interface DialogProps {
   /** Controlled open state. */
@@ -94,6 +96,53 @@ function CloseButton({ onClose }: { onClose: () => void }) {
   );
 }
 
+/**
+ * The scrolling middle of the panel. Only this part scrolls when the content
+ * is taller than the panel's cap; its edges fade (12px) on the side that has
+ * more content, so a line cut by the edge reads as "keep scrolling" rather
+ * than as clipped. Padding sits inside the scroll area so focus rings and the
+ * first/last line are never flush against the cut.
+ */
+function DialogBody({ children }: { children: ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [edges, setEdges] = useState<{ top: boolean; bottom: boolean }>({
+    top: false,
+    bottom: false,
+  });
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const update = () => {
+      const top = el.scrollTop > 1;
+      const bottom = el.scrollTop + el.clientHeight < el.scrollHeight - 1;
+      setEdges((prev) =>
+        prev.top === top && prev.bottom === bottom ? prev : { top, bottom },
+      );
+    };
+    update();
+    el.addEventListener("scroll", update, { passive: true });
+    const ro =
+      typeof ResizeObserver !== "undefined" ? new ResizeObserver(update) : null;
+    ro?.observe(el);
+    if (el.firstElementChild) ro?.observe(el.firstElementChild);
+    return () => {
+      el.removeEventListener("scroll", update);
+      ro?.disconnect();
+    };
+  }, []);
+  return (
+    <div
+      ref={ref}
+      data-slot="dialog-body"
+      data-fade-top={edges.top ? "" : undefined}
+      data-fade-bottom={edges.bottom ? "" : undefined}
+      className="uikit-dialog-body -mx-6 -my-1 flex min-h-0 flex-col gap-4 overflow-y-auto px-6 py-1"
+    >
+      {children}
+    </div>
+  );
+}
+
 export function Dialog({
   open,
   onClose,
@@ -147,8 +196,11 @@ export function Dialog({
   // Keeps the panel through its exit; while closing, it shows the last open
   // title/body/footer and is inert and hidden from assistive technology.
   const presence = useModalPresence(open, { title, eyebrow, footer, children });
+  // Content height changes glide instead of jumping (open only).
+  const heightRef = useAnimatedPanelHeight(open);
   const panelRef = useComposedRef<HTMLDivElement>(
     presence.panelRef,
+    heightRef,
     managedFocus ? refs.setFloating : null,
   );
   if (!presence.present || typeof document === "undefined") return null;
@@ -180,7 +232,9 @@ export function Dialog({
         onClick={(e) => e.stopPropagation()}
         className={cn(
           "uikit-modal-panel p-6 rounded-[14px] flex flex-col gap-4",
-          "max-h-[85vh] overflow-y-auto",
+          // The panel caps at 85vh; past that only the body scrolls, so the
+          // title row and the footer actions stay in view.
+          "max-h-[85vh] overflow-hidden",
           "bg-uikit-bg text-uikit-ink shadow-uikit-deep",
           className,
         )}
@@ -218,7 +272,7 @@ export function Dialog({
           </div>
         )}
 
-        {shown.children}
+        <DialogBody>{shown.children}</DialogBody>
 
         {shown.footer && (
           <div className="flex items-center gap-3 justify-end">{shown.footer}</div>

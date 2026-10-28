@@ -23,23 +23,23 @@ export default defineConfig({
     {
       name: "iPad Pro 11",
       use: { ...devices["iPad Pro 11"], browserName: "webkit" },
-      testIgnore: /dropdown-exit/,
+      testIgnore: /dropdown-exit|dialog-motion/,
     },
     {
       name: "iPhone 15",
       use: { ...devices["iPhone 15"], browserName: "webkit" },
-      testIgnore: /dropdown-exit/,
+      testIgnore: /dropdown-exit|dialog-motion/,
     },
     // Motion checks: a desktop pointer in both engines the app ships to.
     {
       name: "Desktop Chrome",
       use: { ...devices["Desktop Chrome"] },
-      testMatch: /dropdown-exit/,
+      testMatch: /dropdown-exit|dialog-motion/,
     },
     {
       name: "Desktop Safari",
       use: { ...devices["Desktop Safari"] },
-      testMatch: /dropdown-exit/,
+      testMatch: /dropdown-exit|dialog-motion/,
     },
   ],
 });

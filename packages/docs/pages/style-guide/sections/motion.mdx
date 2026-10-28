@@ -41,6 +41,12 @@ Three tiers, two custom easings, one prohibition.
   the panel at rest, so fixed-position pickers inside it are unaffected. Tokens:
   `--uikit-dur-modal-in`, `--uikit-dur-modal-out`, `--uikit-dur-scrim-in`,
   `--uikit-dur-scrim-out`.
+- `220ms` on `cubic-bezier(.2, .8, .2, 1)` — disclosure and panel height. A
+  `Collapsible` moves its height between `0` and its content, the content fading in and
+  settling 4px as it opens (out faster, `120–160ms` ease-in), and its chevron turns 90° on
+  the same curve. A Dialog / Modal / AlertDialog whose content grows or shrinks while open
+  glides to its new height on the same timing and follows a Collapsible rather than
+  animating on top of it. Tokens: `--uikit-dur-collapse`, `--uikit-ease-collapse`.
 
 ### When not to animate
 

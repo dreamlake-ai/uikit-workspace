@@ -767,6 +767,63 @@ html[data-theme='dark'] {
   }
 }
 
+/* ── Dialog body ─────────────────────────────────────────────────
+   When a Dialog's content is taller than its 85vh cap, only the body scrolls;
+   the edge that has more content fades over 12px. */
+.uikit-dialog-body[data-fade-top] {
+  mask-image: linear-gradient(to bottom, transparent 0, #000 12px);
+}
+.uikit-dialog-body[data-fade-bottom] {
+  mask-image: linear-gradient(to top, transparent 0, #000 12px);
+}
+.uikit-dialog-body[data-fade-top][data-fade-bottom] {
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 12px,
+    #000 calc(100% - 12px),
+    transparent 100%
+  );
+}
+
+/* ── Collapsible ─────────────────────────────────────────────────
+   Height moves between 0 and the measured content height, quick then slow;
+   the content fades in and settles 4px as it opens, and leaves faster than it
+   arrives. The chevron turns on the same curve. Reduced motion: no movement. */
+:root {
+  --uikit-dur-collapse: 220ms;
+  --uikit-ease-collapse: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.uikit-collapsible-content[data-measured] {
+  transition: height var(--uikit-dur-collapse) var(--uikit-ease-collapse);
+}
+.uikit-collapsible-inner {
+  transition:
+    opacity 200ms ease-out 40ms,
+    transform var(--uikit-dur-collapse) var(--uikit-ease-collapse);
+}
+.uikit-collapsible-content[data-state='closed'] > .uikit-collapsible-inner {
+  opacity: 0;
+  transform: translateY(-4px);
+  transition:
+    opacity 120ms ease-in,
+    transform 160ms ease-in;
+}
+.uikit-collapsible-chevron {
+  transition: transform var(--uikit-dur-collapse) var(--uikit-ease-collapse);
+}
+.uikit-collapsible-chevron[data-state='open'] {
+  transform: rotate(90deg);
+}
+@media (prefers-reduced-motion: reduce) {
+  .uikit-collapsible-content[data-measured],
+  .uikit-collapsible-inner,
+  .uikit-collapsible-content[data-state='closed'] > .uikit-collapsible-inner,
+  .uikit-collapsible-chevron {
+    transition: none;
+  }
+}
+
 /* ── Scrollbar utilities ────────────────────────────────────────── */
 
 .uikit-no-scrollbar {

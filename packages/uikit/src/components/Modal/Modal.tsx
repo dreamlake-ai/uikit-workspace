@@ -14,6 +14,7 @@ import {
 import { createPortal } from 'react-dom'
 import { cn } from '../../lib/utils'
 import { useComposedRef, useModalPresence } from '../../lib/useModalPresence'
+import { useAnimatedPanelHeight } from '../../lib/useAnimatedPanelHeight'
 
 interface ModalContextValue {
   open: boolean
@@ -99,7 +100,9 @@ export function ModalContent({
   const { open, setOpen } = useCtx('ModalContent')
   // Kept through its exit with the last open children; inert while closing.
   const presence = useModalPresence(open, children)
-  const panelRef = useComposedRef(presence.panelRef, ref)
+  // Content height changes glide instead of jumping (open only).
+  const heightRef = useAnimatedPanelHeight(open)
+  const panelRef = useComposedRef(presence.panelRef, heightRef, ref)
 
   useEffect(() => {
     if (!open) return

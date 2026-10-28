@@ -8,6 +8,23 @@ floats above the rest of the page, unaffected by any clipping ancestor.
 
 A simple confirm dialog with title, eyebrow, body text, and an action footer.
 
+## Growing content
+
+When the content changes height while the dialog is open — a section expands,
+an error line appears, a multi-step dialog moves to its next step — the panel
+glides to its new height (220ms, quick then slow) instead of jumping, and stays
+centred as it does. A `Collapsible` inside is followed as it animates, so the
+two never fight. The panel still caps at 85% of the viewport; past that only the body
+scrolls — the title row and the footer stay in view — and the edge with more
+content fades over 12px so a cut line reads as "keep scrolling". `Modal` and `AlertDialog` do the same. Reduced motion: no glide.
+
+## Long eyebrow
+
+The eyebrow often names the resource the dialog acts on, so it can be any
+length. It takes only the room the title leaves and ellipsizes before the close
+button; the title keeps its words and truncates only if it alone is wider than
+the row.
+
 ## Publish dataset
 
 A real-world form: a text input for the dataset family name, a radio list of
@@ -55,7 +72,7 @@ Supply a visible `title` or `aria-label` for the dialog's accessible name.
 | `open`                   | `boolean`                                   | —       | **Required.** Controlled open state.                                                                                                                                     |
 | `onClose`                | `() => void`                                | —       | **Required.** Fires when the user dismisses the dialog (Esc key, backdrop click, or any explicit close affordance the caller renders). Caller must flip `open` to false. |
 | `title`                  | `ReactNode`                                 | —       | Heading rendered top-left of the panel. 17px semibold ink.                                                                                                               |
-| `eyebrow`                | `string`                                    | —       | Small uppercase mono label rendered next to the title.                                                                                                                   |
+| `eyebrow`                | `string`                                    | —       | Small uppercase mono label rendered next to the title. Takes the room the title leaves and ellipsizes; the title never yields to it.                                     |
 | `footer`                 | `ReactNode`                                 | —       | Footer content. Typically a row of action buttons aligned right.                                                                                                         |
 | `width`                  | `number`                                    | `480`   | Panel width in px.                                                                                                                                                       |
 | `showEscHint`            | `boolean`                                   | `true`  | Show the muted "esc" hint in the header. Clicking it also calls `onClose`.                                                                                               |
