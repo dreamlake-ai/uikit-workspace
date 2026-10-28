@@ -14,7 +14,8 @@ The height moves between `0` and the measured content height in 220ms on
 settles 4px down as it opens, and leaves faster than it arrives. While the
 height is moving the content carries `data-animating`, so a surrounding
 `Dialog` follows it rather than animating its own height on top. Closed content
-is `inert`, so focus can't land in a hidden section. With reduced motion there
+is `inert` and, once folded away, `visibility: hidden`, so focus and
+find-in-page can't land in a hidden section. With reduced motion there
 is no movement.
 
 ## Disclosure

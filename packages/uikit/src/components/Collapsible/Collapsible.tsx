@@ -213,6 +213,9 @@ export function CollapsibleContent({
       style={{
         overflow: "hidden",
         height: ctx.open ? (measured ? contentHeight! : "auto") : 0,
+        // Once folded away, take the content out of view entirely (not just
+        // clipped to 0px) — find-in-page and visibility checks skip it.
+        visibility: !ctx.open && !animating ? "hidden" : undefined,
         ...style,
       }}
       {...props}
