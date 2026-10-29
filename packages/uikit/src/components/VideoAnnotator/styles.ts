@@ -94,13 +94,14 @@ export const CSS = `
 .va-seek-buf{position:absolute;left:0;top:0;bottom:0;border-radius:2px;
   background:color-mix(in srgb, var(--va-text) 26%, var(--va-panel))}
 .va-seek-fill{position:absolute;left:0;top:0;bottom:0;border-radius:2px;background:var(--va-scrub-fill)}
-.va-seek-thumb{position:absolute;top:50%;width:10px;height:10px;margin:-5px 0 0 -5px;border-radius:999px;
-  background:var(--va-scrub-knob);opacity:0;transform:scale(.8);
-  transition:opacity .12s ease,transform .16s cubic-bezier(.2,.8,.2,1),box-shadow .16s ease;pointer-events:none}
-.va-seek:hover .va-seek-thumb{opacity:1;transform:scale(1)}
-/* Dragging: the knob grows a little and wears a soft accent ring. */
-.va-seek:active .va-seek-thumb{opacity:1;transform:scale(1.2);
-  box-shadow:0 0 0 4px color-mix(in srgb, var(--va-accent) 22%, transparent)}
+.va-seek-thumb{position:absolute;top:50%;width:8px;height:8px;margin:-4px 0 0 -4px;border-radius:999px;
+  background:var(--va-scrub-knob);opacity:0;
+  transition:opacity .12s ease,transform .12s ease,box-shadow .12s ease;pointer-events:none}
+/* Matched to the kit Slider: 8px, +2px on hover and drag, and only while
+   dragging a 2px ring at accent 20% (1.6px before the 1.25 scale). No halo. */
+.va-seek:hover .va-seek-thumb{opacity:1;transform:scale(1.25)}
+.va-seek:active .va-seek-thumb{opacity:1;transform:scale(1.25);
+  box-shadow:0 0 0 1.6px color-mix(in srgb, var(--va-accent) 20%, transparent)}
 @media (prefers-reduced-motion: reduce){.va-seek-thumb{transition:none}}
 /* Hand-pose overlay canvas: absolutely positioned by JS to sit exactly over the
    letterboxed video content. Never intercepts pointer events. */
