@@ -17,6 +17,7 @@ export const BasicSpec = () => {
         videoTitle="pour liquid"
         videoSubtitle="videos/pour_liquid.mp4"
         extractFps={5}
+        showSeekBar
         segments={segments}
         selectedIndex={selected}
         onSegmentsChange={setSegments}

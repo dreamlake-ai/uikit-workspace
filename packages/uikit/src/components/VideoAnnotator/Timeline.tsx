@@ -202,12 +202,24 @@ export function Timeline({
                   style={{ left: posCss(p.start), width: widCss(p.end - p.start) }}
                   onMouseEnter={(e) => {
                     const r = e.currentTarget.getBoundingClientRect();
+                    const was = p.edited && p.original && p.original !== p.description ? p.original : null;
+                    // Only say what the lane doesn't already show: the caption when
+                    // it's cut off (width or the 3-line clamp), or the pre-edit
+                    // caption. A fully visible "1 approach" needs no second copy.
+                    const lab = e.currentTarget.querySelector<HTMLElement>(".va-seglabel");
+                    const cut = lab
+                      ? lab.scrollWidth > lab.clientWidth + 1 || lab.scrollHeight > lab.clientHeight + 1
+                      : !!p.description;
+                    if (!cut && was == null) return;
+                    // Sit above the whole timeline (ruler included), so the tip never
+                    // covers the ruler's ticks and numbers.
+                    const top = timelineRef.current?.getBoundingClientRect().top ?? r.top;
                     setCellTip({
                       n: i + 1,
                       cap: p.description ?? "",
-                      was: p.edited && p.original && p.original !== p.description ? p.original : null,
+                      was,
                       left: r.left + r.width / 2,
-                      bottom: window.innerHeight - r.top + 8,
+                      bottom: window.innerHeight - Math.min(top, r.top) + 6,
                     });
                   }}
                   onMouseLeave={() => setCellTip(null)}
