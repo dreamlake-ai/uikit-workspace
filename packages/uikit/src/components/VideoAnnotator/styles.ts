@@ -36,10 +36,13 @@ export const CSS = `
   --va-idle: var(--tone-warm-gray, #9c907a);
   --va-selected: var(--selected-bg, #f5f3ee);
   --va-radius: var(--radius, 6px);
-  /* Scrub rail — opaque so fill/knob never stack translucently (design tokens). */
-  --va-scrub-track: #e6e4dc;
-  --va-scrub-fill:  #73726e;
-  --va-scrub-knob:  #5c5b57;
+  /* Scrub rail. Opaque mixes so fill/knob never stack translucently. The played
+     part and the knob are the accent — the same blue as the timeline playhead and
+     the selected segment — and the rail is mixed from the page tokens, so it reads
+     quiet in both themes (it used to be a fixed light #e6e4dc, glaring in dark). */
+  --va-scrub-track: color-mix(in srgb, var(--va-text) 14%, var(--va-panel));
+  --va-scrub-fill:  var(--va-accent);
+  --va-scrub-knob:  var(--va-accent);
   /* Edited-segment ring — green (design --lab-edit = --diff-add). */
   --va-edit: var(--diff-add, var(--tone-green, #1f8f4a));
   /* Popover/tooltip drop shadow. Aliases the kit's theme-aware shadow token
@@ -89,11 +92,16 @@ export const CSS = `
 .va-seek::before{content:"";position:absolute;left:0;right:0;top:-6px;bottom:-6px}
 .va-seek-track{position:relative;flex:1;height:3px;border-radius:2px;background:var(--va-scrub-track)}
 .va-seek-buf{position:absolute;left:0;top:0;bottom:0;border-radius:2px;
-  background:color-mix(in srgb, var(--va-scrub-fill) 30%, transparent)}
+  background:color-mix(in srgb, var(--va-text) 26%, var(--va-panel))}
 .va-seek-fill{position:absolute;left:0;top:0;bottom:0;border-radius:2px;background:var(--va-scrub-fill)}
-.va-seek-thumb{position:absolute;top:50%;width:9px;height:9px;margin:-4.5px 0 0 -4.5px;border-radius:999px;
-  background:var(--va-scrub-knob);opacity:0;transition:opacity .12s ease;pointer-events:none}
-.va-seek:hover .va-seek-thumb,.va-seek:active .va-seek-thumb{opacity:1}
+.va-seek-thumb{position:absolute;top:50%;width:10px;height:10px;margin:-5px 0 0 -5px;border-radius:999px;
+  background:var(--va-scrub-knob);opacity:0;transform:scale(.8);
+  transition:opacity .12s ease,transform .16s cubic-bezier(.2,.8,.2,1),box-shadow .16s ease;pointer-events:none}
+.va-seek:hover .va-seek-thumb{opacity:1;transform:scale(1)}
+/* Dragging: the knob grows a little and wears a soft accent ring. */
+.va-seek:active .va-seek-thumb{opacity:1;transform:scale(1.2);
+  box-shadow:0 0 0 4px color-mix(in srgb, var(--va-accent) 22%, transparent)}
+@media (prefers-reduced-motion: reduce){.va-seek-thumb{transition:none}}
 /* Hand-pose overlay canvas: absolutely positioned by JS to sit exactly over the
    letterboxed video content. Never intercepts pointer events. */
 .va-overlay{position:absolute;left:0;top:0;pointer-events:none;z-index:2}
@@ -152,16 +160,15 @@ export const CSS = `
 /* No press-shift on the speed button — the base button:active translate reads
    as jitter here next to the readout. */
 .va-speedsel .va-speedbtn:active{transform:none}
-.va-speedsel.open .va-speedbtn{background:color-mix(in srgb, var(--va-text) 6%, transparent);color:var(--va-text)}
-.va-speedmenu{position:absolute;bottom:calc(100% + 6px);left:0;z-index:40;min-width:calc(100% + 8px);
-  background:var(--va-panel);border:1px solid var(--va-line);border-radius:6px;
-  box-shadow:0 8px 24px var(--va-shadow);padding:4px}
-.va-speedmenu button{width:100%;display:flex;align-items:center;gap:6px;white-space:nowrap;height:auto;
-  background:transparent;border:none;border-radius:6px;padding:5px 12px 5px 22px;
-  font:11px var(--f-mono, ui-monospace, Menlo, monospace);color:var(--va-text);text-align:left;position:relative}
-.va-speedmenu button:hover{background:var(--va-panel2)}
-.va-speedmenu button[aria-selected="true"]{color:var(--va-accent)}
-.va-speedcheck{position:absolute;left:6px}
+.va-speedsel .va-speedbtn[data-state="open"]{background:color-mix(in srgb, var(--va-text) 6%, transparent);color:var(--va-text)}
+.va-speedsel .va-speedbtn[data-state="open"] .va-caret{transform:rotate(180deg)}
+.va-speedbtn .va-caret{transition:transform .22s cubic-bezier(.2,.8,.2,1)}
+/* The list is the kit DropdownMenu (surface, wedge, fold, hover slider); only the
+   rate rows' mono type and the check column are the annotator's own. */
+.va-speedmenu{min-width:88px}
+.va-speedmenu [role="menuitemradio"]{font:11px var(--f-mono, ui-monospace, Menlo, monospace);gap:6px}
+.va-speedmenu [data-selected]{color:var(--va-accent)}
+.va-speedcheck{display:inline-flex;width:12px;flex:none}
 
 /* margin-top opens a gap above the timeline for the floating zoom capsule
    (which sits over the ruler) and separates it from the transport row. */
