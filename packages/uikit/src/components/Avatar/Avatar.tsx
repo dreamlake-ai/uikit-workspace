@@ -73,6 +73,7 @@ export function Avatar({
 }: AvatarProps) {
   // Declared unconditionally (Rules of Hooks). Only used by the simple form.
   const [failedSrc, setFailedSrc] = useState<string | null>(null);
+  const [loadedSrc, setLoadedSrc] = useState<string | null>(null);
 
   /**
    * Catch an image that failed BEFORE React was listening.
@@ -85,9 +86,11 @@ export function Avatar({
    * natural width, a broken one has zero.
    */
   const catchEarlyError = useCallback((node: HTMLImageElement | null) => {
-    if (node && node.complete && node.naturalWidth === 0 && node.src) {
-      setFailedSrc(node.getAttribute("src"));
-    }
+    if (!node || !node.complete || !node.src) return;
+    // A success can land before hydration too, and would otherwise leave the
+    // initials painted under the photo for good.
+    if (node.naturalWidth === 0) setFailedSrc(node.getAttribute("src"));
+    else setLoadedSrc(node.getAttribute("src"));
   }, []);
 
   // Composed form: render children and coordinate image/fallback via context.
@@ -106,21 +109,30 @@ export function Avatar({
     );
   }
 
-  // Simple form (unchanged behavior): initials with optional image.
+  // Simple form: initials with optional image.
   const px = size ?? 32;
   const showImage = !!image && failedSrc !== image;
+  // Until the photo has actually arrived, the square is the initials square —
+  // the fill and the letters sit UNDER the loading image, which paints over
+  // them. Swapping straight to a bare <img> left an empty, unfilled square for
+  // as long as the request took: a row of members on a slow connection read as
+  // a row of holes. The app's own avatar has always drawn it this way.
+  const ready = showImage && loadedSrc === image;
   const label = name ?? "";
 
   return (
     <span
       className={cn(
-        "inline-flex items-center justify-center shrink-0 select-none overflow-hidden",
+        "relative inline-flex items-center justify-center shrink-0 select-none overflow-hidden",
         // Mono, like every other small monogram the app draws (the profile
         // rows, the note-presence stack): at this size the initials are a
         // label, not display type. The 88px `AvatarHero` below stays on UI
         // type, where it IS display type.
-        !showImage &&
-          "text-uikit-ink font-uikit-mono font-semibold leading-none tracking-uikit-tighter opacity-90",
+        !ready &&
+          "text-uikit-ink font-uikit-mono font-semibold leading-none tracking-uikit-tighter",
+        // The 90% is the bare monogram's. Under a loading image it dims only
+        // the letters, never the photo painting over them.
+        !showImage && "opacity-90",
         className,
       )}
       style={{
@@ -128,23 +140,33 @@ export function Avatar({
         height: px,
         borderRadius: radius ?? 4,
         fontSize: Math.round(px * 0.36),
-        background: showImage
+        background: ready
           ? undefined
           : "color-mix(in oklab, var(--ink) 8%, var(--bg))",
         ...style,
       }}
       {...rest}
     >
-      {showImage ? (
+      {/* While the image is still coming, it carries the name (its alt);
+          the letters under it are decoration. */}
+      {!ready &&
+        (showImage ? (
+          <span aria-hidden className="opacity-90">
+            {getInitials(label)}
+          </span>
+        ) : (
+          getInitials(label)
+        ))}
+      {showImage && (
         <img
+          key={image}
           ref={catchEarlyError}
           src={image}
           alt={label}
-          className="w-full h-full object-cover"
+          className="absolute inset-0 w-full h-full object-cover"
+          onLoad={() => setLoadedSrc(image!)}
           onError={() => setFailedSrc(image!)}
         />
-      ) : (
-        getInitials(label)
       )}
     </span>
   );
