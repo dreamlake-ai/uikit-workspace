@@ -7,34 +7,36 @@ import {
   useMemo,
   useRef,
   useState,
-} from "react";
+} from 'react'
 
-import { cn } from "../../lib/utils";
+import { cn } from '../../lib/utils'
 
-export interface SliderProps extends Omit<
-  ComponentProps<"div">,
-  "defaultValue" | "onChange"
-> {
-  value?: number[];
-  defaultValue?: number[];
-  onValueChange?: (value: number[]) => void;
-  min?: number;
-  max?: number;
-  step?: number;
-  disabled?: boolean;
+export interface SliderProps extends Omit<ComponentProps<'div'>, 'defaultValue' | 'onChange'> {
+  value?: number[]
+  defaultValue?: number[]
+  onValueChange?: (value: number[]) => void
+  min?: number
+  max?: number
+  step?: number
+  disabled?: boolean
   /** Draw step tick markers along the track. */
-  showStep?: boolean;
+  showStep?: boolean
+  /** Accessible name for the thumb(s) — the element that carries
+   *  `role="slider"`, so this is what a screen reader announces. */
+  thumbLabel?: string
+  /** Reads a value aloud (`aria-valuetext`), e.g. a time "1:05". */
+  getValueText?: (value: number) => string
 }
 
 function clamp(v: number, min: number, max: number) {
-  return Math.min(Math.max(v, min), max);
+  return Math.min(Math.max(v, min), max)
 }
 
 function roundToStep(v: number, min: number, step: number) {
-  if (!step) return v;
-  const snapped = Math.round((v - min) / step) * step + min;
+  if (!step) return v
+  const snapped = Math.round((v - min) / step) * step + min
   // Avoid floating point dust (e.g. 0.30000000000000004).
-  return Number(snapped.toPrecision(10));
+  return Number(snapped.toPrecision(10))
 }
 
 /**
@@ -56,122 +58,121 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(function Slider(
     step = 1,
     disabled = false,
     showStep = false,
+    thumbLabel,
+    getValueText,
     ...props
   },
-  ref,
+  ref
 ) {
-  const trackRef = useRef<HTMLDivElement>(null);
-  const activeThumb = useRef<number | null>(null);
-  const isControlled = value !== undefined;
-  const [internal, setInternal] = useState<number[]>(defaultValue ?? [min]);
-  const values = isControlled ? value! : internal;
+  const trackRef = useRef<HTMLDivElement>(null)
+  const activeThumb = useRef<number | null>(null)
+  const isControlled = value !== undefined
+  const [internal, setInternal] = useState<number[]>(defaultValue ?? [min])
+  const values = isControlled ? value! : internal
 
-  const range = max - min || 1;
-  const percent = (v: number) => ((clamp(v, min, max) - min) / range) * 100;
+  const range = max - min || 1
+  const percent = (v: number) => ((clamp(v, min, max) - min) / range) * 100
 
   const commit = useCallback(
     (next: number[]) => {
-      if (!isControlled) setInternal(next);
-      onValueChange?.(next);
+      if (!isControlled) setInternal(next)
+      onValueChange?.(next)
     },
-    [isControlled, onValueChange],
-  );
+    [isControlled, onValueChange]
+  )
 
   const setThumb = useCallback(
     (index: number, raw: number) => {
-      const snapped = clamp(roundToStep(raw, min, step), min, max);
-      if (values[index] === snapped) return;
-      const next = values.slice();
-      next[index] = snapped;
+      const snapped = clamp(roundToStep(raw, min, step), min, max)
+      if (values[index] === snapped) return
+      const next = values.slice()
+      next[index] = snapped
       // Keep thumbs ordered so multi-thumb ranges don't cross.
-      next.sort((a, b) => a - b);
-      commit(next);
+      next.sort((a, b) => a - b)
+      commit(next)
     },
-    [values, min, max, step, commit],
-  );
+    [values, min, max, step, commit]
+  )
 
   const valueFromClientX = useCallback(
     (clientX: number) => {
-      const track = trackRef.current;
-      if (!track) return min;
-      const rect = track.getBoundingClientRect();
-      const ratio = clamp((clientX - rect.left) / (rect.width || 1), 0, 1);
-      return min + ratio * range;
+      const track = trackRef.current
+      if (!track) return min
+      const rect = track.getBoundingClientRect()
+      const ratio = clamp((clientX - rect.left) / (rect.width || 1), 0, 1)
+      return min + ratio * range
     },
-    [min, range],
-  );
+    [min, range]
+  )
 
   const nearestThumb = useCallback(
     (raw: number) => {
-      let best = 0;
-      let bestDist = Infinity;
+      let best = 0
+      let bestDist = Infinity
       values.forEach((v, i) => {
-        const d = Math.abs(v - raw);
+        const d = Math.abs(v - raw)
         if (d < bestDist) {
-          bestDist = d;
-          best = i;
+          bestDist = d
+          best = i
         }
-      });
-      return best;
+      })
+      return best
     },
-    [values],
-  );
+    [values]
+  )
 
   const onPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
-    if (disabled) return;
-    e.preventDefault();
-    const raw = valueFromClientX(e.clientX);
-    const index = nearestThumb(raw);
-    activeThumb.current = index;
-    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-    setThumb(index, raw);
-  };
+    if (disabled) return
+    e.preventDefault()
+    const raw = valueFromClientX(e.clientX)
+    const index = nearestThumb(raw)
+    activeThumb.current = index
+    ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
+    setThumb(index, raw)
+  }
 
   const onPointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
-    if (disabled || activeThumb.current === null) return;
-    setThumb(activeThumb.current, valueFromClientX(e.clientX));
-  };
+    if (disabled || activeThumb.current === null) return
+    setThumb(activeThumb.current, valueFromClientX(e.clientX))
+  }
 
   const onPointerUp = (e: ReactPointerEvent<HTMLDivElement>) => {
-    activeThumb.current = null;
+    activeThumb.current = null
     try {
-      (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+      ;(e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId)
     } catch {
       /* pointer already released */
     }
-  };
+  }
 
   const onKeyDown = (index: number) => (e: KeyboardEvent<HTMLDivElement>) => {
-    if (disabled) return;
+    if (disabled) return
     const delta =
-      e.key === "ArrowRight" || e.key === "ArrowUp"
+      e.key === 'ArrowRight' || e.key === 'ArrowUp'
         ? step
-        : e.key === "ArrowLeft" || e.key === "ArrowDown"
+        : e.key === 'ArrowLeft' || e.key === 'ArrowDown'
           ? -step
-          : 0;
-    if (delta === 0) return;
-    e.preventDefault();
-    setThumb(index, values[index] + delta);
-  };
+          : 0
+    if (delta === 0) return
+    e.preventDefault()
+    setThumb(index, values[index] + delta)
+  }
 
   const ticks = useMemo(() => {
-    if (!showStep || !step) return [];
-    const count = Math.ceil(range / step);
-    return Array.from({ length: count + 1 }, (_, i) => min + i * step);
-  }, [showStep, step, range, min]);
+    if (!showStep || !step) return []
+    const count = Math.ceil(range / step)
+    return Array.from({ length: count + 1 }, (_, i) => min + i * step)
+  }, [showStep, step, range, min])
 
-  const lo = percent(Math.min(...values));
-  const hi = percent(Math.max(...values));
+  const lo = percent(Math.min(...values))
+  const hi = percent(Math.max(...values))
 
   return (
     <div
       ref={ref}
       data-slot="slider"
       data-disabled={disabled || undefined}
-      className={cn(
-        "relative flex w-full touch-none select-none items-center",
-        className,
-      )}
+      className={cn('relative flex w-full touch-none select-none items-center', className)}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
@@ -185,8 +186,8 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(function Slider(
         <div
           data-slot="slider-range"
           className={cn(
-            "absolute h-full rounded-full",
-            disabled ? "bg-uikit-ink-12" : "bg-uikit-accent",
+            'absolute h-full rounded-full',
+            disabled ? 'bg-uikit-ink-12' : 'bg-uikit-accent'
           )}
           style={{
             left: `${values.length > 1 ? lo : 0}%`,
@@ -198,10 +199,10 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(function Slider(
             key={i}
             data-slot="slider-step"
             className={cn(
-              "absolute top-1/2 block h-[5px] w-px -translate-x-1/2 -translate-y-1/2 rounded-[1px]",
+              'absolute top-1/2 block h-[5px] w-px -translate-x-1/2 -translate-y-1/2 rounded-[1px]',
               t < Math.min(...values) || t > Math.max(...values)
-                ? "bg-uikit-ink-12"
-                : "bg-uikit-accent",
+                ? 'bg-uikit-ink-12'
+                : 'bg-uikit-accent'
             )}
             style={{ left: `${percent(t)}%` }}
           />
@@ -216,11 +217,13 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(function Slider(
           aria-valuemin={min}
           aria-valuemax={max}
           aria-valuenow={v}
+          aria-valuetext={getValueText?.(v)}
+          aria-label={thumbLabel}
           aria-disabled={disabled || undefined}
           data-slot="slider-thumb"
           onKeyDown={onKeyDown(i)}
           className={cn(
-            "absolute size-2 -translate-x-1/2 shrink-0 rounded-full outline-none",
+            'absolute size-2 -translate-x-1/2 shrink-0 rounded-full outline-none',
             // No halo on hover. At 8px the thumb is half what it was, and a
             // 4px translucent ring doubled its footprint the moment the
             // pointer arrived — the dot grew a second, softer dot around it.
@@ -229,14 +232,14 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(function Slider(
             // focus-visible keeps a ring, because a keyboard user gets no
             // cursor and no hover: it drops to ring-2 so it stays in the same
             // proportion to the thumb that ring-4 had at 16px.
-            "transition-[transform,box-shadow] hover:cursor-ew-resize hover:scale-125 focus-visible:ring-2",
+            'transition-[transform,box-shadow] hover:cursor-ew-resize hover:scale-125 focus-visible:ring-2',
             disabled
-              ? "pointer-events-none bg-uikit-ink-12"
-              : "bg-uikit-accent ring-uikit-accent/40",
+              ? 'pointer-events-none bg-uikit-ink-12'
+              : 'bg-uikit-accent ring-uikit-accent/40'
           )}
           style={{ left: `${percent(v)}%` }}
         />
       ))}
     </div>
-  );
-});
+  )
+})

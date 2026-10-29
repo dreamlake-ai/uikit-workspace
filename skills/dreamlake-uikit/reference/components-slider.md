@@ -21,14 +21,16 @@ the track. Values snap to the nearest step.
 
 ## Props
 
-| Prop            | Type                        | Default | Description                                   |
-| --------------- | --------------------------- | ------- | --------------------------------------------- |
-| `value`         | `number[]`                  | —       | Controlled thumb values. One entry per thumb. |
-| `defaultValue`  | `number[]`                  | `[min]` | Initial values in uncontrolled mode.          |
-| `onValueChange` | `(value: number[]) => void` | —       | Called when a thumb moves.                    |
-| `min`           | `number`                    | `0`     | Minimum value of the track.                   |
-| `max`           | `number`                    | `100`   | Maximum value of the track.                   |
-| `step`          | `number`                    | `1`     | Snap interval for thumb values.               |
-| `disabled`      | `boolean`                   | `false` | Disable pointer and keyboard interaction.     |
-| `showStep`      | `boolean`                   | `false` | Draw step tick markers along the track.       |
-| `className`     | `string`                    | —       | Extra classes on the container.               |
+| Prop            | Type                        | Default | Description                                                 |
+| --------------- | --------------------------- | ------- | ----------------------------------------------------------- |
+| `value`         | `number[]`                  | —       | Controlled thumb values. One entry per thumb.               |
+| `defaultValue`  | `number[]`                  | `[min]` | Initial values in uncontrolled mode.                        |
+| `onValueChange` | `(value: number[]) => void` | —       | Called when a thumb moves.                                  |
+| `min`           | `number`                    | `0`     | Minimum value of the track.                                 |
+| `max`           | `number`                    | `100`   | Maximum value of the track.                                 |
+| `step`          | `number`                    | `1`     | Snap interval for thumb values.                             |
+| `disabled`      | `boolean`                   | `false` | Disable pointer and keyboard interaction.                   |
+| `showStep`      | `boolean`                   | `false` | Draw step tick markers along the track.                     |
+| `thumbLabel`    | `string`                    | —       | Accessible name on the thumb (the `role="slider"` element). |
+| `getValueText`  | `(value: number) => string` | —       | `aria-valuetext` for a value, e.g. a time readout.          |
+| `className`     | `string`                    | —       | Extra classes on the container.                             |

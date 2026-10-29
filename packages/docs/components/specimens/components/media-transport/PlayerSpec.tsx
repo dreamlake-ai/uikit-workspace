@@ -38,7 +38,8 @@ export const PlayerSpec = () => {
         {t.toFixed(1)} s
       </div>
       <Slider
-        aria-label="Seek"
+        thumbLabel="Seek"
+        getValueText={(v) => `${v.toFixed(1)} s`}
         value={[t]}
         min={0}
         max={LENGTH}
