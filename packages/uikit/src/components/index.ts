@@ -22,6 +22,7 @@ export * from "./Input";
 export * from "./Inputs";
 export * from "./Kbd";
 export * from "./Label";
+export * from "./MediaTransport";
 export * from "./Menu";
 export * from "./Modal";
 export * from "./PanelLayout";

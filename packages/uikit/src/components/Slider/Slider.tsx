@@ -24,6 +24,11 @@ export interface SliderProps extends Omit<
   disabled?: boolean;
   /** Draw step tick markers along the track. */
   showStep?: boolean;
+  /** Accessible name for the thumb(s) — the element that carries
+   *  `role="slider"`, so this is what a screen reader announces. */
+  thumbLabel?: string;
+  /** Reads a value aloud (`aria-valuetext`), e.g. a time "1:05". */
+  getValueText?: (value: number) => string;
 }
 
 function clamp(v: number, min: number, max: number) {
@@ -56,6 +61,8 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(function Slider(
     step = 1,
     disabled = false,
     showStep = false,
+    thumbLabel,
+    getValueText,
     ...props
   },
   ref,
@@ -216,6 +223,8 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(function Slider(
           aria-valuemin={min}
           aria-valuemax={max}
           aria-valuenow={v}
+          aria-valuetext={getValueText?.(v)}
+          aria-label={thumbLabel}
           aria-disabled={disabled || undefined}
           data-slot="slider-thumb"
           onKeyDown={onKeyDown(i)}
