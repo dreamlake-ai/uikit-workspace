@@ -33,7 +33,9 @@ the product does.
 
 Pass `image` to render a photo, cropped to fill the avatar and clipped to its
 radius. If the URL is missing or fails to load, the avatar falls back to
-initials — so `name` is always required as the fallback.
+initials — so `name` is always required as the fallback. While the photo is
+still loading the avatar is the initials square, and the image paints over it
+when it arrives — a slow request never shows an empty box.
 
 ## Composed form
 
@@ -76,7 +78,7 @@ and wires `onEdit` to its avatar-picker dialog.)
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `name` | `string` | — | Display name (simple form). Initials are derived automatically; used as the fallback when `image` is absent or fails to load. Optional when using the composed form. |
-| `image` | `string` | — | Avatar image URL. Cropped to fill the avatar; falls back to initials on missing/error. |
+| `image` | `string` | — | Avatar image URL. Cropped to fill the avatar; shows the initials until it loads, and falls back to them on missing/error. |
 | `size` | `number` | `32` / `24` | Avatar size in px. Defaults to `32` for the simple form and `24` for the composed form. The initials scale with the size. |
 | `radius` | `number` | `4` | Border radius in px — the same rounded square in both forms. Use `size / 2` for a circle. |
 | `className` | `string` | — | Extra classes on the root `<span>`. |
