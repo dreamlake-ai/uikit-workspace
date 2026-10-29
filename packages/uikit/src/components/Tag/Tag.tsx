@@ -21,24 +21,26 @@ export type TagTone =
   | "purple"
   | "warmGray";
 
-// Tone → CSS-variable lookup. The hex values themselves live in
-// `packages/uikit/src/styles.css` as `--tone-*` (Style Guide §Color),
-// so every site that wants a palette color points through this map.
+// Tone → CSS-variable lookup. The hex values live in
+// `packages/uikit/src/styles.css` as `--tone-*-text` (Style Guide §Color):
+// the palette tones as text — per theme, each the nearest step of its hue
+// that reaches WCAG AA (4.5:1) on the page. A Tag only ever colours words,
+// so it reads these; `--tone-*` stays the palette for dots, fills and edges.
 // Inline hex literals are intentionally avoided per §"Never invent a
 // near-miss hex."
-const TONE_VARS: Record<TagTone, string> = {
-  blue: "var(--tone-blue)",
-  green: "var(--tone-green)",
-  amber: "var(--tone-amber)",
-  red: "var(--tone-red)",
-  purple: "var(--tone-purple)",
-  warmGray: "var(--tone-warm-gray)",
+const TONE_TEXT_VARS: Record<TagTone, string> = {
+  blue: "var(--tone-blue-text)",
+  green: "var(--tone-green-text)",
+  amber: "var(--tone-amber-text)",
+  red: "var(--tone-red-text)",
+  purple: "var(--tone-purple-text)",
+  warmGray: "var(--tone-warm-gray-text)",
 };
 
 /** Resolves a palette tone name OR a raw color string to a CSS color. */
 function resolveColor(c: TagTone | string | undefined): string | undefined {
   if (!c) return undefined;
-  return c in TONE_VARS ? TONE_VARS[c as TagTone] : c;
+  return c in TONE_TEXT_VARS ? TONE_TEXT_VARS[c as TagTone] : c;
 }
 
 export interface TagProps {
@@ -93,7 +95,7 @@ export function Tag({
   onRemove,
   className,
 }: TagProps) {
-  const toneColor = tone ? TONE_VARS[tone] : undefined;
+  const toneColor = tone ? TONE_TEXT_VARS[tone] : undefined;
   const staticColor = toneColor ?? "var(--ink)";
   const accentColor =
     resolveColor(accent) ?? toneColor ?? "var(--uikit-accent)";

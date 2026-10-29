@@ -29,6 +29,11 @@ status-colored labels — `#failed`, `#running`, `#stale`. For the rare case
 where you want the static color to differ from hover, override `accent`
 independently.
 
+The words are drawn in the tone's **text** step (`--tone-<name>-text`, Style
+Guide §Color "Tones as text"): the same hue, deeper in light and lighter in
+dark, so every tone reaches 4.5:1 against the page in both themes. A raw palette
+hex is a dot or fill colour and is too light for 11–13px text.
+
 ## Pill variant
 
 A labelled value: no line, no fill, just the word in its tone with room around

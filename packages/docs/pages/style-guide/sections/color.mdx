@@ -108,6 +108,29 @@ source.
 
 <PaletteGrid />
 
+#### Tones as text
+
+The six hexes are for marks — dots, fills, edges, chart series — and they do
+not change with the theme. Set as small words they mostly fail WCAG AA: blue
+reads 2.5:1 on the light page, purple 2.8:1 on the dark one. So each tone has a
+text twin, `--tone-<name>-text`, per theme: the same hue, deeper in light and
+lighter in dark, each the nearest step that reaches 4.5:1 on `--bg` and
+`--panel-bg`. Tones that already pass keep their palette hex (purple in light,
+blue and amber in dark).
+
+| Tone | Light text | Dark text |
+| --- | --- | --- |
+| `blue` | `#0077c2` · 4.59:1 | `#23aaff` · 5.30:1 |
+| `green` | `#1d8444` · 4.57:1 | `#25ac59` · 4.57:1 |
+| `amber` | `#906e23` · 4.57:1 | `#c0922e` · 4.74:1 |
+| `red` | `#c34d37` · 4.57:1 | `#d77f6f` · 4.59:1 |
+| `purple` | `#7c5bd9` · 4.66:1 | `#a088e3` · 4.57:1 |
+| `warmGray` | `#7d725d` · 4.57:1 | `#a09580` · 4.56:1 |
+
+Anything that colours **words** with a tone reads the `-text` twin (`Tag` does);
+anything that colours a **mark** keeps `--tone-*`. Several dark values clear the
+line by only a few hundredths — if the palette moves, re-measure these.
+
 ### When adding a new concept
 
 1. **Open `pipelines-canvas.jsx`.** `PIPE_KIND_COLOR`, `PIPE_STATUS`, and
