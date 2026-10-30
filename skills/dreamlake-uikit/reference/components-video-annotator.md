@@ -16,8 +16,8 @@ split and "⋯" always stay. Keyboard shortcuts keep working for anything folded
 Controls never overlap, wrap or run past the video. The slim progress rail
 under the video fills in the accent blue as the clip plays — the same blue as
 the timeline playhead and the selected segment — over a quiet rail mixed from
-the page tokens, and its round knob shows on hover and grows a little while you
-drag. Hovering a segment shows its caption only when the lane cuts it off (or
+the page tokens, and its round knob, sized like the kit Slider's (8px), shows on hover
+at 10px and, only while you drag, wears a thin 2px accent ring. Hovering a segment shows its caption only when the lane cuts it off (or
 its pre-edit caption, for an edited segment), in a chip above the ruler. The playback-speed
 menu is the kit dropdown menu: its surface and elevation, a wedge aimed at the
 speed button, a check on the current rate, and arrow-key navigation. Segments always tile the whole clip
