@@ -550,16 +550,26 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
   // Drag-to-dock via the header grab handle. Driven with pointer events rather
   // than native DnD so a floating surrogate can follow the cursor and morph into
   // the target's half-rect — the target panels themselves stay unmarked.
-  const onHandleDown = (leaf: LeafNode, e: ReactPointerEvent, thresholdPx = 0) => {
-    e.preventDefault()
-    e.stopPropagation()
+  const onHandleDown = (
+    leaf: LeafNode,
+    e: ReactPointerEvent | PointerEvent,
+    thresholdPx = 0,
+    move?: { from: HTMLElement }
+  ) => {
+    // A header MOVE gesture (see PanelLeaf's `onMoveDown`) starts on content the
+    // host owns — tabs, a breadcrumb — so it must not cancel their own pointer
+    // handling or focus. It only arms past the threshold, like a tab drag.
+    if (!move) {
+      e.preventDefault()
+      e.stopPropagation()
+    }
     // Two things start a drag, and they sit in different places in the DOM: a
     // panel header's handle (inside the leaf) and a TAB (in the group's tab bar,
     // which is a sibling ABOVE the leaf — so `closest('[data-leaf-id]')` walks
     // straight past it and finds nothing). Fall back to the group region, which
     // is also the only correct source rect for an inactive tab, whose leaf is
     // not mounted at all.
-    const from = e.currentTarget as HTMLElement
+    const from = move?.from ?? (e.currentTarget as HTMLElement)
     const panelEl = (from.closest('[data-leaf-id]') ??
       from.closest('[data-panel-region]')) as HTMLElement | null
     if (!panelEl) return
@@ -568,7 +578,7 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
     setDrag({
       armed: thresholdPx <= 0,
       srcId: leaf.id,
-      wholeGroup: from.hasAttribute('data-panel-group-handle'),
+      wholeGroup: !!move || from.hasAttribute('data-panel-group-handle'),
       label: leaf.title ?? `Panel ${leaf.n}`,
       grabDX: e.clientX - r.left,
       grabDY: e.clientY - r.top,
@@ -578,6 +588,13 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
       y: e.clientY,
       target: null,
     })
+  }
+
+  // Move the WHOLE panel (its group, when tabbed) from its header. Dragging a
+  // single tab still tears out just that tab; this is the panel-as-a-unit path.
+  const onMoveDown = (leaf: LeafNode, e: PointerEvent, from: HTMLElement) => {
+    if (compact || e.button !== 0) return
+    onHandleDown(leaf, e, TAB_DRAG_THRESHOLD_PX, { from })
   }
 
   // While a drag is live, track the cursor on the window: move the surrogate,
@@ -849,8 +866,9 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
             onResize={doResize}
             onActivateTab={doActivateTab}
             onHandleDown={onHandleDown}
+            onMoveDown={onMoveDown}
           />}
-          {persistent && <PersistentPanels compactId={compact ? activeId : undefined} root={root} rootBox={rootBox} draggingId={drag?.armed ? drag.srcId : null} onFocus={focus} onClose={requestClose} onHandleDown={onHandleDown} />}
+          {persistent && <PersistentPanels compactId={compact ? activeId : undefined} root={root} rootBox={rootBox} draggingId={drag?.armed ? drag.srcId : null} onFocus={focus} onClose={requestClose} onHandleDown={onHandleDown} onMoveDown={onMoveDown} />}
         </div>
       </PanelConfigContext.Provider>
 

@@ -2,7 +2,7 @@ import { Fragment, type PointerEvent as ReactPointerEvent } from 'react'
 import { usePanelConfig } from './config'
 import { Divider } from './Divider'
 import { GroupTabBar } from './GroupTabBar'
-import { PanelLeaf } from './PanelLeaf'
+import { isMoveHandleTarget, PanelLeaf } from './PanelLeaf'
 import { ROOT_PANEL_BOX, splitChildBox, type PanelBox } from './panel-box'
 import type { LeafNode, PanelNode } from './panel-tree'
 
@@ -17,6 +17,8 @@ export interface RenderNodeProps {
   onResize: (splitId: string, index: number, a: number, b: number) => void
   onActivateTab: (groupId: string, leafId: string) => void
   onHandleDown: (leaf: LeafNode, e: ReactPointerEvent) => void
+  /** Start moving the whole panel from its header (see PanelLeaf). */
+  onMoveDown: (leaf: LeafNode, e: PointerEvent, from: HTMLElement) => void
 }
 
 /** The recursive renderer: leaf → panel, group → tab bar over its active leaf,
@@ -30,6 +32,7 @@ export function RenderNode({
   onResize,
   onActivateTab,
   onHandleDown,
+  onMoveDown,
 }: RenderNodeProps) {
   const { tabbed, persistent, showSingleTab } = usePanelConfig()
   if (persistent && node.kind !== 'split') {
@@ -46,20 +49,17 @@ export function RenderNode({
       <div data-panel-slot={group.activeId} className="flex-1 min-h-0 min-w-0" />
     </div>
     return <div data-panel-region className="relative flex flex-col w-full h-full min-w-0 min-h-0">
-      <div
-        data-dock-handle
-        data-panel-group-handle
-        aria-label="Move panel group"
-        title="Drag to move this panel group"
-        onPointerDown={event => {
-          if (event.button === 0) onHandleDown(group.children.find(child => child.id === group.activeId) ?? group.children[0], event)
-        }}
-        style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: 64, height: 8, zIndex: 3, cursor: 'grab', touchAction: 'none', display: 'flex', justifyContent: 'center', alignItems: 'center' }}
-      >
-        <span style={{ width: 28, height: 3, borderRadius: 2, background: 'var(--uikit-handle)', pointerEvents: 'none' }} />
-      </div>
       {(group.children.length > 1 || showSingleTab?.(group.children[0])) && (
-        <div data-panel-tab-slot={group.activeId} style={{ position: 'absolute', left: 10, right: 56, top: 8, zIndex: 2, minWidth: 0 }}>
+        <div
+          data-panel-tab-slot={group.activeId}
+          // The strip's empty area moves the whole group; a tab (which stops
+          // the event itself) still tears out just that tab.
+          onPointerDown={(event) => {
+            if (!isMoveHandleTarget(event.target, event.currentTarget, true)) return
+            onMoveDown(group.children.find(child => child.id === group.activeId) ?? group.children[0], event.nativeEvent, event.currentTarget)
+          }}
+          style={{ position: 'absolute', left: 10, right: 56, top: 8, zIndex: 2, minWidth: 0 }}
+        >
           <GroupTabBar group={group} onActivate={(id) => { onActivateTab(group.id, id); onFocus(id) }} onCloseTab={onClose} onHandleDown={onHandleDown} />
         </div>
       )}
@@ -75,6 +75,7 @@ export function RenderNode({
         onFocus={() => onFocus(node.id)}
         onClose={() => onClose(node.id)}
         onHandleDown={(e) => onHandleDown(node, e)}
+        onMoveDown={(e, from) => onMoveDown(node, e, from)}
       />
     )
   }
@@ -106,6 +107,7 @@ export function RenderNode({
             onFocus={() => onFocus(active.id)}
             onClose={() => onClose(active.id)}
             onHandleDown={(e) => onHandleDown(active, e)}
+            onMoveDown={(e, from) => onMoveDown(active, e, from)}
           />
         </div>
       </div>
@@ -131,6 +133,7 @@ export function RenderNode({
               onResize={onResize}
               onActivateTab={onActivateTab}
               onHandleDown={onHandleDown}
+              onMoveDown={onMoveDown}
             />
           </div>
           {i < node.children.length - 1 && (

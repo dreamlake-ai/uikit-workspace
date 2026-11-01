@@ -15,6 +15,7 @@ export function PersistentPanels({
   onFocus,
   onClose,
   onHandleDown,
+  onMoveDown,
 }: {
   compactId?: string
   root: PanelNode
@@ -23,6 +24,7 @@ export function PersistentPanels({
   onFocus: (id: string) => void
   onClose: (id: string) => void
   onHandleDown: (leaf: LeafNode, event: PointerEvent) => void
+  onMoveDown: (leaf: LeafNode, event: globalThis.PointerEvent, from: HTMLElement) => void
 }) {
   const { showSingleTab, tabbed } = usePanelConfig()
   const layer = useRef<HTMLDivElement>(null)
@@ -112,6 +114,7 @@ export function PersistentPanels({
             onFocus={() => onFocus(leaf.id)}
             onClose={() => onClose(leaf.id)}
             onHandleDown={(event) => onHandleDown(leaf, event)}
+            onMoveDown={(event, from) => onMoveDown(leaf, event, from)}
           />
         </div>
       ))}
