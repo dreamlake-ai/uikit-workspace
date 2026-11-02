@@ -55,6 +55,11 @@ export function ResizeDivider({
   const [leaveAnim, setLeaveAnim] = useState<LeaveAnim | null>(null)
 
   const hostRef = useRef<HTMLDivElement>(null)
+  // The host's rect for the length of a drag. Its extent along the long axis
+  // — the only part `readPos` uses — holds still while the divider slides, so
+  // one read at pointerdown serves the whole gesture; reading it per move
+  // forced a layout mid-frame, after the host had just moved the column.
+  const dragRectRef = useRef<DOMRect | null>(null)
   const startRef = useRef(0)
   const stopRef = useRef<(() => void) | null>(null)
   useEffect(() => () => stopRef.current?.(), [])
@@ -79,7 +84,7 @@ export function ResizeDivider({
   const readPos = (e: { clientX: number; clientY: number }): number | null => {
     const host = hostRef.current
     if (!host) return null
-    const r = host.getBoundingClientRect()
+    const r = dragRectRef.current ?? host.getBoundingClientRect()
     return isHorizontal ? e.clientY - r.top : e.clientX - r.left
   }
 
@@ -90,6 +95,7 @@ export function ResizeDivider({
     setLeaveAnim(null)
     setDragging(true)
     startRef.current = isHorizontal ? e.clientX : e.clientY
+    dragRectRef.current = hostRef.current?.getBoundingClientRect() ?? null
     stopRef.current = startResizeDrag(e.currentTarget, e,
       isHorizontal ? 'col-resize' : 'row-resize', point => {
         const current = isHorizontal ? point.clientX : point.clientY
@@ -104,6 +110,7 @@ export function ResizeDivider({
         }
       }, () => {
         stopRef.current = null
+        dragRectRef.current = null
         setDragging(false)
         onResizeEndRef.current?.()
       })

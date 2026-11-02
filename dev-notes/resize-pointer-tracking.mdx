@@ -33,3 +33,32 @@ iframe crossings, final coordinates, and release outside the handle.
 No public skill impact: this changes browser gesture reliability and preserves
 component props and task procedures. No public documentation pages or generated
 skills change. This source behavior has not been released.
+
+## 2026-11-02 — Dividers move the DOM per frame and commit on release
+
+A PanelLayout divider drag used to commit the tree on every coalesced frame:
+`onResize` → `commit` → React state → the whole layout re-rendered, the host's
+`onChange` ran, `PersistentPanels` re-measured every slot in a layout effect
+(a forced layout mid-commit), and every hosted view re-rendered — per pointer
+move. Profiled on the DreamLake dash route, that was all of the drag's script
+time; the frame still hit 16.7 ms on a light page but had no headroom on a
+heavy one.
+
+Now the divider writes the two adjacent children's `flex-grow` directly each
+frame and commits the tree ONCE when the pointer is released. `onResize` and
+`onChange` therefore fire once per drag (keyboard steps still commit per key).
+Persistent surfaces keep following the boundary during the drag because they
+observe the slots' sizes, not the tree; `--panel-x` / `--panel-w` are rebuilt
+from the committed ratios at release, so content that reads them lags the drag
+by the gesture's length (no consumer does today — PanelLeaf publishes them and
+nothing in the kit or DreamLake reads them).
+
+Both dividers also stop measuring their own rect per move: the bar's extent
+along the axis the pill rides holds still while it slides, so it is read once
+at pointerdown. The per-move read forced a second layout in every frame, right
+after the host had moved the column.
+
+Validation: `PanelLayout.test.tsx` pins the mid-drag DOM move with no commit
+and the single commit on release; `ResizableLayout` and `resize-drag` tests
+unchanged.
+

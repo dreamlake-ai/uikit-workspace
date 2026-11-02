@@ -55,7 +55,15 @@ export function Divider({
   // Cursor position along the bar (cross-axis px + the bar's cross length), used
   // to place the pill. Tracked on hover too, not just during a drag.
   const [cur, setCur] = useState<{ pos: number; len: number } | null>(null)
-  const drag = useRef<{ start: number; containerPx: number; a: number; b: number } | null>(null)
+  const drag = useRef<{
+    start: number
+    containerPx: number
+    a: number
+    b: number
+    /** The boundary as last applied to the DOM during this drag — what the
+     *  release commits. Unset until the pointer has actually moved. */
+    live: { a: number; b: number } | null
+  } | null>(null)
 
   const stopRef = useRef<(() => void) | null>(null)
   useEffect(() => () => stopRef.current?.(), [])
@@ -71,18 +79,29 @@ export function Divider({
     const parent = e.currentTarget.parentElement
     if (!parent) return
     const rect = parent.getBoundingClientRect()
+    // The two flex children this bar sits between. A split renders its
+    // children and dividers interleaved — child, divider, child, divider,
+    // child — so child i is the parent's element 2i.
+    const siblings = Array.from(parent.children) as HTMLElement[]
+    const before = siblings[index * 2]
+    const after = siblings[index * 2 + 2]
     drag.current = {
       start: isRow ? e.clientX : e.clientY,
       containerPx: isRow ? rect.width : rect.height,
       a: sizeA,
       b: sizeB,
+      live: null,
     }
     setActive(true)
     const target = e.currentTarget
+    // The bar slides along the drag axis but its extent along the OTHER axis
+    // — the one the pill rides — holds still, so it is measured once here.
+    // Measuring it on every move forced a layout in the middle of each frame,
+    // on top of the one the frame ends with.
+    const bar = target.getBoundingClientRect()
     const updatePill = (point: { clientX: number; clientY: number }) => {
-      const r = target.getBoundingClientRect()
-      setCur({ pos: isRow ? point.clientY - r.top : point.clientX - r.left,
-        len: isRow ? r.height : r.width })
+      setCur({ pos: isRow ? point.clientY - bar.top : point.clientX - bar.left,
+        len: isRow ? bar.height : bar.width })
     }
     updatePill(e)
     stopRef.current = startResizeDrag(target, e, isRow ? 'col-resize' : 'row-resize', point => {
@@ -91,13 +110,25 @@ export function Divider({
       const { a, b } = resizeSplit({ containerPx: d.containerPx, childCount,
         deltaPx: (isRow ? point.clientX : point.clientY) - d.start,
         a: d.a, b: d.b, minPx: MIN_PX, dividerPx })
-      onResizeRef.current(splitId, index, a, b)
+      // Per frame the boundary moves in the DOM alone: the two children get
+      // their flex-grow written directly, and the tree is committed ONCE, on
+      // release. Committing every frame re-rendered the whole layout and
+      // every view hosted in it for each pointer move — the host's
+      // `onChange`, `PersistentPanels`' measuring effect, all of it. The
+      // persistent surfaces still follow, since they observe the slots'
+      // sizes rather than the tree; `--panel-x` / `--panel-w` catch up at
+      // release, when the committed ratios rebuild them.
+      d.live = { a, b }
+      if (before) before.style.flexGrow = String(a)
+      if (after) after.style.flexGrow = String(b)
       updatePill(point)
     }, () => {
+      const d = drag.current
       drag.current = null
       stopRef.current = null
       setActive(false)
       if (!hoverRef.current) setCur(null)
+      if (d?.live) onResizeRef.current(splitId, index, d.live.a, d.live.b)
     })
   }
 

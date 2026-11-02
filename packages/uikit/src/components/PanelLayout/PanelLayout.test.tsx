@@ -592,6 +592,55 @@ it('a divider drag ends on the window pointerup, not only on one over the bar', 
   expect(document.body.style.cursor, 'stays ended: no lingering drag tracking the pointer').toBe('')
 })
 
+it('a divider drag moves the boundary in the DOM per frame and commits the tree once, on release', () => {
+  // Committing the tree on every pointer move re-rendered the whole layout —
+  // and every view hosted in it — per frame. Now a frame writes the two
+  // children's flex-grow directly; `onChange`/`onResize` and the tree see
+  // the drag exactly once, when the pointer is released.
+  const onResize = vi.fn()
+  const onChange = vi.fn()
+  const ref = createRef<PanelLayoutHandle>()
+  render(<PanelLayout ref={ref} initial={twoPane} onResize={onResize} onChange={onChange} />)
+  const sep = container.querySelector('[role="separator"]') as HTMLElement
+  const split = sep.parentElement!
+  // jsdom has no layout: give the split a width so the clamp has room, and
+  // run the drag's animation frame at once.
+  vi.spyOn(split, 'getBoundingClientRect').mockReturnValue({
+    x: 0, y: 0, top: 0, left: 0, right: 1000, bottom: 500, width: 1000, height: 500, toJSON: () => ({}),
+  } as DOMRect)
+  vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => (cb(performance.now()), 1))
+  const [first, , second] = Array.from(split.children) as HTMLElement[]
+  const start = sizesOf(ref.current!.getRoot())!
+  expect(first.style.flexGrow).toBe(String(start[0]))
+
+  act(() => {
+    sep.dispatchEvent(
+      new PointerEvent('pointerdown', { bubbles: true, button: 0, clientX: 500, clientY: 5 })
+    )
+  })
+  act(() => {
+    window.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, buttons: 1, clientX: 600, clientY: 5 }))
+  })
+  // Mid-drag: the DOM moved, the tree did not, nobody was told.
+  const liveA = Number(first.style.flexGrow)
+  const liveB = Number(second.style.flexGrow)
+  expect(liveA, 'the left child grew').toBeGreaterThan(start[0])
+  expect(liveB, 'the right child shrank').toBeLessThan(start[1])
+  expect(liveA + liveB).toBeCloseTo(start[0] + start[1], 6)
+  expect(sizesOf(ref.current!.getRoot())).toEqual(start)
+  expect(onResize).not.toHaveBeenCalled()
+  expect(onChange).not.toHaveBeenCalled()
+
+  act(() => {
+    window.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, clientX: 600, clientY: 5 }))
+  })
+  // Release: one commit, carrying the boundary the DOM already shows.
+  expect(sizesOf(ref.current!.getRoot())).toEqual([liveA, liveB])
+  expect(onResize).toHaveBeenCalledTimes(1)
+  expect(onChange).toHaveBeenCalledTimes(1)
+  expect(first.style.flexGrow).toBe(String(liveA))
+})
+
 it('a tree handed to `initial` is migrated and reseeds the id counters', () => {
   const ref = createRef<PanelLayoutHandle>()
   // A blob off disk: no instanceId, and ids above wherever the counter sits.
