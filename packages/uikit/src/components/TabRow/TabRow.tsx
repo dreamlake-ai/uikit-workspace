@@ -69,7 +69,9 @@ export function TabRow({
   }, []);
 
   return (
-    <div className={cn("uikit-tab-row", className)} style={{
+    // `data-tab-count`: a host may draw a lone tab differently from a strip
+    // (a full-width head instead of a tab shape) without counting the DOM.
+    <div className={cn("uikit-tab-row", className)} data-tab-count={tabs.length} style={{
       ...style,
       "--tab-row-min-height": minTabHeight == null ? undefined : `${Math.max(0, minTabHeight)}px`,
       "--tab-row-min-width": `${minimum}px`,
