@@ -1,5 +1,5 @@
 import { Fragment, type PointerEvent as ReactPointerEvent } from 'react'
-import { usePanelConfig } from './config'
+import { DEFAULT_TAB_STRIP_INSET, usePanelConfig } from './config'
 import { Divider } from './Divider'
 import { GroupTabBar } from './GroupTabBar'
 import { isMoveHandleTarget, PanelLeaf } from './PanelLeaf'
@@ -34,7 +34,7 @@ export function RenderNode({
   onHandleDown,
   onMoveDown,
 }: RenderNodeProps) {
-  const { tabbed, persistent, showSingleTab, dividerPx } = usePanelConfig()
+  const { tabbed, persistent, showSingleTab, dividerPx, tabStripInset = DEFAULT_TAB_STRIP_INSET } = usePanelConfig()
   if (persistent && node.kind !== 'split') {
     const group = node.kind === 'group' ? node : { kind: 'group' as const, id: node.id, children: [node], activeId: node.id }
     // Persistent rendering is independent of the host's chrome policy. A
@@ -58,7 +58,7 @@ export function RenderNode({
             if (!isMoveHandleTarget(event.target, event.currentTarget, true)) return
             onMoveDown(group.children.find(child => child.id === group.activeId) ?? group.children[0], event.nativeEvent, event.currentTarget)
           }}
-          style={{ position: 'absolute', left: 10, right: 56, top: 8, zIndex: 2, minWidth: 0 }}
+          style={{ position: 'absolute', left: tabStripInset.left, right: 56, top: tabStripInset.top, zIndex: 2, minWidth: 0 }}
         >
           <GroupTabBar group={group} onActivate={(id) => { onActivateTab(group.id, id); onFocus(id) }} onCloseTab={onClose} onHandleDown={onHandleDown} />
         </div>

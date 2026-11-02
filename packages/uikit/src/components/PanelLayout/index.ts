@@ -78,3 +78,4 @@ export { createLayoutController, validateLayoutRequest } from './layout-controll
 export type * from './layout-controller.types'
 export { createLayoutRegistry } from './layout-registry'
 export type { LayoutRegistry } from './layout-registry'
+export type { TabStripInset } from './config'
