@@ -45,6 +45,23 @@ function HeaderBtn({
   )
 }
 
+/** Controls inside a header keep their own press: a button, link or field is
+ *  never a move handle. A tab is (it only switches on a click that does not
+ *  travel), unless `skipTabs` — a kit tab already starts its own tear-out. */
+const MOVE_EXCLUDE = 'a, input, select, textarea, [contenteditable=""], [contenteditable="true"], [role=button], [role=combobox], [role=menuitem], [role=switch], [role=checkbox], [role=slider], button:not([role=tab]), [data-no-panel-move]'
+
+/** True when a press on `target` should move the whole panel: it lands on a
+ *  `[data-panel-move-handle]` (or on `within` itself, when `within` is the
+ *  handle) and not on a control inside it. */
+export function isMoveHandleTarget(target: EventTarget | null, within: Element, skipTabs = false): boolean {
+  if (!(target instanceof Element) || !within.contains(target)) return false
+  const control = target.closest(skipTabs ? `${MOVE_EXCLUDE}, [role=tab]` : MOVE_EXCLUDE)
+  if (control && within.contains(control)) return false
+  if (within.hasAttribute('data-panel-tab-slot')) return true
+  const handle = target.closest('[data-panel-move-handle]')
+  return !!handle && within.contains(handle)
+}
+
 /**
  * PanelLeaf — one panel: a 26px header (drag handle · title/custom header · close)
  * over a body the host fills via `renderBody`.
@@ -58,6 +75,7 @@ export function PanelLeaf({
   onFocus,
   onClose,
   onHandleDown,
+  onMoveDown,
 }: {
   leaf: LeafNode
   dragging: boolean
@@ -70,6 +88,9 @@ export function PanelLeaf({
   onFocus: () => void
   onClose: () => void
   onHandleDown: (e: ReactPointerEvent) => void
+  /** Pressing a `[data-panel-move-handle]` inside this panel — its tab header,
+   *  a host's header band — starts moving the whole panel. */
+  onMoveDown?: (e: PointerEvent, from: HTMLElement) => void
 }) {
   const {
     tabbed,
@@ -133,12 +154,19 @@ export function PanelLeaf({
   // listener follows DOM bubbling instead, so clicking portaled content still
   // focuses this leaf. The React `onPointerDown` below stays for the ordinary
   // (fiber-descendant) case — `onFocus` is idempotent, so double-firing is fine.
+  // The header move handle listens natively for the same reason: a host's
+  // header band may be portaled content.
   const onFocusRef = useRef(onFocus)
   onFocusRef.current = onFocus
+  const onMoveDownRef = useRef(onMoveDown)
+  onMoveDownRef.current = onMoveDown
   useEffect(() => {
     const el = rootRef.current
     if (!el) return
-    const handle = () => onFocusRef.current()
+    const handle = (e: PointerEvent) => {
+      onFocusRef.current()
+      if (onMoveDownRef.current && isMoveHandleTarget(e.target, el)) onMoveDownRef.current(e, el)
+    }
     el.addEventListener('pointerdown', handle)
     return () => el.removeEventListener('pointerdown', handle)
   }, [])
@@ -178,6 +206,9 @@ export function PanelLeaf({
     >
       {showHeader && (
         <header
+          // A tabbed panel's header row is its move handle (the tab strip above
+          // it covers the tabs; this covers the row's empty space).
+          data-panel-move-handle={tabbed ? '' : undefined}
           onMouseEnter={() => setHeaderHovered(true)}
           onMouseLeave={() => setHeaderHovered(false)}
           className={cn(
@@ -188,6 +219,8 @@ export function PanelLeaf({
             // off the panel's own center.
             headerOnColumn ? contentColumnHeaderClass : 'pl-[12px]',
             tabbed && inGroup ? 'h-[34px] pt-[8px] pl-[20px] pr-[20px]' : undefined,
+            // Move handle (see data-panel-move-handle): a touch drag docks.
+            tabbed && 'touch-none',
             headerClassName?.(leaf)
           )}
         >

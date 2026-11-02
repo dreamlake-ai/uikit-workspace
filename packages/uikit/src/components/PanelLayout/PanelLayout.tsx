@@ -15,6 +15,7 @@ import {
   DEFAULT_PALETTE,
   PanelConfigContext,
   TAB_DRAG_THRESHOLD_PX,
+  dragThresholdFor,
   type PanelConfig,
 } from './config'
 import { Button } from '../Button/Button'
@@ -22,7 +23,7 @@ import { TabRow } from '../TabRow/TabRow'
 import { tabDomId, tabPanelDomId } from './GroupTabBar'
 import { RenderNode } from './RenderNode'
 import { PersistentPanels } from './PersistentPanels'
-import { ROOT_PANEL_BOX, type PanelBox } from './panel-box'
+import { DIVIDER_PX, ROOT_PANEL_BOX, type PanelBox } from './panel-box'
 import {
   applyActivateTab,
   applyClose,
@@ -76,6 +77,8 @@ type DragState = {
   /** False while the pointer is down but hasn't travelled far enough to be a
    *  drag. An unarmed drag paints nothing and commits nothing. */
   armed: boolean
+  /** Distance the pointer must travel to arm (0 for a dedicated handle). */
+  threshold: number
   srcId: string
   wholeGroup?: boolean
   label: string
@@ -153,6 +156,10 @@ export interface PanelLayoutProps {
   compactPanelTrailing?: (leaf: LeafNode) => ReactNode
   /** Layout-owned tabs; keep view DOM connected across moves. */
   tabbed?: boolean
+  /** Thickness of the split dividers between panels, in px (default
+   *  DIVIDER_PX, 10). Their grab area stays at least 10px wide, centred on the
+   *  seam, so a hairline divider is still easy to take hold of. */
+  dividerPx?: number
   /** Show a tab for a lone view only when its content opts in. Groups always show tabs. */
   showSingleTab?: ClosablePredicate
   /** Host disposal guard. Called for every user close affordance. */
@@ -243,6 +250,7 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
     initial,
     initialSingle = false,
     tabbed = false,
+    dividerPx = DIVIDER_PX,
     compact: compactProp,
     compactBreakpoint,
     compactLabel = 'Workspace panels',
@@ -550,16 +558,26 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
   // Drag-to-dock via the header grab handle. Driven with pointer events rather
   // than native DnD so a floating surrogate can follow the cursor and morph into
   // the target's half-rect — the target panels themselves stay unmarked.
-  const onHandleDown = (leaf: LeafNode, e: ReactPointerEvent, thresholdPx = 0) => {
-    e.preventDefault()
-    e.stopPropagation()
+  const onHandleDown = (
+    leaf: LeafNode,
+    e: ReactPointerEvent | PointerEvent,
+    thresholdPx = 0,
+    move?: { from: HTMLElement }
+  ) => {
+    // A header MOVE gesture (see PanelLeaf's `onMoveDown`) starts on content the
+    // host owns — tabs, a breadcrumb — so it must not cancel their own pointer
+    // handling or focus. It only arms past the threshold, like a tab drag.
+    if (!move) {
+      e.preventDefault()
+      e.stopPropagation()
+    }
     // Two things start a drag, and they sit in different places in the DOM: a
     // panel header's handle (inside the leaf) and a TAB (in the group's tab bar,
     // which is a sibling ABOVE the leaf — so `closest('[data-leaf-id]')` walks
     // straight past it and finds nothing). Fall back to the group region, which
     // is also the only correct source rect for an inactive tab, whose leaf is
     // not mounted at all.
-    const from = e.currentTarget as HTMLElement
+    const from = move?.from ?? (e.currentTarget as HTMLElement)
     const panelEl = (from.closest('[data-leaf-id]') ??
       from.closest('[data-panel-region]')) as HTMLElement | null
     if (!panelEl) return
@@ -567,8 +585,11 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
     focus(leaf.id)
     setDrag({
       armed: thresholdPx <= 0,
+      // A thresholded press (tab, header) uses the pointer's own activation
+      // distance: a finger needs more room than a mouse to mean "drag".
+      threshold: thresholdPx <= 0 ? 0 : Math.max(thresholdPx, dragThresholdFor(e.pointerType)),
       srcId: leaf.id,
-      wholeGroup: from.hasAttribute('data-panel-group-handle'),
+      wholeGroup: !!move || from.hasAttribute('data-panel-group-handle'),
       label: leaf.title ?? `Panel ${leaf.n}`,
       grabDX: e.clientX - r.left,
       grabDY: e.clientY - r.top,
@@ -578,6 +599,13 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
       y: e.clientY,
       target: null,
     })
+  }
+
+  // Move the WHOLE panel (its group, when tabbed) from its header. Dragging a
+  // single tab still tears out just that tab; this is the panel-as-a-unit path.
+  const onMoveDown = (leaf: LeafNode, e: PointerEvent, from: HTMLElement) => {
+    if (compact || e.button !== 0) return
+    onHandleDown(leaf, e, TAB_DRAG_THRESHOLD_PX, { from })
   }
 
   // While a drag is live, track the cursor on the window: move the surrogate,
@@ -594,7 +622,7 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
       if (!d.armed) {
         // Still deciding whether this is a click or a drag. Paint nothing and
         // pick no target until the pointer has actually travelled.
-        if (Math.hypot(x - d.x, y - d.y) < TAB_DRAG_THRESHOLD_PX) return
+        if (Math.hypot(x - d.x, y - d.y) < d.threshold) return
         setDrag((prev) => (prev ? { ...prev, armed: true } : prev))
       }
       const el = document.elementFromPoint(x, y) as HTMLElement | null
@@ -746,6 +774,7 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
     contentColumnHeaderClass,
     closable,
     palette,
+    dividerPx,
   }
 
   const withToolbar = showToolbar || toolbar !== undefined
@@ -849,8 +878,9 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
             onResize={doResize}
             onActivateTab={doActivateTab}
             onHandleDown={onHandleDown}
+            onMoveDown={onMoveDown}
           />}
-          {persistent && <PersistentPanels compactId={compact ? activeId : undefined} root={root} rootBox={rootBox} draggingId={drag?.armed ? drag.srcId : null} onFocus={focus} onClose={requestClose} onHandleDown={onHandleDown} />}
+          {persistent && <PersistentPanels compactId={compact ? activeId : undefined} root={root} rootBox={rootBox} draggingId={drag?.armed ? drag.srcId : null} onFocus={focus} onClose={requestClose} onHandleDown={onHandleDown} onMoveDown={onMoveDown} />}
         </div>
       </PanelConfigContext.Provider>
 

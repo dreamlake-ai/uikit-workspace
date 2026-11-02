@@ -8,7 +8,8 @@ import {
 } from 'react'
 import { cn } from '../../lib/utils'
 import { startResizeDrag } from '../../lib/resize-drag'
-import { resizeSplit } from './panel-box'
+import { DIVIDER_PX, resizeSplit } from './panel-box'
+import { usePanelConfig } from './config'
 import { MIN_PX, type Dir } from './panel-tree'
 
 /**
@@ -60,6 +61,7 @@ export function Divider({
   useEffect(() => () => stopRef.current?.(), [])
 
   const isRow = dir === 'row'
+  const { dividerPx = DIVIDER_PX } = usePanelConfig()
 
   const onPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
     // Only a primary-button drag resizes; a right-click or middle-click must not
@@ -88,7 +90,7 @@ export function Divider({
       if (!d) return
       const { a, b } = resizeSplit({ containerPx: d.containerPx, childCount,
         deltaPx: (isRow ? point.clientX : point.clientY) - d.start,
-        a: d.a, b: d.b, minPx: MIN_PX })
+        a: d.a, b: d.b, minPx: MIN_PX, dividerPx })
       onResizeRef.current(splitId, index, a, b)
       updatePill(point)
     }, () => {
@@ -128,6 +130,7 @@ export function Divider({
       deltaPx,
       a: sizeA,
       b: sizeB,
+      dividerPx,
       minPx: MIN_PX,
     })
     onResize(splitId, index, a, b)
@@ -201,8 +204,11 @@ export function Divider({
       className={cn(
         'relative flex-[0_0_auto] self-stretch flex items-center justify-center touch-none z-[1] bg-uikit-bg',
         'outline-none focus-visible:ring-2 focus-visible:ring-uikit-accent focus-visible:ring-inset',
-        isRow ? 'w-[10px] cursor-col-resize' : 'h-[10px] cursor-row-resize',
+        isRow ? 'cursor-col-resize' : 'cursor-row-resize',
       )}
+      // The thickness is the layout's `dividerPx`, the same value its geometry
+      // (panel-box.ts) subtracts for every divider.
+      style={isRow ? { width: dividerPx } : { height: dividerPx }}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onMouseEnter={() => setHover(true)}
@@ -211,6 +217,17 @@ export function Divider({
         if (!drag.current) setCur(null)
       }}
     >
+      {dividerPx < DIVIDER_PX && (
+        // A divider thinner than the default keeps the default's grab area,
+        // centred on the seam over the panels' edges.
+        <span
+          aria-hidden
+          className="absolute"
+          style={isRow
+            ? { top: 0, bottom: 0, left: (dividerPx - DIVIDER_PX) / 2, right: (dividerPx - DIVIDER_PX) / 2 }
+            : { left: 0, right: 0, top: (dividerPx - DIVIDER_PX) / 2, bottom: (dividerPx - DIVIDER_PX) / 2 }}
+        />
+      )}
       {lit && (
         // A quiet grey hint on hover (`--uikit-handle`, no extra opacity: the
         // token IS the hover tone); one step stronger the moment it is grabbed

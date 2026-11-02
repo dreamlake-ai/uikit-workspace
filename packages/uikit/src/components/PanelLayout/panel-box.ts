@@ -28,8 +28,9 @@
  * and safe under SSR.
  */
 
-/** Thickness (px) of the `Divider` between two split children. Must match the
- *  `w-[10px]` / `h-[10px]` on PanelLayout's `Divider`. */
+/** Default thickness (px) of the `Divider` between two split children. A host
+ *  may draw it thinner or thicker with PanelLayout's `dividerPx`; the Divider
+ *  and every calculation below read that one value. */
 export const DIVIDER_PX = 10
 
 /**
@@ -73,6 +74,8 @@ export function splitChildBox(
   sizes: number[],
   index: number,
   dir: 'row' | 'column',
+  /** The divider thickness the layout draws (PanelLayout's `dividerPx`). */
+  dividerPx: number = DIVIDER_PX,
 ): PanelBox {
   if (dir === 'column') return parent
 
@@ -81,7 +84,7 @@ export function splitChildBox(
   // rather than emitting a division by zero.
   if (!(total > 0)) return parent
 
-  const gaps = (sizes.length - 1) * DIVIDER_PX
+  const gaps = (sizes.length - 1) * dividerPx
   // The width actually available to the children, dividers removed.
   const avail = gaps > 0 ? `(${parent.w} - ${gaps}px)` : parent.w
 
@@ -91,7 +94,7 @@ export function splitChildBox(
   const xParts = [parent.x]
   if (before > 0) xParts.push(`${avail} * ${num(before)}`)
   // Every divider to this child's left also pushes it right.
-  if (index > 0) xParts.push(`${index * DIVIDER_PX}px`)
+  if (index > 0) xParts.push(`${index * dividerPx}px`)
 
   return {
     x: xParts.length === 1 ? parent.x : `(${xParts.join(' + ')})`,
@@ -128,10 +131,12 @@ export function resizeSplit(opts: {
   b: number
   /** Smallest a panel may be dragged to, in px. */
   minPx: number
+  /** The divider thickness the layout draws (PanelLayout's `dividerPx`). */
+  dividerPx?: number
 }): { a: number; b: number } {
-  const { containerPx, childCount, deltaPx, a, b, minPx } = opts
+  const { containerPx, childCount, deltaPx, a, b, minPx, dividerPx = DIVIDER_PX } = opts
   const span = a + b
-  const availPx = containerPx - Math.max(0, childCount - 1) * DIVIDER_PX
+  const availPx = containerPx - Math.max(0, childCount - 1) * dividerPx
   // A container too small to measure against: leave the split untouched rather
   // than dividing by zero and writing NaN into every size.
   if (!(availPx > 0) || !(span > 0)) return { a, b }

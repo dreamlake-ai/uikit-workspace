@@ -29,6 +29,8 @@ export interface PanelConfig {
   contentColumnHeaderClass?: string
   closable?: ClosablePredicate
   palette: readonly string[]
+  /** Divider thickness in px (PanelLayout's `dividerPx`; DIVIDER_PX when unset). */
+  dividerPx?: number
 }
 
 /** Distinct, subtle tints so each placeholder panel reads as its own thing. */
@@ -54,4 +56,14 @@ export const tintFor = (n: number, palette: readonly string[]) => palette[(n - 1
  *  without a threshold every tab switch would flash the floating surrogate.
  *  Lives here rather than in PanelLayout.tsx so the tab bar can read it without
  *  importing its own parent. */
-export const TAB_DRAG_THRESHOLD_PX = 4
+export const TAB_DRAG_THRESHOLD_PX = 6
+/** The same activation distance for a finger, which wobbles more than a mouse
+ *  on a press meant as a tap. */
+export const TAB_DRAG_THRESHOLD_TOUCH_PX = 8
+
+/** The activation distance for a press: a tab, a header, a tab strip. Below it
+ *  the press is a click — the tab switches, a button fires — and the panel
+ *  neither lifts nor shows any drag affordance. */
+export function dragThresholdFor(pointerType: string | undefined): number {
+  return pointerType === 'touch' ? TAB_DRAG_THRESHOLD_TOUCH_PX : TAB_DRAG_THRESHOLD_PX
+}

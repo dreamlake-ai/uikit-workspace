@@ -25,6 +25,6 @@ const initial = () =>
 
 export const TabsSpec = () => (
   <PanelStage>
-    <PanelLayout initial={initial} className="p-2" />
+    <PanelLayout tabbed initial={initial} className="p-2" />
   </PanelStage>
 )
