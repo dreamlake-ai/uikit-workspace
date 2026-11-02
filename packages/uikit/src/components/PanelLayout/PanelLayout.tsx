@@ -15,6 +15,7 @@ import {
   DEFAULT_PALETTE,
   PanelConfigContext,
   TAB_DRAG_THRESHOLD_PX,
+  dragThresholdFor,
   type PanelConfig,
 } from './config'
 import { Button } from '../Button/Button'
@@ -76,6 +77,8 @@ type DragState = {
   /** False while the pointer is down but hasn't travelled far enough to be a
    *  drag. An unarmed drag paints nothing and commits nothing. */
   armed: boolean
+  /** Distance the pointer must travel to arm (0 for a dedicated handle). */
+  threshold: number
   srcId: string
   wholeGroup?: boolean
   label: string
@@ -577,6 +580,9 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
     focus(leaf.id)
     setDrag({
       armed: thresholdPx <= 0,
+      // A thresholded press (tab, header) uses the pointer's own activation
+      // distance: a finger needs more room than a mouse to mean "drag".
+      threshold: thresholdPx <= 0 ? 0 : Math.max(thresholdPx, dragThresholdFor(e.pointerType)),
       srcId: leaf.id,
       wholeGroup: !!move || from.hasAttribute('data-panel-group-handle'),
       label: leaf.title ?? `Panel ${leaf.n}`,
@@ -611,7 +617,7 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
       if (!d.armed) {
         // Still deciding whether this is a click or a drag. Paint nothing and
         // pick no target until the pointer has actually travelled.
-        if (Math.hypot(x - d.x, y - d.y) < TAB_DRAG_THRESHOLD_PX) return
+        if (Math.hypot(x - d.x, y - d.y) < d.threshold) return
         setDrag((prev) => (prev ? { ...prev, armed: true } : prev))
       }
       const el = document.elementFromPoint(x, y) as HTMLElement | null
