@@ -31,7 +31,20 @@ export interface PanelConfig {
   palette: readonly string[]
   /** Divider thickness in px (PanelLayout's `dividerPx`; DIVIDER_PX when unset). */
   dividerPx?: number
+  /** Where a tabbed group's strip starts (PanelLayout's `tabStripInset`). */
+  tabStripInset?: TabStripInset
 }
+
+/** A tabbed group's tab strip: its first tab's offset from the panel's left
+ *  and top edges, in px. The header row is `top` plus the strip's own height
+ *  (TAB_STRIP_PX), so the tabs always stand on the panel below and join it. */
+export interface TabStripInset {
+  left: number
+  top: number
+}
+export const DEFAULT_TAB_STRIP_INSET: TabStripInset = { left: 10, top: 8 }
+/** The height of a tabbed group's tab strip (its tabs). */
+export const TAB_STRIP_PX = 26
 
 /** Distinct, subtle tints so each placeholder panel reads as its own thing. */
 export const DEFAULT_PALETTE = [

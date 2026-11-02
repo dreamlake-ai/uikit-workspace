@@ -16,6 +16,7 @@ import {
   PanelConfigContext,
   TAB_DRAG_THRESHOLD_PX,
   dragThresholdFor,
+  type TabStripInset,
   type PanelConfig,
 } from './config'
 import { Button } from '../Button/Button'
@@ -160,6 +161,10 @@ export interface PanelLayoutProps {
    *  DIVIDER_PX, 10). Their grab area stays at least 10px wide, centred on the
    *  seam, so a hairline divider is still easy to take hold of. */
   dividerPx?: number
+  /** Where a tabbed group's tab strip starts: its first tab's offset from the
+   *  panel's left and top edges (default 10 / 8). The tabs fill the header row
+   *  from there down, so they still join the panel below. */
+  tabStripInset?: TabStripInset
   /** Show a tab for a lone view only when its content opts in. Groups always show tabs. */
   showSingleTab?: ClosablePredicate
   /** Host disposal guard. Called for every user close affordance. */
@@ -251,6 +256,7 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
     initialSingle = false,
     tabbed = false,
     dividerPx = DIVIDER_PX,
+    tabStripInset,
     compact: compactProp,
     compactBreakpoint,
     compactLabel = 'Workspace panels',
@@ -775,6 +781,7 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
     closable,
     palette,
     dividerPx,
+    tabStripInset,
   }
 
   const withToolbar = showToolbar || toolbar !== undefined

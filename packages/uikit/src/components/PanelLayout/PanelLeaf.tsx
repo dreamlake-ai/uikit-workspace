@@ -7,7 +7,7 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from 'react'
 import { cn } from '../../lib/utils'
-import { tintFor, usePanelConfig } from './config'
+import { TAB_STRIP_PX, tintFor, usePanelConfig } from './config'
 import { tabDomId, tabPanelDomId } from './GroupTabBar'
 import type { PanelBox } from './panel-box'
 import type { LeafNode } from './panel-tree'
@@ -107,6 +107,7 @@ export function PanelLeaf({
     contentColumnHeaderClass,
     closable,
     palette,
+    tabStripInset,
   } = usePanelConfig()
 
   const utilityPanel = !!compact && !!compactPanelAsAction?.(leaf)
@@ -218,11 +219,16 @@ export function PanelLeaf({
             // x-axis with the content below even when side panels shift the column
             // off the panel's own center.
             headerOnColumn ? contentColumnHeaderClass : 'pl-[12px]',
-            tabbed && inGroup ? 'h-[34px] pt-[8px] pl-[20px] pr-[20px]' : undefined,
+            // A tabbed group's header row holds its tab strip: 8px above the
+            // 26px strip by default, or the host's `tabStripInset.top`.
+            tabbed && inGroup ? cn('pl-[20px] pr-[20px]', !tabStripInset && 'h-[34px] pt-[8px]') : undefined,
             // Move handle (see data-panel-move-handle): a touch drag docks.
             tabbed && 'touch-none',
             headerClassName?.(leaf)
           )}
+          style={tabbed && inGroup && tabStripInset
+            ? { height: tabStripInset.top + TAB_STRIP_PX, paddingTop: tabStripInset.top }
+            : undefined}
         >
           {/* Centered grab handle — drag to dock. `data-dock-handle` gives a host's
             gesture guards a stable selector, so a horizontal DRAG of this handle
