@@ -26,7 +26,7 @@ export function PersistentPanels({
   onHandleDown: (leaf: LeafNode, event: PointerEvent) => void
   onMoveDown: (leaf: LeafNode, event: globalThis.PointerEvent, from: HTMLElement) => void
 }) {
-  const { showSingleTab, tabbed } = usePanelConfig()
+  const { showSingleTab, tabbed, dividerPx } = usePanelConfig()
   const layer = useRef<HTMLDivElement>(null)
   const mountOrder = useRef(new Map<string, number>())
   const sequence = useRef(0)
@@ -38,7 +38,7 @@ export function PersistentPanels({
         leaves.push({ leaf, box, inGroup: node.children.length > 1 || (!!tabbed && !!showSingleTab?.(leaf)), multiple: node.children.length > 1 })
       )
     else
-      node.children.forEach((child, i) => walk(child, splitChildBox(box, node.sizes, i, node.dir)))
+      node.children.forEach((child, i) => walk(child, splitChildBox(box, node.sizes, i, node.dir, dividerPx)))
   }
   walk(root, rootBox)
   // Tree order may change, but moving a connected iframe with insertBefore

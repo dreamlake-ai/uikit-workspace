@@ -23,7 +23,7 @@ import { TabRow } from '../TabRow/TabRow'
 import { tabDomId, tabPanelDomId } from './GroupTabBar'
 import { RenderNode } from './RenderNode'
 import { PersistentPanels } from './PersistentPanels'
-import { ROOT_PANEL_BOX, type PanelBox } from './panel-box'
+import { DIVIDER_PX, ROOT_PANEL_BOX, type PanelBox } from './panel-box'
 import {
   applyActivateTab,
   applyClose,
@@ -156,6 +156,10 @@ export interface PanelLayoutProps {
   compactPanelTrailing?: (leaf: LeafNode) => ReactNode
   /** Layout-owned tabs; keep view DOM connected across moves. */
   tabbed?: boolean
+  /** Thickness of the split dividers between panels, in px (default
+   *  DIVIDER_PX, 10). Their grab area stays at least 10px wide, centred on the
+   *  seam, so a hairline divider is still easy to take hold of. */
+  dividerPx?: number
   /** Show a tab for a lone view only when its content opts in. Groups always show tabs. */
   showSingleTab?: ClosablePredicate
   /** Host disposal guard. Called for every user close affordance. */
@@ -246,6 +250,7 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
     initial,
     initialSingle = false,
     tabbed = false,
+    dividerPx = DIVIDER_PX,
     compact: compactProp,
     compactBreakpoint,
     compactLabel = 'Workspace panels',
@@ -769,6 +774,7 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
     contentColumnHeaderClass,
     closable,
     palette,
+    dividerPx,
   }
 
   const withToolbar = showToolbar || toolbar !== undefined

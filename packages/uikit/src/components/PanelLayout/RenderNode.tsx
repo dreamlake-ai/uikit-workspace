@@ -34,7 +34,7 @@ export function RenderNode({
   onHandleDown,
   onMoveDown,
 }: RenderNodeProps) {
-  const { tabbed, persistent, showSingleTab } = usePanelConfig()
+  const { tabbed, persistent, showSingleTab, dividerPx } = usePanelConfig()
   if (persistent && node.kind !== 'split') {
     const group = node.kind === 'group' ? node : { kind: 'group' as const, id: node.id, children: [node], activeId: node.id }
     // Persistent rendering is independent of the host's chrome policy. A
@@ -126,7 +126,7 @@ export function RenderNode({
               // The SAME arithmetic as the flex layout above, handed to CSS as an
               // expression so content can position itself against the viewport
               // without ever measuring the DOM.
-              box={splitChildBox(box, node.sizes, i, node.dir)}
+              box={splitChildBox(box, node.sizes, i, node.dir, dividerPx)}
               draggingId={draggingId}
               onFocus={onFocus}
               onClose={onClose}

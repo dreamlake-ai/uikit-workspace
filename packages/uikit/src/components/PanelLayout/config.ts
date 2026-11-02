@@ -29,6 +29,8 @@ export interface PanelConfig {
   contentColumnHeaderClass?: string
   closable?: ClosablePredicate
   palette: readonly string[]
+  /** Divider thickness in px (PanelLayout's `dividerPx`; DIVIDER_PX when unset). */
+  dividerPx?: number
 }
 
 /** Distinct, subtle tints so each placeholder panel reads as its own thing. */

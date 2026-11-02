@@ -29,15 +29,15 @@ function evalBox(box: PanelBox, areaX: number, areaW: number) {
 
 /** Independent reference: what the browser's flex layout actually produces for
  *  `basis-0` children with `flexGrow: sizes[i]` separated by DIVIDER_PX dividers. */
-function referenceRow(areaX: number, areaW: number, sizes: number[]) {
+function referenceRow(areaX: number, areaW: number, sizes: number[], dividerPx = DIVIDER_PX) {
   const total = sizes.reduce((a, b) => a + b, 0)
-  const avail = areaW - (sizes.length - 1) * DIVIDER_PX
+  const avail = areaW - (sizes.length - 1) * dividerPx
   const out: { x: number; w: number }[] = []
   let cursor = areaX
   for (const s of sizes) {
     const w = avail * (s / total)
     out.push({ x: cursor, w })
-    cursor += w + DIVIDER_PX
+    cursor += w + dividerPx
   }
   return out
 }
@@ -160,4 +160,36 @@ it('[panel-box] resizeSplit leaves a degenerate split alone instead of writing N
     .toStrictEqual({ a: 50, b: 50 })
   expect(resizeSplit({ containerPx: 1000, childCount: 2, deltaPx: 20, a: 0, b: 0, minPx: 120 }))
     .toStrictEqual({ a: 0, b: 0 })
+})
+
+it('[panel-box] the centring maths follows the layout\'s divider width (1px and 10px)', () => {
+  const areaX = 221
+  const areaW = 1208
+  for (const dividerPx of [1, 10]) {
+    for (const sizes of [[0.62, 0.38], [2, 1, 1]]) {
+      const expected = referenceRow(areaX, areaW, sizes, dividerPx)
+      let spanned = (sizes.length - 1) * dividerPx
+      sizes.forEach((_, i) => {
+        const got = evalBox(splitChildBox(ROOT_PANEL_BOX, sizes, i, 'row', dividerPx), areaX, areaW)
+        spanned += got.w
+        expect(got.x, `divider ${dividerPx} sizes=${JSON.stringify(sizes)} child ${i} x`).toBeCloseTo(expected[i].x, 6)
+        expect(got.w, `divider ${dividerPx} sizes=${JSON.stringify(sizes)} child ${i} w`).toBeCloseTo(expected[i].w, 6)
+      })
+      expect(spanned, `divider ${dividerPx}: children + dividers refill the area`).toBeCloseTo(areaW, 6)
+    }
+  }
+  // The second of two panels starts 1px after the first ends at 1px, 10px at 10.
+  const first = evalBox(splitChildBox(ROOT_PANEL_BOX, [1, 1], 0, 'row', 1), 0, 1001)
+  const second = evalBox(splitChildBox(ROOT_PANEL_BOX, [1, 1], 1, 'row', 1), 0, 1001)
+  expect(second.x - (first.x + first.w)).toBeCloseTo(1, 6)
+})
+
+it('[panel-box] resizeSplit tracks the cursor 1:1 at a 1px divider too', () => {
+  // 3 children in 400px with 1px dividers → 398px of flex space: 39.8px of travel
+  // is exactly 10% of the span. At the default 10px, 38px is (test above).
+  const thin = resizeSplit({ containerPx: 400, childCount: 3, deltaPx: 39.8, a: 50, b: 50, minPx: 10, dividerPx: 1 })
+  expect(thin.a).toBeCloseTo(60, 6)
+  expect(thin.b).toBeCloseTo(40, 6)
+  const wide = resizeSplit({ containerPx: 400, childCount: 3, deltaPx: 38, a: 50, b: 50, minPx: 10, dividerPx: 10 })
+  expect(wide.a).toBeCloseTo(60, 6)
 })
