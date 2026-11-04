@@ -112,7 +112,8 @@ function useMenuFloating(
     middleware: [
       offset(sideOffset + (arrow ? 4 : 0)),
       flip({ padding: 8 }),
-      shift({ padding: 8 }),
+      // A submenu may fit on neither side on mobile; keep it inside the viewport.
+      shift({ padding: 8, crossAxis: isSubmenu }),
       ...(arrow ? [arrowMiddleware({ element: arrowRef, padding: 16 })] : []),
     ],
   });

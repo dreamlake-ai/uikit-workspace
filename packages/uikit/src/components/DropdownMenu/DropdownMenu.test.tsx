@@ -7,10 +7,14 @@ import {
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
 } from "./DropdownMenu";
 
 let root: Root;
 let container: HTMLDivElement;
+let viewportWidth = 800;
 let triggerBox = { x: 300, y: 300, width: 80, height: 30 };
 const box = (x: number, y: number, width: number, height: number) => ({
   x,
@@ -28,6 +32,7 @@ beforeEach(() => {
   container = document.createElement("div");
   document.body.append(container);
   root = createRoot(container);
+  viewportWidth = 800;
   triggerBox = { x: 300, y: 300, width: 80, height: 30 };
   vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(
     function (this: HTMLElement) {
@@ -38,9 +43,13 @@ beforeEach(() => {
           triggerBox.width,
           triggerBox.height,
         );
+      if (this instanceof HTMLElement && this.dataset.subtrigger !== undefined)
+        return box(49, 300, 132, 32);
+      if (this instanceof HTMLElement && this.dataset.submenu !== undefined)
+        return box(0, 0, 210, 124);
       if (this.getAttribute("role") === "menu") return box(0, 0, 180, 100);
       if (this.hasAttribute("data-dropdown-menu-arrow")) return box(0, 0, 7, 7);
-      return box(0, 0, 800, 600);
+      return box(0, 0, viewportWidth, 600);
     },
   );
   for (const [property, axis] of [
@@ -156,4 +165,31 @@ it("keeps keyboard navigation and Escape focus return with the wedge", async () 
     expect(document.querySelector('[role="menu"]')).toBeNull(),
   );
   await vi.waitFor(() => expect(document.activeElement).toBe(trigger));
+});
+
+it("keeps a submenu in the viewport when neither side of its trigger fits", async () => {
+  viewportWidth = 390;
+  await act(async () =>
+    root.render(
+      <DropdownMenu defaultOpen>
+        <DropdownMenuTrigger data-trigger="">Options</DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <DropdownMenuSub defaultOpen>
+            <DropdownMenuSubTrigger data-subtrigger="">
+              Search provider
+            </DropdownMenuSubTrigger>
+            <DropdownMenuSubContent data-submenu="">
+              <DropdownMenuItem>Tavily Advanced</DropdownMenuItem>
+            </DropdownMenuSubContent>
+          </DropdownMenuSub>
+        </DropdownMenuContent>
+      </DropdownMenu>,
+    ),
+  );
+  const submenu = document.querySelector("[data-submenu]") as HTMLElement;
+  await vi.waitFor(() => {
+    const left = Number.parseFloat(submenu.style.left);
+    expect(left).toBeGreaterThanOrEqual(8);
+    expect(left + submenu.offsetWidth).toBeLessThanOrEqual(viewportWidth - 8);
+  });
 });
