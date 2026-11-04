@@ -180,6 +180,18 @@ export interface VideoAnnotatorProps {
   /** Fired when the user toggles verification on the active segment (A key / no-op if absent). */
   onApproveToggle?: (index: number, verified: boolean) => void;
 
+  /**
+   * View-only mode for viewers who may watch and navigate but not edit. Hides
+   * the split / merge controls (including the overflow-menu merge item), the
+   * boundary drag handles and the add / remove-track entries; drops the `s`,
+   * `a` and Backspace shortcuts; and turns every edit path — including the
+   * imperative `split` / `merge` / `toggleApprove` / `addTrack` /
+   * `removeTrack` — into a no-op, so no edit callback ever fires. Playback,
+   * seeking, frame / segment stepping, zoom, lane selection and the hand-pose
+   * toggle are unchanged. Default false.
+   */
+  readOnly?: boolean;
+
   /** Playback-speed options for the speed dropdown. Default [0.25,0.5,1,1.5,2]. */
   speeds?: number[];
   /**

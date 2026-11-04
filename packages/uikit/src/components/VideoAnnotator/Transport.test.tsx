@@ -106,6 +106,19 @@ describe("Transport stays one row by giving things up in order", () => {
   });
 });
 
+describe("readOnly", () => {
+  it("drops split and merge, and does not reserve their width", () => {
+    at(700, { readOnly: true } as Partial<typeof props>);
+    expect(screen.queryByLabelText("Split at playhead (S)")).toBeNull();
+    expect(screen.queryByLabelText("Merge into previous (Backspace)")).toBeNull();
+    expect(screen.getByLabelText("Play/Pause (Space)")).not.toBeNull();
+    const w = { readout: 176, speed: 40 };
+    // At level 2 the right group (split + ⋯) is the wider side; without split
+    // it is just ⋯, so the bar needs less.
+    expect(needed(2, w, true, false)).toBeLessThan(needed(2, w, true));
+  });
+});
+
 describe("play / pause sits on the bar's exact centre at every level", () => {
   it("lays the bar out as a 1fr auto 1fr grid", () => {
     const bar = at(700);

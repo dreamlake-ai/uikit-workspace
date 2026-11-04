@@ -9,12 +9,16 @@ export interface AnnotatorKeyActions {
   goSeg: (index: number) => void;
   doMerge: (index: number) => void;
   sel: number;
+  /** View-only: the edit keys (s, a, Backspace) are not bound at all — not
+   *  even `preventDefault` — so they keep their ordinary browser meaning. */
+  readOnly?: boolean;
 }
 
 /** Document-level shortcuts: Space, ←/→ (frame; Shift = 1s, Alt = nudge
  *  playhead to boundary), ,/. and j/k (prev/next segment: select + seek to its
  *  start), s (split), a (approve), Backspace (merge). Suppressed while typing in
- *  an input/textarea/select. Install controlled by `enableKeyboard`. */
+ *  an input/textarea/select. Install controlled by `enableKeyboard`; the edit
+ *  keys are skipped in `readOnly`. */
 export function useAnnotatorKeyboard(enabled: boolean, actions: AnnotatorKeyActions): void {
   // Keep the latest actions in a ref so the document listener attaches once (on
   // `enabled` change) instead of re-subscribing every time a callback identity
@@ -26,7 +30,7 @@ export function useAnnotatorKeyboard(enabled: boolean, actions: AnnotatorKeyActi
   useEffect(() => {
     if (!enabled || typeof document === "undefined") return;
     const onKey = (e: KeyboardEvent) => {
-      const { togglePlay, stepFrame, gotoBoundary, doSplit, approveToggle, goSeg, doMerge, sel } =
+      const { togglePlay, stepFrame, gotoBoundary, doSplit, approveToggle, goSeg, doMerge, sel, readOnly } =
         actionsRef.current;
       const el = document.activeElement as HTMLElement | null;
       // Suppress every shortcut while a field is focused — an input/textarea/
@@ -37,6 +41,7 @@ export function useAnnotatorKeyboard(enabled: boolean, actions: AnnotatorKeyActi
         if (e.key === "Escape") el?.blur();
         return;
       }
+      if (readOnly && /^(s|S|a|A|Backspace)$/.test(e.key)) return;
       switch (e.key) {
         case " ":
           e.preventDefault();

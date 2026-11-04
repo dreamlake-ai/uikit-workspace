@@ -22,6 +22,7 @@ export function Timeline({
   zoom,
   currentTime,
   allowAddTracks,
+  editable = true,
   onScrubDown,
   onBoundaryDown,
   onAddTrack,
@@ -42,6 +43,9 @@ export function Timeline({
   currentTime: number;
   /** Show the built-in "+ add track" row (host-configurable entry). */
   allowAddTracks: boolean;
+  /** Render the active lane's boundary drag handles. False in view-only mode,
+   *  where segments can be clicked / scrubbed but never resized. Default true. */
+  editable?: boolean;
   onScrubDown: (e: React.MouseEvent) => void;
   onBoundaryDown: (e: React.MouseEvent, i: number) => void;
   onAddTrack: () => void;
@@ -231,6 +235,7 @@ export function Timeline({
                 </div>
               ))}
               {isActive &&
+                editable &&
                 tsegs.map((p, i) =>
                   i > 0 ? (
                     <div
