@@ -47,7 +47,8 @@ import {
  *      also repeats the readout at its top;
  *   3. frame step joins them (← / → still step);
  *   4. segment prev / next join them too (, / . still jump).
- * Play / pause, split and "⋯" never fold. At every level play / pause sits
+ * Play / pause, split and "⋯" never fold (`readOnly` drops split and merge
+ * altogether, and the fit math stops reserving their width). At every level play / pause sits
  * on the bar's exact centre (a `1fr auto 1fr` grid, see styles.ts), so a
  * level only fits when the wider side group fits beside the cluster. The level is chosen from the bar's
  * OWN width (ResizeObserver), not the viewport's: a labeling view beside an
@@ -64,6 +65,8 @@ export function needed(
   level: Level,
   w: Record<string, number>,
   hasHandpose: boolean,
+  /** False in view-only mode: no split / merge on the right. */
+  editable = true,
 ): number {
   const sum = (items: number[]) =>
     items.length
@@ -78,9 +81,9 @@ export function needed(
   center.push(PLAY);
   if (level < 3) center.push(ICON);
   if (level < 4) center.push(ICON);
-  const right: number[] = [ICON]; // split
+  const right: number[] = editable ? [ICON] : []; // split
   if (level < 2) {
-    right.push(ICON); // merge
+    if (editable) right.push(ICON); // merge
     if (hasHandpose) right.push(ICON);
   }
   if (w.extra) right.push(w.extra);
@@ -94,7 +97,7 @@ export function needed(
   return 2 * Math.max(l, r) + c + 2 * GROUP_GAP;
 }
 
-function useTransportLevel(hasHandpose: boolean) {
+function useTransportLevel(hasHandpose: boolean, editable: boolean) {
   const root = useRef<HTMLDivElement>(null);
   const widths = useRef<Record<string, number>>({});
   const [level, setLevel] = useState<Level>(0);
@@ -113,7 +116,7 @@ function useTransportLevel(hasHandpose: boolean) {
     const avail = el.clientWidth;
     let next: Level = 4;
     for (const l of [0, 1, 2, 3] as Level[])
-      if (needed(l, widths.current, hasHandpose) <= avail + 0.5) {
+      if (needed(l, widths.current, hasHandpose, editable) <= avail + 0.5) {
         next = l;
         break;
       }
@@ -143,6 +146,7 @@ export function Transport({
   segCount,
   doSplit,
   doMerge,
+  readOnly = false,
   hasHandpose,
   showHands,
   handsLoading,
@@ -161,13 +165,15 @@ export function Transport({
   segCount: number;
   doSplit: () => void;
   doMerge: (index: number) => void;
+  /** View-only: no split / merge entries, inline or in the overflow menu. */
+  readOnly?: boolean;
   hasHandpose: boolean;
   showHands: boolean;
   handsLoading?: boolean;
   onToggleHands: () => void;
   transportExtra?: ReactNode;
 }) {
-  const { root, level } = useTransportLevel(hasHandpose);
+  const { root, level } = useTransportLevel(hasHandpose, !readOnly);
   const folded = level >= 2;
   return (
     <div className="va-transport" ref={root} data-level={level}>
@@ -231,14 +237,16 @@ export function Transport({
       </div>
 
       <div className="va-tp-right">
-        <TipButton
-          className="va-icon"
-          label="Split at playhead (S)"
-          onClick={doSplit}
-        >
-          <Scissors size={15} />
-        </TipButton>
-        {!folded && (
+        {!readOnly && (
+          <TipButton
+            className="va-icon"
+            label="Split at playhead (S)"
+            onClick={doSplit}
+          >
+            <Scissors size={15} />
+          </TipButton>
+        )}
+        {!folded && !readOnly && (
           <TipButton
             className="va-icon"
             label="Merge into previous (Backspace)"
@@ -317,13 +325,15 @@ export function Transport({
                 </>
               )}
               {level >= 3 && <DropdownMenuSeparator />}
-              <DropdownMenuItem
-                disabled={sel <= 0}
-                onSelect={() => doMerge(sel)}
-              >
-                <ArrowLeftToLine size={13} /> Merge into previous
-                <span className="va-moremenu-key">⌫</span>
-              </DropdownMenuItem>
+              {!readOnly && (
+                <DropdownMenuItem
+                  disabled={sel <= 0}
+                  onSelect={() => doMerge(sel)}
+                >
+                  <ArrowLeftToLine size={13} /> Merge into previous
+                  <span className="va-moremenu-key">⌫</span>
+                </DropdownMenuItem>
+              )}
               {hasHandpose && (
                 <DropdownMenuItem
                   disabled={handsLoading}

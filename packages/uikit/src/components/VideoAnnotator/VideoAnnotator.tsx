@@ -83,6 +83,7 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
       allowAddTracks = true,
       onAddTrack,
       onRemoveTrack,
+      readOnly = false,
       speeds = DEFAULT_SPEEDS,
       enableKeyboard = true,
       showSeekBar = false,
@@ -274,13 +275,15 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
     }, [sel]);
 
     // Route a structural edit of the active track back to the host in the shape
-    // the current mode expects.
+    // the current mode expects. Read-only never routes an edit — this is the one
+    // funnel split / merge / boundary drag / duration pinning all pass through.
     const commitSegs = useCallback(
       (next: Segment[]) => {
+        if (readOnly) return;
         if (multi) onTracksChange?.(trackList.map((t, i) => (i === active ? { ...t, segments: next } : t)));
         else onSegmentsChange?.(next);
       },
-      [multi, onTracksChange, onSegmentsChange, trackList, active]
+      [readOnly, multi, onTracksChange, onSegmentsChange, trackList, active]
     );
 
 
@@ -291,6 +294,7 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
     // plain Track (id/name/segments) — the exact shape the component already
     // accepts — so an added lane is data-compatible with the supplied `tracks`.
     const addTrack = useCallback(() => {
+      if (readOnly) return;
       if (onAddTrack) return onAddTrack();
       const uid =
         typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `t${trackList.length}`;
@@ -301,16 +305,17 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
       };
       onTracksChange?.([...trackList, next]);
       onActiveTrackChange?.(trackList.length);
-    }, [onAddTrack, onTracksChange, onActiveTrackChange, trackList, D]);
+    }, [readOnly, onAddTrack, onTracksChange, onActiveTrackChange, trackList, D]);
 
     const removeTrack = useCallback(
       (i: number) => {
+        if (readOnly) return;
         if (onRemoveTrack) return onRemoveTrack(i);
         if (trackList.length <= 1) return;
         onTracksChange?.(trackList.filter((_, idx) => idx !== i));
         if (active >= i) onActiveTrackChange?.(Math.max(0, active - (active === i ? 0 : 1)));
       },
-      [onRemoveTrack, onTracksChange, onActiveTrackChange, trackList, active]
+      [readOnly, onRemoveTrack, onTracksChange, onActiveTrackChange, trackList, active]
     );
 
 
@@ -378,24 +383,26 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
     );
 
     const doSplit = useCallback(() => {
+      if (readOnly) return;
       const res = splitAt(segs, clipNow(), D);
       if ("error" in res) { showToast(res.error); return; }
       commitSegs(res.segments);
       onSelectedChange(res.selected);
-    }, [segs, D, commitSegs, onSelectedChange, showToast, clipNow]);
+    }, [readOnly, segs, D, commitSegs, onSelectedChange, showToast, clipNow]);
 
     const doMerge = useCallback(
       (i: number) => {
+        if (readOnly) return;
         const res = mergeInto(segs, i);
         if (!res) return;
         commitSegs(res.segments);
         onSelectedChange(res.selected);
       },
-      [segs, commitSegs, onSelectedChange]
+      [readOnly, segs, commitSegs, onSelectedChange]
     );
 
     const approveToggle = useCallback(() => {
-      if (!curSeg) return;
+      if (readOnly || !curSeg) return;
       const nextVerified = !curSeg.verified;
       onApproveToggle?.(sel, nextVerified);
       if (nextVerified) {
@@ -403,7 +410,7 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
         if (nxt >= 0) goSeg(nxt);
         else showToast("All phases in this video verified ✓");
       }
-    }, [curSeg, sel, segs, onApproveToggle, goSeg, showToast]);
+    }, [readOnly, curSeg, sel, segs, onApproveToggle, goSeg, showToast]);
 
     const togglePlay = useCallback(() => {
       const v = videoRef.current;
@@ -642,6 +649,7 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
       goSeg,
       doMerge,
       sel,
+      readOnly,
     });
 
     const handposeReady = Boolean(handpose && handpose.frames && handpose.frames.length);
@@ -740,6 +748,7 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
           segCount={segs.length}
           doSplit={doSplit}
           doMerge={doMerge}
+          readOnly={readOnly}
           hasHandpose={hasHandpose}
           showHands={showHands}
           handsLoading={handsLoading}
@@ -764,7 +773,8 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
               D={D}
               zoom={zoom}
               currentTime={clipTime}
-              allowAddTracks={multi && allowAddTracks}
+              allowAddTracks={multi && allowAddTracks && !readOnly}
+              editable={!readOnly}
               onScrubDown={startScrub}
               onBoundaryDown={startBoundaryDrag}
               onAddTrack={addTrack}
@@ -795,7 +805,7 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
                     </button>
                     {/* Remove-track entry — configurable (allowAddTracks), hover-revealed,
                         never on the last lane. */}
-                    {allowAddTracks && trackList.length > 1 && (
+                    {allowAddTracks && !readOnly && trackList.length > 1 && (
                       <button
                         type="button"
                         className="va-rowlab-x"
@@ -817,7 +827,13 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
         </div>
 
         {showDescription && (
-          <DescriptionBox segment={curSeg} index={sel} extractFps={extractFps} onChange={onDescriptionChange} />
+          <DescriptionBox
+            segment={curSeg}
+            index={sel}
+            extractFps={extractFps}
+            onChange={readOnly ? undefined : onDescriptionChange}
+            readOnly={readOnly}
+          />
         )}
 
         {toast && <div className="va-toast">{toast}</div>}

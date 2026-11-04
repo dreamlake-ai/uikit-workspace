@@ -9,11 +9,14 @@ export function DescriptionBox({
   index,
   extractFps,
   onChange,
+  readOnly = false,
 }: {
   segment: Segment | null;
   index: number;
   extractFps?: number | null;
   onChange?: (index: number, value: string) => void;
+  /** View only: the caption shows in the same box but can't be edited. */
+  readOnly?: boolean;
 }) {
   const words = segment ? (segment.description || "").trim().split(/\s+/).filter(Boolean).length : 0;
   const range = segment
@@ -26,9 +29,11 @@ export function DescriptionBox({
     <div className="va-desc">
       <textarea
         className="va-desc-box"
-        placeholder="Phase description — edit to match the clip"
+        aria-label="Phase description"
+        placeholder={readOnly ? "No description" : "Phase description — edit to match the clip"}
+        readOnly={readOnly}
         value={segment?.description ?? ""}
-        onChange={(e) => onChange?.(index, e.target.value)}
+        onChange={readOnly ? undefined : (e) => onChange?.(index, e.target.value)}
       />
       <div className="va-desc-meta">
         <span>{words} words</span>
