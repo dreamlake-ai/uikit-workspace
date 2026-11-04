@@ -105,7 +105,7 @@ visible panel if a breakpoint change would hide the focused editor.
 | `padding` | `number` | `12` | Outer padding from the layout's container edges in px. Set to `0` for designs where the layout sits flush with the viewport. |
 | `defaultWidths` | `{ left?: number; middle?: number; right?: number }` | `2/3/5` | Initial flex weights for each column. Ignored for any column that opts into a fixed-px mode (`leftFixedPx`, `middleFixedPx`). |
 | `minWidths` | `{ left?: number; middle?: number; right?: number }` | `80px` | Minimum pixel width per column, enforced during drag-resize. |
-| `leftFixedPx` | `number` | — | Pin the left column to a fixed pixel width. The column ignores its flex ratio and never grows with the viewport. |
+| `leftFixedPx` | `number` | — | Pin the left column to a fixed-but-resize-adjustable pixel width that never grows with the viewport. The left-middle drag mutates it 1:1 (clamped by `minWidths`), trading width with the middle column; the right column keeps its width. Persisted as `leftPx` with `storageKey`. |
 | `middleFixedPx` | `number` | — | Pin the middle column to a fixed-but-resize-adjustable pixel width. The middle-right drag mutates the value 1:1 (clamped by `minWidths.middle`); the right column takes the remaining width. Pair with `storageKey` to persist the px value. |
 | `storageKey` | `string` | — | `localStorage` key to persist column widths across sessions. |
 | `leftHidden` | `boolean` | `false` | Collapse the left column. |

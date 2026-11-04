@@ -53,9 +53,12 @@ export interface ResizableLayoutProps {
    */
   padding?: number;
   /**
-   * Pin the left column to a fixed pixel width (`flex: 0 0 <px>`). When set,
-   * the left column ignores `defaultWidths.left` and never grows with the
-   * viewport. Leave undefined for the default flex-ratio behavior.
+   * Pin the left column to a fixed-but-resize-adjustable pixel width
+   * (`flex: 0 0 <px>`). The value is the initial width; the left-middle drag
+   * mutates it directly (1px cursor = 1px left), clamped by `minWidths`, and
+   * trades the width with the middle column; right keeps its width. The column
+   * ignores `defaultWidths.left` and never grows with the viewport. Pair with
+   * `storageKey` to persist the px value. Leave undefined for flex ratios.
    */
   leftFixedPx?: number;
   /**
@@ -74,8 +77,10 @@ const MIN_WIDTH_DEFAULT = 80;
 
 // Persisted shape. `middle` is interpreted in px when `middleFixedPx` is set,
 // otherwise as a flex ratio. Mode is implicit from the caller's props — the
-// component never tries to convert between the two on the fly.
-type StoredWidths = { left?: number; middle?: number; right?: number };
+// component never tries to convert between the two on the fly. A
+// `leftFixedPx` column's width is `leftPx`: `left` already held a flex ratio
+// in that mode, so reading it as px would turn old values into slivers.
+type StoredWidths = { left?: number; leftPx?: number; middle?: number; right?: number };
 
 function readWidths(key: string | undefined): StoredWidths {
   if (!key || typeof window === "undefined") return {};
@@ -83,6 +88,7 @@ function readWidths(key: string | undefined): StoredWidths {
     const stored = JSON.parse(localStorage.getItem(key) ?? "{}");
     return {
       left: typeof stored.left === "number" ? stored.left : undefined,
+      leftPx: typeof stored.leftPx === "number" ? stored.leftPx : undefined,
       middle: typeof stored.middle === "number" ? stored.middle : undefined,
       right: typeof stored.right === "number" ? stored.right : undefined,
     };
@@ -208,6 +214,8 @@ export function ResizableLayout({
   // Px state for the fixed-but-resizable middle column. Tracks the *current*
   // width, which starts at `middleFixedPx` and is mutated by the resize handle.
   const [middlePx, setMiddlePx] = useState(middleFixedPx ?? 0);
+  // Same for the fixed-but-resizable left column.
+  const [leftPx, setLeftPx] = useState(leftFixedPx ?? 0);
   const [isResizing, setIsResizing] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -215,12 +223,14 @@ export function ResizableLayout({
   const middleFlexRef = useRef(middleFlex);
   const rightFlexRef = useRef(rightFlex);
   const middlePxRef = useRef(middlePx);
+  const leftPxRef = useRef(leftPx);
   const minWidthsRef = useRef(minWidths);
 
   leftFlexRef.current = leftFlex;
   middleFlexRef.current = middleFlex;
   rightFlexRef.current = rightFlex;
   middlePxRef.current = middlePx;
+  leftPxRef.current = leftPx;
   minWidthsRef.current = minWidths;
 
   // Hydrate persisted widths on mount.
@@ -228,6 +238,7 @@ export function ResizableLayout({
     if (!storageKey) return;
     const stored = readWidths(storageKey);
     if (stored.left != null) setLeftFlex(stored.left);
+    if (stored.leftPx != null && leftFixedPx != null) setLeftPx(stored.leftPx);
     if (stored.right != null) setRightFlex(stored.right);
     if (stored.middle != null) {
       if (middleFixedPx != null) setMiddlePx(stored.middle);
@@ -242,14 +253,52 @@ export function ResizableLayout({
     setIsResizing(false);
     writeWidths(storageKey, {
       left: leftFlexRef.current,
+      ...(leftFixedPx != null && { leftPx: leftPxRef.current }),
       middle: middleFixedPx != null ? middlePxRef.current : middleFlexRef.current,
       right: rightFlexRef.current,
     });
-  }, [storageKey, middleFixedPx]);
+  }, [storageKey, leftFixedPx, middleFixedPx]);
 
   const handleLeftMiddleResize = useCallback((deltaX: number) => {
     if (!containerRef.current) return;
     const cw = containerRef.current.clientWidth;
+
+    // Fixed-px left: the drag moves the left column's own width 1:1 and
+    // trades it with the adjacent middle column only, as the flex-ratio
+    // branch below does; right keeps its pixel width.
+    if (leftFixedPx != null) {
+      const min = minWidthsRef.current?.left ?? MIN_WIDTH_DEFAULT;
+      const middleMin = minWidthsRef.current?.middle ?? MIN_WIDTH_DEFAULT;
+      const left = leftPxRef.current;
+      if (middleFixedPx != null) {
+        const max = Math.max(left, left + middlePxRef.current - middleMin);
+        const next = Math.max(min, Math.min(max, left + deltaX));
+        middlePxRef.current -= next - left;
+        leftPxRef.current = next;
+        setMiddlePx(middlePxRef.current);
+        setLeftPx(next);
+        return;
+      }
+      // Middle and right split the rest by flex ratio. Re-weight them so the
+      // middle absorbs the change and right's pixel width stays put.
+      const rest = cw - gap * (rightHidden ? 1 : 2) - left;
+      const m = middleFlexRef.current;
+      const r = rightHidden ? 0 : rightFlexRef.current;
+      const middleWidth = rightHidden ? rest : (rest * m) / (m + r);
+      const max = Math.max(left, left + middleWidth - middleMin);
+      const next = Math.max(min, Math.min(max, left + deltaX));
+      leftPxRef.current = next;
+      setLeftPx(next);
+      const nextRest = rest - (next - left);
+      if (!rightHidden && nextRest > 0) {
+        middleFlexRef.current = ((m + r) * (middleWidth - (next - left))) / nextRest;
+        rightFlexRef.current = m + r - middleFlexRef.current;
+        setMiddleFlex(middleFlexRef.current);
+        setRightFlex(rightFlexRef.current);
+      }
+      return;
+    }
+
     const total =
       leftFlexRef.current + middleFlexRef.current + rightFlexRef.current;
     const raw = deltaX / (cw / total);
@@ -265,7 +314,7 @@ export function ResizableLayout({
     middleFlexRef.current -= delta;
     setLeftFlex(leftFlexRef.current);
     setMiddleFlex(middleFlexRef.current);
-  }, []);
+  }, [leftFixedPx, middleFixedPx, rightHidden, gap]);
 
   const handleMiddleRightResize = useCallback((deltaX: number) => {
     if (!containerRef.current) return;
@@ -276,7 +325,7 @@ export function ResizableLayout({
       const min = minWidthsRef.current?.middle ?? MIN_WIDTH_DEFAULT;
       // Upper bound: leave room for any right-min plus the fixed left + dividers.
       const cw = containerRef.current.clientWidth;
-      const fixedLeft = leftFixedPx != null && !leftHidden ? leftFixedPx : 0;
+      const fixedLeft = leftFixedPx != null && !leftHidden ? leftPxRef.current : 0;
       const rightMin = minWidthsRef.current?.right ?? 0;
       const max = Math.max(min, cw - fixedLeft - rightMin);
       const next = Math.max(min, Math.min(max, middlePxRef.current + deltaX));
@@ -287,7 +336,7 @@ export function ResizableLayout({
 
     // Flex-ratio mode (no middleFixedPx).
     const cw = containerRef.current.clientWidth;
-    const fixed = leftFixedPx != null && !leftHidden ? leftFixedPx : 0;
+    const fixed = leftFixedPx != null && !leftHidden ? leftPxRef.current : 0;
     const flexAvailable = Math.max(1, cw - fixed);
     const total =
       (leftFixedPx != null ? 0 : leftFlexRef.current) +
@@ -315,7 +364,7 @@ export function ResizableLayout({
   const leftStyle = leftHidden
     ? undefined
     : leftFixedPx != null
-      ? { flexGrow: 0, flexShrink: 0, flexBasis: `${leftFixedPx}px` }
+      ? { flexGrow: 0, flexShrink: 0, flexBasis: `${leftPx}px` }
       : { flexGrow: leftFlex, flexShrink: 1, flexBasis: 0 };
 
   const middleStyle = middleHidden

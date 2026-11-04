@@ -74,6 +74,56 @@ it('preserves persisted desktop widths and DOM across repeated mode changes', ()
   expect(JSON.parse(localStorage.getItem('compact-widths')!).middle).toBe(420)
 })
 
+it('drags a fixed-px left column by its own divider and restores the saved width', () => {
+  // jsdom has no layout; give the panel row a desktop width.
+  const width = vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(1605)
+  // `left: 2` is a flex ratio an older version saved; it must not become px.
+  localStorage.setItem('compact-widths', JSON.stringify({ left: 2, middle: 6, right: 3 }))
+  const sizes = {
+    storageKey: 'compact-widths', leftFixedPx: 288, gap: 24,
+    defaultWidths: { middle: 6, right: 3 }, minWidths: { left: 210, middle: 360, right: 280 },
+  }
+  render(sizes)
+  const column = (label: string) => host.querySelector(`[aria-label="${label}"]`)!.parentElement!
+  const [left, middle, right] = ['Navigation draft', 'Content draft', 'Details draft'].map(column)
+  expect(left.style.flexBasis).toBe('288px')
+  const drag = (dx: number) => {
+    const divider = host.querySelector('.group\\/divider')!
+    act(() => {
+      divider.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, button: 0, clientX: 300 }))
+    })
+    act(() => {
+      window.dispatchEvent(new MouseEvent('pointerup', { clientX: 300 + dx }))
+    })
+  }
+  // Middle and right split what's left by flex ratio; in px:
+  const rest = () => 1605 - 48 - parseFloat(left.style.flexBasis)
+  const pixels = () => {
+    const [m, r] = [middle, right].map(el => Number(el.style.flexGrow))
+    return [Math.round((rest() * m) / (m + r)), Math.round((rest() * r) / (m + r))]
+  }
+  expect(pixels()).toEqual([846, 423])
+  drag(100)
+  expect(left.style.flexBasis).toBe('388px')
+  // Only the adjacent middle column gives up the width.
+  expect(pixels()).toEqual([746, 423])
+  drag(-400)
+  expect(left.style.flexBasis).toBe('210px')
+  expect(pixels()).toEqual([924, 423])
+  // Widest: middle down to its 360 minimum.
+  drag(2000)
+  expect(left.style.flexBasis).toBe('774px')
+  expect(pixels()).toEqual([360, 423])
+  drag(-474)
+  expect(pixels()).toEqual([834, 423])
+  expect(JSON.parse(localStorage.getItem('compact-widths')!)).toMatchObject({ left: 2, leftPx: 300 })
+  act(() => root.unmount())
+  root = createRoot(host)
+  render(sizes)
+  expect(column('Navigation draft').style.flexBasis).toBe('300px')
+  width.mockRestore()
+})
+
 it('supports controlled detail selection and omits hidden panels with a visible fallback', () => {
   const onChange = vi.fn()
   render({ compact: true, compactPanel: 'right', onCompactPanelChange: onChange })
