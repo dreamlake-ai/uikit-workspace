@@ -5,12 +5,14 @@ order: 200
 description: Indeterminate loading spinner — a dual dot-pulse ring that inherits text color.
 ---
 
-import { SizesSpec } from '../../../components/specimens/components/spinner/SizesSpec'
-import { ColorSpec } from '../../../components/specimens/components/spinner/ColorSpec'
-import sizesSrc from '../../../components/specimens/components/spinner/SizesSpec.tsx?raw'
-import colorSrc from '../../../components/specimens/components/spinner/ColorSpec.tsx?raw'
+import { SizesSpec } from "../../../components/specimens/components/spinner/SizesSpec";
+import { ColorSpec } from "../../../components/specimens/components/spinner/ColorSpec";
+import sizesSrc from "../../../components/specimens/components/spinner/SizesSpec.tsx?raw";
+import colorSrc from "../../../components/specimens/components/spinner/ColorSpec.tsx?raw";
 
 # Spinner
+
+**Loading policy:** DreamLake uses one Braille dot spinner for all waits. The expanding-ring Spinner shown below is legacy behavior awaiting migration; do not use it as the standard for new loading UI. Use the existing app Braille loader until the UIKit migration is complete. See the [style guide](/style-guide) for labels, timing, accessibility, reduced motion, and prohibited alternatives.
 
 An indeterminate loading indicator: two out-of-phase expanding circles drawn as
 an inline SVG. It renders inline (use it inside buttons, list rows, or empty
@@ -37,9 +39,9 @@ a spinner to a tone while an action runs.
 
 ## Props
 
-| Prop | Type | Default | Description |
-| --- | --- | --- | --- |
-| `size` | `number \| string` | `24` | Diameter in px. |
-| `className` | `string` | — | Extra classes (e.g. a `text-*` color). |
+| Prop        | Type               | Default | Description                            |
+| ----------- | ------------------ | ------- | -------------------------------------- |
+| `size`      | `number \| string` | `24`    | Diameter in px.                        |
+| `className` | `string`           | —       | Extra classes (e.g. a `text-*` color). |
 
 Any other native `<svg>` attributes (`style`, `aria-*`, …) are forwarded.
