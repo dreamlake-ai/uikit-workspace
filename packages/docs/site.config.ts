@@ -12,18 +12,15 @@
  *   versions.json-backed version switcher.
  * - The 6-char git hash is captured at build/dev start (`__GIT_HASH__`).
  */
-import { initDocs } from '@dreamlake/dockit'
+import { initDocs, type PageFrontmatter, type DocPageLoader } from '@dreamlake/dockit'
 
-const pages = import.meta.glob('./pages/**/+Page.mdx', { eager: true }) as Record<
-  string,
-  { frontmatter?: Record<string, unknown> }
->
-
-const rawPages = import.meta.glob('./pages/**/+Page.mdx', {
-  eager: true,
-  query: '?raw',
-  import: 'default',
-}) as Record<string, string>
+const pageMetadata = import.meta.glob<PageFrontmatter>('./pages/**/+Page.mdx', {
+  eager: true, query: '?frontmatter', import: 'default',
+})
+const pageLoaders = import.meta.glob<Awaited<ReturnType<DocPageLoader>>>('./pages/**/+Page.mdx')
+const rawPages = import.meta.env.DEV
+  ? import.meta.glob<string>('./pages/**/+Page.mdx', { eager: true, query: '?raw', import: 'default' })
+  : undefined
 
 initDocs({
   site: {
@@ -53,6 +50,7 @@ initDocs({
     // The three-button segmented slider this site has always used (the
     // library default is the single-button cycle toggle).
     themeToggle: 'segmented',
+    continuousReading: true,
     /**
      * Studio's preview-inspector bridge (the "DOM picker"). With this site
      * open in Studio's Web Preview panel, the composer's element picker can
@@ -71,17 +69,17 @@ initDocs({
      */
     headScripts: ['https://docs.studio.dreamlake.ai/design-integration.js'],
   },
-  pages,
+  pageMetadata,
+  pageLoaders,
   rawPages,
-  // First-appearance order of the pre-migration sidebar (sections are
-  // scoped per tab; this list preserves the previous rendering exactly).
-  sectionOrder: ['Get started', 'Developer notes', 'Components', 'Pipeline', 'Workflow'],
-  // Moved verbatim from the old lib/tabs.ts. Overview is the catch-all
-  // fallback, so its prefix intentionally matches nothing.
+  // Topic sections are scoped to each topbar tab.
+  sectionOrder: ['Get started', 'Introduction', 'Foundations', 'Interaction', 'Patterns', 'Developer notes', 'Components', 'Pipeline', 'Workflow'],
+  // Overview is the catch-all; the style guide has its own topic navigation.
   tabs: [
     { id: 'overview', label: 'Overview', numeral: 'I', landing: '/', urlPrefix: '/overview' },
-    { id: 'components', label: 'Components', numeral: 'II', landing: '/components/button', urlPrefix: '/components' },
-    { id: 'pipeline', label: 'Pipeline View', numeral: 'III', landing: '/pipeline-view/pipeline-graph', urlPrefix: '/pipeline-view' },
-    { id: 'workflow', label: 'Workflow View', numeral: 'IV', landing: '/workflow-view/workflow-canvas', urlPrefix: '/workflow-view' },
+    { id: 'style-guide', label: 'Style guide', numeral: 'II', landing: '/style-guide', urlPrefix: '/style-guide' },
+    { id: 'components', label: 'Components', numeral: 'III', landing: '/components/button', urlPrefix: '/components' },
+    { id: 'pipeline', label: 'Pipeline View', numeral: 'IV', landing: '/pipeline-view/pipeline-graph', urlPrefix: '/pipeline-view' },
+    { id: 'workflow', label: 'Workflow View', numeral: 'V', landing: '/workflow-view/workflow-canvas', urlPrefix: '/workflow-view' },
   ],
 })

@@ -1,13 +1,20 @@
+---
+title: "Iconography"
+section: Foundations
+order: 23
+description: "DreamLake style guide: iconography."
+---
+
 import { IconCatalog, MigrationBacklog } from '../../../components/specimens/IconCatalog'
 
-## Iconography
+# Iconography
 
 Every icon across `dreamlake`, `pipelines`, `timetravel`, `profile`, and `notebook` is
 sourced from [lucide.dev](https://lucide.dev). Render via `lucide-react` so the path
 data matches upstream byte-for-byte — no hand-copied SVG. Stroke 1.4–1.6 at small
 sizes (12–16px); 1.1–1.25 at large (24–28px).
 
-### Categories
+## Categories
 
 A representative cut across the six domain categories the design-guide lists:
 navigation, files & data, actions, layout & views, status, and DreamLake-specific
@@ -15,7 +22,7 @@ domain glyphs.
 
 <IconCatalog />
 
-### Migration backlog
+## Migration backlog
 
 A handful of legacy custom SVGs still ship inline in source apps (`wireframe-shared.jsx`,
 `timetravel-view.jsx`). They *read* like Lucide but aren't — replace with the canonical

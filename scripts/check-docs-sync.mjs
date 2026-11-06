@@ -47,7 +47,7 @@ const UIKIT_STYLESHEET = 'packages/uikit/src/styles.css'
 const DOCS_OVERRIDES = {
   // Icons has no per-component page by design; the catalog lives in the
   // style guide's iconography section.
-  Icons: [`${STYLE_GUIDE_DIR}/sections/iconography.mdx`],
+  Icons: [`${STYLE_GUIDE_DIR}/iconography/+Page.mdx`],
 }
 
 const SKIP_MARKER = '[skip docs-sync]'
@@ -249,7 +249,7 @@ function main() {
     violations.push({
       component: '(design tokens)',
       sources: [UIKIT_STYLESHEET],
-      expected: [`${STYLE_GUIDE_DIR}/sections/*.mdx`],
+      expected: [`${STYLE_GUIDE_DIR}/**/+Page.mdx`],
     })
   }
 

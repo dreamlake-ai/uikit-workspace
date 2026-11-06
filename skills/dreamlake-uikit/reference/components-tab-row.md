@@ -50,6 +50,8 @@ The caller owns the tab list, selection, and content. When closing the active ta
 | `aria-label` | `string` | `Open documents` | Accessible name for the tab list. |
 | `className`, `style` | standard React props | — | Customize the outer row. |
 
+The row carries `data-tab-count` with the number of tabs, so a host can style a lone tab differently from a strip (for example, as a full-width head) without counting the DOM: `.uikit-tab-row[data-tab-count='1']`.
+
 ### TabRowItem
 
 | Field | Type | Description |

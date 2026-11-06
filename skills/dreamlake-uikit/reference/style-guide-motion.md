@@ -1,0 +1,64 @@
+# Motion
+
+Three tiers, two custom easings, one prohibition.
+
+## Durations & easings
+
+**Tier 1 — feedback (100–150ms · linear ease)**
+
+- `100ms` — search palette result rows on hover.
+- `120ms` — nav-rail rows on hover and selection.
+- `150ms` — Tailwind's default; everything else color/border transitions through here
+  (prose links, copy/anchor buttons, palette inner borders).
+
+**Tier 2 — chrome morph (180–250ms)**
+
+- `180ms` — search input grows wider when the cmd+K palette opens.
+- `220ms` — palette backdrop fades + blurs in.
+- `250ms` — topbar merged-state crossfade as the H1 scrolls past, brand → breadcrumb
+  swap, palette panel slide. Uses `cubic-bezier(.4, .7, .3, 1)` — a soft ease-out with
+  a settled tail.
+
+**Dropdown unfold (320ms)**
+
+- `320ms` on `cubic-bezier(0.2, 0.8, 0.2, 1)`, opacity over the first `120ms` — dropdown-like
+  panels (Select, DropdownMenu, Menu, ContextMenu, BreadcrumbTree) unfold from the corner
+  nearest their trigger (`data-unfold="tl" | "tr" | "bl" | "br" | "t" | "b"`): a clip-path
+  reveal outset 40px so the shadow and wedge are never cut, plus a slight scale from the same
+  corner. Dialogs and toasts keep the plain rise.
+- `220ms` on `cubic-bezier(0.4, 0, 1, 1)` — the **fold** on close: the same panels fold back
+  into that corner, the unfold played backwards, opacity held for the first third. It starts
+  from the pose on screen (a close mid-unfold never jumps) and a reopen mid-fold animates
+  back open on the unfold's curve. The panel is `inert`, `aria-hidden` and pointer-transparent
+  for the fold, so focus return, Escape and the next click are never delayed by it.
+  `lib/usePanelPresence.ts`.
+
+**Tier 3 — spring (420ms)**
+
+- `420ms` — theme-toggle puck. Uses `cubic-bezier(.34, 1.45, .55, 1)` for an overshoot
+  that reads as a button-press, not a crossfade.
+- `340ms` in / `160ms` out — modal pop (Dialog, Modal, AlertDialog). Enter is a damped
+  spring from the panel's centre: scale `.85 → 1.035 → .995 → 1`, opacity reaching 1 at
+  the overshoot. Exit is `scale(1 → .95)` with a fade, `cubic-bezier(.4, 0, 1, 1)`. The
+  backdrop fades its colour over `180ms` in / `150ms` out alongside it. A close or reopen
+  mid-animation starts from the pose already on screen. The enter leaves no transform on
+  the panel at rest, so fixed-position pickers inside it are unaffected. Tokens:
+  `--uikit-dur-modal-in`, `--uikit-dur-modal-out`, `--uikit-dur-scrim-in`,
+  `--uikit-dur-scrim-out`.
+- `220ms` on `cubic-bezier(.2, .8, .2, 1)` — disclosure and panel height. A
+  `Collapsible` moves its height between `0` and its content, the content fading in and
+  settling 4px as it opens (out faster, `120–160ms` ease-in), and its chevron turns 90° on
+  the same curve. A Dialog / Modal / AlertDialog whose content grows or shrinks while open
+  glides to its new height on the same timing and follows a Collapsible rather than
+  animating on top of it. Tokens: `--uikit-dur-collapse`, `--uikit-ease-collapse`.
+
+## When not to animate
+
+**Never on `box-shadow`** — except the focus-visible outline. Animating shadow
+composites every frame and reads as "the panel is breathing"; the resting shadow is
+meant to be invisible after first paint.
+
+Honor `prefers-reduced-motion` everywhere. The theme toggle's spring puck and any
+slide-in chrome collapse to instant transitions when the user has reduced-motion set;
+modals keep only their opacity fade (no scaling, no spring); dropdown panels unfold and
+fold as a plain fade (120ms in, 100ms out); nothing else moves under that media query.

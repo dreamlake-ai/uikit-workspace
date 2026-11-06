@@ -71,6 +71,8 @@ Every control is one `DialSchema`. The most commonly used fields:
 | `disabled`            | `boolean`                                                        | Disables a `button` control.                                                     |
 | `colSpan` / `rowSpan` | `number`                                                         | Grid span when laid out inside a group.                                          |
 
+The lock toggle on locked inputs uses lucide `LockKeyhole` / `LockOpen` at the default stroke (2).
+
 ### Supported `dtype` values
 
 | `dtype`                                          | Renders                                                                                           |

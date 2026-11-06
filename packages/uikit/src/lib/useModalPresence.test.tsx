@@ -267,7 +267,8 @@ it("ModalContent keeps the consumer's ref, style and animation callback", async 
 })
 
 it('styles.css: enter leaves no transform behind and reduced motion never scales', () => {
-  const css = readFileSync(resolve(process.cwd(), 'src/styles.css'), 'utf8')
+  // CSS selector quoting is formatting, not behavior.
+  const css = readFileSync(resolve(process.cwd(), 'src/styles.css'), 'utf8').replaceAll("'", '"')
   const rule = (selector: string, from = 0) => {
     const at = css.indexOf(`${selector} {`, from)
     expect(at).toBeGreaterThan(-1)

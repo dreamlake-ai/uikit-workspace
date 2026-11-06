@@ -59,7 +59,7 @@ Supply a visible `title` or `aria-label` for the dialog's accessible name.
   open title, body and footer; it is inert and hidden from assistive
   technology meanwhile. Esc, scroll lock and focus return still release the
   moment `open` turns false. Reduced motion fades without scaling. See
-  [Motion](reference/style-guide.md#motion).
+  [Motion](reference/style-guide-motion.md).
 
 > **Opt-in focus management** — `managedFocus` defaults to false to preserve
 > existing consumers. Enable it for keyboard workflows instead of adding a

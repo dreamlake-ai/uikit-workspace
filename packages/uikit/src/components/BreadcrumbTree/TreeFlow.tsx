@@ -1,3 +1,4 @@
+import { Spinner } from '../Spinner'
 import {
   useCallback,
   useEffect,
@@ -6,7 +7,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { ChevronRight, Folder, Loader } from "lucide-react";
+import { ChevronRight, Folder } from "lucide-react";
 import { cn } from "../../lib/utils";
 import type {
   BreadcrumbNode,
@@ -511,9 +512,9 @@ export function TreeFlow({
             className="flex items-center justify-center pt-6"
             style={{ width: ROW_W }}
           >
-            <Loader
+            <Spinner
               size={14}
-              className="animate-spin text-uikit-muted opacity-50"
+              className="text-uikit-muted opacity-50"
             />
           </div>
         )}
@@ -541,9 +542,9 @@ export function TreeFlow({
                 paddingLeft: 8 + row.depth * INDENT,
               }}
             >
-              <Loader
+              <Spinner
                 size={11}
-                className="animate-spin text-uikit-muted opacity-50"
+                className="text-uikit-muted opacity-50"
               />
             </div>
           ) : (

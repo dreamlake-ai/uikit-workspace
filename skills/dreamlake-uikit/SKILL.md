@@ -1,6 +1,6 @@
 ---
 name: dreamlake-uikit
-description: DreamLake uikit is the React component library and design contract — surfaces, ink, semantic color, type, geometry, and the zebra-list patterns shared by every DreamLake page. Use when answering questions about DreamLake (Overview, Avatar, Style guide, BreadcrumbTree, LLM-Readable Docs, Button, Split Button, CodeBlock, Dialog, Field, FilterBar, ListSearchInput, Menu, ProfileCard, ProfileLayout, ResizableLayout, PanelLayout, Layout controller, TabbedContainer, Select, SideNav, Tabs, Tab Row, Tag, TextField, VirtualList, VirtualListFlow, VideoAnnotator, Spinner, Skeleton, Switch, Badge, Collapsible, Card, Alert Dialog, Drawer, Toast, UIKit Badge, Pipeline Graph, Anatomy, Pipeline Graph JSON, Architecture & Roadmap, useIsMobile, Subtask Annotation, Label, Toggle, Workflow Canvas, Node Types, Toolbar, Modal, Form Layout, Input, Mouse Cursor Icons, Tooltip, Popover, Dropdown Menu, Theme, Tree View, Context Menu, Dial, Waterfall, Slider, Media Transport, Number Inputs, Layout, Sync Scroll).
+description: DreamLake uikit is the React component library and design contract — surfaces, ink, semantic color, type, geometry, and the zebra-list patterns shared by every DreamLake page. Use when answering questions about DreamLake (Overview, Avatar, Style guide, BreadcrumbTree, LLM-Readable Docs, Color, Typography, Spacing & layout, Iconography, Elevation & depth, Button, Border & radius, Split Button, Motion, CodeBlock, Loading & progress, Zebra lists, Dialog, Field, FilterBar, ListSearchInput, Menu, ProfileCard, ProfileLayout, ResizableLayout, PanelLayout, Layout controller, TabbedContainer, Select, SideNav, Tabs, Tab Row, Tag, TextField, VirtualList, VirtualListFlow, VideoAnnotator, Spinner, Skeleton, Switch, Badge, Collapsible, Card, Alert Dialog, Drawer, Toast, UIKit Badge, Pipeline Graph, Anatomy, Pipeline Graph JSON, Architecture & Roadmap, useIsMobile, Subtask Annotation, Label, Toggle, Workflow Canvas, Node Types, Toolbar, Modal, Form Layout, Input, Mouse Cursor Icons, Tooltip, Popover, Dropdown Menu, Theme, Tree View, Context Menu, Dial, Waterfall, Slider, Media Transport, Number Inputs, Layout, Sync Scroll).
 ---
 # DreamLake
 
@@ -14,7 +14,6 @@ file that matches the question; each is a self-contained markdown page.
 **Get started**
 
 - `reference/overview.md` — Overview: Surfaces, ink, color, type, geometry, and the zebra-list patterns shared by every DreamLake page.
-- `reference/style-guide.md` — Style guide: Surfaces, ink, semantic palette, type pairing, spacing, icons, elevation, radii, motion, and zebra-list bands — the complete DreamLake design contract on one page.
 - `reference/llm-readable.md` — LLM-Readable Docs: Every page is available as clean markdown, plus an llms.txt index, a full-corpus dump, and an importable agent skill.
 
 **Components**
@@ -44,8 +43,8 @@ file that matches the question; each is a self-contained markdown page.
 - `reference/components-virtual-list.md` — VirtualList: Windowed list — fixed or dynamic item height, plus infinite-scroll for very large row sets.
 - `reference/components-virtual-list-flow.md` — VirtualListFlow: Flow-layout virtual list — items in CSS normal flow, so sticky / gap / scroll stability work like a non-virtual list.
 - `reference/components-video-annotator.md` — VideoAnnotator: Video player with an editable, contiguous segment timeline — split, merge, drag boundaries, and frame-step transport.
-- `reference/components-spinner.md` — Spinner: Indeterminate loading spinner — a dual dot-pulse ring that inherits text color.
-- `reference/components-skeleton.md` — Skeleton: Pulsing placeholder block for loading states.
+- `reference/components-spinner.md` — Spinner: Shared Braille loading spinner for every indeterminate wait.
+- `reference/components-skeleton.md` — Skeleton: Static placeholder block that reserves layout space.
 - `reference/components-switch.md` — Switch: Binary on/off toggle. Controlled or uncontrolled.
 - `reference/components-badge.md` — Badge: Small inline status/category chip — neutral container, tone in the ink.
 - `reference/components-collapsible.md` — Collapsible: Expand/collapse region with an animated-height content area.
@@ -75,6 +74,28 @@ file that matches the question; each is a self-contained markdown page.
 - `reference/components-number-inputs.md` — Number Inputs: Drag-to-adjust numeric, vector, color, and text inputs for the Dial system.
 - `reference/components-layout.md` — Layout: Studio layout shells — an edge-docked dock layout and a pointer-transparent liquid layout for floating panels over a 3D canvas.
 - `reference/components-sync-scroll.md` — Sync Scroll: Synchronize scroll position across multiple panes — a master drives its slaves, with optional drag-to-scroll on either axis.
+
+**Introduction**
+
+- `reference/style-guide.md` — Style guide: The DreamLake design contract, organized into foundations, interaction, and patterns.
+
+**Foundations**
+
+- `reference/style-guide-color.md` — Color: DreamLake style guide: color.
+- `reference/style-guide-typography.md` — Typography: DreamLake style guide: typography.
+- `reference/style-guide-spacing-layout.md` — Spacing & layout: DreamLake style guide: spacing & layout.
+- `reference/style-guide-iconography.md` — Iconography: DreamLake style guide: iconography.
+- `reference/style-guide-elevation.md` — Elevation & depth: DreamLake style guide: elevation & depth.
+- `reference/style-guide-border-radius.md` — Border & radius: DreamLake style guide: border & radius.
+
+**Interaction**
+
+- `reference/style-guide-motion.md` — Motion: DreamLake style guide: motion.
+- `reference/style-guide-loading.md` — Loading & progress: One Braille spinner for every indeterminate wait; static labels and placeholders.
+
+**Patterns**
+
+- `reference/style-guide-zebra-lists.md` — Zebra lists: DreamLake style guide: zebra lists.
 
 **Pipeline**
 

@@ -14,6 +14,8 @@ Pass the `visibleData` from `useTreeState` to `data`, and wire `expandedItems`,
 `getIcon` returns whatever node icon you want, with the expanded flag for
 folder-open states.
 
+The expand chevrons are lucide `ChevronRight` / `ChevronDown` at lucide's default stroke (2), the same weight as every other 11–17px icon in the kit.
+
 ## Connectors
 
 The branch into a row is an arc on every row, not only the last child — a column
@@ -31,7 +33,7 @@ colour held still.
 It is legible on the page and faint where it crosses a filled row (1.03:1 in
 light). That is the cost of a neutral line in a tree whose surfaces sit within
 19 levels of each other — see
-[Color → Lines that cross rows](reference/style-guide.md#lines-that-cross-rows).
+[Color → Lines that cross rows](reference/style-guide-color.md#lines-that-cross-rows).
 
 ## Selectable
 

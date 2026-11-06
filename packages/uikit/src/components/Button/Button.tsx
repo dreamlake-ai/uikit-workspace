@@ -1,3 +1,4 @@
+import { Spinner } from '../Spinner'
 import {
   type AnchorHTMLAttributes,
   type ButtonHTMLAttributes,
@@ -248,7 +249,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
     const body = (
       <>
-        {loading && <LoadingDot />}
+        {loading && <Spinner size={12} aria-hidden="true" style={{ color: 'inherit' }} />}
         {!loading && leftIcon && (
           <span className="inline-flex shrink-0">{leftIcon}</span>
         )}
@@ -268,6 +269,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ref: mergeRefs(ref, child.props.ref),
         "data-slot": "button",
         disabled: disabled || loading || undefined,
+        "aria-busy": loading || undefined,
         style: { ...styles, ...child.props.style },
         className: cn(classes, child.props.className),
       } as Record<string, unknown>);
@@ -286,6 +288,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           rel={rel}
           data-slot="button"
           data-loading={loading || undefined}
+          aria-busy={loading || undefined}
           aria-disabled={inert || undefined}
           className={classes}
           style={styles}
@@ -302,6 +305,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         type={type}
         disabled={disabled || loading}
         data-loading={loading || undefined}
+        aria-busy={loading || undefined}
         data-slot="button"
         className={classes}
         style={styles}
@@ -312,12 +316,3 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     );
   },
 );
-
-function LoadingDot() {
-  return (
-    <span
-      aria-hidden
-      className="inline-block size-3 rounded-full border-2 border-current border-r-transparent animate-spin"
-    />
-  );
-}

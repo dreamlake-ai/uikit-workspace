@@ -30,6 +30,8 @@ The component is **controlled** on `segments` + `selectedIndex`: it runs the
 split/merge/boundary invariants internally and hands the host a fresh array via
 `onSegmentsChange`, so the host owns state and persistence.
 
+Buffering uses the shared Braille `Spinner` with a static “Loading…” label. See [Loading & progress](reference/style-guide-loading.md).
+
 ## Demo
 
 Click the video frame to play/pause. Drag a boundary to move it, double-click a
@@ -63,6 +65,16 @@ scheme. `goToSegment(index)` selects a segment and seeks to its start — the sa
 action as clicking it — so a host list can drive selection and let the component
 own the seek.
 
+## View only
+
+Set `readOnly` for a viewer who may watch and navigate but not edit — a signed-out
+visitor on a public page, say. Split and merge leave the transport and its `⋯`
+menu, the timeline drops its boundary drag handles, and lanes lose their add /
+remove entries. `s`, `a` and `Backspace` are not bound at all, and the ref's
+edit methods do nothing, so no edit callback ever fires. Playback, seeking,
+frame and segment stepping, zoom, lane selection and the hand-pose toggle work
+as usual.
+
 ## Props
 
 | Prop | Type | Default | Description |
@@ -90,6 +102,7 @@ own the seek.
 | `srcFps` | `number \| null` | `extractFps` → `30` | Source fps for the "· fN" frame readout. |
 | `speeds` | `number[]` | `[0.25,0.5,1,1.5,2]` | Playback-speed options for the speed dropdown. |
 | `enableKeyboard` | `boolean` | `true` | Install the document-level keyboard shortcuts. Set `false` to drive only via the ref. |
+| `readOnly` | `boolean` | `false` | View only: no split / merge (inline or in `⋯`), boundary handles or add / remove-track entries; `s`, `a` and `Backspace` unbound; the ref's edit methods are no-ops; the description box (`showDescription`) is read-only. Viewing controls are unchanged. |
 | `className` | `string` | — | Extra classes on the root element. |
 
 ### Segment

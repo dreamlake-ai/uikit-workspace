@@ -4,6 +4,8 @@ A button for primary actions and form submits. Wraps a native `<button>` (so it
 accepts `type`, `onClick`, and the rest of the button attributes) and adds
 variants, sizes and a loading state.
 
+The loading state uses the shared Braille `Spinner` and exposes `aria-busy` while disabling the action. See [Loading & progress](reference/style-guide-loading.md).
+
 ## Variants
 
 Every variant shares **one radius (6px, the badge step), one padding scale and
@@ -85,5 +87,5 @@ match the button set.
 
 ## Split actions
 
-For a direct action joined to a chevron menu, use [Split Button](/components/split-button).
+For a direct action joined to a chevron menu, use [Split Button](reference/components-split-button.md).
 It shares these variants and 6px corners, with framed, filled, ghost and header-action examples.

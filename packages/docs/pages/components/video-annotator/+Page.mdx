@@ -46,6 +46,8 @@ The component is **controlled** on `segments` + `selectedIndex`: it runs the
 split/merge/boundary invariants internally and hands the host a fresh array via
 `onSegmentsChange`, so the host owns state and persistence.
 
+Buffering uses the shared Braille `Spinner` with a static “Loading…” label. See [Loading & progress](/style-guide/loading).
+
 ## Demo
 
 Click the video frame to play/pause. Drag a boundary to move it, double-click a

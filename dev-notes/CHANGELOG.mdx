@@ -6,6 +6,11 @@ sections. README copy edits and typo fixes are skipped. See
 [`./README.mdx`](./README.mdx) for the folder convention and
 [`../CLAUDE.md`](../CLAUDE.md) for the release-notes policy.
 
+## 2026-11-06 — One loading indicator and a paged style guide
+
+- Replace UIKit's ring spinner and internal busy animations with the shared Braille spinner. Skeletons preserve layout without pulsing; reduced motion uses a static glyph.
+- Split the style guide into Foundation, Interaction, and Pattern pages. The loading policy has its own page, and Dockit provides optional continuous reading. Preserve existing guide anchor links.
+
 ## 2026-09-30 — Resize pointer tracking (Unreleased)
 
 - `resize-pointer-tracking.mdx`: records immediate listener ownership, pointer capture, frame coalescing, final-coordinate flushing, cleanup, and live-width handling under CPU load.

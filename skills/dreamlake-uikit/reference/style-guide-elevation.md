@@ -1,20 +1,16 @@
-import { ShadowSpecimen } from '../../../components/specimens/ShadowSpecimen'
-
-## Elevation & depth
+# Elevation & depth
 
 Four shadow tints layered onto the panel surface. Light mode uses ink-tinted black at
 low opacity; dark mode uses pure black at higher opacity (the same custom property
 tracks both themes).
 
-### Shadow scale
+## Shadow scale
 
 `tint-1` is the resting panel base; `tint-2` lifts a popover off the page; `tint-3`
 floats a modal or vim-help overlay. The inset variant marks pressed states and focused
 inputs.
 
-<ShadowSpecimen />
-
-### Z-index layers
+## Z-index layers
 
 A small fixed set of layers — never invent ad-hoc z-indices.
 
