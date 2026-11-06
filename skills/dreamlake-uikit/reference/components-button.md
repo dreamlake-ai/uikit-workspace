@@ -82,3 +82,8 @@ Any other native `<button>` attributes (`onClick`, `aria-*`, …) are forwarded.
 without rendering one. Accepts `variant`, `size`, `tone`, `icon`, `value`, and
 `className`, and is useful for styling a non-button element (like a link) to
 match the button set.
+
+## Split actions
+
+For a direct action joined to a chevron menu, use [Split Button](/components/split-button).
+It shares these variants and 6px corners, with framed, filled, ghost and header-action examples.
