@@ -1,22 +1,17 @@
-import { SurfaceTokens } from '../../../components/specimens/SurfaceTokens'
-import { PaletteGrid } from '../../../components/specimens/PaletteGrid'
-
-## Color
+# Color
 
 Color splits across three concerns: the *surface stack* (where things sit), the *ink
 pair* (what users read), and a *six-color semantic palette* (what's happening). No
 primary/secondary distinction — semantics come first, and the palette stays at six
 forever.
 
-### Surfaces
+## Surfaces
 
 Three surface tokens — `--bg`, `--panel-bg`, `--rail-bg` — relate differently in light
 vs. dark. Light separates `--bg` from `--panel-bg` (subtle cream-on-cream lift) and
 shares `--rail-bg` with `--panel-bg`. Dark collapses `--panel-bg` onto `--bg`; panels
 lift via 1px `--faint` + shadow alone, and `--rail-bg` *drops* below `--bg` so the rail
 recedes into a deeper plane.
-
-<SurfaceTokens />
 
 `--uikit-segment-thumb` and `--uikit-segment-track` are the two surfaces of a
 segmented control (Tabs `segment`, ToggleButtons `primary`/`secondary`). Both themes
@@ -28,7 +23,7 @@ ink-5 sits *above* the page, so the track becomes
 being lifted to a grey. Dark text contrast: selected `--ink` on the thumb 11.4:1,
 unselected `--uikit-muted` on the track 5.8:1.
 
-#### Lines that cross rows
+### Lines that cross rows
 
 `--faint` is translucent, which is what you want for a hairline that should sit
 *on* the panel it crosses. It is the wrong behaviour when the thing underneath
@@ -51,7 +46,7 @@ over `--bg` instead of over transparent, so a chip reads the same on every
 surface. Keep the translucent originals for washes that *should* tint what they
 sit on.
 
-#### Row states are luminance, not hue
+### Row states are luminance, not hue
 
 `--tree-hover` used to be a warm amber against a neutral `--tree-sel`, so hover
 and selection were told apart by **hue** — they were never more than 1.05:1
@@ -63,7 +58,7 @@ That is enough to read and not much more. If the two ever need to be told apart
 at a glance rather than side by side, the room has to come from somewhere —
 a darker selection fill, or the accent ring a multi-row run already carries.
 
-### Ink
+## Ink
 
 Two text colors carry every glyph on the page: `--ink` for primary content, `--muted`
 for secondary. There is no third gray, and no paler text: both meet WCAG AA (4.5:1) on
@@ -80,7 +75,7 @@ in dark mode against the inverted surface stack.
 Contrast on `--bg`: `--ink` 17.2 / 11.4, `--muted` 5.28 / 4.73 (light / dark).
 Dark `--muted` was `#8a8a8a` until 2026-10, which measured 3.9:1.
 
-#### Drag affordances
+### Drag affordances
 
 `--uikit-handle` and `--uikit-handle-active` colour the grab pills: the
 PanelLayout divider and the dock handles in panel headers. The pill shows on
@@ -99,16 +94,14 @@ Until 2026-10 these were `#8a8a8a` / `#4a4a4a` light and `#e2e2e2` / `#ffffff`
 dark. A grabbed divider was near-black in light (8.8:1), glaring white in dark
 (13.5:1), and heavier than the seam it sits on.
 
-### Semantic palette
+## Semantic palette
 
 All domain coloring — pipeline kinds, run statuses, transform types, event types,
 branch identities, release kinds, diff ops — pulls from one shared 6-color set. Every
 other page maps its concepts onto these six. **`dreamlake-pipelines`** is the canonical
 source.
 
-<PaletteGrid />
-
-#### Tones as text
+### Tones as text
 
 The six hexes are for marks — dots, fills, edges, chart series — and they do
 not change with the theme. Set as small words they mostly fail WCAG AA: blue
@@ -131,7 +124,7 @@ Anything that colours **words** with a tone reads the `-text` twin (`Tag` does);
 anything that colours a **mark** keeps `--tone-*`. Several dark values clear the
 line by only a few hundredths — if the palette moves, re-measure these.
 
-### When adding a new concept
+## When adding a new concept
 
 1. **Open `pipelines-canvas.jsx`.** `PIPE_KIND_COLOR`, `PIPE_STATUS`, and
    `PIPE_FLOW_LABEL` are the canonical mappings. The legend (`PipeLegend`) is what users
@@ -149,7 +142,7 @@ line by only a few hundredths — if the palette moves, re-measure these.
    `--ok` / `--error` to `tokens.css`; keep the six hex values inline at use sites so
    `grep` tells the truth.
 
-### Why six and not more
+## Why six and not more
 
 - **Six is the ceiling for a legend.** The pipelines flow legend is already 5 rows tall
   (`running` / `queued` / `stalled` / `error` / `ok`); a 7th hue pushes it past the
@@ -161,11 +154,11 @@ line by only a few hundredths — if the palette moves, re-measure these.
   return only these six values plus surface tokens. Anything else is either a typo, a
   leftover from prototyping, or a missed alignment.
 
-### Chart axes
+## Chart axes
 
 Use `--uikit-axis` (or `text-uikit-axis`) for numeric axes and tick labels: `#525252` in light mode and `#cccccc` in dark mode. Render at full opacity; reserve faint ink for background gridlines.
 
-### Code surfaces
+## Code surfaces
 
 `CodeBlock` keeps its `bg-uikit-code` shell in both reading and editing modes.
 The Monaco content and gutter backgrounds are transparent, so switching modes

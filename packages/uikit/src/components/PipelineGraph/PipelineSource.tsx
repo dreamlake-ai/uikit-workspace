@@ -1,3 +1,4 @@
+import { Spinner } from '../Spinner'
 /**
  * PipelineSource — the read-only inspector that pairs with <PipelineGraph>.
  *
@@ -592,7 +593,7 @@ function RunButton({ onClick, running, disabled }: { onClick: () => void; runnin
         display: 'inline-flex', alignItems: 'center', gap: 6,
       }}
     >
-      {running ? <><RunSpinner /> running…</> : '▶ run'}
+      {running ? <><Spinner size={11} aria-hidden="true" style={{ color: 'inherit' }} /> running…</> : '▶ run'}
     </button>
   )
 }
@@ -644,18 +645,6 @@ function ReviewButton({ onClick }: { onClick: () => void }) {
     >
       ⏸ review
     </button>
-  )
-}
-
-// Small inline spinner shown on the RUN button while a run is in progress.
-function RunSpinner() {
-  return (
-    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" aria-hidden="true" style={{ flexShrink: 0 }}>
-      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="3" strokeOpacity="0.3" />
-      <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
-        <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="0.7s" repeatCount="indefinite" />
-      </path>
-    </svg>
   )
 }
 

@@ -10,6 +10,8 @@ Everything a real app needs on top — which views may be tabbed, which one
 reclaims space when a panel closes, which panels stay transparent — is injected
 through props rather than inferred.
 
+A leaf's close control is lucide `X` (14px, default stroke), the same glyph as Dialog and Modal close buttons.
+
 Three layers ship separately, and the lower two are useful on their own:
 
 | Layer         | What it is                                                          |
@@ -26,19 +28,26 @@ inspect → resolve → apply above these low-level mechanics, with forkable exa
 
 ## Demo
 
-Drag a divider to resize. Grab the **handle at the top of a panel header** and
-drop it on another panel: near an edge it docks to that side, in the centre it
+Drag a divider to resize. Drag a panel by its **tab** or by the **empty area of
+its header** (there is no separate grab bar) and drop it on another panel: near an edge it docks to that side, in the centre it
 merges as a tab. `⌘D` splits the focused panel to the right, `⌘⇧D` below.
 Escape cancels a drag in flight.
+
+A tab, tab strip or header press arms a drag only after **6px** of travel (**8px**
+for touch); below that it is a click and the panel does not lift. Buttons, links
+and form fields inside a header keep their own press. A host element marked
+`[data-panel-move-handle]` moves its whole panel or group. Moves are disabled in
+compact layouts. The divider width is the `dividerPx` setting (default 10); a
+thinner divider keeps a 10px grab area.
 
 The divider is invisible at rest, and no line is drawn along the seam. Under
 the cursor a slim frosted pill appears (`.uikit-grip-pill`: `--uikit-grip-fill`
 with a `--uikit-grip-ring` hairline and a soft shadow); hover sharpens its edge
 and while the divider is held the edge takes the accent. It is the same pill
 `ResizeDivider` (and so `ResizableLayout` and `Waterfall`) shows, so every
-splitter in an app looks alike. The dock handles at the top of a panel header
+splitter in an app looks alike. The dock handles on a panel header
 are drag handles, not splitters, and keep the grey `--uikit-handle` tokens.
-Values and contrast are in the [color tokens](reference/style-guide.md#drag-affordances).
+Values and contrast are in the [color tokens](reference/style-guide-color.md#drag-affordances).
 
 > **Note:** `PanelLayout` fills its container. Without an ancestor that has a real height it collapses to
 >   nothing — the demos here sit in a fixed-height box.
@@ -110,6 +119,12 @@ while switching tabs or docking it into another region. Groups normally arise fr
 centre, so `panelGroup` is how you seed a layout that already has tabs. A tab
 can be dragged straight out of its group to dock elsewhere, and a group that
 loses its second-to-last tab collapses back into a plain panel.
+
+A group's tab strip starts 10px from the panel's left edge and 8px from its
+top, under a 34px header row. Set `tabStripInset` (`{ left, top }`, in px) to
+move it: the header row becomes `top` plus the 26px strip, so the tabs still
+stand on the panel below and join it. A tight `{ left: 2, top: 2 }` gives a
+28px header:
 
 ## Persistent editor and preview views
 
@@ -332,6 +347,8 @@ independent — a drag in one can never dock into another.
 | Prop                       | Type                                      | Default             | Description                                                                                                                         |
 | -------------------------- | ----------------------------------------- | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | `initial`                  | `() => PanelNode`                         | 3-panel demo        | Builds the initial tree. Called once, on mount.                                                                                     |
+| `dividerPx`                | `number`                                  | `10`                | Divider width in px. Below 10 the grab area stays 10px.                                                                             |
+| `tabStripInset`            | `TabStripInset` (`{ left, top }`)         | `10` / `8`          | Tab strip offset in px from a tabbed group's left / top. Header row = `top` + the 26px strip.                                       |
 | `initialSingle`            | `boolean`                                 | `false`             | Without `initial`: `true` starts with one panel.                                                                                    |
 | `root`                     | `PanelNode`                               | —                   | Controlled mode. The layout renders this and never mutates its own state; every change arrives via `onChange`.                      |
 | `onChange`                 | `(root: PanelNode) => void`               | —                   | Fires on every tree mutation — split, close, resize, dock, reset. The hook for persistence.                                         |

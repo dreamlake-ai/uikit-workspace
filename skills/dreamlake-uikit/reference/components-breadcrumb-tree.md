@@ -5,11 +5,17 @@ breadcrumb. The panel floats above any clipping ancestor and offers two
 layouts, switched by a toggle in its bottom-right corner. Children are fetched
 on demand with pagination and results are reused when you revisit a node.
 
+Pending children use the shared Braille `Spinner` in both column and tree layouts. See [Loading & progress](reference/style-guide-loading.md).
+
 ## Demo
 
 Click the chevron to open the panel. Drill into nodes by clicking rows. Click a
 breadcrumb item to navigate back (the panel closes). The toggle in the panel's
 bottom-right switches layouts, and rows can be dragged between parents.
+
+The crumbs and the chevron are buttons, so Tab reaches them; on keyboard focus
+each shows the kit's 2px accent ring (pointer clicks show none). The chevron is
+named "Browse folders" and reports `aria-expanded` while the panel is open.
 
 ## Layouts
 

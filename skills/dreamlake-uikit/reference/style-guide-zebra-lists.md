@@ -1,13 +1,9 @@
-import { ZebraSpecimen } from '../../../components/specimens/ZebraSpecimen'
-import { ZebraStatesSpecimen } from '../../../components/specimens/ZebraStatesSpecimen'
-import { ZebraRunSpecimen } from '../../../components/specimens/ZebraRunSpecimen'
-
-## Zebra lists
+# Zebra lists
 
 Every list row is in exactly one of four bands at any moment: **base**, **zebra**,
 **hover**, **selected**. Each band picks a different hue axis so they never collide.
 
-### The four-band model
+## The four-band model
 
 **Zebra** is structural — a cool ink-step that carries scan rhythm. **Hover** is
 transient — a soft tint of the active blue that previews the eventual selection.
@@ -19,9 +15,7 @@ which is what makes the alternating zebra fills tile rather than smear and lets 
 hovered or selected row read as a discrete tile lifting out of the list — without any
 per-row border.
 
-<ZebraSpecimen />
-
-### Per-state colors
+## Per-state colors
 
 Precedence is strict — only one rule wins per render:
 
@@ -38,9 +32,7 @@ exception is bright-blue selected, which forces every span inside the row to
 Hover is **bg-only**. No inset border, no ring. The 2px row gap already detaches the
 hovered tile from its neighbours.
 
-<ZebraStatesSpecimen />
-
-### Multi-row runs
+## Multi-row runs
 
 When two or more rows are selected, **consecutive selected rows merge into one visual
 block.** The two ways to draw the block are not interchangeable; pick by what the
@@ -58,5 +50,3 @@ wrapper is transparent — its `::after` pseudo-element draws the 2px accent bor
 sitting at `z:2` above the rows so the stroke isn't occluded by row backgrounds. Rows
 inside the run keep their zebra parity uninterrupted; the ring is purely an outer
 indicator.
-
-<ZebraRunSpecimen />

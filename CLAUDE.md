@@ -54,7 +54,7 @@ the same PR.** The `docs-sync` GitHub Action fails the PR otherwise.
 - Component `packages/uikit/src/components/<Name>/` maps to page
   `packages/docs/pages/components/<kebab-name>/+Page.mdx`.
 - Changes to `packages/uikit/src/styles.css` (the design tokens) must
-  come with an edit under `packages/docs/pages/style-guide/sections/`.
+  come with an edit under `packages/docs/pages/style-guide/`.
 - The `<Preview>` blocks render the live component, so demos never go
   stale. What goes stale is everything hand-written around them: the
   prose describing appearance, and the Props table's defaults and

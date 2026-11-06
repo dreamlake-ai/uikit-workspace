@@ -1,3 +1,4 @@
+import { Spinner } from '../Spinner'
 import {
   forwardRef,
   useCallback,
@@ -715,8 +716,8 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
           {buffering && showBufferingOverlay && (
             <div className="va-buffering" aria-hidden="true">
               <div className="va-buf">
-                <div className="va-bufring" />
-                <div className="va-buflabel">Loading<b> ···</b></div>
+                <Spinner size={14} aria-hidden="true" style={{ color: 'rgba(255,255,255,.7)' }} />
+                <div className="va-buflabel">Loading…</div>
               </div>
             </div>
           )}

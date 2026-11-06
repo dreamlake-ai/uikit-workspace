@@ -34,12 +34,12 @@ export default defineConfig({
     {
       name: "Desktop Chrome",
       use: { ...devices["Desktop Chrome"] },
-      testMatch: /dropdown-exit|dialog-motion|split-button/,
+      testMatch: /dropdown-exit|dialog-motion|split-button|loading-guide/,
     },
     {
       name: "Desktop Safari",
       use: { ...devices["Desktop Safari"] },
-      testMatch: /dropdown-exit|dialog-motion|split-button/,
+      testMatch: /dropdown-exit|dialog-motion|split-button|loading-guide/,
     },
   ],
 });

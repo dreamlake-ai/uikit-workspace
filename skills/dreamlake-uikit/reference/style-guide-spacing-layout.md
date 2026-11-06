@@ -1,16 +1,12 @@
-import { SpacingScale } from '../../../components/specimens/SpacingScale'
-
-## Spacing & layout
+# Spacing & layout
 
 Eleven spacing steps from 2 to 40px. There's no token — values are used inline. Most
 padding lives between 6–18px; the 2px row gap is sacred. The big jumps at the top
 (20 → 28 → 40) are for section breathing room, not row rhythm.
 
-### Spacing scale
+## Spacing scale
 
-<SpacingScale />
-
-### Page grid
+## Page grid
 
 The docs site itself is the canonical example: a 3-column grid at `1320px` max width —
 **240px** left rail, **1fr** content, **240px** right rail — with `0` gaps between
@@ -25,7 +21,7 @@ columns. Everything inside lays out against this frame.
 }
 ```
 
-### Breakpoints
+## Breakpoints
 
 Two breakpoints in current use, both for the docs shell:
 
@@ -36,7 +32,7 @@ Two breakpoints in current use, both for the docs shell:
 No "mobile-first" set of named breakpoints. Everything is desktop-first; the two
 overrides are the only places the layout changes.
 
-### Touch: card meta goes to the bottom-right corner
+## Touch: card meta goes to the bottom-right corner
 
 A card header with always-visible actions on a touch device (`hover: none`) is
 one line: title, then the buttons, centred on the title; the title truncates
@@ -44,4 +40,4 @@ against them. The meta (timestamp) is not squeezed in beside the buttons — it
 sits in the card's bottom-right corner, right-aligned on the footer row. This
 overrides the narrow-card rule (meta on its own line below `20rem`) for touch
 cards with top-right actions only — pointer cards keep it.
-See [ProfileCard](/components/profile-card).
+See [ProfileCard](reference/components-profile-card.md).

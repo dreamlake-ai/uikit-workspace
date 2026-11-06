@@ -1,3 +1,4 @@
+import { Spinner } from '../Spinner'
 import {
   useState,
   useEffect,
@@ -15,7 +16,6 @@ import {
   ChevronDown,
   Columns3,
   ListTree,
-  Loader,
 } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { usePanelPresence } from "../../lib/usePanelPresence";
@@ -1177,9 +1177,9 @@ export function BreadcrumbTree({
 
                           {loading && items.length === 0 && (
                             <div className="flex items-center justify-center pt-6">
-                              <Loader
+                              <Spinner
                                 size={14}
-                                className="animate-spin text-uikit-muted opacity-50"
+                                className="text-uikit-muted opacity-50"
                               />
                             </div>
                           )}
@@ -1194,9 +1194,9 @@ export function BreadcrumbTree({
 
                           {loading && items.length > 0 && (
                             <div className="flex items-center justify-center py-2">
-                              <Loader
+                              <Spinner
                                 size={11}
-                                className="animate-spin text-uikit-muted opacity-50"
+                                className="text-uikit-muted opacity-50"
                               />
                             </div>
                           )}

@@ -1,27 +1,22 @@
 # Spinner
 
-**Loading policy:** DreamLake uses one Braille dot spinner for all waits. The expanding-ring Spinner shown below is legacy behavior awaiting migration; do not use it as the standard for new loading UI. Use the existing app Braille loader until the UIKit migration is complete. See the [style guide](style-guide.md) for labels, timing, accessibility, reduced motion, and prohibited alternatives.
-
-An indeterminate loading indicator: two out-of-phase expanding circles drawn as
-an inline SVG. It renders inline (use it inside buttons, list rows, or empty
-states) and defaults to the muted token so it sits quietly until content loads.
+The shared Braille loading indicator: ten frames (`⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏`) at 80ms per
+frame. It appears after 250ms and remains still under reduced motion. Use it for
+all waits, including internal component loaders. See [Loading & progress](reference/style-guide-loading.md).
 
 ## Sizes
 
-`size` sets the diameter in px (default `24`). The SVG scales crisply at any
-size.
+`size` sets the glyph font size (default `12`). A CSS font-size string is also accepted.
 
 ## Color
 
-The stroke is `currentColor`. By default it tints to `--muted`; pass any
-`text-*` utility (or set `color` on a parent) to recolor it — useful for tinting
-a spinner to a tone while an action runs.
+The glyph defaults to the accent token. Use a `text-*` class or `style.color` to inherit a control's color.
 
 ## Props
 
 | Prop        | Type               | Default | Description                            |
 | ----------- | ------------------ | ------- | -------------------------------------- |
-| `size`      | `number \| string` | `24`    | Diameter in px.                        |
+| `size`      | `number \| string` | `12`    | Glyph font size.                        |
 | `className` | `string`           | —       | Extra classes (e.g. a `text-*` color). |
 
-Any other native `<svg>` attributes (`style`, `aria-*`, …) are forwarded.
+Any other native `<span>` attributes (`style`, `aria-*`, …) are forwarded.

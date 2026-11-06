@@ -71,18 +71,14 @@ export const CSS = `
   overflow:hidden;display:flex;align-items:center;justify-content:center}
 .va-video{max-width:100%;max-height:100%;background:#000}
 .va-stage-msg{position:absolute;color:var(--va-muted);font-size:13px;text-align:center;padding:20px}
-/* Buffering overlay (design-spec dreamlake-loading: thin ring + mono status),
+/* Buffering overlay (shared Braille spinner + mono status),
    centered over the video; never intercepts clicks. */
 .va-buffering{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;z-index:3}
 .va-buf{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px}
-@keyframes va-bufspin{to{transform:rotate(360deg)}}
-.va-bufring{width:26px;height:26px;border-radius:50%;
-  border:1.5px solid rgba(255,255,255,.18);border-top-color:rgba(255,255,255,.62);
-  animation:va-bufspin .8s linear infinite}
 .va-buflabel{font:500 9px/1 var(--f-mono, ui-monospace, monospace);letter-spacing:.14em;
   text-transform:uppercase;color:rgba(255,255,255,.55)}
 .va-buflabel b{font-weight:500;color:rgba(255,255,255,.38)}
-@media (prefers-reduced-motion: reduce){.va-bufring{animation:none}}
+
 /* Shared scrub bar — a slim static progress rail that sits BELOW the video
    stage (design .lab-video__scrub): a 3px track, a played fill, and a small
    round knob that only appears on hover/drag. Inset 8px from the left/right
