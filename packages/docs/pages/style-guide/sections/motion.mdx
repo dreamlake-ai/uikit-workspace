@@ -5,12 +5,14 @@ Three tiers, two custom easings, one prohibition.
 ### Durations & easings
 
 **Tier 1 — feedback (100–150ms · linear ease)**
+
 - `100ms` — search palette result rows on hover.
 - `120ms` — nav-rail rows on hover and selection.
 - `150ms` — Tailwind's default; everything else color/border transitions through here
   (prose links, copy/anchor buttons, palette inner borders).
 
 **Tier 2 — chrome morph (180–250ms)**
+
 - `180ms` — search input grows wider when the cmd+K palette opens.
 - `220ms` — palette backdrop fades + blurs in.
 - `250ms` — topbar merged-state crossfade as the H1 scrolls past, brand → breadcrumb
@@ -18,6 +20,7 @@ Three tiers, two custom easings, one prohibition.
   a settled tail.
 
 **Dropdown unfold (320ms)**
+
 - `320ms` on `cubic-bezier(0.2, 0.8, 0.2, 1)`, opacity over the first `120ms` — dropdown-like
   panels (Select, DropdownMenu, Menu, ContextMenu, BreadcrumbTree) unfold from the corner
   nearest their trigger (`data-unfold="tl" | "tr" | "bl" | "br" | "t" | "b"`): a clip-path
@@ -31,6 +34,7 @@ Three tiers, two custom easings, one prohibition.
   `lib/usePanelPresence.ts`.
 
 **Tier 3 — spring (420ms)**
+
 - `420ms` — theme-toggle puck. Uses `cubic-bezier(.34, 1.45, .55, 1)` for an overshoot
   that reads as a button-press, not a crossfade.
 - `340ms` in / `160ms` out — modal pop (Dialog, Modal, AlertDialog). Enter is a damped
@@ -47,6 +51,41 @@ Three tiers, two custom easings, one prohibition.
   the same curve. A Dialog / Modal / AlertDialog whose content grows or shrinks while open
   glides to its new height on the same timing and follows a Collapsible rather than
   animating on top of it. Tokens: `--uikit-dur-collapse`, `--uikit-ease-collapse`.
+
+### Loading and progress: one shared dot spinner
+
+Use the existing Braille dot spinner for every indeterminate wait in DreamLake.
+The frame sequence is `⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏`, advancing every 80ms (800ms
+per cycle). This is the single loading animation across the app, UIKit, and
+embedded viewers. Do not invent a loader for an individual feature.
+
+- **With a label:** use a short description of the pending work, such as
+  “Loading files…”, “Connecting…”, or “Uploading…”. Use this for pages, panels,
+  lists, previews, buffering, and long-running operations. Keep measured counts,
+  percentages, and named steps as text alongside the shared spinner.
+- **Without a visible label:** use the same spinner in an icon-sized button or
+  other constrained space. The containing control must retain an accessible
+  name describing its action and expose its busy state.
+- **Timing and layout:** delay the visual indicator by 250ms so fast operations
+  do not flash. Keep the status accessible immediately. Reserve the space needed
+  for the result, retain existing content during refreshes, and remove the
+  indicator when work completes, fails, or is canceled.
+- **Accessibility:** announce the status once with `role="status"`; keep the
+  animated glyph decorative (`aria-hidden="true"`). Respect
+  `prefers-reduced-motion` by showing a static first frame with the same label.
+- **No alternative busy animations:** no expanding circles, rotating rings or
+  refresh icons, pulsing dots, animated ellipses, shimmer, or pulsing skeletons.
+  Static layout placeholders may reserve space; the dot spinner is the only
+  animated indication of a wait. Ordinary navigation transitions and data
+  visualizations are outside this loading rule.
+
+**Implementation status:** the reference already exists in the app's
+`components/ui/Loading.tsx` and `.dl-braille` in `styles/index.css`. UIKit's
+exported `Spinner` and internal loading states still need migration to this
+visual. Existing ring and skeleton previews document legacy behavior; they are
+not approved alternatives. Until the shared UIKit implementation is migrated,
+app features should reuse the existing app loader in its inline form or its
+bare spinner instead of copying the glyph animation into new components.
 
 ### When not to animate
 

@@ -1,5 +1,7 @@
 # Spinner
 
+**Loading policy:** DreamLake uses one Braille dot spinner for all waits. The expanding-ring Spinner shown below is legacy behavior awaiting migration; do not use it as the standard for new loading UI. Use the existing app Braille loader until the UIKit migration is complete. See the [style guide](style-guide.md) for labels, timing, accessibility, reduced motion, and prohibited alternatives.
+
 An indeterminate loading indicator: two out-of-phase expanding circles drawn as
 an inline SVG. It renders inline (use it inside buttons, list rows, or empty
 states) and defaults to the muted token so it sits quietly until content loads.
@@ -17,9 +19,9 @@ a spinner to a tone while an action runs.
 
 ## Props
 
-| Prop | Type | Default | Description |
-| --- | --- | --- | --- |
-| `size` | `number \| string` | `24` | Diameter in px. |
-| `className` | `string` | — | Extra classes (e.g. a `text-*` color). |
+| Prop        | Type               | Default | Description                            |
+| ----------- | ------------------ | ------- | -------------------------------------- |
+| `size`      | `number \| string` | `24`    | Diameter in px.                        |
+| `className` | `string`           | —       | Extra classes (e.g. a `text-*` color). |
 
 Any other native `<svg>` attributes (`style`, `aria-*`, …) are forwarded.
