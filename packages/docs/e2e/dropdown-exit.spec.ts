@@ -208,3 +208,42 @@ test("reduced motion: the fold is a short fade", async ({ page }) => {
     ),
   ).toBe(true);
 });
+
+for (const close of ['Escape', 'Enter', 'pointer', 'outside'] as const) {
+  test(`Menu: ${close} moves focus before hiding its navigation link`, async ({ page }) => {
+    const warnings: string[] = []
+    page.on('console', (message) => {
+      if (/Blocked aria-hidden/.test(message.text())) warnings.push(message.text())
+    })
+    await page.addInitScript(() => {
+      ;(window as any).focusAtHide = []
+      const original = Element.prototype.setAttribute
+      Element.prototype.setAttribute = function (name, value) {
+        if (name === 'aria-hidden' && value === 'true' && this.getAttribute('role') === 'menu') {
+          ;(window as any).focusAtHide.push(this.contains(document.activeElement))
+        }
+        original.call(this, name, value)
+      }
+    })
+    await page.goto('/components/menu')
+    await page.waitForLoadState('networkidle')
+    const trigger = page.getByRole('button', { name: 'Navigation menu' })
+    await trigger.click()
+    const link = page.getByRole('menuitem', { name: 'Open project' })
+    await link.focus()
+    if (close === 'outside') await page.getByRole('textbox', { name: 'Outside menu' }).click()
+    else if (close === 'pointer') await link.click()
+    else await page.keyboard.press(close)
+    await expect(page.getByRole('menu')).toHaveCount(0)
+    if (close === 'outside') await expect(page.getByRole('textbox', { name: 'Outside menu' })).toBeFocused()
+    else if (close === 'Escape') await expect(trigger).toBeFocused()
+    else {
+      // Native anchor navigation may move focus again to its destination;
+      // the menu must neither swallow navigation nor strand focus inside it.
+      await expect(page).toHaveURL(/#focus-return$/)
+      expect(await page.evaluate(() => document.activeElement?.closest('[data-closing]') !== null)).toBe(false)
+    }
+    expect(await page.evaluate(() => (window as any).focusAtHide)).toEqual([false])
+    expect(warnings).toEqual([])
+  })
+}

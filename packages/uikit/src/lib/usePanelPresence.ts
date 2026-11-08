@@ -5,6 +5,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { useHiddenContentFocus } from "./useHiddenContentFocus";
 
 /** The fold: a little shorter than the unfold (320ms, most of it visible in
  *  the first ~140ms) and on an accelerating curve, so it leaves from where the
@@ -74,9 +75,13 @@ function prefersReducedMotion() {
  *
  * No `Element.animate` (jsdom, very old engines): unmounts at once, as before.
  */
-export function usePanelPresence(open: boolean): PanelPresence {
+export function usePanelPresence(
+  open: boolean,
+  returnFocus?: () => HTMLElement | null | undefined,
+): PanelPresence {
   const [present, setPresent] = useState(open);
   const node = useRef<HTMLElement | null>(null);
+  const hiddenProps = useHiddenContentFocus(!open, node, returnFocus);
   /** The panel's running Web Animation, if any: the fold, or a fold being
    *  played back open after a reopen. */
   const anim = useRef<{ animation: Animation; closing: boolean } | null>(null);
@@ -168,7 +173,7 @@ export function usePanelPresence(open: boolean): PanelPresence {
     closing,
     ref,
     closingProps: closing
-      ? { inert: true, "aria-hidden": true, "data-closing": "" }
+      ? { ...hiddenProps, "data-closing": "" }
       : {},
   };
 }
