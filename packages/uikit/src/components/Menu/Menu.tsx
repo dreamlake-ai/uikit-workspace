@@ -102,7 +102,9 @@ export function Menu({
   const hover = useHoverSlider()
   const panelRef = useRef<HTMLDivElement>(null)
   // Stays mounted while it folds back into the trigger after closing.
-  const presence = usePanelPresence(open)
+  const presence = usePanelPresence(open, () =>
+    triggerRef.current?.querySelector<HTMLElement>('button, a[href], [tabindex]'),
+  )
   const panelNodeRef = useComposedRef<HTMLDivElement>(panelRef, presence.ref)
   const [coords, setCoords] = useState<{
     /** Distance from the viewport top ('down') or bottom ('up'). */

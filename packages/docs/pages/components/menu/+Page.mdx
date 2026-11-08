@@ -5,6 +5,9 @@ order: 50
 description: Trigger-anchored dropdown menu with sections, items, dividers, and a destructive variant.
 ---
 
+import { FocusReturnSpec } from '../../../components/specimens/components/menu/FocusReturnSpec'
+import focusSrc from '../../../components/specimens/components/menu/FocusReturnSpec.tsx?raw'
+
 import { MinimalSpec } from '../../../components/specimens/components/menu/MinimalSpec'
 import { WorkspaceSwitcherSpec } from '../../../components/specimens/components/menu/WorkspaceSwitcherSpec'
 import minimalSrc from '../../../components/specimens/components/menu/MinimalSpec.tsx?raw'
@@ -44,6 +47,16 @@ decision before that's been made.
 
 <Preview source={wsSrc} filename="WorkspaceSwitcherSpec.tsx">
   <WorkspaceSwitcherSpec />
+</Preview>
+
+## Focus return
+
+Use a focusable trigger. Closing from a focused menu link (by selection or
+Escape) returns focus to the trigger before the retained exit panel becomes
+inert and hidden. Clicking another input keeps focus on that input.
+
+<Preview source={focusSrc} filename="FocusReturnSpec.tsx">
+  <FocusReturnSpec />
 </Preview>
 
 ## Behavior
