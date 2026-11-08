@@ -26,6 +26,12 @@ The account row itself is composed by the caller (avatar + name + handle +
 because the row is highly app-specific and it would force a shared `Avatar`
 decision before that's been made.
 
+## Focus return
+
+Use a focusable trigger. Closing from a focused menu link (by selection or
+Escape) returns focus to the trigger before the retained exit panel becomes
+inert and hidden. Clicking another input keeps focus on that input.
+
 ## Behavior
 
 - **Wedge points at the chevron** — the panel's trigger-facing edge carries a wedge that
