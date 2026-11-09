@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 
-test('shared Braille spinner, reduced motion, and sectioned continuous guide', async ({ page }) => {
+test('shared Braille spinner, reduced motion, and bounded reading routes', async ({ page, isMobile }) => {
   await page.goto('/style-guide/loading')
   const frames = page.locator('.uikit-spinner-frames').first()
   await expect(frames).toHaveCSS('animation-name', 'uikit-braille')
@@ -11,11 +11,24 @@ test('shared Braille spinner, reduced motion, and sectioned continuous guide', a
   await expect(frames).toHaveCSS('animation-name', 'none')
   await page.goto('/style-guide')
   await expect(page.locator('[data-doc-page]')).toHaveCount(1)
-  await page.getByRole('checkbox', { name: 'Keep scrolling' }).check()
-  await page.locator('.doc-reading-next').scrollIntoViewIfNeeded()
-  const next = page.locator('[data-doc-page="/style-guide/color"]')
-  await expect(next).toBeVisible()
-  await next.evaluate(e => e.scrollIntoView({ block: 'start' }))
+  await expect(page.getByRole('checkbox', { name: 'Keep scrolling' })).toHaveCount(0)
+  await expect(page.locator('.doc-reading-footer')).toHaveAttribute('data-pinned', /true|false/)
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight))
+  await expect(page.locator('.doc-reading-footer')).toHaveAttribute('data-pinned', 'true')
+  if (isMobile) {
+    await page.locator('.doc-page-next').tap()
+  } else {
+    const footer = await page.locator('.doc-reading-footer').boundingBox()
+    await page.mouse.move(footer!.x + footer!.width * .8, footer!.y + footer!.height / 2)
+    await page.waitForTimeout(300)
+    await page.mouse.wheel(0, 100)
+    await page.waitForTimeout(90)
+    await page.mouse.wheel(0, 100)
+  }
+  await expect(page).toHaveURL(/\/style-guide\/color$/)
+  await expect(page.locator('[data-doc-page]')).toHaveCount(1)
+  await expect(page.locator('[data-doc-page]')).toHaveAttribute('data-doc-page', '/style-guide/color')
+  await expect.poll(() => page.evaluate(() => scrollY)).toBe(0)
   await expect(page.locator('aside a[aria-current="page"]').first()).toHaveAttribute('href', '/style-guide/color')
   await page.setViewportSize({ width: 390, height: 844 })
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)

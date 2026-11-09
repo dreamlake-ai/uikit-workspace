@@ -1,6 +1,6 @@
 {
   "name": "docs",
-  "version": "0.2.8",
+  "version": "0.2.9",
   "description": "Documentation site (@dreamlake/dockit shell + MDX pages)",
   "private": true,
   "type": "module",
@@ -13,7 +13,7 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
-    "@dreamlake/dockit": "0.2.33",
+    "@dreamlake/dockit": "0.2.34",
     "@dreamlake/uikit": "workspace:*",
     "@mdx-js/react": "latest",
     "lucide-react": "^1.21.0",

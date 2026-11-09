@@ -50,7 +50,6 @@ initDocs({
     // The three-button segmented slider this site has always used (the
     // library default is the single-button cycle toggle).
     themeToggle: 'segmented',
-    continuousReading: true,
     /**
      * Studio's preview-inspector bridge (the "DOM picker"). With this site
      * open in Studio's Web Preview panel, the composer's element picker can

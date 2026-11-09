@@ -1,7 +1,9 @@
 # Style guide
 
-Each topic has its own page. Choose a topic from the sidebar, or enable **Keep
-scrolling** to read the next topic below the current one.
+Each topic has its own page. Choose a topic from the sidebar, or pause at the
+previous/next links and scroll again to continue. The next topic replaces the
+current page, keeping its own URL and table of contents. You can also use the
+links directly.
 
 ## Foundations
 
