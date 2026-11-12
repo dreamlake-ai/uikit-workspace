@@ -9,6 +9,8 @@ import { IconTabsSpec } from '../../../components/specimens/components/tab-row/I
 import iconTabsSrc from '../../../components/specimens/components/tab-row/IconTabsSpec.tsx?raw'
 import { TabRowSpec } from '../../../components/specimens/components/tab-row/TabRowSpec'
 import tabRowSrc from '../../../components/specimens/components/tab-row/TabRowSpec.tsx?raw'
+import { GroupedTabsSpec } from '../../../components/specimens/components/tab-row/GroupedTabsSpec'
+import groupedTabsSrc from '../../../components/specimens/components/tab-row/GroupedTabsSpec.tsx?raw'
 
 # Tab Row
 
@@ -36,6 +38,18 @@ remains the accessible name and tooltip. A closable icon tab reserves another
 
 <Preview source={iconTabsSrc} filename="IconTabsSpec.tsx">
   <IconTabsSpec />
+</Preview>
+
+## Tab groups
+
+Set `groupStart` on the first tab of a group to draw a thin vertical divider
+before it, for example between fixed views and closable sessions. The divider
+is decorative: it is not a tab, takes no focus, and arrow keys move straight
+across it. It is never drawn before the first tab, so a group that empties
+leaves no stray divider.
+
+<Preview source={groupedTabsSrc} filename="GroupedTabsSpec.tsx">
+  <GroupedTabsSpec />
 </Preview>
 
 ## Usage
@@ -86,6 +100,7 @@ The row carries `data-tab-count` with the number of tabs, so a host can style a 
 | `panelId` | `string` | Optional ID of the corresponding content panel, used as `aria-controls`. |
 | `closable` | `boolean` | Set to `false` to prevent closing this tab. |
 | `entering` | `boolean` | Animate a newly opened tab; respects reduced motion. |
+| `groupStart` | `boolean` | Draw a thin divider before this tab to start a new group; ignored on the first tab. |
 
 ## Keyboard interaction
 

@@ -180,3 +180,22 @@ it('keeps the complete active tab visible when its viewport narrows and disconne
     else Reflect.deleteProperty(Element.prototype, 'scrollIntoView')
   }
 })
+
+it('draws a hidden divider only before a non-first group start without breaking keyboard selection', () => {
+  const change = vi.fn()
+  act(() => root.render(<TabRow value="terminal" onValueChange={change}
+    tabs={[
+      { value: 'brief', label: 'Brief', groupStart: true },
+      { value: 'terminal', label: 'Terminal' },
+      { value: 'session', label: 'Session', groupStart: true },
+    ]} />))
+  const dividers = container.querySelectorAll('.uikit-tab-row-divider')
+  expect(dividers).toHaveLength(1)
+  expect(dividers[0].getAttribute('aria-hidden')).toBe('true')
+  expect(dividers[0].nextElementSibling?.querySelector('[role="tab"]')?.textContent).toBe('Session')
+  const tabs = container.querySelectorAll<HTMLButtonElement>('[role="tab"]')
+  expect(tabs).toHaveLength(3)
+  act(() => tabs[1].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true })))
+  expect(change).toHaveBeenCalledWith('session')
+  expect(document.activeElement).toBe(tabs[2])
+})

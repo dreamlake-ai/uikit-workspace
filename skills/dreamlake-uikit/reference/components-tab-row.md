@@ -18,6 +18,14 @@ plus their tab borders. The default desktop row spacing is unchanged. An item wi
 remains the accessible name and tooltip. A closable icon tab reserves another
 22px for its close control. Other tabs retain their normal width and appearance.
 
+## Tab groups
+
+Set `groupStart` on the first tab of a group to draw a thin vertical divider
+before it, for example between fixed views and closable sessions. The divider
+is decorative: it is not a tab, takes no focus, and arrow keys move straight
+across it. It is never drawn before the first tab, so a group that empties
+leaves no stray divider.
+
 ## Usage
 
 ```tsx
@@ -66,6 +74,7 @@ The row carries `data-tab-count` with the number of tabs, so a host can style a 
 | `panelId` | `string` | Optional ID of the corresponding content panel, used as `aria-controls`. |
 | `closable` | `boolean` | Set to `false` to prevent closing this tab. |
 | `entering` | `boolean` | Animate a newly opened tab; respects reduced motion. |
+| `groupStart` | `boolean` | Draw a thin divider before this tab to start a new group; ignored on the first tab. |
 
 ## Keyboard interaction
 
