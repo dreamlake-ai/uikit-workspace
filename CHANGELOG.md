@@ -15,6 +15,7 @@
 
 ## Unreleased
 
+- `TabRow` items accept `groupStart`: a thin, `aria-hidden` divider precedes that tab (ignored on the first tab) to separate tab groups. Tab semantics and arrow-key selection are unchanged.
 - Dark segmented controls (Tabs `segment`, ToggleButtons `primary`/`secondary`) mirror light: the selected thumb is the page colour (`--uikit-segment-thumb` back to `--bg`), and the track is a recess below the page — new `--uikit-segment-track`, `color-mix(in srgb, #000 32%, var(--bg))` in dark, unset in light so light is unchanged. Dark unselected Tabs text on the track goes 4.09:1 → 5.76:1.
 - Dark `--uikit-muted` `#8a8a8a` → `#999999`, so secondary text meets WCAG AA on the dark page (3.9:1 → 4.73:1). The color guide now says not to put opacity on `--ink` / `--muted` text.
 - `Dialog`, `ModalContent` and `AlertDialogContent` share one spring-pop motion (`lib/useModalPresence`): a 340ms centred spring in, a 160ms shrink-and-fade out, and a backdrop fade alongside. The panel stays mounted, inert and hidden from assistive technology through its exit with its last open content; Esc, scroll lock and focus return still release when `open` turns false. A close or reopen mid-animation starts from the pose on screen. Reduced motion fades only. `Modal` and `AlertDialog` no longer use the top-anchored `uikit-panel-in`. Tests that expect a closed dialog to leave the DOM at once should wait for the exit or query by role.

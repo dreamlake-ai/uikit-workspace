@@ -1,4 +1,4 @@
-import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
+import { Fragment, useEffect, useRef, type CSSProperties, type ReactNode } from "react";
 import { X } from "lucide-react";
 import { cn } from "../../lib/utils";
 
@@ -21,6 +21,8 @@ export interface TabRowItem {
   closable?: boolean;
   /** Animate entry; callers own whether a tab is newly opened. */
   entering?: boolean;
+  /** Start a new group: a thin divider precedes this tab. Ignored on the first tab. */
+  groupStart?: boolean;
 }
 
 export interface TabRowProps {
@@ -85,7 +87,9 @@ export function TabRow({
           const iconOnly = !!tab.iconOnly && hasIcon;
           const iconWidth = onClose && tab.closable !== false ? 54 : 32;
           return (
-          <div key={tab.value} className="uikit-tab-row-item" role="presentation"
+          <Fragment key={tab.value}>
+          {tab.groupStart && index > 0 && <span className="uikit-tab-row-divider" aria-hidden />}
+          <div className="uikit-tab-row-item" role="presentation"
             data-active={tab.value === value || undefined} data-enter={tab.entering || undefined}
             data-icon-only={iconOnly || undefined}
             data-fit-content={tab.fitContent || undefined}
@@ -126,6 +130,7 @@ export function TabRow({
               <X size={10} strokeWidth={2.5} />
             </button>}
           </div>
+          </Fragment>
           );
         })}
       </div>
@@ -151,6 +156,7 @@ const CSS =
   '.uikit-tab-row-scroll{position:relative;z-index:1;display:flex;align-items:flex-end;gap:2px;' +
   'flex:1;min-width:0;overflow-x:auto;scrollbar-width:none}' +
   '.uikit-tab-row-scroll::-webkit-scrollbar{display:none}' +
+  '.uikit-tab-row-divider{flex:none;align-self:center;width:1px;height:14px;margin:0 4px;background:var(--faint)}' +
   '.uikit-tab-row-item{display:flex;align-items:center;flex:0 1 var(--tab-row-preferred-width);overflow:hidden;' +
   'box-sizing:border-box;min-width:var(--tab-row-min-width);max-width:var(--tab-row-preferred-width);' +
   'border:1px solid transparent;border-radius:8px 8px 0 0;transition:background 120ms ease}' +
