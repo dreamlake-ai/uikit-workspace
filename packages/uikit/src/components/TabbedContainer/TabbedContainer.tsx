@@ -6,6 +6,8 @@ export interface TabbedContainerItem {
   value: string;
   label: ReactNode;
   children: ReactNode;
+  /** Contextual actions shown at the right of the tab row while this tab is active. */
+  actions?: ReactNode;
 }
 export interface TabbedContainerProps {
   items: TabbedContainerItem[];
@@ -19,6 +21,8 @@ export interface TabbedContainerProps {
   activationMode?: "click" | "hover";
   className?: string;
   contentClassName?: string;
+  /** Actions shown at the right of the tab row for every tab, after the active tab's own. */
+  actions?: ReactNode;
 }
 /** A neutral, framed tabbed content surface, following Dockit's CodeTabs file-tab
  * geometry. It accepts arbitrary content; CodeBlock/editor concerns stay outside.
@@ -33,6 +37,7 @@ export function TabbedContainer({
   activationMode = "click",
   className,
   contentClassName,
+  actions,
 }: TabbedContainerProps) {
   const [internal, setInternal] = useState(defaultValue ?? items[0]?.value);
   const id = useId(),
@@ -88,6 +93,12 @@ export function TabbedContainer({
               </TabsTrigger>
             ))}
           </TabsList>
+          {(items[index].actions || actions) && (
+            <div className="uikit-tabbed-container-actions">
+              {items[index].actions}
+              {actions}
+            </div>
+          )}
         </div>
         {items.map(
           (item, i) =>
