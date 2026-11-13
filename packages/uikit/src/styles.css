@@ -1184,10 +1184,15 @@ html[data-theme='dark'] {
   min-width: 0;
 }
 .uikit-tabbed-container-header {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
   min-height: 30px;
   background: var(--bg);
 }
 .uikit-tabbed-container .uikit-tabbed-container-tabs {
+  flex: 1 1 auto;
+  min-width: 0;
   overflow-x: auto;
   min-height: 30px;
   gap: 2px;
@@ -1222,6 +1227,13 @@ html[data-theme='dark'] {
   background: var(--code-bg);
   color: var(--ink);
   font-weight: 600;
+}
+.uikit-tabbed-container-actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 4px;
+  padding-bottom: 3px;
 }
 .uikit-tabbed-container-content {
   border: 1px solid var(--faint);
