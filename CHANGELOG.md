@@ -15,6 +15,7 @@
 
 ## Unreleased
 
+- `TabRow`: the label's right padding tightens on hover/selection only when the tab has a close control. A fitted (`fitContent`), non-closable tab previously narrowed by 6px when selected or hovered and moved every tab after it.
 - `TabRow` items accept `groupStart`: a thin, `aria-hidden` divider precedes that tab (ignored on the first tab) to separate tab groups. Tab semantics and arrow-key selection are unchanged.
 - Dark segmented controls (Tabs `segment`, ToggleButtons `primary`/`secondary`) mirror light: the selected thumb is the page colour (`--uikit-segment-thumb` back to `--bg`), and the track is a recess below the page — new `--uikit-segment-track`, `color-mix(in srgb, #000 32%, var(--bg))` in dark, unset in light so light is unchanged. Dark unselected Tabs text on the track goes 4.09:1 → 5.76:1.
 - Dark `--uikit-muted` `#8a8a8a` → `#999999`, so secondary text meets WCAG AA on the dark page (3.9:1 → 4.73:1). The color guide now says not to put opacity on `--ink` / `--muted` text.

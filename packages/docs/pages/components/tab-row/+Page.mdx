@@ -94,7 +94,7 @@ The row carries `data-tab-count` with the number of tabs, so a host can style a 
 | `label` | `string` | Visible title and accessible name. |
 | `icon` | `ReactNode` | Optional visual beside the label. |
 | `iconOnly` | `boolean` | Display only the icon at compact width; preserve the text label for accessibility. |
-| `fitContent` | `boolean` | Size a text tab to its label and controls, preserving padding and capping width at `preferredTabWidth`; longer labels use the existing ellipsis. Icon-only tabs retain their compact width. |
+| `fitContent` | `boolean` | Size a text tab to its label and controls, preserving padding and capping width at `preferredTabWidth`; longer labels use the existing ellipsis. A fitted tab without a close control keeps the same width when selected or hovered, so tabs after it do not move. Icon-only tabs retain their compact width. |
 | `title` | `string` | Optional full tooltip, such as a path. |
 | `trailing` | `ReactNode` | A fixed control after the title, outside the tab button; selection reveals it together with the close control. |
 | `panelId` | `string` | Optional ID of the corresponding content panel, used as `aria-controls`. |

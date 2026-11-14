@@ -172,7 +172,10 @@ const CSS =
   'border:0;background:transparent;cursor:pointer;padding:6px 10px;flex:1;min-width:0;min-height:var(--tab-row-min-height,0px);text-align:left;' +
   'overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--uikit-muted);opacity:.6;' +
   `transition:color 120ms ease,opacity 120ms ease,padding-right ${OPEN}}` +
-  `.uikit-tab-row-item:hover .uikit-tab-row-item-label,.uikit-tab-row-item[data-active] .uikit-tab-row-item-label` +
+  // Tighten the label only to make room for a close button; a tab without one
+  // (e.g. a fitted, non-closable tab) keeps its width when selected or hovered.
+  `.uikit-tab-row-item:has(> .uikit-tab-row-item-x):hover .uikit-tab-row-item-label,` +
+  `.uikit-tab-row-item[data-active]:has(> .uikit-tab-row-item-x) .uikit-tab-row-item-label` +
   '{padding-right:4px}' +
   '.uikit-tab-row-item[data-icon-only] .uikit-tab-row-item-label{display:flex;align-items:center;justify-content:center;padding:6px}' +
   '.uikit-tab-row-item:hover .uikit-tab-row-item-label{opacity:1}' +
