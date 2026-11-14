@@ -148,15 +148,15 @@ export function TabRow({
 const RED = "oklch(59% .18 25)";
 const OPEN = "160ms cubic-bezier(.2,.7,.3,1)";
 const CSS =
-  '.uikit-tab-row-item-trailing{display:inline-flex;align-items:center;flex:none;margin-right:5px}' +
+  '.uikit-tab-row-item-trailing{display:inline-flex;align-items:center;flex:none;margin-right:0}' +
   '.uikit-tab-row-item-icon{display:inline-flex;vertical-align:middle;margin-right:6px}' +
   '.uikit-tab-row-item[data-icon-only]{flex-shrink:0}' +
   '.uikit-tab-row-item[data-icon-only] .uikit-tab-row-item-icon{margin-right:0}' +
   '.uikit-tab-row{-webkit-user-select:none;user-select:none;position:relative;display:flex;align-items:flex-end;gap:6px;width:100%;min-width:0}' +
-  '.uikit-tab-row-line{position:absolute;left:0;right:0;bottom:0;height:1px;background:var(--faint);z-index:0}' +
+  '.uikit-tab-row-line{display:none}' +
   '.uikit-tab-row-controls{position:relative;z-index:1;flex:0 0 auto;margin-bottom:4px;display:flex;align-items:center;gap:2px}' +
   '.uikit-tab-row-compact .uikit-tab-row-controls{margin-bottom:0;align-self:center}' +
-  '.uikit-tab-row-item:focus-within .uikit-tab-row-item-x{width:16px;margin-right:5px;opacity:.55}' +
+  '.uikit-tab-row-item:focus-within .uikit-tab-row-item-x{width:16px;margin-right:0;opacity:.55}' +
   '.uikit-tab-row-item button:focus-visible{outline:2px solid var(--uikit-accent);outline-offset:-2px}' +
   '.uikit-tab-row-scroll{position:relative;z-index:1;display:flex;align-items:flex-end;gap:2px;' +
   'flex:1;min-width:0;overflow-x:auto;scrollbar-width:none}' +
@@ -181,10 +181,10 @@ const CSS =
   '.uikit-tab-row-item[data-active] .uikit-tab-row-item-label{color:var(--ink);opacity:1;font-weight:600}' +
   '.uikit-tab-row-item-x{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;' +
   'box-sizing:border-box;border:0;padding:0;background:transparent;cursor:pointer;' +
-  'color:var(--uikit-muted);border-radius:4px;width:16px;margin-right:5px;opacity:.55;overflow:hidden;' +
+  'color:var(--uikit-muted);border-radius:4px;width:16px;margin-right:0;opacity:.55;overflow:hidden;' +
   `transition:width ${OPEN},margin-right ${OPEN},opacity 120ms ease,color 120ms ease}` +
   '.uikit-tab-row-item:hover .uikit-tab-row-item-x,.uikit-tab-row-item[data-active] .uikit-tab-row-item-x' +
-  '{width:16px;margin-right:5px;opacity:.55}' +
+  '{width:16px;margin-right:0;opacity:.55}' +
   `.uikit-tab-row-item:hover .uikit-tab-row-item-x:hover,.uikit-tab-row-item[data-active] .uikit-tab-row-item-x:hover` +
   `{opacity:1;color:${RED}}` +
   `.uikit-tab-row-item:has(.uikit-tab-row-item-x:hover) .uikit-tab-row-item-label{color:${RED};opacity:1;` +

@@ -4,9 +4,9 @@ import { TabRow } from "@dreamlake/uikit";
 
 const MEMO_ID = "6af89080efca7d15a5c451f7";
 const PANELS = [
-  { key: "navigation", name: "Left panel", label: "E1 · Left panel" },
-  { key: "editor", name: "Editor", label: "E2 · Editor" },
-  { key: "chat", name: "Chat", label: "E3 · Chat" },
+  { key: "navigation", name: "Left panel", label: "Left panel" },
+  { key: "editor", name: "Editor", label: "Editor" },
+  { key: "chat", name: "Chat", label: "Chat" },
 ] as const;
 type PanelKey = (typeof PANELS)[number]["key"];
 type PreviewTab = { value: string; label: string };
@@ -79,7 +79,7 @@ export function PanelTabsWorkspaceSpec() {
       data-panel-tabs-workspace
       ref={workspace}
     >
-      <h3>E · Workspace context — proposed UI</h3>
+      <h3>1.A · Workspace context — S-curved tabs</h3>
       <p className="dl-tabs-workspace-intro">
         Shared S-curved tabs beside the left panel, editor, and chat. The space
         around each panel shows the workspace background; the selected tab joins
@@ -120,7 +120,7 @@ export function PanelTabsWorkspaceSpec() {
                     id: `${id}-${key}-${tab.value}-tab`,
                     panelId: `${id}-${key}-${tab.value}-body`,
                     trailing:
-                      tab.value === "memo" ? (
+                      tab.value === "memo" && selected[key] === tab.value ? (
                         <a
                           className="dl-tabs-workspace-hash"
                           href={`https://dreamlake.ai/fortyfive/memos/${MEMO_ID}`}
@@ -156,7 +156,7 @@ export function PanelTabsWorkspaceSpec() {
                   }}
                   trailing={
                     <button
-                      className="dl-tabs-workspace-action"
+                      className="dl-tabs-workspace-action uikit-document-tab-action"
                       type="button"
                       aria-label={`Add ${name.toLowerCase()} preview tab`}
                       title={`Add ${name.toLowerCase()} preview tab`}
@@ -291,23 +291,24 @@ const CSS = `
 .dl-tabs-workspace-spec{color:var(--ink);font-size:12px;line-height:1.5;container-type:inline-size}
 .dl-tabs-workspace-spec h3{font-size:15px;margin:0 0 8px}
 .dl-tabs-workspace-intro,.dl-tabs-workspace-note{color:var(--uikit-muted);margin:0 0 16px;max-width:76ch}
-.dl-tabs-workspace-canvas{background:var(--panel-bg,var(--bg));padding:20px 24px 28px;border:1px solid var(--faint);border-radius:10px}
+.dl-tabs-workspace-canvas{background:var(--uikit-document-strip-surface,var(--uikit-workspace-bg));padding:20px 24px 28px;border:0;box-shadow:none}
 .dl-tabs-workspace-caption{color:var(--uikit-muted);font-size:10px;margin-bottom:18px;letter-spacing:.04em}
 .dl-tabs-workspace-grid{display:grid;grid-template-columns:minmax(150px,.65fr) minmax(220px,1.2fr) minmax(220px,1fr);gap:18px;align-items:start}
 .dl-tabs-workspace-panel{min-width:0}
 .dl-tabs-workspace-panel-caption{font-size:11px;color:var(--uikit-muted);margin-bottom:8px}
-.dl-tabs-workspace-header{display:flex;align-items:flex-end;gap:4px;min-width:0;padding:8px 8px 0;background:var(--panel-bg,var(--bg))}
+.dl-tabs-workspace-header{display:flex;align-items:flex-end;gap:4px;min-width:0;padding:8px 0 0;background:var(--uikit-document-strip-surface,var(--uikit-workspace-bg));border:0;box-shadow:none}
 .dl-tabs-workspace-panel[data-workspace-panel="editor"] .dl-tabs-workspace-header{padding-left:max(0px,calc(var(--workspace-editor-inset,25px) - 8px))}
-.dl-tabs-workspace-panel[data-workspace-panel="editor"] .dl-tabs-workspace-header[data-editor-overflow]{padding-left:8px}
+.dl-tabs-workspace-panel[data-workspace-panel="editor"] .dl-tabs-workspace-header[data-editor-overflow]{padding-left:0}
 .dl-tabs-workspace-header .uikit-tab-row{width:auto;max-width:calc(100% - 26px);flex:0 1 auto;padding-inline:0}
 .dl-tabs-workspace-header .uikit-tab-row-scroll{flex:0 1 auto}
 .dl-tabs-workspace-header .uikit-tab-row-item-label{padding-inline:8px}
 .dl-tabs-workspace-action{display:inline-flex;align-items:center;justify-content:center;flex:0 0 22px;width:22px;height:24px;border:0;border-radius:4px;padding:0;color:var(--uikit-muted);background:transparent;cursor:pointer}
+.dl-tabs-workspace-action.uikit-document-tab-action{background:var(--uikit-document-action-bg,color-mix(in srgb,var(--ink) 3%,var(--uikit-document-strip-surface,var(--uikit-workspace-bg))));box-shadow:none}
 .dl-tabs-workspace-action:hover{background:color-mix(in srgb,var(--ink) 7%,transparent);color:var(--ink)}
 .dl-tabs-workspace-action:focus-visible,.dl-tabs-workspace-hash:focus-visible{outline:2px solid var(--uikit-accent);outline-offset:1px}
 .dl-tabs-workspace-undock{margin-left:auto;margin-bottom:4px}
 .dl-tabs-workspace-hash{font:10px var(--font-uikit-mono,monospace);color:var(--uikit-muted);text-decoration:none;white-space:nowrap}
-.dl-tabs-workspace-body{position:relative;min-height:310px;background:var(--bg);border:1px solid var(--faint);border-top:0;border-radius:0 0 7px 7px;padding:16px 12px}
+.dl-tabs-workspace-body{position:relative;min-height:310px;background:var(--uikit-document-surface,var(--bg));border:0;box-shadow:none;border-radius:0 0 7px 7px;padding:16px 12px}
 .dl-tabs-workspace-body [hidden]{display:none}
 .dl-tabs-workspace-panel[data-workspace-panel="editor"] .dl-tabs-workspace-body{padding-inline:0}
 .dl-tabs-workspace-editor-column{width:calc(100% - 48px);max-width:520px;margin-inline:auto}

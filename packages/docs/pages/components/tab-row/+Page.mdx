@@ -22,7 +22,7 @@ A row of closable document tabs with a raised active tab. Tabs start at their pr
 
 ## Workspace context
 
-**E — left panel, editor, and chat with surrounding workspace background.** The
+**1.A — S-curved tabs beside the left panel, editor, and chat.** The
 editor text stays in a narrower column. Its tabs start at the text edge while
 there is room; adding drafts expands the strip before scrolling. This is a docs
 layout proposal, not an application screenshot or a completed editor adapter.
@@ -33,12 +33,13 @@ layout proposal, not an application screenshot or a completed editor adapter.
 
 ## Panel tab edge study
 
-**A — S-curved, roomy. B — straight left edge, roomy. C — S-curved, crowded.
-D — straight left edge, crowded.** S-curved tabs are the selected direction;
-B and D remain labeled comparisons. The selected tab matches the body and its
+**1. Which tab edge? 1.A — S-curved (selected). 1.B — straight left edge.**
+Both choices appear in roomy and crowded states; those are viewport states,
+not additional choices. Future questions use 2.A, 2.B, and so on. The selected tab matches the body and its
 curved feet extend into it; inactive tabs use a different opaque shade.
 
-The hash badge stays immediately before its close button, together at the right
+Only the foreground tab shows its canonical hash badge. It stays immediately
+before its close button, together at the right
 scroll edge of the owning tab. The **↙** undock preview always stays in the
 far-right corner; **+** follows the last tab until overflow pins it in front.
 Wheel vertically or swipe to scroll. The below-strip popover has a pointing wedge
@@ -104,6 +105,37 @@ import { TabRow } from "@dreamlake/uikit";
 ```
 
 The caller owns the tab list, selection, and content. When closing the active tab, choose its replacement in `onClose`. Omit `onClose` for a row without close controls.
+
+## Surface configuration
+
+Tabs sit on the workspace background. Borders follow the tab shapes only;
+there is no full-width rule above the body or border around the panel. The
+selected tab uses the body's surface. The first tab reserves only the 8px
+needed for its S-shaped foot; editor alignment can position it at the text column.
+The + control uses a subtle tint without a shadow.
+
+Set these CSS variables on the containing layout (or the `TabRow` style):
+
+| Variable                         | Default                   | Purpose                                                               |
+| -------------------------------- | ------------------------- | --------------------------------------------------------------------- |
+| `--uikit-document-strip-surface` | `--uikit-workspace-bg`    | Background around tabs; app layouts map this to `var(--dl-shell-bg)`. |
+| `--uikit-document-surface`       | `--bg`                    | Selected tab; set this to the host body color.                                          |
+| `--uikit-document-inactive-bg`   | Strip surface             | Background tabs blend into the workspace.                             |
+| `--uikit-document-hover-bg`      | 4% ink over strip surface | Hovered background tab.                                               |
+| `--uikit-document-action-bg`     | 3% ink over strip surface | Subtle + tint in the specimens.                                       |
+
+`--uikit-workspace-bg` defaults to `#f1eee7` in light mode and `#222226` in
+dark mode, matching the app's workspace shell. Explicit light/dark selection
+and system dark mode use the same defaults. Body defaults remain `#fffefa`
+(light) and `#2e2e35` (dark). Override the variables on the containing layout
+so tabs and controls inherit the same choices. The host owns its panel body
+fill: keep `--uikit-document-surface` equal to that fill (normally `--bg`). The
+workspace specimen applies it to both; `PanelLayout` does not recolor arbitrary
+caller content.
+
+Canonical references belong in the trailing slot only when the owning tab is
+selected. Preserve unrelated trailing actions on background tabs. The docs
+examples demonstrate this caller-owned distinction without fabricating IDs.
 
 ## Props
 

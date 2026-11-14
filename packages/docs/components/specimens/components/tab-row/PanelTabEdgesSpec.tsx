@@ -11,8 +11,7 @@ function EdgeExample({
   crowded?: boolean;
 }) {
   const id = useId();
-  const alternative =
-    edge === "smooth" ? (crowded ? "C" : "A") : crowded ? "D" : "B";
+  const alternative = edge === "smooth" ? "1.A" : "1.B";
   const initial = [
     "Chat session",
     "Design memo",
@@ -328,7 +327,7 @@ function EdgeExample({
                   ? `${id}-tooltip`
                   : undefined,
               trailing:
-                tab.label === "Design memo" ? (
+                tab.label === "Design memo" && tab.value === active ? (
                   <span
                     className="dl-tab-reference"
                     data-reference-id="6af89080efca7d15a5c451f7"
@@ -355,6 +354,7 @@ function EdgeExample({
                   variant="ghost"
                   size="sm"
                   icon
+                  className="uikit-document-tab-action"
                   aria-label="New session"
                   onClick={() => {
                     const value = String(nextId.current++);
@@ -436,24 +436,21 @@ const CSS = `
 .dl-tab-edge-example{min-width:0}
 .dl-tab-edge-example[data-tab-density="crowded"] .dl-tab-edge-panel{max-width:360px}
 .dl-tab-edge-label{margin:0 0 12px;font:500 12px var(--font-uikit-mono,monospace);color:var(--ink)}
-.dl-tab-edge-panel{position:relative;isolation:isolate;min-width:0;background:var(--panel-bg);border-radius:10px;border:1px solid var(--faint)}
+.dl-tab-edge-panel{position:relative;isolation:isolate;min-width:0;background:var(--uikit-document-strip-surface,var(--uikit-workspace-bg));border:0;box-shadow:none}
 .dl-tab-edge-header{padding:8px 36px 0 0;position:relative;z-index:2}
 .dl-tab-edge-study .uikit-tab-row{gap:0}
 .dl-tab-edge-study .uikit-tab-row-scroll{padding-left:8px;align-items:flex-end;flex:0 1 auto;touch-action:pan-x}
 .dl-tab-edge-study [data-overflow] .uikit-tab-row-scroll{flex:1 1 auto}
 .dl-tab-edge-study .uikit-tab-row-line{display:none}
-.dl-tab-edge-study .uikit-tab-row-controls{z-index:6;align-self:stretch;align-items:center;margin-bottom:0;background:var(--panel-bg);gap:0}
-.dl-tab-edge-study [data-overflow] .uikit-tab-row-controls{box-shadow:-8px 0 10px -8px var(--ink)}
+.dl-tab-edge-study .uikit-tab-row-controls{z-index:6;align-self:stretch;align-items:center;margin-bottom:0;background:var(--uikit-document-strip-surface,var(--uikit-workspace-bg));gap:0}
 .dl-tab-edge-study .uikit-tab-row-item-label{padding:5px 6px 6px 9px;opacity:.8}
 .dl-tab-edge-study .uikit-tab-row-item[data-active] .uikit-tab-row-item-label{opacity:1}
 .dl-tab-edge-study [data-tab-edge="straight"] .uikit-tab-row-item:first-child{border-top-left-radius:0}
 .dl-tab-edge-study [data-tab-edge="straight"] .uikit-tab-row-item:first-child::before{display:none}
 .dl-tab-reference{font:10px var(--font-uikit-mono,monospace);padding:1px 3px;border:1px solid var(--faint);border-radius:3px;white-space:nowrap}
 .dl-tab-undock{position:absolute!important;right:4px;top:8px}
-.dl-tab-edge-study [data-tab-density="crowded"] .uikit-tab-row-item + .uikit-tab-row-item{margin-left:-12px}
-.dl-tab-edge-study [data-tab-density="crowded"] .uikit-document-tab-end{padding-right:16px}
 .dl-tab-edge-study [data-grabbed] .uikit-tab-row-scroll{cursor:grabbing;touch-action:none}
-.dl-tab-edge-content{position:relative;z-index:0;min-height:112px;padding:20px;background:var(--bg);border-radius:0 0 10px 10px;color:var(--ink);font-size:13px}
+.dl-tab-edge-content{position:relative;z-index:0;min-height:112px;padding:20px;background:var(--uikit-document-surface,var(--bg));border:0;box-shadow:none;border-radius:0 0 10px 10px;color:var(--ink);font-size:13px}
 .dl-tab-edge-content p{margin:8px 0 0;color:var(--muted);font-size:12px;line-height:1.5}
 .dl-tab-edge-status{display:block;min-height:18px;margin-top:6px;color:var(--muted);font-size:11px}
 .dl-tab-edge-popover::before{content:"";position:absolute;left:var(--tip-arrow-left,16px);top:-5px;width:8px;height:8px;background:var(--bg);border-top:1px solid var(--faint);border-left:1px solid var(--faint);transform:translateX(-50%) rotate(45deg)}
