@@ -124,17 +124,9 @@ export function GroupTabBar({
     }
   }
 
-  if (tabbed && group.children.length === 1) {
-    const leaf = group.children[0]
-    return <div data-single-view-header={leaf.id} id={tabDomId(leaf.id)}
-      className="flex items-center h-[26px] px-2.5 min-w-0 overflow-hidden whitespace-nowrap text-uikit-muted"
-      onPointerDown={event => {
-        if (!(event.target as HTMLElement).closest('button, a') && event.button === 0)
-          onHandleDown(leaf, event, TAB_DRAG_THRESHOLD_PX)
-      }}>
-      {renderTab ? renderTab(leaf) : leaf.title ?? `Panel ${leaf.n}`}
-    </div>
-  }
+  // A single document uses the same tab semantics and inside close control.
+  // Keep the marker used by hosts for title styling and docking targets.
+  const single = tabbed && group.children.length === 1
 
   return (
     // `bg-uikit-bg`: occlusion hygiene for the same reason as PanelLeaf's root —
@@ -159,7 +151,7 @@ export function GroupTabBar({
           <Tab
             key={leaf.id}
             {...(!renderTab ? { type: 'button' as const } : {})}
-            aria-label={renderTab ? label : undefined}
+            aria-label={label}
             role="tab"
             id={tabDomId(leaf.id)}
             aria-selected={active}
@@ -167,6 +159,7 @@ export function GroupTabBar({
             // Roving tabindex: the strip is ONE tab stop, then ←/→ within it.
             tabIndex={active ? 0 : -1}
             data-tab-id={leaf.id}
+            data-single-view-header={single ? leaf.id : undefined}
             onKeyDown={(e) => onKeyDown(e, index)}
             onPointerDown={(e) => {
               // A tab is BOTH a click target and a drag handle, so the drag only
