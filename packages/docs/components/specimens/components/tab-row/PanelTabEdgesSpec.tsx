@@ -345,7 +345,7 @@ function EdgeExample({
               setTabs(next);
               if (active === value) setActive(next[0]?.value ?? "");
             }}
-            minTabWidth={crowded ? 112 : 96}
+            minTabWidth={crowded ? 170 : 96}
             preferredTabWidth={160}
             minTabHeight={30}
             aria-label={`${edge} ${crowded ? "crowded" : "roomy"} panel tabs`}

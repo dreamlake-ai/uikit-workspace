@@ -297,7 +297,7 @@ const CSS = `
 .dl-tabs-workspace-panel{min-width:0}
 .dl-tabs-workspace-panel-caption{font-size:11px;color:var(--uikit-muted);margin-bottom:8px}
 .dl-tabs-workspace-header{display:flex;align-items:flex-end;gap:4px;min-width:0;padding:8px 8px 0;background:var(--panel-bg,var(--bg))}
-.dl-tabs-workspace-panel[data-workspace-panel="editor"] .dl-tabs-workspace-header{padding-left:var(--workspace-editor-inset,25px)}
+.dl-tabs-workspace-panel[data-workspace-panel="editor"] .dl-tabs-workspace-header{padding-left:max(0px,calc(var(--workspace-editor-inset,25px) - 8px))}
 .dl-tabs-workspace-panel[data-workspace-panel="editor"] .dl-tabs-workspace-header[data-editor-overflow]{padding-left:8px}
 .dl-tabs-workspace-header .uikit-tab-row{width:auto;max-width:calc(100% - 26px);flex:0 1 auto;padding-inline:0}
 .dl-tabs-workspace-header .uikit-tab-row-scroll{flex:0 1 auto}
