@@ -1,10 +1,11 @@
 /** Shared document-tab presentation; each existing component retains its controller.
  * --uikit-document-surface is the panel body colour, defaulting to the chat's --bg.
  * Strip/inactive/hover/action colours can be overridden on a containing element.
+ * Native selection scrolling reserves the same gutter as the curved feet.
  * Sticky end controls belong to their original tab (no cloned close target).
  */
 export const documentTabStyles = `
-.uikit-document-tab-strip{background:var(--uikit-document-strip-surface,var(--uikit-workspace-bg));padding-inline:8px;border:0;box-shadow:none}
+.uikit-document-tab-strip{background:var(--uikit-document-strip-surface,var(--uikit-workspace-bg));padding-inline:8px;scroll-padding-inline:8px;border:0;box-shadow:none}
 .uikit-document-tab{--uikit-tab-fill:var(--uikit-document-inactive-bg,var(--uikit-document-strip-surface,var(--uikit-workspace-bg)));--uikit-tab-line:var(--faint);position:relative;z-index:1;overflow:visible;border:1px solid transparent;border-bottom:0;border-radius:8px 8px 0 0;background:linear-gradient(var(--uikit-tab-fill),var(--uikit-tab-fill)) padding-box,linear-gradient(to bottom,var(--uikit-tab-line) calc(100% - 8px),var(--uikit-tab-fill) 0) border-box;color:var(--uikit-muted);transition:color 120ms ease}
 .uikit-document-tab[data-active]{--uikit-tab-fill:var(--uikit-document-surface,var(--bg));z-index:3;color:var(--ink)}
 .uikit-document-tab:not([data-active]):hover{--uikit-tab-fill:var(--uikit-document-hover-bg,color-mix(in srgb,var(--ink) 4%,var(--uikit-document-strip-surface,var(--uikit-workspace-bg))))}
