@@ -5,6 +5,8 @@ order: 111
 description: Closable document tabs that compress to a configurable minimum width before scrolling horizontally.
 ---
 
+import { PanelTabsWorkspaceSpec } from "../../../components/specimens/components/tab-row/PanelTabsWorkspaceSpec";
+import panelTabsWorkspaceSrc from "../../../components/specimens/components/tab-row/PanelTabsWorkspaceSpec.tsx?raw";
 import { PanelTabEdgesSpec } from "../../../components/specimens/components/tab-row/PanelTabEdgesSpec";
 import panelTabEdgesSrc from "../../../components/specimens/components/tab-row/PanelTabEdgesSpec.tsx?raw";
 import { IconTabsSpec } from "../../../components/specimens/components/tab-row/IconTabsSpec";
@@ -18,19 +20,32 @@ import groupedTabsSrc from "../../../components/specimens/components/tab-row/Gro
 
 A row of closable document tabs with a raised active tab. Tabs start at their preferred width, compress as space runs out, then scroll horizontally once they reach the minimum. Leading and trailing controls stay fixed.
 
+## Workspace context
+
+**E — left panel, editor, and chat with surrounding workspace background.** The
+editor text stays in a narrower column. Its tabs start at the text edge while
+there is room; adding drafts expands the strip before scrolling. This is a docs
+layout proposal, not an application screenshot or a completed editor adapter.
+
+<Preview source={panelTabsWorkspaceSrc} filename="PanelTabsWorkspaceSpec.tsx">
+  <PanelTabsWorkspaceSpec />
+</Preview>
+
 ## Panel tab edge study
 
-Two variants on the existing `TabRow`: a smooth shoulder on the leftmost tab,
-or a straight left edge. Both keep the close button inside its tab, put tabs
-in front of the panel background, and leave 8px above the row. Select and close
-tabs to compare the same existing interactions. Roomy rows place **+** after the
-last tab; crowded rows overlap and keep **+** in front. The **↙** icon previews
-undocking; its placement is provisional. Wheel vertically or swipe to scroll.
-The label popover stays below the strip while scrolling and updates in place;
-on touch it dismisses about one second after scrolling stops. Hold a tab for
-500ms on touch to grab and reorder this example. This demonstrates reordering,
-not cross-panel docking. These are proposed styles;
-they do not change the shared component defaults.
+**A — S-curved, roomy. B — straight left edge, roomy. C — S-curved, crowded.
+D — straight left edge, crowded.** S-curved tabs are the selected direction;
+B and D remain labeled comparisons. The selected tab matches the body and its
+curved feet extend into it; inactive tabs use a different opaque shade.
+
+The hash badge stays immediately before its close button, together at the right
+scroll edge of the owning tab. The **↙** undock preview always stays in the
+far-right corner; **+** follows the last tab until overflow pins it in front.
+Wheel vertically or swipe to scroll. The below-strip popover has a pointing wedge
+and updates in place; on touch it dismisses about one second after scrolling
+stops. Hold for 500ms on touch to enter the same-row reorder demonstration.
+These are proposed shared styles, with runtime acceptance still pending;
+the demo does not establish cross-panel docking or physical-device acceptance.
 
 <Preview source={panelTabEdgesSrc} filename="PanelTabEdgesSpec.tsx">
   <PanelTabEdgesSpec />
@@ -108,23 +123,24 @@ The row carries `data-tab-count` with the number of tabs, so a host can style a 
 
 ### TabRowItem
 
-| Field        | Type        | Description                                                                                                                                                                                 |
-| ------------ | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `value`      | `string`    | Unique tab identifier.                                                                                                                                                                      |
-| `label`      | `string`    | Visible title and accessible name.                                                                                                                                                          |
-| `icon`       | `ReactNode` | Optional visual beside the label.                                                                                                                                                           |
-| `iconOnly`   | `boolean`   | Display only the icon at compact width; preserve the text label for accessibility.                                                                                                          |
-| `fitContent` | `boolean`   | Size a text tab to its label and controls, preserving padding and capping width at `preferredTabWidth`; longer labels use the existing ellipsis. Icon-only tabs retain their compact width. |
-| `title`      | `string`    | Optional full tooltip, such as a path.                                                                                                                                                      |
-| `trailing`   | `ReactNode` | A fixed control after the title, outside the tab button; selection reveals it together with the close control.                                                                              |
-| `panelId`    | `string`    | Optional ID of the corresponding content panel, used as `aria-controls`.                                                                                                                    |
-| `closable`   | `boolean`   | Set to `false` to prevent closing this tab.                                                                                                                                                 |
-| `entering`   | `boolean`   | Animate a newly opened tab; respects reduced motion.                                                                                                                                        |
-| `groupStart` | `boolean`   | Draw a thin divider before this tab to start a new group; ignored on the first tab.                                                                                                         |
+| Field           | Type        | Description                                                                                                                                                                                 |
+| --------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `value`         | `string`    | Unique tab identifier.                                                                                                                                                                      |
+| `label`         | `string`    | Visible title and accessible name.                                                                                                                                                          |
+| `icon`          | `ReactNode` | Optional visual beside the label.                                                                                                                                                           |
+| `iconOnly`      | `boolean`   | Display only the icon at compact width; preserve the text label for accessibility.                                                                                                          |
+| `fitContent`    | `boolean`   | Size a text tab to its label and controls, preserving padding and capping width at `preferredTabWidth`; longer labels use the existing ellipsis. Icon-only tabs retain their compact width. |
+| `title`         | `string`    | Optional full tooltip, such as a path.                                                                                                                                                      |
+| `trailing`      | `ReactNode` | A fixed control after the title, outside the tab button; selection reveals it together with the close control.                                                                              |
+| `descriptionId` | `string`    | Optional ID of the visible custom tooltip describing this tab.                                                                                                                              |
+| `panelId`       | `string`    | Optional ID of the corresponding content panel, used as `aria-controls`.                                                                                                                    |
+| `closable`      | `boolean`   | Set to `false` to prevent closing this tab.                                                                                                                                                 |
+| `entering`      | `boolean`   | Animate a newly opened tab; respects reduced motion.                                                                                                                                        |
+| `groupStart`    | `boolean`   | Draw a thin divider before this tab to start a new group; ignored on the first tab.                                                                                                         |
 
 ## Keyboard interaction
 
-Tab focuses the selected tab. Left/Right arrows select adjacent tabs; Home/End select the first/last tab. Delete requests closing the focused tab. Close buttons are keyboard accessible and appear when their tab contains focus. Selection scrolls into view.
+Tab focuses the selected tab. Left/Right arrows select adjacent tabs; Home/End select the first/last tab. Delete requests closing the focused tab. Close buttons remain visible inside their owning tabs and are keyboard accessible. Selection scrolls into view.
 
 Use [Tabs](/components/tabs) for underline and segmented switches. Use Tab Row for open documents or pages that need close controls and width compression.
 

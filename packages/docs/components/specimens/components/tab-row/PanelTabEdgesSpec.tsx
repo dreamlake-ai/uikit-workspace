@@ -1,8 +1,8 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState, type CSSProperties } from "react";
 import { ArrowDownLeft, Plus } from "lucide-react";
 import { Button, TabRow } from "@dreamlake/uikit";
 
-/** Interaction specimens on the existing TabRow; shared defaults are unchanged. */
+/** Interaction proposals on the existing TabRow; wrapper gestures are docs-only. */
 function EdgeExample({
   edge,
   crowded = false,
@@ -11,6 +11,8 @@ function EdgeExample({
   crowded?: boolean;
 }) {
   const id = useId();
+  const alternative =
+    edge === "smooth" ? (crowded ? "C" : "A") : crowded ? "D" : "B";
   const initial = [
     "Chat session",
     "Design memo",
@@ -27,7 +29,12 @@ function EdgeExample({
   );
   const [active, setActive] = useState("0");
   const [overflow, setOverflow] = useState(false);
-  const [tip, setTip] = useState<{ label: string; left: number } | null>(null);
+  const [tip, setTip] = useState<{
+    label: string;
+    left: number;
+    arrowLeft: number;
+    tabId: string;
+  } | null>(null);
   const [grabbed, setGrabbed] = useState<string | null>(null);
   const [status, setStatus] = useState("");
   const host = useRef<HTMLDivElement>(null);
@@ -64,9 +71,15 @@ function EdgeExample({
     const box = element.getBoundingClientRect();
     const area = host.current!.getBoundingClientRect();
     tipActive.current = true;
+    const left = Math.max(0, Math.min(box.left - area.left, area.width - 180));
     setTip({
+      tabId: element.id,
+      arrowLeft: Math.max(
+        12,
+        Math.min(box.left + box.width / 2 - area.left - left, 160),
+      ),
       label: element.title || element.textContent || "Session",
-      left: Math.max(0, Math.min(box.left - area.left, area.width - 180)),
+      left,
     });
     if (touch) scheduleDismiss();
   };
@@ -100,22 +113,15 @@ function EdgeExample({
         bounds.left + 1,
         Math.min(point.current.x, bounds.right - 1),
       );
-      const candidates = Array.from(
-        scroll.querySelectorAll<HTMLElement>('[role="tab"]'),
-      );
-      const visible = candidates.filter((element) => {
-        const box = element.getBoundingClientRect();
-        return box.right > bounds.left && box.left < bounds.right;
-      });
-      const target = visible.reduce<HTMLElement | null>((best, element) => {
-        const box = element.getBoundingClientRect();
-        const distance = Math.abs((box.left + box.right) / 2 - x);
-        if (!best) return element;
-        const previous = best.getBoundingClientRect();
-        return distance < Math.abs((previous.left + previous.right) / 2 - x)
-          ? element
-          : best;
-      }, null);
+      // Follow the actual painted tab, including overlap and its sticky controls.
+      const target = document
+        .elementsFromPoint(x, bounds.top + bounds.height / 2)
+        .map((element) =>
+          element
+            .closest(".uikit-tab-row-item")
+            ?.querySelector<HTMLElement>('[role="tab"]'),
+        )
+        .find((element) => element && scroll.contains(element));
       if (target) showTip(target, point.current.touch);
     };
     const touchMove = (event: TouchEvent) => {
@@ -153,8 +159,11 @@ function EdgeExample({
       aria-label={`${edge} ${crowded ? "crowded" : "roomy"} tabs`}
     >
       <p className="dl-tab-edge-label">
-        {edge === "smooth" ? "Smooth left edge" : "Straight left edge"} ·{" "}
-        {crowded ? "crowded" : "roomy"}
+        {alternative} ·{" "}
+        {edge === "smooth"
+          ? "S-curved tabs (selected direction)"
+          : "Straight left edge (comparison)"}{" "}
+        · {crowded ? "crowded" : "roomy"}
       </p>
       <div className="dl-tab-edge-panel">
         <div
@@ -194,7 +203,7 @@ function EdgeExample({
           }}
           onBlurCapture={(event) => {
             if (!event.currentTarget.contains(event.relatedTarget as Node))
-              setTip(null);
+              hideTip();
           }}
           onKeyDownCapture={(event) => {
             if (event.key === "Escape") {
@@ -313,6 +322,21 @@ function EdgeExample({
               ...tab,
               id: `${id}-${tab.value}`,
               panelId: `${id}-panel`,
+              title: "",
+              descriptionId:
+                tip?.tabId === `${id}-${tab.value}`
+                  ? `${id}-tooltip`
+                  : undefined,
+              trailing:
+                tab.label === "Design memo" ? (
+                  <span
+                    className="dl-tab-reference"
+                    data-reference-id="6af89080efca7d15a5c451f7"
+                    aria-label="Memo reference 6af89080efca7d15a5c451f7"
+                  >
+                    #6af890
+                  </span>
+                ) : undefined,
             }))}
             value={active}
             onValueChange={setActive}
@@ -340,27 +364,34 @@ function EdgeExample({
                 >
                   <Plus size={14} />
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  icon
-                  aria-label="Undock session"
-                  onClick={() =>
-                    setStatus(
-                      "Undock action preview — placement is being reviewed.",
-                    )
-                  }
-                >
-                  <ArrowDownLeft size={14} />
-                </Button>
               </>
             }
           />
+          <Button
+            className="dl-tab-undock"
+            variant="ghost"
+            size="sm"
+            icon
+            aria-label="Undock session"
+            onClick={() =>
+              setStatus(
+                "Undock action preview — pinned to the far-right corner.",
+              )
+            }
+          >
+            <ArrowDownLeft size={14} />
+          </Button>
           {tip && (
             <div
               className="dl-tab-edge-popover"
+              id={`${id}-tooltip`}
               role="tooltip"
-              style={{ left: tip.left }}
+              style={
+                {
+                  left: tip.left,
+                  "--tip-arrow-left": `${tip.arrowLeft}px`,
+                } as CSSProperties
+              }
             >
               {tip.label}
             </div>
@@ -405,29 +436,27 @@ const CSS = `
 .dl-tab-edge-example{min-width:0}
 .dl-tab-edge-example[data-tab-density="crowded"] .dl-tab-edge-panel{max-width:360px}
 .dl-tab-edge-label{margin:0 0 12px;font:500 12px var(--font-uikit-mono,monospace);color:var(--ink)}
-.dl-tab-edge-panel{position:relative;isolation:isolate;min-width:0;background:var(--panel-bg);border-radius:10px}
-.dl-tab-edge-header{padding:8px 8px 0 0;position:relative;z-index:2}
+.dl-tab-edge-panel{position:relative;isolation:isolate;min-width:0;background:var(--panel-bg);border-radius:10px;border:1px solid var(--faint)}
+.dl-tab-edge-header{padding:8px 36px 0 0;position:relative;z-index:2}
 .dl-tab-edge-study .uikit-tab-row{gap:0}
 .dl-tab-edge-study .uikit-tab-row-scroll{padding-left:8px;align-items:flex-end;flex:0 1 auto;touch-action:pan-x}
 .dl-tab-edge-study [data-overflow] .uikit-tab-row-scroll{flex:1 1 auto}
 .dl-tab-edge-study .uikit-tab-row-line{display:none}
 .dl-tab-edge-study .uikit-tab-row-controls{z-index:6;align-self:stretch;align-items:center;margin-bottom:0;background:var(--panel-bg);gap:0}
 .dl-tab-edge-study [data-overflow] .uikit-tab-row-controls{box-shadow:-8px 0 10px -8px var(--ink)}
-.dl-tab-edge-study .uikit-tab-row-item{--dl-study-tab-fill:color-mix(in srgb,var(--bg) 80%,var(--panel-bg));position:relative;z-index:1;background:var(--dl-study-tab-fill);border-color:var(--faint);border-bottom-color:transparent;border-radius:6px 6px 0 0}
-.dl-tab-edge-study .uikit-tab-row-item[data-active]{--dl-study-tab-fill:var(--bg);z-index:4;background:var(--bg);border-bottom-color:var(--bg)}
 .dl-tab-edge-study .uikit-tab-row-item-label{padding:5px 6px 6px 9px;opacity:.8}
 .dl-tab-edge-study .uikit-tab-row-item[data-active] .uikit-tab-row-item-label{opacity:1}
-.dl-tab-edge-study .uikit-tab-row-item-x,.dl-tab-edge-study .uikit-tab-row-item:hover .uikit-tab-row-item-x,.dl-tab-edge-study .uikit-tab-row-item:focus-within .uikit-tab-row-item-x{width:18px;height:18px;flex:0 0 18px;margin-right:6px;opacity:.65}
-.dl-tab-edge-study [data-tab-edge="smooth"] .uikit-tab-row-item:first-child{overflow:visible;border-top-left-radius:12px}
-.dl-tab-edge-study [data-tab-edge="smooth"] .uikit-tab-row-item:first-child::before{content:"";position:absolute;pointer-events:none;left:-8px;bottom:-1px;width:8px;height:8px;background:radial-gradient(circle at 0 0,transparent 7px,var(--dl-study-tab-fill) 7.5px)}
 .dl-tab-edge-study [data-tab-edge="straight"] .uikit-tab-row-item:first-child{border-top-left-radius:0}
+.dl-tab-edge-study [data-tab-edge="straight"] .uikit-tab-row-item:first-child::before{display:none}
+.dl-tab-reference{font:10px var(--font-uikit-mono,monospace);padding:1px 3px;border:1px solid var(--faint);border-radius:3px;white-space:nowrap}
+.dl-tab-undock{position:absolute!important;right:4px;top:8px}
 .dl-tab-edge-study [data-tab-density="crowded"] .uikit-tab-row-item + .uikit-tab-row-item{margin-left:-12px}
-.dl-tab-edge-study [data-tab-density="crowded"] .uikit-tab-row-item-x{margin-right:18px}
-.dl-tab-edge-study [data-tab-density="crowded"] .uikit-tab-row-item:hover .uikit-tab-row-item-x{margin-right:18px}
+.dl-tab-edge-study [data-tab-density="crowded"] .uikit-document-tab-end{padding-right:16px}
 .dl-tab-edge-study [data-grabbed] .uikit-tab-row-scroll{cursor:grabbing;touch-action:none}
 .dl-tab-edge-content{position:relative;z-index:0;min-height:112px;padding:20px;background:var(--bg);border-radius:0 0 10px 10px;color:var(--ink);font-size:13px}
 .dl-tab-edge-content p{margin:8px 0 0;color:var(--muted);font-size:12px;line-height:1.5}
 .dl-tab-edge-status{display:block;min-height:18px;margin-top:6px;color:var(--muted);font-size:11px}
+.dl-tab-edge-popover::before{content:"";position:absolute;left:var(--tip-arrow-left,16px);top:-5px;width:8px;height:8px;background:var(--bg);border-top:1px solid var(--faint);border-left:1px solid var(--faint);transform:translateX(-50%) rotate(45deg)}
 .dl-tab-edge-popover{position:absolute;top:calc(100% + 5px);z-index:10;max-width:180px;padding:8px 10px;border:1px solid var(--faint);border-radius:6px;background:var(--bg);color:var(--ink);box-shadow:0 4px 14px #0002;font-size:12px;pointer-events:none}
 @media(max-width:700px){.dl-tab-edge-study{grid-template-columns:minmax(0,1fr)}}
 `;
