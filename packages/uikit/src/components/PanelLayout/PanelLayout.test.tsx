@@ -690,3 +690,31 @@ it('does not reorder an inactive tab dropped on its own group header', () => {
   expect(result.kind).toBe('group')
   if (result.kind === 'group') expect(result.children.map(leaf => leaf.id)).toEqual([first.id, second.id])
 })
+
+
+it('connects a shown singleton tab to its retained tabpanel and keeps trailing actions before close', () => {
+  const tree = panelLeaf({ view: 'asset', title: 'Asset' })
+  const copy = vi.fn()
+  const close = vi.fn(() => false)
+  render(<PanelLayout initial={() => tree} tabbed showSingleTab={() => true}
+    renderTabTrailing={() => <button onClick={copy}>Copy canonical reference</button>}
+    onRequestClose={close} renderBody={() => <input defaultValue="retained" />} />)
+  const tab = container.querySelector('[role="tab"]')!
+  const panel = container.querySelector('[role="tabpanel"]')!
+  expect(tab.getAttribute('aria-selected')).toBe('true')
+  expect(tab.getAttribute('aria-controls')).toBe(panel.id)
+  expect(panel.getAttribute('aria-labelledby')).toBe(tab.id)
+  const originalInput = panel.querySelector('input')!
+  originalInput.value = 'unsent draft'
+  const end = tab.querySelector('.uikit-document-tab-end')!
+  const action = end.querySelector<HTMLButtonElement>('button')!
+  const closer = end.querySelector<HTMLElement>('[aria-label="Close Asset"]')!
+  expect(action.compareDocumentPosition(closer) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  act(() => action.click())
+  expect(copy).toHaveBeenCalledOnce()
+  expect(close).not.toHaveBeenCalled()
+  act(() => closer.click())
+  expect(close).toHaveBeenCalledOnce()
+  expect(container.querySelector('input')).toBe(originalInput)
+  expect(originalInput.value).toBe('unsent draft')
+})

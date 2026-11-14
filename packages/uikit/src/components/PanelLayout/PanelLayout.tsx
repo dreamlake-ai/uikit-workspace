@@ -191,6 +191,8 @@ export interface PanelLayoutProps {
   // ── content ─────────────────────────────────────────────────────────────
   /** Optional identity/eyebrow content inside a tab. */
   renderTab?: LeafRenderer
+  /** Reference/actions immediately before close; stays together at the scrolling edge. */
+  renderTabTrailing?: LeafRenderer
   renderBody?: LeafRenderer
   renderHeader?: LeafRenderer
 
@@ -275,6 +277,7 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
     onFocusedLeafChange,
     onResize,
     renderTab,
+    renderTabTrailing,
     renderBody,
     renderHeader,
     showToolbar = false,
@@ -772,6 +775,7 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(funct
     tabbed,
     showSingleTab,
     renderTab,
+    renderTabTrailing,
     renderBody,
     renderHeader,
     leafClassName,

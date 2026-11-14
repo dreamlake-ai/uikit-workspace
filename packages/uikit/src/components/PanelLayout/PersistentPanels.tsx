@@ -30,12 +30,12 @@ export function PersistentPanels({
   const layer = useRef<HTMLDivElement>(null)
   const mountOrder = useRef(new Map<string, number>())
   const sequence = useRef(0)
-  const leaves: { leaf: LeafNode; box: PanelBox; inGroup: boolean; multiple: boolean }[] = []
+  const leaves: { leaf: LeafNode; box: PanelBox; inGroup: boolean }[] = []
   const walk = (node: PanelNode, box: PanelBox) => {
-    if (node.kind === 'leaf') leaves.push({ leaf: node, box, inGroup: !!tabbed && !!showSingleTab?.(node), multiple: false })
+    if (node.kind === 'leaf') leaves.push({ leaf: node, box, inGroup: !!tabbed && !!showSingleTab?.(node) })
     else if (node.kind === 'group')
       node.children.forEach((leaf) =>
-        leaves.push({ leaf, box, inGroup: node.children.length > 1 || (!!tabbed && !!showSingleTab?.(leaf)), multiple: node.children.length > 1 })
+        leaves.push({ leaf, box, inGroup: node.children.length > 1 || (!!tabbed && !!showSingleTab?.(leaf)) })
       )
     else
       node.children.forEach((child, i) => walk(child, splitChildBox(box, node.sizes, i, node.dir, dividerPx)))
@@ -98,7 +98,7 @@ export function PersistentPanels({
   }, [root, showSingleTab, compactId, tabbed])
   return (
     <div ref={layer} style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
-      {leaves.map(({ leaf, box, inGroup, multiple }) => (
+      {leaves.map(({ leaf, box, inGroup }) => (
         <div
           key={leaf.id}
           data-surface={leaf.id}
@@ -109,7 +109,7 @@ export function PersistentPanels({
             leaf={leaf}
             box={compactId ? rootBox : box}
             inGroup={compactId ? false : inGroup}
-            tabRole={compactId ? true : multiple}
+            tabRole={compactId ? true : inGroup}
             dragging={draggingId === leaf.id}
             onFocus={() => onFocus(leaf.id)}
             onClose={() => onClose(leaf.id)}
