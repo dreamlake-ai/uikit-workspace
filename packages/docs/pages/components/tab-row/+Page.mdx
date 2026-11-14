@@ -23,7 +23,11 @@ A row of closable document tabs with a raised active tab. Tabs start at their pr
 ## Workspace context
 
 **1.A — S-curved tabs beside the left panel, editor, and chat.** The
-editor text stays in a narrower column. Its tabs start at the text edge while
+chosen design has no gaps between panels or below them. Right-gutter controls
+follow the active tab: chat shows + and ↙ even in an editor panel; editor tabs
+retain editor controls. Floating affects only the active chat in that panel.
+These are docs simulations; product routing is separate work. The editor text
+stays in a narrower column. Its tabs start at the text edge while
 there is room; adding drafts expands the strip before scrolling. This is a docs
 layout proposal, not an application screenshot or a completed editor adapter.
 
@@ -33,15 +37,17 @@ layout proposal, not an application screenshot or a completed editor adapter.
 
 ## Panel tab edge study
 
-**1. Which tab edge? 1.A — S-curved (selected). 1.B — straight left edge.**
+**1. Tab edge: 1.A — S-curved (chosen). 1.B — straight left edge (earlier comparison).**
 Both choices appear in roomy and crowded states; those are viewport states,
 not additional choices. Future questions use 2.A, 2.B, and so on. The selected tab matches the body and its
-curved feet extend into it; inactive tabs use a different opaque shade.
+curved feet extend into it. Inactive tabs are flat labels with faint vertical
+separators; hovering gives them a rounded rectangle. Separators beside the
+active or hovered tab disappear.
 
 Only the foreground tab shows its canonical hash badge. It stays immediately
 before its close button, together at the right
-scroll edge of the owning tab. The **↙** undock preview always stays in the
-far-right corner; **+** follows the last tab until overflow pins it in front.
+scroll edge of the owning tab. A selected chat shows **+** and **↙** together
+in the far-right gutter, aligned with the tab top. Editor tabs hide these chat controls.
 Wheel vertically or swipe to scroll. The below-strip popover has a pointing wedge
 and updates in place; on touch it dismisses about one second after scrolling
 stops. Hold for 500ms on touch to enter the same-row reorder demonstration.
@@ -116,13 +122,14 @@ The + control uses a subtle tint without a shadow.
 
 Set these CSS variables on the containing layout (or the `TabRow` style):
 
-| Variable                         | Default                   | Purpose                                                               |
-| -------------------------------- | ------------------------- | --------------------------------------------------------------------- |
-| `--uikit-document-strip-surface` | `--uikit-workspace-bg`    | Background around tabs; app layouts map this to `var(--dl-shell-bg)`. |
-| `--uikit-document-surface`       | `--bg`                    | Selected tab; set this to the host body color.                                          |
-| `--uikit-document-inactive-bg`   | Strip surface             | Background tabs blend into the workspace.                             |
-| `--uikit-document-hover-bg`      | 4% ink over strip surface | Hovered background tab.                                               |
-| `--uikit-document-action-bg`     | 3% ink over strip surface | Subtle + tint in the specimens.                                       |
+| Variable                           | Default                   | Purpose                                                               |
+| ---------------------------------- | ------------------------- | --------------------------------------------------------------------- |
+| `--uikit-document-strip-surface`   | `--uikit-workspace-bg`    | Background around tabs; app layouts map this to `var(--dl-shell-bg)`. |
+| `--uikit-document-surface`         | `--bg`                    | Selected tab; set this to the host body color.                        |
+| `--uikit-document-inactive-bg`     | Strip surface             | Background tabs blend into the workspace.                             |
+| `--uikit-document-hover-bg`        | 4% ink over strip surface | Hovered background tab.                                               |
+| `--uikit-document-action-bg`       | 3% ink over strip surface | Subtle action tint in the specimens.                                  |
+| `--uikit-document-action-hover-bg` | 8% ink over strip surface | Hover shade for + and ↙.                                              |
 
 `--uikit-workspace-bg` defaults to `#f1eee7` in light mode and `#222226` in
 dark mode, matching the app's workspace shell. Explicit light/dark selection

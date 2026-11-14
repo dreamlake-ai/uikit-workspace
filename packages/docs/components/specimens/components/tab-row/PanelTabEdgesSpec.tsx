@@ -24,7 +24,11 @@ function EdgeExample({
   const [tabs, setTabs] = useState(
     initial
       .slice(0, crowded ? 7 : 3)
-      .map((label, i) => ({ value: String(i), label })),
+      .map((label, i) => ({
+        value: String(i),
+        label,
+        kind: i === 0 ? "chat" : "editor",
+      })),
   );
   const [active, setActive] = useState("0");
   const [overflow, setOverflow] = useState(false);
@@ -346,41 +350,48 @@ function EdgeExample({
             }}
             minTabWidth={crowded ? 170 : 96}
             preferredTabWidth={160}
-            minTabHeight={30}
+            minTabHeight={28}
             aria-label={`${edge} ${crowded ? "crowded" : "roomy"} panel tabs`}
             trailing={
-              <>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  icon
-                  className="uikit-document-tab-action"
-                  aria-label="New session"
-                  onClick={() => {
-                    const value = String(nextId.current++);
-                    setTabs([...tabs, { value, label: "New session" }]);
-                    setActive(value);
-                  }}
-                >
-                  <Plus size={14} />
-                </Button>
-              </>
+              selected?.kind === "chat" ? (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    icon
+                    className="dl-tab-action uikit-document-tab-action"
+                    aria-label="New session"
+                    onClick={() => {
+                      const value = String(nextId.current++);
+                      const at = tabs.findIndex((tab) => tab.value === active);
+                      setTabs([
+                        ...tabs.slice(0, at + 1),
+                        { value, label: "New session", kind: "chat" },
+                        ...tabs.slice(at + 1),
+                      ]);
+                      setActive(value);
+                    }}
+                  >
+                    <Plus size={14} />
+                  </Button>
+                  <Button
+                    className="dl-tab-action dl-tab-undock uikit-document-tab-action"
+                    variant="ghost"
+                    size="sm"
+                    icon
+                    aria-label="Undock session"
+                    onClick={() =>
+                      setStatus(
+                        "Undock action placement preview. Use the workspace example to preview floating just the active chat.",
+                      )
+                    }
+                  >
+                    <ArrowDownLeft size={14} />
+                  </Button>
+                </>
+              ) : undefined
             }
           />
-          <Button
-            className="dl-tab-undock"
-            variant="ghost"
-            size="sm"
-            icon
-            aria-label="Undock session"
-            onClick={() =>
-              setStatus(
-                "Undock action preview — pinned to the far-right corner.",
-              )
-            }
-          >
-            <ArrowDownLeft size={14} />
-          </Button>
           {tip && (
             <div
               className="dl-tab-edge-popover"
@@ -437,18 +448,18 @@ const CSS = `
 .dl-tab-edge-example[data-tab-density="crowded"] .dl-tab-edge-panel{max-width:360px}
 .dl-tab-edge-label{margin:0 0 12px;font:500 12px var(--font-uikit-mono,monospace);color:var(--ink)}
 .dl-tab-edge-panel{position:relative;isolation:isolate;min-width:0;background:var(--uikit-document-strip-surface,var(--uikit-workspace-bg));border:0;box-shadow:none}
-.dl-tab-edge-header{padding:8px 36px 0 0;position:relative;z-index:2}
+.dl-tab-edge-header{padding:8px 0 0;position:relative;z-index:2}
 .dl-tab-edge-study .uikit-tab-row{gap:0}
 .dl-tab-edge-study .uikit-tab-row-scroll{padding-left:8px;align-items:flex-end;flex:0 1 auto;touch-action:pan-x}
 .dl-tab-edge-study [data-overflow] .uikit-tab-row-scroll{flex:1 1 auto}
 .dl-tab-edge-study .uikit-tab-row-line{display:none}
-.dl-tab-edge-study .uikit-tab-row-controls{z-index:6;align-self:stretch;align-items:center;margin-bottom:0;background:var(--uikit-document-strip-surface,var(--uikit-workspace-bg));gap:0}
-.dl-tab-edge-study .uikit-tab-row-item-label{padding:5px 6px 6px 9px;opacity:.8}
+.dl-tab-edge-study .uikit-tab-row-controls{z-index:6;align-self:stretch;align-items:flex-start;margin-bottom:0;margin-left:auto;background:var(--uikit-document-strip-surface,var(--uikit-workspace-bg));gap:2px}
+.dl-tab-edge-study .uikit-tab-row-item-label{padding:4px 6px 4px 9px;opacity:.8}
 .dl-tab-edge-study .uikit-tab-row-item[data-active] .uikit-tab-row-item-label{opacity:1}
 .dl-tab-edge-study [data-tab-edge="straight"] .uikit-tab-row-item:first-child{border-top-left-radius:0}
 .dl-tab-edge-study [data-tab-edge="straight"] .uikit-tab-row-item:first-child::before{display:none}
 .dl-tab-reference{font:10px var(--font-uikit-mono,monospace);padding:1px 3px;border:1px solid var(--faint);border-radius:3px;white-space:nowrap}
-.dl-tab-undock{position:absolute!important;right:4px;top:8px}
+.dl-tab-action{min-width:32px;height:28px;padding:0 9px;margin:0;align-self:flex-start;box-shadow:none}
 .dl-tab-edge-study [data-grabbed] .uikit-tab-row-scroll{cursor:grabbing;touch-action:none}
 .dl-tab-edge-content{position:relative;z-index:0;min-height:112px;padding:20px;background:var(--uikit-document-surface,var(--bg));border:0;box-shadow:none;border-radius:0 0 10px 10px;color:var(--ink);font-size:13px}
 .dl-tab-edge-content p{margin:8px 0 0;color:var(--muted);font-size:12px;line-height:1.5}
