@@ -1,4 +1,4 @@
-import { useIsMobile } from '../../lib/useIsMobile'
+import { useIsMobile } from "../../lib/useIsMobile";
 import {
   forwardRef,
   useEffect,
@@ -9,8 +9,8 @@ import {
   type ForwardedRef,
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
-} from 'react'
-import { cn } from '../../lib/utils'
+} from "react";
+import { cn } from "../../lib/utils";
 import {
   DEFAULT_PALETTE,
   PanelConfigContext,
@@ -18,13 +18,13 @@ import {
   dragThresholdFor,
   type TabStripInset,
   type PanelConfig,
-} from './config'
-import { Button } from '../Button/Button'
-import { TabRow } from '../TabRow/TabRow'
-import { tabDomId, tabPanelDomId } from './GroupTabBar'
-import { RenderNode } from './RenderNode'
-import { PersistentPanels } from './PersistentPanels'
-import { DIVIDER_PX, ROOT_PANEL_BOX, type PanelBox } from './panel-box'
+} from "./config";
+import { Button } from "../Button/Button";
+import { TabRow } from "../TabRow/TabRow";
+import { tabDomId, tabPanelDomId } from "./GroupTabBar";
+import { RenderNode } from "./RenderNode";
+import { PersistentPanels } from "./PersistentPanels";
+import { DIVIDER_PX, ROOT_PANEL_BOX, type PanelBox } from "./panel-box";
 import {
   applyActivateTab,
   applyClose,
@@ -46,8 +46,13 @@ import {
   type LeafNode,
   type PanelNode,
   type PanelRect,
-} from './panel-tree'
-import type { ClosablePredicate, LeafClassName, LeafRenderer, TabbablePredicate } from './types'
+} from "./panel-tree";
+import type {
+  ClosablePredicate,
+  LeafClassName,
+  LeafRenderer,
+  TabbablePredicate,
+} from "./types";
 
 // ---------------------------------------------------------------------------
 // PanelLayout — a recursive tiling panel workspace.
@@ -77,31 +82,31 @@ import type { ClosablePredicate, LeafClassName, LeafRenderer, TabbablePredicate 
 type DragState = {
   /** False while the pointer is down but hasn't travelled far enough to be a
    *  drag. An unarmed drag paints nothing and commits nothing. */
-  armed: boolean
+  armed: boolean;
   /** Distance the pointer must travel to arm (0 for a dedicated handle). */
-  threshold: number
-  srcId: string
-  wholeGroup?: boolean
-  label: string
-  grabDX: number // cursor offset within the source panel at grab time
-  grabDY: number
-  srcW: number
-  srcH: number
-  x: number // current cursor position
-  y: number
-  target: { id: string; side: DockSide; rect: PanelRect } | null
-}
+  threshold: number;
+  srcId: string;
+  wholeGroup?: boolean;
+  label: string;
+  grabDX: number; // cursor offset within the source panel at grab time
+  grabDY: number;
+  srcW: number;
+  srcH: number;
+  x: number; // current cursor position
+  y: number;
+  target: { id: string; side: DockSide; rect: PanelRect } | null;
+};
 
 /** One leaf's identity plus its live pixel rect — what `inspect()` returns. */
 export type PanelLeafInfo = {
-  id: string
-  view?: string
-  title?: string
-  rect: { left: number; top: number; width: number; height: number }
+  id: string;
+  view?: string;
+  title?: string;
+  rect: { left: number; top: number; width: number; height: number };
   /** Source pointer of the panel's root element, when the host's build stamps
    *  `data-loc` attributes. Omitted otherwise — treat it as optional. */
-  loc?: string
-}
+  loc?: string;
+};
 
 export interface PanelLayoutHandle {
   /** Split `leafId` along `dir`, seeding the new panel with `view`/`title`.
@@ -114,94 +119,94 @@ export interface PanelLayoutHandle {
     title?: string,
     before?: boolean,
     size?: number,
-    contentMax?: number
-  ) => void
-  getRoot: () => PanelNode
+    contentMax?: number,
+  ) => void;
+  getRoot: () => PanelNode;
   /** Replace the entire layout at runtime (e.g. switching workspaces). */
-  replaceRoot: (tree: PanelNode) => void
+  replaceRoot: (tree: PanelNode) => void;
   /** Walks the live DOM to return each leaf with its current pixel rect. */
-  inspect: () => PanelLeafInfo[]
+  inspect: () => PanelLeafInfo[];
   /** Close the leaf with the given id. */
-  closeLeaf: (id: string) => void
+  closeLeaf: (id: string) => void;
   /** Mark a leaf as the focused panel (targets keyboard splits at it). No-op if
    *  the id isn't a live leaf. */
-  focusLeaf: (id: string) => void
+  focusLeaf: (id: string) => void;
 }
 
 export interface PanelLayoutProps {
   /** Show one focused panel with a selector for every leaf, including inactive
    * group tabs. Pass a boolean at both widths to keep all view DOM mounted.
    * Selection and breakpoint changes leave the desktop tree/sizes untouched. */
-  compact?: boolean
+  compact?: boolean;
   /** Collapse below this viewport width in CSS px. Explicit compact takes precedence. */
-  compactBreakpoint?: number
+  compactBreakpoint?: number;
   /** Accessible name for the compact panel selector. Default "Workspace panels". */
   /** Put opted-in panel headers in the compact tab row instead of a second row. */
-  compactHeaderInTabRow?: (leaf: LeafNode) => boolean
-  compactLabel?: string
+  compactHeaderInTabRow?: (leaf: LeafNode) => boolean;
+  compactLabel?: string;
   /** Fixed controls before compact tabs, using TabRow’s existing leading slot. */
-  compactLeading?: ReactNode
+  compactLeading?: ReactNode;
   /** An icon makes this compact panel an icon-only tab with its label retained. */
-  compactPanelIcon?: (leaf: LeafNode) => ReactNode
+  compactPanelIcon?: (leaf: LeafNode) => ReactNode;
   /** Show an inactive utility panel as a leading button; selection restores its tab at either width. */
-  panelAsAction?: (leaf: LeafNode) => boolean
+  panelAsAction?: (leaf: LeafNode) => boolean;
   /** Present utility panels as leading action buttons instead of document tabs.
    * Their icon/name come from compactPanelIcon/compactPanelLabel. */
-  compactPanelAsAction?: (leaf: LeafNode) => boolean
+  compactPanelAsAction?: (leaf: LeafNode) => boolean;
   /** Product-specific compact names, independent of desktop titles. The second
    * argument identifies the selected compact panel. One-argument callbacks work. */
-  compactPanelLabel?: (leaf: LeafNode, active: boolean) => string
+  compactPanelLabel?: (leaf: LeafNode, active: boolean) => string;
   /** Fit individual compact text tabs to content; others keep standard widths. */
-  compactPanelFitContent?: (leaf: LeafNode, active: boolean) => boolean
+  compactPanelFitContent?: (leaf: LeafNode, active: boolean) => boolean;
   /** Content beside each compact label, outside its tab button. */
-  compactPanelTrailing?: (leaf: LeafNode) => ReactNode
+  compactPanelTrailing?: (leaf: LeafNode) => ReactNode;
   /** Layout-owned tabs; keep view DOM connected across moves. */
-  tabbed?: boolean
+  tabbed?: boolean;
   /** Thickness of the split dividers between panels, in px (default
    *  DIVIDER_PX, 10). Their grab area stays at least 10px wide, centred on the
    *  seam, so a hairline divider is still easy to take hold of. */
-  dividerPx?: number
+  dividerPx?: number;
   /** Where a tabbed group's tab strip starts: its first tab's offset from the
    *  panel's left and top edges (default 10 / 8). The tabs fill the header row
    *  from there down, so they still join the panel below. */
-  tabStripInset?: TabStripInset
+  tabStripInset?: TabStripInset;
   /** Show a tab for a lone view only when its content opts in. Groups always show tabs. */
-  showSingleTab?: ClosablePredicate
+  showSingleTab?: ClosablePredicate;
   /** Host disposal guard. Called for every user close affordance. */
-  onRequestClose?: (id: string) => void
+  onRequestClose?: (id: string) => void;
   // ── the tree ────────────────────────────────────────────────────────────
   /** Build the initial tree (uncontrolled). Called once, on mount. Compose it
    *  with `panelLeaf` / `panelSplit`. */
-  initial?: () => PanelNode
+  initial?: () => PanelNode;
   /** Without `initial`: `true` starts with one panel, `false` with a 3-panel demo. */
-  initialSingle?: boolean
+  initialSingle?: boolean;
   /** Controlled mode: when set, this IS the tree and the layout never mutates its
    *  own state — every change arrives through `onChange` for the host to apply. */
-  root?: PanelNode
+  root?: PanelNode;
   /** Fires on every tree mutation (split/close/resize/dock/reset). Use this for
    *  persisting the layout. Cause is intentionally not exposed — to tell a user
    *  drag from a programmatic change, subscribe to `onResize` instead. */
-  onChange?: (root: PanelNode) => void
-  onFocusedLeafChange?: (leaf: LeafNode) => void
+  onChange?: (root: PanelNode) => void;
+  onFocusedLeafChange?: (leaf: LeafNode) => void;
   /** Fires ONLY when the user drags a divider — the one signal that actually
    *  expresses "I want this panel at this size". Split/close/dock produce
    *  computed sizes that should not be confused with user intent. */
-  onResize?: (root: PanelNode) => void
+  onResize?: (root: PanelNode) => void;
 
   // ── content ─────────────────────────────────────────────────────────────
   /** Optional identity/eyebrow content inside a tab. */
-  renderTab?: LeafRenderer
+  renderTab?: LeafRenderer;
   /** Reference/actions immediately before close; stays together at the scrolling edge. */
-  renderTabTrailing?: LeafRenderer
-  renderBody?: LeafRenderer
-  renderHeader?: LeafRenderer
+  renderTabTrailing?: LeafRenderer;
+  renderBody?: LeafRenderer;
+  renderHeader?: LeafRenderer;
 
   // ── chrome ──────────────────────────────────────────────────────────────
   /** Show the built-in toolbar (title, shortcut hints, Reset). Default false —
    *  a layout shouldn't inject a title bar into a host's chrome uninvited. */
-  showToolbar?: boolean
+  showToolbar?: boolean;
   /** Replace the built-in toolbar's contents. Implies `showToolbar`. */
-  toolbar?: ReactNode
+  toolbar?: ReactNode;
   /**
    * What the toolbar's Reset button builds. Defaults to `initial` — which is
    * right only while `initial` means "a fresh layout". The moment `initial`
@@ -210,731 +215,880 @@ export interface PanelLayoutProps {
    * Point this at the fresh tree instead — `usePersistedPanelLayout().reset`
    * forgets the saved layout and returns the fallback.
    */
-  resetTo?: () => PanelNode
-  className?: string
+  resetTo?: () => PanelNode;
+  className?: string;
 
   // ── policy seams ────────────────────────────────────────────────────────
   /** Which views may share a tab group. Default: every view may. Returning false
    *  makes a view a SINGLETON — the centre/tab drop zone is suppressed for it, in
    *  both the live drag preview and the drop itself. */
-  isTabbable?: TabbablePredicate
+  isTabbable?: TabbablePredicate;
   /** Which panels may be dismissed. Default: every panel may. Returning false
    *  withholds that leaf's close affordances AND refuses those closes — see
    *  `ClosablePredicate`. The imperative handle's `closeLeaf` is not gated by
    *  it, so a host can still take a panel away on its own terms. */
-  closable?: ClosablePredicate
+  closable?: ClosablePredicate;
   /** The app's PRIMARY view. When a panel closes next to a leaf carrying it, that
    *  leaf absorbs the whole freed slot, so the primary column recovers its width
    *  as auxiliary panels are dismissed. Default: every sibling grows
    *  proportionally. */
-  primaryView?: string
+  primaryView?: string;
   /** Extra classes on a leaf's root. APPENDED to the defaults and resolved by
    *  tailwind-merge, so returning `bg-transparent` overrides the default opaque
    *  fill for that panel. */
-  leafClassName?: LeafClassName
+  leafClassName?: LeafClassName;
   /** Extra classes on a leaf's header band. APPENDED (as `leafClassName`). */
-  headerClassName?: LeafClassName
+  headerClassName?: LeafClassName;
   /** REPLACES the overflow policy on the wrapper around `renderHeader`'s output
    *  (default `overflow-hidden`). For a header that must let something escape
    *  vertically — a tab strip whose active tab notches the border, say. */
-  headerContentClassName?: LeafClassName
+  headerContentClassName?: LeafClassName;
   /** The box the ROOT of the tree occupies, as CSS math. Default reads
    *  `--panel-area-x` / `--panel-area-w`; pass your own to use different names. */
-  rootBox?: PanelBox
+  rootBox?: PanelBox;
   /** Class applied to the header of a leaf that has BOTH a custom header and a
    *  `contentMax`, in place of the default flush-left padding — the hook for a
    *  host whose panels share a viewport-centered content column. */
-  contentColumnHeaderClass?: string
+  contentColumnHeaderClass?: string;
   /** Tints for placeholder panels (and the drag surrogate's dot). */
-  palette?: readonly string[]
+  palette?: readonly string[];
   /** ⌘/Ctrl + `key` splits the focused panel (⇧ = vertical). `false` removes the
    *  window listener entirely. Default `{ key: 'd' }`. */
-  splitShortcut?: false | { key?: string }
+  splitShortcut?: false | { key?: string };
 }
 
-export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(function PanelLayout(
-  {
-    initial,
-    initialSingle = false,
-    tabbed = false,
-    dividerPx = DIVIDER_PX,
-    tabStripInset,
-    compact: compactProp,
-    compactBreakpoint,
-    compactLabel = 'Workspace panels',
-    compactHeaderInTabRow,
-    compactPanelLabel,
-    compactPanelFitContent,
-    compactPanelTrailing,
-    compactLeading,
-    compactPanelIcon,
-    panelAsAction,
-    compactPanelAsAction,
-    showSingleTab,
-    onRequestClose,
-    root: rootProp,
-    onChange,
-    onFocusedLeafChange,
-    onResize,
-    renderTab,
-    renderTabTrailing,
-    renderBody,
-    renderHeader,
-    showToolbar = false,
-    toolbar,
-    resetTo,
-    className,
-    isTabbable,
-    closable,
-    primaryView,
-    leafClassName,
-    headerClassName,
-    headerContentClassName,
-    rootBox = ROOT_PANEL_BOX,
-    contentColumnHeaderClass,
-    palette = DEFAULT_PALETTE,
-    splitShortcut = { key: 'd' },
-  }: PanelLayoutProps,
-  ref: ForwardedRef<PanelLayoutHandle>
-) {
-  const responsiveCompact = useIsMobile(compactBreakpoint ?? 0)
-  const compact = compactProp ?? (compactBreakpoint === undefined ? undefined : responsiveCompact)
-  const controlled = rootProp !== undefined
-  const [internalRoot, setInternalRoot] = useState<PanelNode>(() => {
-    const seed = rootProp ?? (initial ? initial() : buildInitial(initialSingle))
-    // The SAME treatment `replaceRoot` gives an incoming tree, because `initial`
-    // is just as likely to be handing us one off disk. Skipping it here meant a
-    // restored layout kept the id counters at their start-of-page values — and
-    // since a previous session minted its ids from those same counters, the very
-    // next panel the user opened was handed an id already in the tree. Two
-    // panels, one id: `findLeaf`, `applySplit` and every `data-leaf-id` lookup
-    // then silently operate on whichever one they reach first.
-    // `normalizeTree` is idempotent and cheap, so a tree that needs neither pays
-    // almost nothing.
-    const migrated = normalizeTree(seed)
-    reseedCounters(migrated)
-    return migrated
-  })
-  const root = controlled ? rootProp : internalRoot
-  const [focusedId, setFocusedId] = useState<string>(() => firstLeafId(root))
-  // Supplying compact opts into connected surfaces at BOTH widths. Otherwise a
-  // breakpoint would switch renderers and destroy editors/iframes on resize.
-  const persistent = tabbed || compact !== undefined
-  const compactRef = useRef(compact)
-  compactRef.current = compact
-  const leaves: LeafNode[] = []
-  const collect = (node: PanelNode) => {
-    if (node.kind === 'leaf') leaves.push(node)
-    else node.children.forEach(collect)
-  }
-  collect(root)
-  const activeId = findLeaf(root, focusedId) ? focusedId : firstLeafId(root)
-  const utilityLeaves = compact ? leaves.filter(leaf => compactPanelAsAction?.(leaf) || (leaf.id !== activeId && panelAsAction?.(leaf))) : []
-  const utilityIds = new Set(utilityLeaves.map(leaf => leaf.id))
-  const documentLeaves = leaves.filter(leaf => !utilityIds.has(leaf.id))
-  const compactName = (leaf: LeafNode) => compactPanelLabel?.(leaf, leaf.id === activeId)?.trim() || leaf.title || `Panel ${leaf.n}`
-  const hasCompactSelector = !!compact && (leaves.length > 1 || compactLeading != null || utilityLeaves.length > 0)
-  // Active drag: the floating surrogate + where it would dock. `target` is null
-  // while the cursor is over the source panel or empty space (the surrogate just
-  // tracks the cursor at the panel's own size).
-  const [drag, setDrag] = useState<DragState | null>(null)
-
-  // Refs keep the window handlers stable while reading fresh state. Assigning
-  // during render is what lets several mutations fired in one tick compose off
-  // the latest tree instead of all reusing the pre-render value — and, in
-  // controlled mode, what re-syncs the ref to whatever the host handed back.
-  // The layout's own root element. Every DOM lookup below is scoped to it:
-  // `data-leaf-id` is unique within ONE tree, but a page may mount several
-  // layouts, and a document-wide query would happily return another layout's
-  // panel — letting a drag in one dock into the other.
-  const containerRef = useRef<HTMLDivElement>(null)
-  const selectorHadFocus = useRef(false)
-  const compactSelectorRef = useRef<HTMLDivElement>(null)
-  const pendingActionFocus = useRef<string | null>(null)
-  useLayoutEffect(() => {
-    if (pendingActionFocus.current !== activeId) return
-    compactSelectorRef.current?.querySelector<HTMLElement>('[role="tab"][aria-selected="true"]')?.focus({ preventScroll: true })
-    pendingActionFocus.current = null
-  }, [activeId])
-  const rootRef = useRef(root)
-  rootRef.current = root
-  const focusedLeafCallback = useRef(onFocusedLeafChange)
-  focusedLeafCallback.current = onFocusedLeafChange
-  const focusRef = useRef(focusedId)
-  focusRef.current = focusedId
-  const dragRef = useRef(drag)
-  dragRef.current = drag
-  const onChangeRef = useRef(onChange)
-  onChangeRef.current = onChange
-  const onResizeRef = useRef(onResize)
-  onResizeRef.current = onResize
-  const isTabbableRef = useRef(isTabbable)
-  isTabbableRef.current = isTabbable
-  const requestCloseRef = useRef(onRequestClose)
-  requestCloseRef.current = onRequestClose
-  const closableRef = useRef(closable)
-  closableRef.current = closable
-  const primaryViewRef = useRef(primaryView)
-  primaryViewRef.current = primaryView
-
-  /** Adopt `next` as the tree: sync the ref (so a second mutation this tick sees
-   *  it), hold it in state unless the host is driving, and announce it. */
-  const commit = (next: PanelNode) => {
-    rootRef.current = next
-    if (!controlled) setInternalRoot(next)
-    onChangeRef.current?.(next)
-  }
-
-  const focus = (id: string) => {
-    focusRef.current = id
-    setFocusedId(id)
-    const leaf = findLeaf(rootRef.current, id)
-    if (leaf) focusedLeafCallback.current?.(leaf)
-  }
-
-  /** Close a leaf, keeping focus on a live one. A tree that empties out is
-   *  replaced by a fresh blank panel — the layout always renders something. */
-  const closeLeaf = (id: string) => {
-    // Nothing to close is not a change. Without this the layout would announce
-    // an `onChange` for a tree it never altered, and a host persisting that
-    // would write the identical blob back to storage. (Reference equality is no
-    // help here: `applyClose` rebuilds a split node even when it removes
-    // nothing from it.)
-    if (!findLeaf(rootRef.current, id)) return
-    const next = applyClose(rootRef.current, id, primaryViewRef.current) ?? makeLeaf()
-    commit(next)
-    focus(findLeaf(next, focusRef.current) ? focusRef.current : firstLeafId(next))
-  }
-
-  /** The close every USER affordance goes through — a header's close button, a
-   *  tab's ×, Delete on a focused tab. `closable` is enforced here rather than
-   *  only by hiding those buttons, because Delete never touches a button; a
-   *  hidden button on its own would be a suggestion. `closeLeaf` above stays
-   *  ungated on purpose: it is the host's own tool, and a host closing a panel
-   *  itself already knows its policy. */
-  const requestClose = (id: string) => {
-    const leaf = findLeaf(rootRef.current, id)
-    if (leaf && closableRef.current?.(leaf) === false) return
-    if (requestCloseRef.current) requestCloseRef.current(id)
-    else closeLeaf(id)
-  }
-
-  const doSplit = (id: string, dir: Dir) => {
-    // Same reasoning as `closeLeaf`: a stale target (the focused panel can
-    // outlive the tree it was in — a host `replaceRoot`, or any swap in
-    // controlled mode) splits nothing, but `applySplit` still rebuilds an
-    // equivalent tree, and committing it would announce a change that never
-    // happened.
-    if (!findLeaf(rootRef.current, id)) return
-    const { node, newId } = applySplit(rootRef.current, id, dir)
-    commit(node)
-    if (newId) focus(newId)
-  }
-
-  const doResize = (splitId: string, index: number, a: number, b: number) => {
-    const next = applyResize(rootRef.current, splitId, index, a, b)
-    commit(next)
-    onResizeRef.current?.(next)
-  }
-
-  // Switch which tab shows inside a group. Focus follows, so keyboard splits and
-  // the surrogate track the newly-visible leaf.
-  const doActivateTab = (groupId: string, leafId: string) => {
-    const next = applyActivateTab(rootRef.current, groupId, leafId)
-    if (next === rootRef.current) return
-    commit(next)
-    focus(leafId)
-  }
-
-  const doReset = () => {
-    const seed = resetTo ? resetTo() : initial ? initial() : buildInitial(initialSingle)
-    // Same treatment as `initial` and `replaceRoot`: a host's reset may well
-    // hand back a tree it built earlier, so migrate it and lift the counters
-    // past its ids before it goes live.
-    const fresh = normalizeTree(seed)
-    reseedCounters(fresh)
-    commit(fresh)
-    focus(firstLeafId(fresh))
-  }
-
-  useImperativeHandle(
-    ref,
-    () => ({
-      splitWith: (
-        targetId: string,
-        dir: Dir,
-        view?: string,
-        title?: string,
-        before?: boolean,
-        size?: number,
-        contentMax?: number
-      ) => {
-        let fraction = size
-        if (fraction == null && dir === 'row') {
-          const el = containerRef.current?.querySelector(`[data-leaf-id="${targetId}"]`)
-          // A zero width means the panel is not laid out yet (hidden ancestor, or
-          // a split fired before first paint). Dividing by it would put NaN into
-          // every size in the split, so leave `fraction` undefined and let
-          // applySplit fall back to its own default.
-          const w = el ? el.getBoundingClientRect().width : 0
-          if (w > 0) {
-            // Round to 10px so float jitter never varies the fraction between calls.
-            const cappedPx = Math.round(Math.min(MAX_NEW_PANEL_PX, w / 2) / 10) * 10
-            fraction = cappedPx / w
-          }
-        }
-        const seed = makeLeaf(view, title, contentMax)
-        const { node, newId } = applySplit(rootRef.current, targetId, dir, seed, before, fraction)
-        commit(node)
-        if (newId) focus(newId)
-      },
-      getRoot: () => rootRef.current,
-      replaceRoot: (tree: PanelNode) => {
-        // An incoming tree may be a real persisted blob from an older schema —
-        // migrate it (backfill instanceId, normalize groups) before it enters the
-        // live tree, and lift the id counters past it so newly minted nodes can
-        // never collide with the restored ids.
-        const migrated = normalizeTree(tree)
-        reseedCounters(migrated)
-        commit(migrated)
-        const first = firstLeafId(migrated)
-        if (first) focus(first)
-      },
-      inspect: (): PanelLeafInfo[] => {
-        const results: PanelLeafInfo[] = []
-        const walk = (node: PanelNode) => {
-          if (node.kind === 'leaf') {
-            const el = containerRef.current?.querySelector(`[data-leaf-id="${node.id}"]`)
-            const r = el?.getBoundingClientRect()
-            // Nearest stamped element at/under the leaf root (selector pointers).
-            const loc =
-              el?.closest('[data-loc]')?.getAttribute('data-loc') ??
-              el?.querySelector('[data-loc]')?.getAttribute('data-loc') ??
-              undefined
-            results.push({
-              id: node.id,
-              view: node.view,
-              title: node.title,
-              rect: r
-                ? {
-                    left: Math.round(r.left),
-                    top: Math.round(r.top),
-                    width: Math.round(r.width),
-                    height: Math.round(r.height),
-                  }
-                : { left: 0, top: 0, width: 0, height: 0 },
-              ...(loc ? { loc } : {}),
-            })
-          } else {
-            node.children.forEach(walk)
-          }
-        }
-        walk(rootRef.current)
-        return results
-      },
-      closeLeaf,
-      focusLeaf: (id: string) => {
-        if (!findLeaf(rootRef.current, id)) return // not a live leaf — ignore
-        if (compactRef.current) { focus(id); return }
-        const activate = (node: PanelNode): PanelNode => node.kind === 'group' && node.children.some(c => c.id === id) ? { ...node, activeId: id } : node.kind === 'split' ? { ...node, children: node.children.map(activate) } : node
-        commit(activate(rootRef.current))
-        focus(id)
-      },
-    }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
-  )
-
-  // Keyboard splits. Capture phase + stopPropagation so a page-global binding on
-  // the same chord does not also fire while we're here.
-  const shortcutKey = splitShortcut === false ? null : (splitShortcut.key ?? 'd')
-  useEffect(() => {
-    if (!shortcutKey || compact) return
-    const onKey = (e: KeyboardEvent) => {
-      const t = e.target as HTMLElement | null
-      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return
-      if (!(e.metaKey || e.ctrlKey)) return
-      if (e.key.toLowerCase() !== shortcutKey.toLowerCase()) return
-      e.preventDefault()
-      e.stopPropagation()
-      doSplit(focusRef.current, e.shiftKey ? 'column' : 'row')
-    }
-    window.addEventListener('keydown', onKey, true)
-    return () => window.removeEventListener('keydown', onKey, true)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [shortcutKey, compact])
-
-  // Drag-to-dock via the header grab handle. Driven with pointer events rather
-  // than native DnD so a floating surrogate can follow the cursor and morph into
-  // the target's half-rect — the target panels themselves stay unmarked.
-  const onHandleDown = (
-    leaf: LeafNode,
-    e: ReactPointerEvent | PointerEvent,
-    thresholdPx = 0,
-    move?: { from: HTMLElement }
-  ) => {
-    // A header MOVE gesture (see PanelLeaf's `onMoveDown`) starts on content the
-    // host owns — tabs, a breadcrumb — so it must not cancel their own pointer
-    // handling or focus. It only arms past the threshold, like a tab drag.
-    if (!move) {
-      e.preventDefault()
-      e.stopPropagation()
-    }
-    // Two things start a drag, and they sit in different places in the DOM: a
-    // panel header's handle (inside the leaf) and a TAB (in the group's tab bar,
-    // which is a sibling ABOVE the leaf — so `closest('[data-leaf-id]')` walks
-    // straight past it and finds nothing). Fall back to the group region, which
-    // is also the only correct source rect for an inactive tab, whose leaf is
-    // not mounted at all.
-    const from = move?.from ?? (e.currentTarget as HTMLElement)
-    const panelEl = (from.closest('[data-leaf-id]') ??
-      from.closest('[data-panel-region]')) as HTMLElement | null
-    if (!panelEl) return
-    const r = panelEl.getBoundingClientRect()
-    focus(leaf.id)
-    setDrag({
-      armed: thresholdPx <= 0,
-      // A thresholded press (tab, header) uses the pointer's own activation
-      // distance: a finger needs more room than a mouse to mean "drag".
-      threshold: thresholdPx <= 0 ? 0 : Math.max(thresholdPx, dragThresholdFor(e.pointerType)),
-      srcId: leaf.id,
-      wholeGroup: !!move || from.hasAttribute('data-panel-group-handle'),
-      label: leaf.title ?? `Panel ${leaf.n}`,
-      grabDX: e.clientX - r.left,
-      grabDY: e.clientY - r.top,
-      srcW: r.width,
-      srcH: r.height,
-      x: e.clientX,
-      y: e.clientY,
-      target: null,
-    })
-  }
-
-  // Move the WHOLE panel (its group, when tabbed) from its header. Dragging a
-  // single tab still tears out just that tab; this is the panel-as-a-unit path.
-  const onMoveDown = (leaf: LeafNode, e: PointerEvent, from: HTMLElement) => {
-    if (compact || e.button !== 0) return
-    onHandleDown(leaf, e, TAB_DRAG_THRESHOLD_PX, { from })
-  }
-
-  // While a drag is live, track the cursor on the window: move the surrogate,
-  // hit-test the panel underneath (never the source), and commit on release.
-  const isDragging = drag !== null
-  useEffect(() => {
-    if (!isDragging) return
-
-    const onMove = (e: PointerEvent) => {
-      const d = dragRef.current
-      if (!d) return
-      const x = e.clientX
-      const y = e.clientY
-      if (!d.armed) {
-        // Still deciding whether this is a click or a drag. Paint nothing and
-        // pick no target until the pointer has actually travelled.
-        if (Math.hypot(x - d.x, y - d.y) < d.threshold) return
-        setDrag((prev) => (prev ? { ...prev, armed: true } : prev))
-      }
-      const el = document.elementFromPoint(x, y) as HTMLElement | null
-      // Tab strips are sibling overlays above retained leaf surfaces. Resolve
-      // their owning region explicitly: a header drop means "join these tabs",
-      // not a top-edge split and not an empty-space drop.
-      const header = el?.closest('[data-panel-tab-slot]') as HTMLElement | null
-      const hit = (header?.closest('[data-panel-region]') ?? el?.closest('[data-leaf-id]')) as HTMLElement | null
-      // Ignore a panel belonging to another layout on the same page.
-      const panelEl = hit && containerRef.current?.contains(hit) ? hit : null
-      let tid = panelEl ? header?.getAttribute('data-panel-tab-slot') || panelEl.getAttribute('data-leaf-id') : null
-      const sharesSourceGroup = (node: PanelNode): boolean => node.kind === 'group'
-        ? node.children.some(child => child.id === d.srcId) && node.children.some(child => child.id === tid)
-        : node.kind === 'split' && node.children.some(sharesSourceGroup)
-      const ownRegion = tid === d.srcId || (!!header && sharesSourceGroup(rootRef.current))
-      if (ownRegion && d.wholeGroup) tid = null
-      if (ownRegion && !d.wholeGroup) {
-        // A tab may split away from its OWN group. The visible source occupies
-        // the group's box; target a remaining sibling after extraction.
-        const sibling = (node: PanelNode): string | null => node.kind === 'group'
-          ? node.children.some(child => child.id === d.srcId) ? node.children.find(child => child.id !== d.srcId)?.id ?? null : null
-          : node.kind === 'split' ? node.children.map(sibling).find(Boolean) ?? null : null
-        tid = sibling(rootRef.current)
-      }
-      let target: DragState['target'] = null
-      if (panelEl && tid && tid !== d.srcId) {
-        const r = panelEl.getBoundingClientRect()
-        // Only offer a centre/tab merge when BOTH the dragged view and the target
-        // view are tabbable — else a singleton could be grouped. Gating it here
-        // keeps the live preview and the drop resolving to the same side.
-        const canTab = isTabbableRef.current
-        const tree = rootRef.current
-        const srcLeaf = findLeaf(tree, d.srcId)
-        const tgtLeaf = findLeaf(tree, tid)
-        const allowCenter = !d.wholeGroup && !ownRegion && (!canTab || (canTab(srcLeaf?.view) && canTab(tgtLeaf?.view)))
-        if (header ? allowCenter : (!ownRegion || dockSideFromPoint(r, x, y, true) !== 'center')) {
-          target = {
-            id: tid,
-            side: header ? 'center' : dockSideFromPoint(r, x, y, allowCenter),
-            rect: { left: r.left, top: r.top, width: r.width, height: r.height },
-          }
-        }
-      }
-      setDrag((prev) => (prev ? { ...prev, x, y, target } : prev))
-    }
-
-    const finish = () => {
-      const d = dragRef.current
-      // Never armed ⇒ the pointer went down and up without travelling: a click.
-      // Let it through to the tab's own onClick instead of docking anything.
-      if (d?.armed && d.target) {
-        // Belt-and-suspenders: even though the side was already gated during the
-        // drag, pass the predicate so a `center` can never group a singleton.
-        const next = d.wholeGroup ? applyDockGroup(rootRef.current, d.srcId, d.target.id, d.target.side) : applyDock(
-          rootRef.current,
-          d.srcId,
-          d.target.id,
-          d.target.side,
-          isTabbableRef.current
+export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(
+  function PanelLayout(
+    {
+      initial,
+      initialSingle = false,
+      tabbed = false,
+      dividerPx = DIVIDER_PX,
+      tabStripInset,
+      compact: compactProp,
+      compactBreakpoint,
+      compactLabel = "Workspace panels",
+      compactHeaderInTabRow,
+      compactPanelLabel,
+      compactPanelFitContent,
+      compactPanelTrailing,
+      compactLeading,
+      compactPanelIcon,
+      panelAsAction,
+      compactPanelAsAction,
+      showSingleTab,
+      onRequestClose,
+      root: rootProp,
+      onChange,
+      onFocusedLeafChange,
+      onResize,
+      renderTab,
+      renderTabTrailing,
+      renderBody,
+      renderHeader,
+      showToolbar = false,
+      toolbar,
+      resetTo,
+      className,
+      isTabbable,
+      closable,
+      primaryView,
+      leafClassName,
+      headerClassName,
+      headerContentClassName,
+      rootBox = ROOT_PANEL_BOX,
+      contentColumnHeaderClass,
+      palette = DEFAULT_PALETTE,
+      splitShortcut = { key: "d" },
+    }: PanelLayoutProps,
+    ref: ForwardedRef<PanelLayoutHandle>,
+  ) {
+    const responsiveCompact = useIsMobile(compactBreakpoint ?? 0);
+    const compact =
+      compactProp ??
+      (compactBreakpoint === undefined ? undefined : responsiveCompact);
+    const controlled = rootProp !== undefined;
+    const [internalRoot, setInternalRoot] = useState<PanelNode>(() => {
+      const seed =
+        rootProp ?? (initial ? initial() : buildInitial(initialSingle));
+      // The SAME treatment `replaceRoot` gives an incoming tree, because `initial`
+      // is just as likely to be handing us one off disk. Skipping it here meant a
+      // restored layout kept the id counters at their start-of-page values — and
+      // since a previous session minted its ids from those same counters, the very
+      // next panel the user opened was handed an id already in the tree. Two
+      // panels, one id: `findLeaf`, `applySplit` and every `data-leaf-id` lookup
+      // then silently operate on whichever one they reach first.
+      // `normalizeTree` is idempotent and cheap, so a tree that needs neither pays
+      // almost nothing.
+      const migrated = normalizeTree(seed);
+      reseedCounters(migrated);
+      return migrated;
+    });
+    const root = controlled ? rootProp : internalRoot;
+    const [focusedId, setFocusedId] = useState<string>(() => firstLeafId(root));
+    // Supplying compact opts into connected surfaces at BOTH widths. Otherwise a
+    // breakpoint would switch renderers and destroy editors/iframes on resize.
+    const persistent = tabbed || compact !== undefined;
+    const compactRef = useRef(compact);
+    compactRef.current = compact;
+    const leaves: LeafNode[] = [];
+    const collect = (node: PanelNode) => {
+      if (node.kind === "leaf") leaves.push(node);
+      else node.children.forEach(collect);
+    };
+    collect(root);
+    const activeId = findLeaf(root, focusedId) ? focusedId : firstLeafId(root);
+    const utilityLeaves = compact
+      ? leaves.filter(
+          (leaf) =>
+            compactPanelAsAction?.(leaf) ||
+            (leaf.id !== activeId && panelAsAction?.(leaf)),
         )
-        // `applyDock` hands back the identical reference when it declines the
-        // move (a vanished source, or a drop onto itself) — don't report that.
-        if (next !== rootRef.current) commit(next)
-        focus(d.srcId)
+      : [];
+    const utilityIds = new Set(utilityLeaves.map((leaf) => leaf.id));
+    const documentLeaves = leaves.filter((leaf) => !utilityIds.has(leaf.id));
+    const compactName = (leaf: LeafNode) =>
+      compactPanelLabel?.(leaf, leaf.id === activeId)?.trim() ||
+      leaf.title ||
+      `Panel ${leaf.n}`;
+    const hasCompactSelector =
+      !!compact &&
+      (leaves.length > 1 || compactLeading != null || utilityLeaves.length > 0);
+    // Active drag: the floating surrogate + where it would dock. `target` is null
+    // while the cursor is over the source panel or empty space (the surrogate just
+    // tracks the cursor at the panel's own size).
+    const [drag, setDrag] = useState<DragState | null>(null);
+
+    // Refs keep the window handlers stable while reading fresh state. Assigning
+    // during render is what lets several mutations fired in one tick compose off
+    // the latest tree instead of all reusing the pre-render value — and, in
+    // controlled mode, what re-syncs the ref to whatever the host handed back.
+    // The layout's own root element. Every DOM lookup below is scoped to it:
+    // `data-leaf-id` is unique within ONE tree, but a page may mount several
+    // layouts, and a document-wide query would happily return another layout's
+    // panel — letting a drag in one dock into the other.
+    const containerRef = useRef<HTMLDivElement>(null);
+    const selectorHadFocus = useRef(false);
+    const compactSelectorRef = useRef<HTMLDivElement>(null);
+    const pendingActionFocus = useRef<string | null>(null);
+    useLayoutEffect(() => {
+      if (pendingActionFocus.current !== activeId) return;
+      compactSelectorRef.current
+        ?.querySelector<HTMLElement>('[role="tab"][aria-selected="true"]')
+        ?.focus({ preventScroll: true });
+      pendingActionFocus.current = null;
+    }, [activeId]);
+    const rootRef = useRef(root);
+    rootRef.current = root;
+    const focusedLeafCallback = useRef(onFocusedLeafChange);
+    focusedLeafCallback.current = onFocusedLeafChange;
+    const focusRef = useRef(focusedId);
+    focusRef.current = focusedId;
+    const dragRef = useRef(drag);
+    dragRef.current = drag;
+    const onChangeRef = useRef(onChange);
+    onChangeRef.current = onChange;
+    const onResizeRef = useRef(onResize);
+    onResizeRef.current = onResize;
+    const isTabbableRef = useRef(isTabbable);
+    isTabbableRef.current = isTabbable;
+    const requestCloseRef = useRef(onRequestClose);
+    requestCloseRef.current = onRequestClose;
+    const closableRef = useRef(closable);
+    closableRef.current = closable;
+    const primaryViewRef = useRef(primaryView);
+    primaryViewRef.current = primaryView;
+
+    /** Adopt `next` as the tree: sync the ref (so a second mutation this tick sees
+     *  it), hold it in state unless the host is driving, and announce it. */
+    const commit = (next: PanelNode) => {
+      rootRef.current = next;
+      if (!controlled) setInternalRoot(next);
+      onChangeRef.current?.(next);
+    };
+
+    const focus = (id: string) => {
+      focusRef.current = id;
+      setFocusedId(id);
+      const leaf = findLeaf(rootRef.current, id);
+      if (leaf) focusedLeafCallback.current?.(leaf);
+    };
+
+    /** Close a leaf, keeping focus on a live one. A tree that empties out is
+     *  replaced by a fresh blank panel — the layout always renders something. */
+    const closeLeaf = (id: string) => {
+      // Nothing to close is not a change. Without this the layout would announce
+      // an `onChange` for a tree it never altered, and a host persisting that
+      // would write the identical blob back to storage. (Reference equality is no
+      // help here: `applyClose` rebuilds a split node even when it removes
+      // nothing from it.)
+      if (!findLeaf(rootRef.current, id)) return;
+      const next =
+        applyClose(rootRef.current, id, primaryViewRef.current) ?? makeLeaf();
+      commit(next);
+      focus(
+        findLeaf(next, focusRef.current) ? focusRef.current : firstLeafId(next),
+      );
+    };
+
+    /** The close every USER affordance goes through — a header's close button, a
+     *  tab's ×, Delete on a focused tab. `closable` is enforced here rather than
+     *  only by hiding those buttons, because Delete never touches a button; a
+     *  hidden button on its own would be a suggestion. `closeLeaf` above stays
+     *  ungated on purpose: it is the host's own tool, and a host closing a panel
+     *  itself already knows its policy. */
+    const requestClose = (id: string) => {
+      const leaf = findLeaf(rootRef.current, id);
+      if (leaf && closableRef.current?.(leaf) === false) return;
+      if (requestCloseRef.current) requestCloseRef.current(id);
+      else closeLeaf(id);
+    };
+
+    const doSplit = (id: string, dir: Dir) => {
+      // Same reasoning as `closeLeaf`: a stale target (the focused panel can
+      // outlive the tree it was in — a host `replaceRoot`, or any swap in
+      // controlled mode) splits nothing, but `applySplit` still rebuilds an
+      // equivalent tree, and committing it would announce a change that never
+      // happened.
+      if (!findLeaf(rootRef.current, id)) return;
+      const { node, newId } = applySplit(rootRef.current, id, dir);
+      commit(node);
+      if (newId) focus(newId);
+    };
+
+    const doResize = (splitId: string, index: number, a: number, b: number) => {
+      const next = applyResize(rootRef.current, splitId, index, a, b);
+      commit(next);
+      onResizeRef.current?.(next);
+    };
+
+    // Switch which tab shows inside a group. Focus follows, so keyboard splits and
+    // the surrogate track the newly-visible leaf.
+    const doActivateTab = (groupId: string, leafId: string) => {
+      const next = applyActivateTab(rootRef.current, groupId, leafId);
+      if (next === rootRef.current) return;
+      commit(next);
+      focus(leafId);
+    };
+
+    const doReset = () => {
+      const seed = resetTo
+        ? resetTo()
+        : initial
+          ? initial()
+          : buildInitial(initialSingle);
+      // Same treatment as `initial` and `replaceRoot`: a host's reset may well
+      // hand back a tree it built earlier, so migrate it and lift the counters
+      // past its ids before it goes live.
+      const fresh = normalizeTree(seed);
+      reseedCounters(fresh);
+      commit(fresh);
+      focus(firstLeafId(fresh));
+    };
+
+    useImperativeHandle(
+      ref,
+      () => ({
+        splitWith: (
+          targetId: string,
+          dir: Dir,
+          view?: string,
+          title?: string,
+          before?: boolean,
+          size?: number,
+          contentMax?: number,
+        ) => {
+          let fraction = size;
+          if (fraction == null && dir === "row") {
+            const el = containerRef.current?.querySelector(
+              `[data-leaf-id="${targetId}"]`,
+            );
+            // A zero width means the panel is not laid out yet (hidden ancestor, or
+            // a split fired before first paint). Dividing by it would put NaN into
+            // every size in the split, so leave `fraction` undefined and let
+            // applySplit fall back to its own default.
+            const w = el ? el.getBoundingClientRect().width : 0;
+            if (w > 0) {
+              // Round to 10px so float jitter never varies the fraction between calls.
+              const cappedPx =
+                Math.round(Math.min(MAX_NEW_PANEL_PX, w / 2) / 10) * 10;
+              fraction = cappedPx / w;
+            }
+          }
+          const seed = makeLeaf(view, title, contentMax);
+          const { node, newId } = applySplit(
+            rootRef.current,
+            targetId,
+            dir,
+            seed,
+            before,
+            fraction,
+          );
+          commit(node);
+          if (newId) focus(newId);
+        },
+        getRoot: () => rootRef.current,
+        replaceRoot: (tree: PanelNode) => {
+          // An incoming tree may be a real persisted blob from an older schema —
+          // migrate it (backfill instanceId, normalize groups) before it enters the
+          // live tree, and lift the id counters past it so newly minted nodes can
+          // never collide with the restored ids.
+          const migrated = normalizeTree(tree);
+          reseedCounters(migrated);
+          commit(migrated);
+          const first = firstLeafId(migrated);
+          if (first) focus(first);
+        },
+        inspect: (): PanelLeafInfo[] => {
+          const results: PanelLeafInfo[] = [];
+          const walk = (node: PanelNode) => {
+            if (node.kind === "leaf") {
+              const el = containerRef.current?.querySelector(
+                `[data-leaf-id="${node.id}"]`,
+              );
+              const r = el?.getBoundingClientRect();
+              // Nearest stamped element at/under the leaf root (selector pointers).
+              const loc =
+                el?.closest("[data-loc]")?.getAttribute("data-loc") ??
+                el?.querySelector("[data-loc]")?.getAttribute("data-loc") ??
+                undefined;
+              results.push({
+                id: node.id,
+                view: node.view,
+                title: node.title,
+                rect: r
+                  ? {
+                      left: Math.round(r.left),
+                      top: Math.round(r.top),
+                      width: Math.round(r.width),
+                      height: Math.round(r.height),
+                    }
+                  : { left: 0, top: 0, width: 0, height: 0 },
+                ...(loc ? { loc } : {}),
+              });
+            } else {
+              node.children.forEach(walk);
+            }
+          };
+          walk(rootRef.current);
+          return results;
+        },
+        closeLeaf,
+        focusLeaf: (id: string) => {
+          if (!findLeaf(rootRef.current, id)) return; // not a live leaf — ignore
+          if (compactRef.current) {
+            focus(id);
+            return;
+          }
+          const activate = (node: PanelNode): PanelNode =>
+            node.kind === "group" && node.children.some((c) => c.id === id)
+              ? { ...node, activeId: id }
+              : node.kind === "split"
+                ? { ...node, children: node.children.map(activate) }
+                : node;
+          commit(activate(rootRef.current));
+          focus(id);
+        },
+      }),
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      [],
+    );
+
+    // Keyboard splits. Capture phase + stopPropagation so a page-global binding on
+    // the same chord does not also fire while we're here.
+    const shortcutKey =
+      splitShortcut === false ? null : (splitShortcut.key ?? "d");
+    useEffect(() => {
+      if (!shortcutKey || compact) return;
+      const onKey = (e: KeyboardEvent) => {
+        const t = e.target as HTMLElement | null;
+        if (
+          t &&
+          (t.tagName === "INPUT" ||
+            t.tagName === "TEXTAREA" ||
+            t.isContentEditable)
+        )
+          return;
+        if (!(e.metaKey || e.ctrlKey)) return;
+        if (e.key.toLowerCase() !== shortcutKey.toLowerCase()) return;
+        e.preventDefault();
+        e.stopPropagation();
+        doSplit(focusRef.current, e.shiftKey ? "column" : "row");
+      };
+      window.addEventListener("keydown", onKey, true);
+      return () => window.removeEventListener("keydown", onKey, true);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [shortcutKey, compact]);
+
+    // Drag-to-dock via the header grab handle. Driven with pointer events rather
+    // than native DnD so a floating surrogate can follow the cursor and morph into
+    // the target's half-rect — the target panels themselves stay unmarked.
+    const onHandleDown = (
+      leaf: LeafNode,
+      e: ReactPointerEvent | PointerEvent,
+      thresholdPx = 0,
+      move?: { from: HTMLElement },
+    ) => {
+      // A header MOVE gesture (see PanelLeaf's `onMoveDown`) starts on content the
+      // host owns — tabs, a breadcrumb — so it must not cancel their own pointer
+      // handling or focus. It only arms past the threshold, like a tab drag.
+      if (!move) {
+        e.preventDefault();
+        e.stopPropagation();
       }
-      setDrag(null)
-    }
+      // Two things start a drag, and they sit in different places in the DOM: a
+      // panel header's handle (inside the leaf) and a TAB (in the group's tab bar,
+      // which is a sibling ABOVE the leaf — so `closest('[data-leaf-id]')` walks
+      // straight past it and finds nothing). Fall back to the group region, which
+      // is also the only correct source rect for an inactive tab, whose leaf is
+      // not mounted at all.
+      const from = move?.from ?? (e.currentTarget as HTMLElement);
+      const panelEl = (from.closest("[data-leaf-id]") ??
+        from.closest("[data-panel-region]")) as HTMLElement | null;
+      if (!panelEl) return;
+      const r = panelEl.getBoundingClientRect();
+      focus(leaf.id);
+      setDrag({
+        armed: thresholdPx <= 0,
+        // A thresholded press (tab, header) uses the pointer's own activation
+        // distance: a finger needs more room than a mouse to mean "drag".
+        threshold:
+          thresholdPx <= 0
+            ? 0
+            : Math.max(thresholdPx, dragThresholdFor(e.pointerType)),
+        srcId: leaf.id,
+        wholeGroup: !!move || from.hasAttribute("data-panel-group-handle"),
+        label: leaf.title ?? `Panel ${leaf.n}`,
+        grabDX: e.clientX - r.left,
+        grabDY: e.clientY - r.top,
+        srcW: r.width,
+        srcH: r.height,
+        x: e.clientX,
+        y: e.clientY,
+        target: null,
+      });
+    };
 
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.preventDefault()
-        setDrag(null)
-      }
-    }
+    // Move the WHOLE panel (its group, when tabbed) from its header. Dragging a
+    // single tab still tears out just that tab; this is the panel-as-a-unit path.
+    const onMoveDown = (leaf: LeafNode, e: PointerEvent, from: HTMLElement) => {
+      if (compact || e.button !== 0) return;
+      onHandleDown(leaf, e, TAB_DRAG_THRESHOLD_PX, { from });
+    };
 
-    window.addEventListener('pointermove', onMove)
-    window.addEventListener('pointerup', finish)
-    window.addEventListener('pointercancel', finish)
-    window.addEventListener('keydown', onKey, true)
-    return () => {
-      window.removeEventListener('pointermove', onMove)
-      window.removeEventListener('pointerup', finish)
-      window.removeEventListener('pointercancel', finish)
-      window.removeEventListener('keydown', onKey, true)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isDragging])
+    // While a drag is live, track the cursor on the window: move the surrogate,
+    // hit-test the panel underneath (never the source), and commit on release.
+    const isDragging = drag !== null;
+    useEffect(() => {
+      if (!isDragging) return;
 
-  // An iframe (artifact, embedded page) swallows pointer events, so the window
-  // listeners above go silent once the cursor crosses one and the surrogate
-  // freezes. Make every iframe transparent to the pointer for the gesture's
-  // lifetime — unlike a full-page overlay, this keeps `elementFromPoint`
-  // resolving the panel underneath for the dock hit-test.
-  useEffect(() => {
-    if (!isDragging) return
-    const style = document.createElement('style')
-    style.textContent = 'iframe { pointer-events: none !important; }'
-    document.head.appendChild(style)
-    return () => style.remove()
-  }, [isDragging])
+      const onMove = (e: PointerEvent) => {
+        const d = dragRef.current;
+        if (!d) return;
+        const x = e.clientX;
+        const y = e.clientY;
+        if (!d.armed) {
+          // Still deciding whether this is a click or a drag. Paint nothing and
+          // pick no target until the pointer has actually travelled.
+          if (Math.hypot(x - d.x, y - d.y) < d.threshold) return;
+          setDrag((prev) => (prev ? { ...prev, armed: true } : prev));
+        }
+        const el = document.elementFromPoint(x, y) as HTMLElement | null;
+        // Tab strips are sibling overlays above retained leaf surfaces. Resolve
+        // their owning region explicitly: a header drop means "join these tabs",
+        // not a top-edge split and not an empty-space drop.
+        const header = el?.closest(
+          "[data-panel-tab-slot]",
+        ) as HTMLElement | null;
+        const hit = (header?.closest("[data-panel-region]") ??
+          el?.closest("[data-leaf-id]")) as HTMLElement | null;
+        // Ignore a panel belonging to another layout on the same page.
+        const panelEl = hit && containerRef.current?.contains(hit) ? hit : null;
+        let tid = panelEl
+          ? header?.getAttribute("data-panel-tab-slot") ||
+            panelEl.getAttribute("data-leaf-id")
+          : null;
+        const sharesSourceGroup = (node: PanelNode): boolean =>
+          node.kind === "group"
+            ? node.children.some((child) => child.id === d.srcId) &&
+              node.children.some((child) => child.id === tid)
+            : node.kind === "split" && node.children.some(sharesSourceGroup);
+        const ownRegion =
+          tid === d.srcId || (!!header && sharesSourceGroup(rootRef.current));
+        if (ownRegion && d.wholeGroup) tid = null;
+        if (ownRegion && !d.wholeGroup) {
+          // A tab may split away from its OWN group. The visible source occupies
+          // the group's box; target a remaining sibling after extraction.
+          const sibling = (node: PanelNode): string | null =>
+            node.kind === "group"
+              ? node.children.some((child) => child.id === d.srcId)
+                ? (node.children.find((child) => child.id !== d.srcId)?.id ??
+                  null)
+                : null
+              : node.kind === "split"
+                ? (node.children.map(sibling).find(Boolean) ?? null)
+                : null;
+          tid = sibling(rootRef.current);
+        }
+        let target: DragState["target"] = null;
+        if (panelEl && tid && tid !== d.srcId) {
+          const r = panelEl.getBoundingClientRect();
+          // Only offer a centre/tab merge when BOTH the dragged view and the target
+          // view are tabbable — else a singleton could be grouped. Gating it here
+          // keeps the live preview and the drop resolving to the same side.
+          const canTab = isTabbableRef.current;
+          const tree = rootRef.current;
+          const srcLeaf = findLeaf(tree, d.srcId);
+          const tgtLeaf = findLeaf(tree, tid);
+          const allowCenter =
+            !d.wholeGroup &&
+            !ownRegion &&
+            (!canTab || (canTab(srcLeaf?.view) && canTab(tgtLeaf?.view)));
+          if (
+            header
+              ? allowCenter
+              : !ownRegion || dockSideFromPoint(r, x, y, true) !== "center"
+          ) {
+            target = {
+              id: tid,
+              side: header ? "center" : dockSideFromPoint(r, x, y, allowCenter),
+              rect: {
+                left: r.left,
+                top: r.top,
+                width: r.width,
+                height: r.height,
+              },
+            };
+          }
+        }
+        setDrag((prev) => (prev ? { ...prev, x, y, target } : prev));
+      };
 
-  // Grab cursor + selection lock, keyed on ARMED rather than on the pointer
-  // merely being down — otherwise a plain tab click would flick the cursor to
-  // `grabbing` for as long as the button was held.
-  const dragArmed = drag?.armed ?? false
-  useEffect(() => {
-    if (!dragArmed) return
-    const prevSelect = document.body.style.userSelect
-    const prevCursor = document.body.style.cursor
-    document.body.style.userSelect = 'none'
-    document.body.style.cursor = 'grabbing'
-    return () => {
-      document.body.style.userSelect = prevSelect
-      document.body.style.cursor = prevCursor
-    }
-  }, [dragArmed])
+      const finish = () => {
+        const d = dragRef.current;
+        // Never armed ⇒ the pointer went down and up without travelling: a click.
+        // Let it through to the tab's own onClick instead of docking anything.
+        if (d?.armed && d.target) {
+          // Belt-and-suspenders: even though the side was already gated during the
+          // drag, pass the predicate so a `center` can never group a singleton.
+          const next = d.wholeGroup
+            ? applyDockGroup(
+                rootRef.current,
+                d.srcId,
+                d.target.id,
+                d.target.side,
+              )
+            : applyDock(
+                rootRef.current,
+                d.srcId,
+                d.target.id,
+                d.target.side,
+                isTabbableRef.current,
+              );
+          // `applyDock` hands back the identical reference when it declines the
+          // move (a vanished source, or a drop onto itself) — don't report that.
+          if (next !== rootRef.current) commit(next);
+          focus(d.srcId);
+        }
+        setDrag(null);
+      };
 
-  // Cancel a desktop gesture when its targets disappear at the breakpoint.
-  useEffect(() => { if (compact) setDrag(null) }, [compact])
-  useLayoutEffect(() => {
-    if (focusedId !== activeId) focus(activeId)
-  }, [activeId, focusedId])
+      const onKey = (e: KeyboardEvent) => {
+        if (e.key === "Escape") {
+          e.preventDefault();
+          setDrag(null);
+        }
+      };
 
-  useLayoutEffect(() => {
-    // The compact selector unmounts on return to desktop. Preserve a usable
-    // keyboard location instead of letting the removed tab send focus to body.
-    if (!hasCompactSelector && selectorHadFocus.current) {
-      containerRef.current?.querySelector<HTMLElement>('[data-surface]:not([hidden]) [data-leaf-id]')?.focus({ preventScroll: true })
-      selectorHadFocus.current = false
-    }
-  }, [hasCompactSelector])
+      window.addEventListener("pointermove", onMove);
+      window.addEventListener("pointerup", finish);
+      window.addEventListener("pointercancel", finish);
+      window.addEventListener("keydown", onKey, true);
+      return () => {
+        window.removeEventListener("pointermove", onMove);
+        window.removeEventListener("pointerup", finish);
+        window.removeEventListener("pointercancel", finish);
+        window.removeEventListener("keydown", onKey, true);
+      };
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isDragging]);
 
-  const config: PanelConfig = {
-    compact,
-    compactTabs: hasCompactSelector,
-    compactHeaderInTabRow,
-    panelAsAction,
-    compactPanelAsAction,
-    compactPanelLabel: compactName,
-    persistent,
-    tabbed,
-    showSingleTab,
-    renderTab,
-    renderTabTrailing,
-    renderBody,
-    renderHeader,
-    leafClassName,
-    headerClassName,
-    headerContentClassName,
-    contentColumnHeaderClass,
-    closable,
-    palette,
-    dividerPx,
-    tabStripInset,
-  }
+    // An iframe (artifact, embedded page) swallows pointer events, so the window
+    // listeners above go silent once the cursor crosses one and the surrogate
+    // freezes. Make every iframe transparent to the pointer for the gesture's
+    // lifetime — unlike a full-page overlay, this keeps `elementFromPoint`
+    // resolving the panel underneath for the dock hit-test.
+    useEffect(() => {
+      if (!isDragging) return;
+      const style = document.createElement("style");
+      style.textContent = "iframe { pointer-events: none !important; }";
+      document.head.appendChild(style);
+      return () => style.remove();
+    }, [isDragging]);
 
-  const withToolbar = showToolbar || toolbar !== undefined
+    // Grab cursor + selection lock, keyed on ARMED rather than on the pointer
+    // merely being down — otherwise a plain tab click would flick the cursor to
+    // `grabbing` for as long as the button was held.
+    const dragArmed = drag?.armed ?? false;
+    useEffect(() => {
+      if (!dragArmed) return;
+      const prevSelect = document.body.style.userSelect;
+      const prevCursor = document.body.style.cursor;
+      document.body.style.userSelect = "none";
+      document.body.style.cursor = "grabbing";
+      return () => {
+        document.body.style.userSelect = prevSelect;
+        document.body.style.cursor = prevCursor;
+      };
+    }, [dragArmed]);
 
-  return (
-    <div
-      ref={containerRef}
-      onFocusCapture={event => {
-        selectorHadFocus.current = !!compactSelectorRef.current?.contains(event.target)
-      }}
-      onBlurCapture={event => {
-        if (event.relatedTarget && !event.currentTarget.contains(event.relatedTarget)) selectorHadFocus.current = false
-      }}
-      className={cn(
-        'flex flex-col h-full min-h-0 min-w-0',
-        withToolbar ? 'gap-[10px]' : 'gap-0',
-        className
-      )}
-    >
-      {withToolbar && (
-        <div className="flex items-center gap-3 shrink-0">
-          {toolbar ?? (
-            <>
-              <span className="text-uikit-ink font-uikit-ui text-[15px] font-bold tracking-[-0.01em]">
-                Panels
-              </span>
-              <span className="text-uikit-muted font-uikit-mono text-[10.5px] opacity-80 tracking-[0.02em]">
-                ⌘D split → · ⌘⇧D split ↓ · drag the handle to dock
-              </span>
-              <span className="flex-1" />
-              <button
-                type="button"
-                onClick={doReset}
-                className="text-uikit-muted font-uikit-ui text-[12px] font-semibold px-[11px] py-[5px] rounded-[8px] border border-uikit-rail-stroke bg-uikit-panel cursor-pointer"
-              >
-                Reset
-              </button>
-            </>
-          )}
-        </div>
-      )}
+    // Cancel a desktop gesture when its targets disappear at the breakpoint.
+    useEffect(() => {
+      if (compact) setDrag(null);
+    }, [compact]);
+    useLayoutEffect(() => {
+      if (focusedId !== activeId) focus(activeId);
+    }, [activeId, focusedId]);
 
-      {hasCompactSelector && (
-        <div ref={compactSelectorRef} data-compact-selector className="shrink-0 min-w-0">
-          <TabRow
-            aria-label={compactLabel}
-            className="uikit-tab-row-compact"
-            minTabHeight={30}
-            trailing={(() => {
-              const active = leaves.find(leaf => leaf.id === activeId)
-              return active && compactHeaderInTabRow?.(active) ? renderHeader?.(active) : undefined
-            })()}
-            leading={utilityLeaves.length > 0 ? <>
-              {compactLeading}
-              {utilityLeaves.map(leaf => {
-                const icon = compactPanelIcon?.(leaf)
-                const hasIcon = icon != null && typeof icon !== 'boolean'
-                return <Button key={leaf.id} variant="action" tone="muted" icon={hasIcon} size="md" className="h-8"
-                  value={activeId === leaf.id} aria-pressed={activeId === leaf.id}
-                  aria-label={compactName(leaf)} title={compactName(leaf)}
-                  id={tabDomId(leaf.id)} aria-controls={tabPanelDomId(leaf.id)} onClick={() => {
-                    if (panelAsAction?.(leaf) && !compactPanelAsAction?.(leaf)) pendingActionFocus.current = leaf.id
-                    focus(leaf.id)
-                  }}>
-                  {hasIcon ? icon : compactName(leaf)}
-                </Button>
-              })}
-            </> : compactLeading}
-            tabs={documentLeaves.map(leaf => {
-              const icon = compactPanelIcon?.(leaf)
-              return {
-                value: leaf.id,
-                id: tabDomId(leaf.id),
-                label: compactName(leaf),
-                fitContent: compactPanelFitContent?.(leaf, leaf.id === activeId),
-                trailing: compactPanelTrailing?.(leaf),
-                icon,
-                iconOnly: icon != null,
-                panelId: tabPanelDomId(leaf.id),
-                closable: closable?.(leaf) ?? true,
-              }
-            })}
-            value={activeId}
-            onValueChange={focus}
-            onClose={requestClose}
-          />
-        </div>
-      )}
-
-      {/* Compact changes slots, never the persisted tree or the view surfaces. */}
-      <PanelConfigContext.Provider value={config}>
-        <div className="flex-1 min-h-0 min-w-0 flex relative">
-          {compact ? (
-            <div data-panel-slot={activeId} className="flex-1 min-h-0 min-w-0" />
-          ) : <RenderNode
-            node={root}
-            box={rootBox}
-            draggingId={drag?.armed ? drag.srcId : null}
-            onFocus={focus}
-            onClose={requestClose}
-            onResize={doResize}
-            onActivateTab={doActivateTab}
-            onHandleDown={onHandleDown}
-            onMoveDown={onMoveDown}
-          />}
-          {persistent && <PersistentPanels compactId={compact ? activeId : undefined} root={root} rootBox={rootBox} draggingId={drag?.armed ? drag.srcId : null} onFocus={focus} onClose={requestClose} onHandleDown={onHandleDown} onMoveDown={onMoveDown} />}
-        </div>
-      </PanelConfigContext.Provider>
-
-      {/* Floating surrogate — follows the cursor at the panel's own size, and
-          morphs to the target's half-rect when hovering another panel. */}
-      {drag?.armed &&
-        (() => {
-          const box = drag.target
-            ? dockRect(drag.target.rect, drag.target.side)
-            : {
-                left: drag.x - drag.grabDX,
-                top: drag.y - drag.grabDY,
-                width: drag.srcW,
-                height: drag.srcH,
-              }
-          return (
-            <div
-              className={cn(
-                'fixed z-[9999] pointer-events-none rounded-[12px] opacity-[0.94] flex items-center justify-center gap-2',
-                'bg-[color-mix(in_srgb,var(--uikit-accent)_10%,var(--panel-bg))]',
-                'border-[1.5px] border-[color-mix(in_srgb,var(--uikit-accent)_35%,transparent)]'
-              )}
-              // left/top/width/height are runtime (dockRect or cursor coords);
-              // the transition is runtime-conditional on drag.target — both inline.
-              style={{
-                left: box.left,
-                top: box.top,
-                width: box.width,
-                height: box.height,
-                // Morph smoothly when snapping to a target; track instantly when free.
-                transition: drag.target
-                  ? 'left 130ms ease, top 130ms ease, width 130ms ease, height 130ms ease'
-                  : 'none',
-              }}
-            >
-              <span className="text-uikit-ink font-uikit-ui text-[13px] font-semibold">
-                {drag.label}
-              </span>
-            </div>
+    useLayoutEffect(() => {
+      // The compact selector unmounts on return to desktop. Preserve a usable
+      // keyboard location instead of letting the removed tab send focus to body.
+      if (!hasCompactSelector && selectorHadFocus.current) {
+        containerRef.current
+          ?.querySelector<HTMLElement>(
+            "[data-surface]:not([hidden]) [data-leaf-id]",
           )
-        })()}
-    </div>
-  )
-})
+          ?.focus({ preventScroll: true });
+        selectorHadFocus.current = false;
+      }
+    }, [hasCompactSelector]);
 
-export default PanelLayout
+    const config: PanelConfig = {
+      compact,
+      compactTabs: hasCompactSelector,
+      compactHeaderInTabRow,
+      panelAsAction,
+      compactPanelAsAction,
+      compactPanelLabel: compactName,
+      persistent,
+      tabbed,
+      showSingleTab,
+      renderTab,
+      renderTabTrailing,
+      renderBody,
+      renderHeader,
+      leafClassName,
+      headerClassName,
+      headerContentClassName,
+      contentColumnHeaderClass,
+      closable,
+      palette,
+      dividerPx,
+      tabStripInset,
+    };
+
+    const withToolbar = showToolbar || toolbar !== undefined;
+
+    return (
+      <div
+        ref={containerRef}
+        onFocusCapture={(event) => {
+          selectorHadFocus.current = !!compactSelectorRef.current?.contains(
+            event.target,
+          );
+        }}
+        onBlurCapture={(event) => {
+          if (
+            event.relatedTarget &&
+            !event.currentTarget.contains(event.relatedTarget)
+          )
+            selectorHadFocus.current = false;
+        }}
+        className={cn(
+          "flex flex-col h-full min-h-0 min-w-0",
+          withToolbar ? "gap-[10px]" : "gap-0",
+          className,
+        )}
+      >
+        {withToolbar && (
+          <div className="flex items-center gap-3 shrink-0">
+            {toolbar ?? (
+              <>
+                <span className="text-uikit-ink font-uikit-ui text-[15px] font-bold tracking-[-0.01em]">
+                  Panels
+                </span>
+                <span className="text-uikit-muted font-uikit-mono text-[10.5px] opacity-80 tracking-[0.02em]">
+                  ⌘D split → · ⌘⇧D split ↓ · drag the handle to dock
+                </span>
+                <span className="flex-1" />
+                <button
+                  type="button"
+                  onClick={doReset}
+                  className="text-uikit-muted font-uikit-ui text-[12px] font-semibold px-[11px] py-[5px] rounded-[8px] border border-uikit-rail-stroke bg-uikit-panel cursor-pointer"
+                >
+                  Reset
+                </button>
+              </>
+            )}
+          </div>
+        )}
+
+        {hasCompactSelector && (
+          <div
+            ref={compactSelectorRef}
+            data-compact-selector
+            className="shrink-0 min-w-0"
+          >
+            <TabRow
+              aria-label={compactLabel}
+              className="uikit-tab-row-compact"
+              minTabHeight={30}
+              trailing={(() => {
+                const active = leaves.find((leaf) => leaf.id === activeId);
+                return active && compactHeaderInTabRow?.(active)
+                  ? renderHeader?.(active)
+                  : undefined;
+              })()}
+              leading={
+                utilityLeaves.length > 0 ? (
+                  <>
+                    {compactLeading}
+                    {utilityLeaves.map((leaf) => {
+                      const icon = compactPanelIcon?.(leaf);
+                      const hasIcon = icon != null && typeof icon !== "boolean";
+                      return (
+                        <Button
+                          key={leaf.id}
+                          variant="action"
+                          tone="muted"
+                          icon={hasIcon}
+                          size="md"
+                          className="h-8"
+                          value={activeId === leaf.id}
+                          aria-pressed={activeId === leaf.id}
+                          aria-label={compactName(leaf)}
+                          title={compactName(leaf)}
+                          id={tabDomId(leaf.id)}
+                          aria-controls={tabPanelDomId(leaf.id)}
+                          onClick={() => {
+                            if (
+                              panelAsAction?.(leaf) &&
+                              !compactPanelAsAction?.(leaf)
+                            )
+                              pendingActionFocus.current = leaf.id;
+                            focus(leaf.id);
+                          }}
+                        >
+                          {hasIcon ? icon : compactName(leaf)}
+                        </Button>
+                      );
+                    })}
+                  </>
+                ) : (
+                  compactLeading
+                )
+              }
+              tabs={documentLeaves.map((leaf) => {
+                const icon = compactPanelIcon?.(leaf);
+                return {
+                  value: leaf.id,
+                  id: tabDomId(leaf.id),
+                  label: compactName(leaf),
+                  fitContent: compactPanelFitContent?.(
+                    leaf,
+                    leaf.id === activeId,
+                  ),
+                  trailing: compactPanelTrailing?.(leaf),
+                  icon,
+                  iconOnly: icon != null,
+                  panelId: tabPanelDomId(leaf.id),
+                  closable: closable?.(leaf) ?? true,
+                };
+              })}
+              value={activeId}
+              onValueChange={focus}
+              onClose={requestClose}
+            />
+          </div>
+        )}
+
+        {/* Compact changes slots, never the persisted tree or the view surfaces. */}
+        <PanelConfigContext.Provider value={config}>
+          <div className="flex-1 min-h-0 min-w-0 flex relative">
+            {compact ? (
+              <div
+                data-panel-slot={activeId}
+                className="flex-1 min-h-0 min-w-0"
+              />
+            ) : (
+              <RenderNode
+                node={root}
+                box={rootBox}
+                draggingId={drag?.armed ? drag.srcId : null}
+                onFocus={focus}
+                onClose={requestClose}
+                onResize={doResize}
+                onActivateTab={doActivateTab}
+                onHandleDown={onHandleDown}
+                onMoveDown={onMoveDown}
+              />
+            )}
+            {persistent && (
+              <PersistentPanels
+                compactId={compact ? activeId : undefined}
+                root={root}
+                rootBox={rootBox}
+                draggingId={drag?.armed ? drag.srcId : null}
+                onFocus={focus}
+                onClose={requestClose}
+                onHandleDown={onHandleDown}
+                onMoveDown={onMoveDown}
+              />
+            )}
+          </div>
+        </PanelConfigContext.Provider>
+
+        {/* Floating surrogate — follows the cursor at the panel's own size, and
+          morphs to the target's half-rect when hovering another panel. */}
+        {drag?.armed &&
+          (() => {
+            const box = drag.target
+              ? dockRect(drag.target.rect, drag.target.side)
+              : {
+                  left: drag.x - drag.grabDX,
+                  top: drag.y - drag.grabDY,
+                  width: drag.srcW,
+                  height: drag.srcH,
+                };
+            return (
+              <div
+                className={cn(
+                  "fixed z-[9999] pointer-events-none rounded-[12px] opacity-[0.94] flex items-center justify-center gap-2",
+                  "bg-[color-mix(in_srgb,var(--uikit-accent)_10%,var(--panel-bg))]",
+                  "border-[1.5px] border-[color-mix(in_srgb,var(--uikit-accent)_35%,transparent)]",
+                )}
+                // left/top/width/height are runtime (dockRect or cursor coords);
+                // the transition is runtime-conditional on drag.target — both inline.
+                style={{
+                  left: box.left,
+                  top: box.top,
+                  width: box.width,
+                  height: box.height,
+                  // Morph smoothly when snapping to a target; track instantly when free.
+                  transition: drag.target
+                    ? "left 130ms ease, top 130ms ease, width 130ms ease, height 130ms ease"
+                    : "none",
+                }}
+              >
+                <span className="text-uikit-ink font-uikit-ui text-[13px] font-semibold">
+                  {drag.label}
+                </span>
+              </div>
+            );
+          })()}
+      </div>
+    );
+  },
+);
+
+export default PanelLayout;

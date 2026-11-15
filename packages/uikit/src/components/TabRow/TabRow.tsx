@@ -1,4 +1,10 @@
-import { Fragment, useEffect, useRef, type CSSProperties, type ReactNode } from "react";
+import {
+  Fragment,
+  useEffect,
+  useRef,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 import { X } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { documentTabStyles } from "./documentTabStyles";
@@ -51,25 +57,46 @@ export interface TabRowProps {
 
 /** Controlled, closable document tabs. Tabs compress before overflowing. */
 export function TabRow({
-  tabs, value, onValueChange, onClose, leading, trailing,
-  minTabWidth = 80, preferredTabWidth = 170, minTabHeight,
-  "aria-label": ariaLabel = "Open documents", className, style,
+  tabs,
+  value,
+  onValueChange,
+  onClose,
+  leading,
+  trailing,
+  minTabWidth = 80,
+  preferredTabWidth = 170,
+  minTabHeight,
+  "aria-label": ariaLabel = "Open documents",
+  className,
+  style,
 }: TabRowProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const minimum = Number.isFinite(minTabWidth) ? Math.max(48, minTabWidth) : 80;
-  const preferred = Number.isFinite(preferredTabWidth) ? Math.max(minimum, preferredTabWidth) : Math.max(minimum, 170);
+  const preferred = Number.isFinite(preferredTabWidth)
+    ? Math.max(minimum, preferredTabWidth)
+    : Math.max(minimum, 170);
   useEffect(() => {
-    scrollRef.current?.querySelector('[aria-selected="true"]')?.closest('.uikit-tab-row-item')?.scrollIntoView?.({
-      inline: "nearest", block: "nearest", behavior: "smooth",
-    });
+    scrollRef.current
+      ?.querySelector('[aria-selected="true"]')
+      ?.closest(".uikit-tab-row-item")
+      ?.scrollIntoView?.({
+        inline: "nearest",
+        block: "nearest",
+        behavior: "smooth",
+      });
   }, [value, tabs.length]);
   useEffect(() => {
     const area = scrollRef.current;
     if (!area || typeof ResizeObserver === "undefined") return;
     const observer = new ResizeObserver(() => {
-      area.querySelector('[aria-selected="true"]')?.closest('.uikit-tab-row-item')?.scrollIntoView?.({
-        inline: "nearest", block: "nearest", behavior: "auto",
-      });
+      area
+        .querySelector('[aria-selected="true"]')
+        ?.closest(".uikit-tab-row-item")
+        ?.scrollIntoView?.({
+          inline: "nearest",
+          block: "nearest",
+          behavior: "auto",
+        });
     });
     observer.observe(area);
     return () => observer.disconnect();
@@ -78,71 +105,143 @@ export function TabRow({
   return (
     // `data-tab-count`: a host may draw a lone tab differently from a strip
     // (a full-width head instead of a tab shape) without counting the DOM.
-    <div className={cn("uikit-tab-row", className)} data-tab-count={tabs.length} style={{
-      ...style,
-      "--tab-row-min-height": minTabHeight == null ? undefined : `${Math.max(0, minTabHeight)}px`,
-      "--tab-row-min-width": `${minimum}px`,
-      "--tab-row-preferred-width": `${preferred}px`,
-    } as CSSProperties}>
+    <div
+      className={cn("uikit-tab-row", className)}
+      data-tab-count={tabs.length}
+      style={
+        {
+          ...style,
+          "--tab-row-min-height":
+            minTabHeight == null ? undefined : `${Math.max(0, minTabHeight)}px`,
+          "--tab-row-min-width": `${minimum}px`,
+          "--tab-row-preferred-width": `${preferred}px`,
+        } as CSSProperties
+      }
+    >
       <div className="uikit-tab-row-line" aria-hidden />
-      {leading != null && <div className="uikit-tab-row-controls">{leading}</div>}
-      <div className="uikit-tab-row-scroll uikit-document-tab-strip" ref={scrollRef} role={tabs.length ? "tablist" : undefined} aria-label={tabs.length ? ariaLabel : undefined}>
+      {leading != null && (
+        <div className="uikit-tab-row-controls">{leading}</div>
+      )}
+      <div
+        className="uikit-tab-row-scroll uikit-document-tab-strip"
+        ref={scrollRef}
+        role={tabs.length ? "tablist" : undefined}
+        aria-label={tabs.length ? ariaLabel : undefined}
+      >
         {tabs.map((tab, index) => {
           const hasIcon = tab.icon != null && typeof tab.icon !== "boolean";
           const iconOnly = !!tab.iconOnly && hasIcon;
           const iconWidth = onClose && tab.closable !== false ? 54 : 32;
           return (
-          <Fragment key={tab.value}>
-          {tab.groupStart && index > 0 && <span className="uikit-tab-row-divider" aria-hidden />}
-          <div className="uikit-tab-row-item uikit-document-tab" role="presentation"
-            data-active={tab.value === value || undefined} data-enter={tab.entering || undefined}
-            data-icon-only={iconOnly || undefined}
-            data-fit-content={tab.fitContent || undefined}
-            style={iconOnly ? {
-              "--tab-row-min-width": `${iconWidth}px`,
-              "--tab-row-preferred-width": `${iconWidth}px`,
-            } as CSSProperties : undefined}>
-            {tab.leading != null && <span className="uikit-tab-row-item-leading">{tab.leading}</span>}
-            <button id={tab.id} type="button" role="tab" className="uikit-tab-row-item-label uikit-document-tab-label"
-              aria-label={iconOnly ? tab.label : undefined}
-              aria-selected={tab.value === value} aria-controls={tab.panelId} aria-describedby={tab.descriptionId}
-              tabIndex={tab.value === value || (!tabs.some(t => t.value === value) && index === 0) ? 0 : -1}
-              title={tab.title ?? tab.label} onClick={() => onValueChange(tab.value)}
-              onAuxClick={event => {
-                if (event.button === 1 && onClose && tab.closable !== false) {
-                  event.preventDefault(); onClose(tab.value);
+            <Fragment key={tab.value}>
+              {tab.groupStart && index > 0 && (
+                <span className="uikit-tab-row-divider" aria-hidden />
+              )}
+              <div
+                className="uikit-tab-row-item uikit-document-tab"
+                role="presentation"
+                data-active={tab.value === value || undefined}
+                data-enter={tab.entering || undefined}
+                data-icon-only={iconOnly || undefined}
+                data-fit-content={tab.fitContent || undefined}
+                style={
+                  iconOnly
+                    ? ({
+                        "--tab-row-min-width": `${iconWidth}px`,
+                        "--tab-row-preferred-width": `${iconWidth}px`,
+                      } as CSSProperties)
+                    : undefined
                 }
-              }}
-              onKeyDown={event => {
-                let next: number;
-                if (event.key === "ArrowRight") next = (index + 1) % tabs.length;
-                else if (event.key === "ArrowLeft") next = (index - 1 + tabs.length) % tabs.length;
-                else if (event.key === "Home") next = 0;
-                else if (event.key === "End") next = tabs.length - 1;
-                else if (event.key === "Delete" && onClose && tab.closable !== false) {
-                  event.preventDefault(); onClose(tab.value); return;
-                } else return;
-                event.preventDefault();
-                scrollRef.current?.querySelectorAll<HTMLButtonElement>('[role="tab"]')[next]?.focus();
-                onValueChange(tabs[next].value);
-              }}>
-              {hasIcon && <span className="uikit-tab-row-item-icon" aria-hidden>{tab.icon}</span>}
-              {!iconOnly && tab.label}
-            </button>
-            <span className="uikit-document-tab-end">
-            {tab.trailing != null && <span className="uikit-tab-row-item-trailing">{tab.trailing}</span>}
-            {onClose && tab.closable !== false && <button type="button"
-              className="uikit-tab-row-item-x uikit-document-tab-close" aria-label={`Close ${tab.label}`}
-              title="Close tab" onClick={() => onClose(tab.value)}>
-              <X size={10} strokeWidth={2.5} />
-            </button>}
-            </span>
-          </div>
-          </Fragment>
+              >
+                {tab.leading != null && (
+                  <span className="uikit-tab-row-item-leading">
+                    {tab.leading}
+                  </span>
+                )}
+                <button
+                  id={tab.id}
+                  type="button"
+                  role="tab"
+                  className="uikit-tab-row-item-label uikit-document-tab-label"
+                  aria-label={iconOnly ? tab.label : undefined}
+                  aria-selected={tab.value === value}
+                  aria-controls={tab.panelId}
+                  aria-describedby={tab.descriptionId}
+                  tabIndex={
+                    tab.value === value ||
+                    (!tabs.some((t) => t.value === value) && index === 0)
+                      ? 0
+                      : -1
+                  }
+                  title={tab.title ?? tab.label}
+                  onClick={() => onValueChange(tab.value)}
+                  onAuxClick={(event) => {
+                    if (
+                      event.button === 1 &&
+                      onClose &&
+                      tab.closable !== false
+                    ) {
+                      event.preventDefault();
+                      onClose(tab.value);
+                    }
+                  }}
+                  onKeyDown={(event) => {
+                    let next: number;
+                    if (event.key === "ArrowRight")
+                      next = (index + 1) % tabs.length;
+                    else if (event.key === "ArrowLeft")
+                      next = (index - 1 + tabs.length) % tabs.length;
+                    else if (event.key === "Home") next = 0;
+                    else if (event.key === "End") next = tabs.length - 1;
+                    else if (
+                      event.key === "Delete" &&
+                      onClose &&
+                      tab.closable !== false
+                    ) {
+                      event.preventDefault();
+                      onClose(tab.value);
+                      return;
+                    } else return;
+                    event.preventDefault();
+                    scrollRef.current
+                      ?.querySelectorAll<HTMLButtonElement>('[role="tab"]')
+                      [next]?.focus();
+                    onValueChange(tabs[next].value);
+                  }}
+                >
+                  {hasIcon && (
+                    <span className="uikit-tab-row-item-icon" aria-hidden>
+                      {tab.icon}
+                    </span>
+                  )}
+                  {!iconOnly && tab.label}
+                </button>
+                <span className="uikit-document-tab-end">
+                  {tab.trailing != null && (
+                    <span className="uikit-tab-row-item-trailing">
+                      {tab.trailing}
+                    </span>
+                  )}
+                  {onClose && tab.closable !== false && (
+                    <button
+                      type="button"
+                      className="uikit-tab-row-item-x uikit-document-tab-close"
+                      aria-label={`Close ${tab.label}`}
+                      title="Close tab"
+                      onClick={() => onClose(tab.value)}
+                    >
+                      <X size={10} strokeWidth={2.5} />
+                    </button>
+                  )}
+                </span>
+              </div>
+            </Fragment>
           );
         })}
       </div>
-      {trailing != null && <div className="uikit-tab-row-controls">{trailing}</div>}
+      {trailing != null && (
+        <div className="uikit-tab-row-controls">{trailing}</div>
+      )}
       <style>{CSS + documentTabStyles}</style>
     </div>
   );
@@ -151,44 +250,44 @@ export function TabRow({
 const RED = "oklch(59% .18 25)";
 const OPEN = "160ms cubic-bezier(.2,.7,.3,1)";
 const CSS =
-  '.uikit-tab-row-item-leading{display:inline-flex;align-items:center;flex:none}' +
-  '.uikit-tab-row-item-trailing{display:inline-flex;align-items:center;flex:none;margin-right:0}' +
-  '.uikit-tab-row-item-icon{display:inline-flex;vertical-align:middle;margin-right:6px}' +
-  '.uikit-tab-row-item[data-icon-only]{flex-shrink:0}' +
-  '.uikit-tab-row-item[data-icon-only] .uikit-tab-row-item-icon{margin-right:0}' +
-  '.uikit-tab-row{-webkit-user-select:none;user-select:none;position:relative;display:flex;align-items:flex-end;gap:6px;width:100%;min-width:0}' +
-  '.uikit-tab-row-line{display:none}' +
-  '.uikit-tab-row-controls{position:relative;z-index:1;flex:0 0 auto;margin-bottom:4px;display:flex;align-items:center;gap:2px}' +
-  '.uikit-tab-row-compact .uikit-tab-row-controls{margin-bottom:0;align-self:center}' +
-  '.uikit-tab-row-item:focus-within .uikit-tab-row-item-x{width:16px;margin-right:0;opacity:.55}' +
-  '.uikit-tab-row-item button:focus-visible{outline:2px solid var(--uikit-accent);outline-offset:-2px}' +
-  '.uikit-tab-row-scroll{position:relative;z-index:1;display:flex;align-items:flex-end;gap:2px;' +
-  'flex:1;min-width:0;overflow-x:auto;scrollbar-width:none}' +
-  '.uikit-tab-row-scroll::-webkit-scrollbar{display:none}' +
-  '.uikit-tab-row-divider{flex:none;align-self:center;width:1px;height:14px;margin:0 4px;background:var(--faint)}' +
-  '.uikit-tab-row-item{display:flex;align-items:center;flex:0 1 var(--tab-row-preferred-width);overflow:visible;' +
-  'box-sizing:border-box;min-width:var(--tab-row-min-width);max-width:var(--tab-row-preferred-width);' +
-  'border:1px solid transparent;transition:background 120ms ease}' +
-  '.uikit-tab-row-item[data-fit-content]:not([data-icon-only]){flex:0 0 auto;min-width:0;max-width:var(--tab-row-preferred-width)}' +
-  '@keyframes uikit-tab-row-item-in{from{min-width:0;max-width:0;opacity:0;transform:translateY(3px)}' +
-  'to{min-width:var(--tab-row-min-width);max-width:var(--tab-row-preferred-width);opacity:1;transform:none}}' +
-  '.uikit-tab-row-item[data-enter]{animation:uikit-tab-row-item-in 220ms cubic-bezier(.2,.7,.3,1)}' +
-  '@media (prefers-reduced-motion:reduce){.uikit-tab-row-item[data-enter]{animation:none}}' +
-  '.uikit-tab-row-item-label{font-family:var(--font-uikit-mono, monospace);font-size:11px;font-weight:500;letter-spacing:-.005em;' +
-  'border:0;background:transparent;cursor:pointer;padding:6px 10px;flex:1;min-width:0;min-height:var(--tab-row-min-height,0px);text-align:left;' +
-  'overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--uikit-muted);opacity:.6;' +
+  ".uikit-tab-row-item-leading{display:inline-flex;align-items:center;flex:none}" +
+  ".uikit-tab-row-item-trailing{display:inline-flex;align-items:center;flex:none;margin-right:0}" +
+  ".uikit-tab-row-item-icon{display:inline-flex;vertical-align:middle;margin-right:6px}" +
+  ".uikit-tab-row-item[data-icon-only]{flex-shrink:0}" +
+  ".uikit-tab-row-item[data-icon-only] .uikit-tab-row-item-icon{margin-right:0}" +
+  ".uikit-tab-row{-webkit-user-select:none;user-select:none;position:relative;display:flex;align-items:flex-end;gap:6px;width:100%;min-width:0}" +
+  ".uikit-tab-row-line{display:none}" +
+  ".uikit-tab-row-controls{position:relative;z-index:1;flex:0 0 auto;margin-bottom:4px;display:flex;align-items:center;gap:2px}" +
+  ".uikit-tab-row-compact .uikit-tab-row-controls{margin-bottom:0;align-self:center}" +
+  ".uikit-tab-row-item:focus-within .uikit-tab-row-item-x{width:16px;margin-right:0;opacity:.55}" +
+  ".uikit-tab-row-item button:focus-visible{outline:2px solid var(--uikit-accent);outline-offset:-2px}" +
+  ".uikit-tab-row-scroll{position:relative;z-index:1;display:flex;align-items:flex-end;gap:2px;" +
+  "flex:1;min-width:0;overflow-x:auto;scrollbar-width:none}" +
+  ".uikit-tab-row-scroll::-webkit-scrollbar{display:none}" +
+  ".uikit-tab-row-divider{flex:none;align-self:center;width:1px;height:14px;margin:0 4px;background:var(--faint)}" +
+  ".uikit-tab-row-item{display:flex;align-items:center;flex:0 1 var(--tab-row-preferred-width);overflow:visible;" +
+  "box-sizing:border-box;min-width:var(--tab-row-min-width);max-width:var(--tab-row-preferred-width);" +
+  "border:1px solid transparent;transition:background 120ms ease}" +
+  ".uikit-tab-row-item[data-fit-content]:not([data-icon-only]){flex:0 0 auto;min-width:0;max-width:var(--tab-row-preferred-width)}" +
+  "@keyframes uikit-tab-row-item-in{from{min-width:0;max-width:0;opacity:0;transform:translateY(3px)}" +
+  "to{min-width:var(--tab-row-min-width);max-width:var(--tab-row-preferred-width);opacity:1;transform:none}}" +
+  ".uikit-tab-row-item[data-enter]{animation:uikit-tab-row-item-in 220ms cubic-bezier(.2,.7,.3,1)}" +
+  "@media (prefers-reduced-motion:reduce){.uikit-tab-row-item[data-enter]{animation:none}}" +
+  ".uikit-tab-row-item-label{font-family:var(--font-uikit-mono, monospace);font-size:11px;font-weight:500;letter-spacing:-.005em;" +
+  "border:0;background:transparent;cursor:pointer;padding:6px 10px;flex:1;min-width:0;min-height:var(--tab-row-min-height,0px);text-align:left;" +
+  "overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--uikit-muted);opacity:.6;" +
   `transition:color 120ms ease,opacity 120ms ease,padding-right ${OPEN}}` +
   // Label padding is constant in every state; end controls own their space.
   // In particular, fitted non-closable tabs must not shift siblings on hover.
-  '.uikit-tab-row-item[data-icon-only] .uikit-tab-row-item-label{display:flex;align-items:center;justify-content:center;padding:6px}' +
-  '.uikit-tab-row-item:hover .uikit-tab-row-item-label{opacity:1}' +
-  '.uikit-tab-row-item[data-active] .uikit-tab-row-item-label{color:var(--ink);opacity:1;font-weight:600}' +
-  '.uikit-tab-row-item-x{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;' +
-  'box-sizing:border-box;border:0;padding:0;background:transparent;cursor:pointer;' +
-  'color:var(--uikit-muted);border-radius:4px;width:16px;margin-right:0;opacity:.55;overflow:hidden;' +
+  ".uikit-tab-row-item[data-icon-only] .uikit-tab-row-item-label{display:flex;align-items:center;justify-content:center;padding:6px}" +
+  ".uikit-tab-row-item:hover .uikit-tab-row-item-label{opacity:1}" +
+  ".uikit-tab-row-item[data-active] .uikit-tab-row-item-label{color:var(--ink);opacity:1;font-weight:600}" +
+  ".uikit-tab-row-item-x{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;" +
+  "box-sizing:border-box;border:0;padding:0;background:transparent;cursor:pointer;" +
+  "color:var(--uikit-muted);border-radius:4px;width:16px;margin-right:0;opacity:.55;overflow:hidden;" +
   `transition:width ${OPEN},margin-right ${OPEN},opacity 120ms ease,color 120ms ease}` +
-  '.uikit-tab-row-item:hover .uikit-tab-row-item-x,.uikit-tab-row-item[data-active] .uikit-tab-row-item-x' +
-  '{width:16px;margin-right:0;opacity:.55}' +
+  ".uikit-tab-row-item:hover .uikit-tab-row-item-x,.uikit-tab-row-item[data-active] .uikit-tab-row-item-x" +
+  "{width:16px;margin-right:0;opacity:.55}" +
   `.uikit-tab-row-item:hover .uikit-tab-row-item-x:hover,.uikit-tab-row-item[data-active] .uikit-tab-row-item-x:hover` +
   `{opacity:1;color:${RED}}` +
   `.uikit-tab-row-item:has(.uikit-tab-row-item-x:hover) .uikit-tab-row-item-label{color:${RED};opacity:1;` +

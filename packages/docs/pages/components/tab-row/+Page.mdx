@@ -162,20 +162,20 @@ The row carries `data-tab-count` with the number of tabs, so a host can style a 
 
 ### TabRowItem
 
-| Field | Type | Description |
-| --- | --- | --- |
-| `value` | `string` | Unique tab identifier. |
-| `label` | `string` | Visible title and accessible name. |
-| `icon` | `ReactNode` | Optional visual beside the label. |
-| `iconOnly` | `boolean` | Display only the icon at compact width; preserve the text label for accessibility. |
-| `fitContent` | `boolean` | Size a text tab to its label and controls, preserving padding and capping width at `preferredTabWidth`; longer labels use the existing ellipsis. A fitted tab without a close control keeps the same width when selected or hovered, so tabs after it do not move. Icon-only tabs retain their compact width. |
-| `title` | `string` | Optional full tooltip, such as a path. |
-| `trailing` | `ReactNode` | A fixed control after the title, outside the tab button; selection reveals it together with the close control. |
-| `leading` | `ReactNode` | A fixed control before the title, outside the tab button and sticky end. Interactive controls remain independently focusable and do not select or close the tab. |
-| `panelId` | `string` | Optional ID of the corresponding content panel, used as `aria-controls`. |
-| `closable` | `boolean` | Set to `false` to prevent closing this tab. |
-| `entering` | `boolean` | Animate a newly opened tab; respects reduced motion. |
-| `groupStart` | `boolean` | Draw a thin divider before this tab to start a new group; ignored on the first tab. |
+| Field        | Type        | Description                                                                                                                                                                                                                                                                                                   |
+| ------------ | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `value`      | `string`    | Unique tab identifier.                                                                                                                                                                                                                                                                                        |
+| `label`      | `string`    | Visible title and accessible name.                                                                                                                                                                                                                                                                            |
+| `icon`       | `ReactNode` | Optional visual beside the label.                                                                                                                                                                                                                                                                             |
+| `iconOnly`   | `boolean`   | Display only the icon at compact width; preserve the text label for accessibility.                                                                                                                                                                                                                            |
+| `fitContent` | `boolean`   | Size a text tab to its label and controls, preserving padding and capping width at `preferredTabWidth`; longer labels use the existing ellipsis. A fitted tab without a close control keeps the same width when selected or hovered, so tabs after it do not move. Icon-only tabs retain their compact width. |
+| `title`      | `string`    | Optional full tooltip, such as a path.                                                                                                                                                                                                                                                                        |
+| `trailing`   | `ReactNode` | A fixed control after the title, outside the tab button; selection reveals it together with the close control.                                                                                                                                                                                                |
+| `leading`    | `ReactNode` | A fixed control before the title, outside the tab button and sticky end. Interactive controls remain independently focusable and do not select or close the tab.                                                                                                                                              |
+| `panelId`    | `string`    | Optional ID of the corresponding content panel, used as `aria-controls`.                                                                                                                                                                                                                                      |
+| `closable`   | `boolean`   | Set to `false` to prevent closing this tab.                                                                                                                                                                                                                                                                   |
+| `entering`   | `boolean`   | Animate a newly opened tab; respects reduced motion.                                                                                                                                                                                                                                                          |
+| `groupStart` | `boolean`   | Draw a thin divider before this tab to start a new group; ignored on the first tab.                                                                                                                                                                                                                           |
 
 ## Keyboard interaction
 

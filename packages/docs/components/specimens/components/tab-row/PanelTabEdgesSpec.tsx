@@ -22,13 +22,11 @@ function EdgeExample({
     "Release checklist",
   ];
   const [tabs, setTabs] = useState(
-    initial
-      .slice(0, crowded ? 7 : 3)
-      .map((label, i) => ({
-        value: String(i),
-        label,
-        kind: i === 0 ? "chat" : "editor",
-      })),
+    initial.slice(0, crowded ? 7 : 3).map((label, i) => ({
+      value: String(i),
+      label,
+      kind: i === 0 ? "chat" : "editor",
+    })),
   );
   const [active, setActive] = useState("0");
   const [overflow, setOverflow] = useState(false);
