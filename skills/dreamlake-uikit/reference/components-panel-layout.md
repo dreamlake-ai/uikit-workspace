@@ -33,6 +33,11 @@ its header** (there is no separate grab bar) and drop it on another panel: near 
 merges as a tab. `⌘D` splits the focused panel to the right, `⌘⇧D` below.
 Escape cancels a drag in flight.
 
+When a panel contains another `PanelLayout`, dragging an outer tab over the nested
+layout docks against the containing outer panel. Nested panel IDs are not outer
+drop targets. A missing or stale target leaves the source panel unchanged, so a
+failed drop cannot discard its mounted content.
+
 A tab, tab strip or header press arms a drag only after **6px** of travel (**8px**
 for touch); below that it is a click and the panel does not lift. Buttons, links
 and form fields inside a header keep their own press. A host element marked
