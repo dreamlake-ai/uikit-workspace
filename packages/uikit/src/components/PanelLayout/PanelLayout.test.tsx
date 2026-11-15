@@ -1046,6 +1046,14 @@ it("does not reorder an inactive tab dropped on its own group header", () => {
 });
 
 it("connects a shown singleton tab to its retained tabpanel and keeps trailing actions before close", () => {
+  // jsdom has no layout observer; use the compact fixture's scoped observer.
+  vi.stubGlobal(
+    "ResizeObserver",
+    class {
+      observe() {}
+      disconnect() {}
+    },
+  );
   const tree = panelLeaf({ view: "asset", title: "Asset" });
   const copy = vi.fn();
   const close = vi.fn(() => false);
