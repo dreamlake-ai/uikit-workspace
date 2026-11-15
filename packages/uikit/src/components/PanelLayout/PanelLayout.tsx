@@ -697,17 +697,30 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(
         // Tab strips are sibling overlays above retained leaf surfaces. Resolve
         // their owning region explicitly: a header drop means "join these tabs",
         // not a top-edge split and not an empty-space drop.
-        const header = el?.closest(
-          "[data-panel-tab-slot]",
-        ) as HTMLElement | null;
+        // A terminal or other view may contain its own PanelLayout. Walk past
+        // its leaf/header markers to the region owned by this layout; inner
+        // IDs are not targets in our tree, even if they happen to collide.
+        const selector = "[data-panel-tab-slot], [data-leaf-id]";
+        let owned = el?.closest<HTMLElement>(selector) ?? null;
+        while (
+          owned &&
+          containerRef.current?.contains(owned) &&
+          owned.closest("[data-panel-layout]") !== containerRef.current
+        ) {
+          owned = owned.parentElement?.closest<HTMLElement>(selector) ?? null;
+        }
+        const header = owned?.hasAttribute("data-panel-tab-slot")
+          ? owned
+          : null;
         const hit = (header?.closest("[data-panel-region]") ??
-          el?.closest("[data-leaf-id]")) as HTMLElement | null;
+          owned) as HTMLElement | null;
         // Ignore a panel belonging to another layout on the same page.
         const panelEl = hit && containerRef.current?.contains(hit) ? hit : null;
         let tid = panelEl
           ? header?.getAttribute("data-panel-tab-slot") ||
             panelEl.getAttribute("data-leaf-id")
           : null;
+        if (tid && !findLeaf(rootRef.current, tid)) tid = null;
         const sharesSourceGroup = (node: PanelNode): boolean =>
           node.kind === "group"
             ? node.children.some((child) => child.id === d.srcId) &&
@@ -892,6 +905,7 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(
     return (
       <div
         ref={containerRef}
+        data-panel-layout=""
         onFocusCapture={(event) => {
           selectorHadFocus.current = !!compactSelectorRef.current?.contains(
             event.target,

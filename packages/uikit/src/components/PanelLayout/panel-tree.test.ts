@@ -141,6 +141,11 @@ it('[panel-tree] applyDock re-docks a leaf beside the target (4 edges)', () => {
   }
 })
 
+it.each(['left', 'right', 'top', 'bottom', 'center'] as const)('[panel-tree] docking against a missing target preserves the source (%s)', (side) => {
+  const tree = split('row', [leaf('a'), leaf('b')])
+  expect(applyDock(tree, 'a', 'nested-or-stale-target', side)).toBe(tree)
+})
+
 it('[panel-tree] extractLeaf hands the freed slot to the neighbor (local reflow)', () => {
   const tree = split('row', [leaf('a'), leaf('b'), leaf('c')], [30, 40, 30])
   const { tree: pruned, taken } = extractLeaf(tree, 'b')

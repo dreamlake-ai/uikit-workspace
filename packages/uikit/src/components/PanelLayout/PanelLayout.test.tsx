@@ -985,6 +985,109 @@ it.each(["header", "own-header", "foreign-header", "not-tabbable"])(
   },
 );
 
+it.each(["body", "header"])(
+  "splits a tab over a nested layout's %s without losing either mounted view",
+  (hitKind) => {
+    vi.stubGlobal(
+      "ResizeObserver",
+      class {
+        observe() {}
+        disconnect() {}
+      },
+    );
+    const ref = createRef<PanelLayoutHandle>();
+    const first = panelLeaf({ title: "First terminal" });
+    const second = panelLeaf({ title: "Second terminal" });
+    const inner = panelLeaf({ title: "Inner terminal" });
+    render(
+      <PanelLayout
+        ref={ref}
+        initial={() => panelGroup([first, second], 1)}
+        tabbed
+        renderBody={(leaf) =>
+          leaf.id === second.id ? (
+            <PanelLayout
+              initial={() => inner}
+              tabbed
+              showSingleTab={() => true}
+              renderBody={() => (
+                <textarea data-inner-draft defaultValue="running session" />
+              )}
+            />
+          ) : (
+            <textarea data-first-draft defaultValue="first session" />
+          )
+        }
+      />,
+    );
+    const draft =
+      container.querySelector<HTMLTextAreaElement>("[data-inner-draft]")!;
+    const firstDraft =
+      container.querySelector<HTMLTextAreaElement>("[data-first-draft]")!;
+    const source = container.querySelector<HTMLElement>(
+      `[data-tab-id="${second.id}"]`,
+    )!;
+    const outerLeaf = container.querySelector<HTMLElement>(
+      `[data-leaf-id="${second.id}"]`,
+    )!;
+    outerLeaf.getBoundingClientRect = () => ({
+      x: 0,
+      y: 30,
+      left: 0,
+      top: 30,
+      right: 600,
+      bottom: 430,
+      width: 600,
+      height: 400,
+      toJSON() {},
+    });
+    document.elementFromPoint = () =>
+      hitKind === "body"
+        ? draft
+        : container.querySelector(`[data-panel-tab-slot="${inner.id}"]`);
+    act(() =>
+      source.dispatchEvent(
+        new PointerEvent("pointerdown", {
+          bubbles: true,
+          button: 0,
+          clientX: 80,
+          clientY: 10,
+        }),
+      ),
+    );
+    act(() =>
+      window.dispatchEvent(
+        new PointerEvent("pointermove", {
+          bubbles: true,
+          clientX: 590,
+          clientY: 230,
+        }),
+      ),
+    );
+    act(() =>
+      window.dispatchEvent(
+        new PointerEvent("pointerup", {
+          bubbles: true,
+          clientX: 590,
+          clientY: 230,
+        }),
+      ),
+    );
+    const result = ref.current!.getRoot();
+    expect(result.kind).toBe("split");
+    if (result.kind !== "split") throw new Error("expected split");
+    expect(result.dir).toBe("row");
+    expect(result.children.map((leaf) => leaf.id)).toEqual([
+      first.id,
+      second.id,
+    ]);
+    expect(container.querySelector("[data-inner-draft]")).toBe(draft);
+    expect(container.querySelector("[data-first-draft]")).toBe(firstDraft);
+    expect(draft.value).toBe("running session");
+    expect(firstDraft.value).toBe("first session");
+  },
+);
+
 it("does not reorder an inactive tab dropped on its own group header", () => {
   vi.stubGlobal(
     "ResizeObserver",

@@ -462,7 +462,7 @@ export function applyDock(
   side: DockSide,
   canTab?: (view: string | undefined) => boolean,
 ): PanelNode {
-  if (srcId === targetId) return node
+  if (srcId === targetId || !findLeaf(node, targetId)) return node
   if (side === 'center') return applyAddTab(node, srcId, targetId, canTab)
   const { tree, taken } = extractLeaf(node, srcId)
   if (!tree || !taken) return node
