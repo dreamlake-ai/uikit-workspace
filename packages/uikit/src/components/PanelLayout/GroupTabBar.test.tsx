@@ -86,3 +86,71 @@ it('focuses the clicked tab before hiding a retained iframe and leaves nested ac
     expect(onActivate).not.toHaveBeenCalled()
   } finally { act(() => root.unmount()); host.remove(); frame.remove() }
 })
+
+
+it('keeps a singleton a selected accessible tab with its close inside and toolbar actions independent', () => {
+  ;(globalThis as any).IS_REACT_ACT_ENVIRONMENT = true
+  vi.stubGlobal('ResizeObserver', class { observe() {} disconnect() {} })
+  const host = document.createElement('div')
+  document.body.append(host)
+  const root = createRoot(host)
+  const leaf = panelLeaf({ title: 'Asset' })
+  const group: Extract<PanelNode, { kind: 'group' }> = { kind: 'group', id: 'single', children: [leaf], activeId: leaf.id }
+  const activate = vi.fn(), close = vi.fn(), drag = vi.fn(), pin = vi.fn()
+  try {
+    act(() => root.render(
+      <PanelConfigContext.Provider value={{ palette: DEFAULT_PALETTE, tabbed: true,
+        renderTab: item => <><span data-label>{item.title}</span><button onClick={pin}>Pin</button></>,
+      }}>
+        <GroupTabBar group={group} onActivate={activate} onCloseTab={close} onHandleDown={drag} />
+      </PanelConfigContext.Provider>
+    ))
+    const tab = host.querySelector<HTMLElement>('[role="tab"]')!
+    expect(tab.getAttribute('aria-label')).toBe('Asset')
+    expect(tab.getAttribute('aria-selected')).toBe('true')
+    expect(tab.getAttribute('aria-controls')).toBe(`panel-${leaf.id}`)
+    expect(tab.dataset.singleViewHeader).toBe(leaf.id)
+    expect(tab.tabIndex).toBe(0)
+    expect(host.querySelector('[role="tablist"]')?.contains(tab)).toBe(true)
+    act(() => tab.querySelector<HTMLElement>('[data-label]')!.click())
+    expect(document.activeElement).toBe(tab)
+    expect(activate).toHaveBeenCalledExactlyOnceWith(leaf.id)
+    activate.mockClear()
+    act(() => tab.querySelector<HTMLButtonElement>('button')!.click())
+    expect(pin).toHaveBeenCalledOnce()
+    expect(activate).not.toHaveBeenCalled()
+    const insideClose = tab.querySelector<HTMLElement>('[aria-label="Close Asset"]')!
+    expect(insideClose).not.toBeNull()
+    act(() => insideClose.click())
+    expect(close).toHaveBeenCalledExactlyOnceWith(leaf.id)
+    expect(activate).not.toHaveBeenCalled()
+    expect(drag).not.toHaveBeenCalled()
+    close.mockClear()
+    act(() => tab.dispatchEvent(new KeyboardEvent('keydown', { key: 'Delete', bubbles: true })))
+    expect(close).toHaveBeenCalledExactlyOnceWith(leaf.id)
+  } finally { act(() => root.unmount()); host.remove() }
+})
+
+it('keeps singleton close affordance policy while keyboard requests still reach the layout authority', () => {
+  ;(globalThis as any).IS_REACT_ACT_ENVIRONMENT = true
+  vi.stubGlobal('ResizeObserver', class { observe() {} disconnect() {} })
+  const host = document.createElement('div')
+  document.body.append(host)
+  const root = createRoot(host)
+  const leaf = panelLeaf({ title: 'Protected terminal' })
+  const group: Extract<PanelNode, { kind: 'group' }> = { kind: 'group', id: 'protected-single', children: [leaf], activeId: leaf.id }
+  const close = vi.fn()
+  try {
+    act(() => root.render(
+      <PanelConfigContext.Provider value={{ palette: DEFAULT_PALETTE, tabbed: true, closable: () => false }}>
+        <GroupTabBar group={group} onActivate={() => {}} onCloseTab={close} onHandleDown={() => {}} />
+      </PanelConfigContext.Provider>
+    ))
+    const tab = host.querySelector<HTMLElement>('[role="tab"]')!
+    expect(tab.getAttribute('aria-label')).toBe('Protected terminal')
+    expect(tab.getAttribute('aria-selected')).toBe('true')
+    expect(tab.querySelector('[role="button"]')).toBeNull()
+    act(() => tab.dispatchEvent(new KeyboardEvent('keydown', { key: 'Delete', bubbles: true })))
+    expect(close).toHaveBeenCalledExactlyOnceWith(leaf.id)
+  } finally { act(() => root.unmount()); host.remove() }
+})

@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useRef, type CSSProperties, type ReactNode } from "react";
 import { X } from "lucide-react";
 import { cn } from "../../lib/utils";
+import { documentTabStyles } from "./documentTabStyles";
 
 export interface TabRowItem {
   value: string;
@@ -16,6 +17,8 @@ export interface TabRowItem {
   /** Content beside the label button, such as a persistent reference action. */
   trailing?: ReactNode;
   title?: string;
+  /** Description supplied by a shared tooltip when visible. */
+  descriptionId?: string;
   /** Optional ID of the panel controlled by this tab. */
   panelId?: string;
   closable?: boolean;
@@ -81,7 +84,7 @@ export function TabRow({
     } as CSSProperties}>
       <div className="uikit-tab-row-line" aria-hidden />
       {leading != null && <div className="uikit-tab-row-controls">{leading}</div>}
-      <div className="uikit-tab-row-scroll" ref={scrollRef} role={tabs.length ? "tablist" : undefined} aria-label={tabs.length ? ariaLabel : undefined}>
+      <div className="uikit-tab-row-scroll uikit-document-tab-strip" ref={scrollRef} role={tabs.length ? "tablist" : undefined} aria-label={tabs.length ? ariaLabel : undefined}>
         {tabs.map((tab, index) => {
           const hasIcon = tab.icon != null && typeof tab.icon !== "boolean";
           const iconOnly = !!tab.iconOnly && hasIcon;
@@ -89,7 +92,7 @@ export function TabRow({
           return (
           <Fragment key={tab.value}>
           {tab.groupStart && index > 0 && <span className="uikit-tab-row-divider" aria-hidden />}
-          <div className="uikit-tab-row-item" role="presentation"
+          <div className="uikit-tab-row-item uikit-document-tab" role="presentation"
             data-active={tab.value === value || undefined} data-enter={tab.entering || undefined}
             data-icon-only={iconOnly || undefined}
             data-fit-content={tab.fitContent || undefined}
@@ -97,9 +100,9 @@ export function TabRow({
               "--tab-row-min-width": `${iconWidth}px`,
               "--tab-row-preferred-width": `${iconWidth}px`,
             } as CSSProperties : undefined}>
-            <button id={tab.id} type="button" role="tab" className="uikit-tab-row-item-label"
+            <button id={tab.id} type="button" role="tab" className="uikit-tab-row-item-label uikit-document-tab-label"
               aria-label={iconOnly ? tab.label : undefined}
-              aria-selected={tab.value === value} aria-controls={tab.panelId}
+              aria-selected={tab.value === value} aria-controls={tab.panelId} aria-describedby={tab.descriptionId}
               tabIndex={tab.value === value || (!tabs.some(t => t.value === value) && index === 0) ? 0 : -1}
               title={tab.title ?? tab.label} onClick={() => onValueChange(tab.value)}
               onAuxClick={event => {
@@ -123,19 +126,21 @@ export function TabRow({
               {hasIcon && <span className="uikit-tab-row-item-icon" aria-hidden>{tab.icon}</span>}
               {!iconOnly && tab.label}
             </button>
+            <span className="uikit-document-tab-end">
             {tab.trailing != null && <span className="uikit-tab-row-item-trailing">{tab.trailing}</span>}
             {onClose && tab.closable !== false && <button type="button"
-              className="uikit-tab-row-item-x" aria-label={`Close ${tab.label}`}
+              className="uikit-tab-row-item-x uikit-document-tab-close" aria-label={`Close ${tab.label}`}
               title="Close tab" onClick={() => onClose(tab.value)}>
               <X size={10} strokeWidth={2.5} />
             </button>}
+            </span>
           </div>
           </Fragment>
           );
         })}
       </div>
       {trailing != null && <div className="uikit-tab-row-controls">{trailing}</div>}
-      <style>{CSS}</style>
+      <style>{CSS + documentTabStyles}</style>
     </div>
   );
 }
@@ -143,49 +148,43 @@ export function TabRow({
 const RED = "oklch(59% .18 25)";
 const OPEN = "160ms cubic-bezier(.2,.7,.3,1)";
 const CSS =
-  '.uikit-tab-row-item-trailing{display:inline-flex;align-items:center;flex:none;margin-right:5px}' +
+  '.uikit-tab-row-item-trailing{display:inline-flex;align-items:center;flex:none;margin-right:0}' +
   '.uikit-tab-row-item-icon{display:inline-flex;vertical-align:middle;margin-right:6px}' +
   '.uikit-tab-row-item[data-icon-only]{flex-shrink:0}' +
   '.uikit-tab-row-item[data-icon-only] .uikit-tab-row-item-icon{margin-right:0}' +
   '.uikit-tab-row{-webkit-user-select:none;user-select:none;position:relative;display:flex;align-items:flex-end;gap:6px;width:100%;min-width:0}' +
-  '.uikit-tab-row-line{position:absolute;left:0;right:0;bottom:0;height:1px;background:var(--faint);z-index:0}' +
+  '.uikit-tab-row-line{display:none}' +
   '.uikit-tab-row-controls{position:relative;z-index:1;flex:0 0 auto;margin-bottom:4px;display:flex;align-items:center;gap:2px}' +
   '.uikit-tab-row-compact .uikit-tab-row-controls{margin-bottom:0;align-self:center}' +
-  '.uikit-tab-row-item:focus-within .uikit-tab-row-item-x{width:16px;margin-right:5px;opacity:.55}' +
+  '.uikit-tab-row-item:focus-within .uikit-tab-row-item-x{width:16px;margin-right:0;opacity:.55}' +
   '.uikit-tab-row-item button:focus-visible{outline:2px solid var(--uikit-accent);outline-offset:-2px}' +
   '.uikit-tab-row-scroll{position:relative;z-index:1;display:flex;align-items:flex-end;gap:2px;' +
   'flex:1;min-width:0;overflow-x:auto;scrollbar-width:none}' +
   '.uikit-tab-row-scroll::-webkit-scrollbar{display:none}' +
   '.uikit-tab-row-divider{flex:none;align-self:center;width:1px;height:14px;margin:0 4px;background:var(--faint)}' +
-  '.uikit-tab-row-item{display:flex;align-items:center;flex:0 1 var(--tab-row-preferred-width);overflow:hidden;' +
+  '.uikit-tab-row-item{display:flex;align-items:center;flex:0 1 var(--tab-row-preferred-width);overflow:visible;' +
   'box-sizing:border-box;min-width:var(--tab-row-min-width);max-width:var(--tab-row-preferred-width);' +
-  'border:1px solid transparent;border-radius:8px 8px 0 0;transition:background 120ms ease}' +
+  'border:1px solid transparent;transition:background 120ms ease}' +
   '.uikit-tab-row-item[data-fit-content]:not([data-icon-only]){flex:0 0 auto;min-width:0;max-width:var(--tab-row-preferred-width)}' +
   '@keyframes uikit-tab-row-item-in{from{min-width:0;max-width:0;opacity:0;transform:translateY(3px)}' +
   'to{min-width:var(--tab-row-min-width);max-width:var(--tab-row-preferred-width);opacity:1;transform:none}}' +
   '.uikit-tab-row-item[data-enter]{animation:uikit-tab-row-item-in 220ms cubic-bezier(.2,.7,.3,1)}' +
   '@media (prefers-reduced-motion:reduce){.uikit-tab-row-item[data-enter]{animation:none}}' +
-  '.uikit-tab-row-item:not([data-active]):hover{background:color-mix(in srgb,var(--ink) 5%,transparent)}' +
-  '.uikit-tab-row-item[data-active]{background:var(--bg);border-color:var(--faint);' +
-  'border-bottom-color:var(--bg)}' +
   '.uikit-tab-row-item-label{font-family:var(--font-uikit-mono, monospace);font-size:11px;font-weight:500;letter-spacing:-.005em;' +
   'border:0;background:transparent;cursor:pointer;padding:6px 10px;flex:1;min-width:0;min-height:var(--tab-row-min-height,0px);text-align:left;' +
   'overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--uikit-muted);opacity:.6;' +
   `transition:color 120ms ease,opacity 120ms ease,padding-right ${OPEN}}` +
-  // Tighten the label only to make room for a close button; a tab without one
-  // (e.g. a fitted, non-closable tab) keeps its width when selected or hovered.
-  `.uikit-tab-row-item:has(> .uikit-tab-row-item-x):hover .uikit-tab-row-item-label,` +
-  `.uikit-tab-row-item[data-active]:has(> .uikit-tab-row-item-x) .uikit-tab-row-item-label` +
-  '{padding-right:4px}' +
+  // Label padding is constant in every state; end controls own their space.
+  // In particular, fitted non-closable tabs must not shift siblings on hover.
   '.uikit-tab-row-item[data-icon-only] .uikit-tab-row-item-label{display:flex;align-items:center;justify-content:center;padding:6px}' +
   '.uikit-tab-row-item:hover .uikit-tab-row-item-label{opacity:1}' +
   '.uikit-tab-row-item[data-active] .uikit-tab-row-item-label{color:var(--ink);opacity:1;font-weight:600}' +
   '.uikit-tab-row-item-x{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;' +
   'box-sizing:border-box;border:0;padding:0;background:transparent;cursor:pointer;' +
-  'color:var(--uikit-muted);border-radius:4px;width:0;margin-right:0;opacity:0;overflow:hidden;' +
+  'color:var(--uikit-muted);border-radius:4px;width:16px;margin-right:0;opacity:.55;overflow:hidden;' +
   `transition:width ${OPEN},margin-right ${OPEN},opacity 120ms ease,color 120ms ease}` +
   '.uikit-tab-row-item:hover .uikit-tab-row-item-x,.uikit-tab-row-item[data-active] .uikit-tab-row-item-x' +
-  '{width:16px;margin-right:5px;opacity:.55}' +
+  '{width:16px;margin-right:0;opacity:.55}' +
   `.uikit-tab-row-item:hover .uikit-tab-row-item-x:hover,.uikit-tab-row-item[data-active] .uikit-tab-row-item-x:hover` +
   `{opacity:1;color:${RED}}` +
   `.uikit-tab-row-item:has(.uikit-tab-row-item-x:hover) .uikit-tab-row-item-label{color:${RED};opacity:1;` +
