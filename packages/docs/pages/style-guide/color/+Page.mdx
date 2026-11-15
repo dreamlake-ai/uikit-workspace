@@ -172,6 +172,33 @@ line by only a few hundredths — if the palette moves, re-measure these.
 
 Use `--uikit-axis` (or `text-uikit-axis`) for numeric axes and tick labels: `#525252` in light mode and `#cccccc` in dark mode. Render at full opacity; reserve faint ink for background gridlines.
 
+## Document tabs and workspace
+
+`--uikit-workspace-bg` is the continuous background behind tabs and panel gutters.
+Its light default is `#f1eee7`; its dark default is `#222226`. Explicit theme
+selection and the system dark-mode fallback both update it. Applications can
+map it to their live shell token instead of maintaining a separate theme value.
+
+The selected tab has curved feet and shares its body's surface. Inactive tabs
+sit on the workspace background with separators; hover paints a rounded
+rectangle. Override these variables on the containing workspace to configure
+both `TabRow` and `PanelLayout` tab groups:
+
+| Variable | Default |
+| --- | --- |
+| `--uikit-document-strip-surface` | `var(--uikit-workspace-bg)` |
+| `--uikit-document-surface` | `var(--bg)`; match the retained panel body |
+| `--uikit-document-inactive-bg` | Strip surface |
+| `--uikit-document-hover-bg` | 4% ink mixed into the strip surface |
+| `--uikit-document-action-bg` | 3% ink mixed into the strip surface |
+| `--uikit-document-action-hover-bg` | 8% ink mixed into the strip surface |
+
+For example, a shell can set `--uikit-document-strip-surface: var(--dl-shell-bg)`
+and `--uikit-document-surface: var(--bg)`. Contextual add/return controls opt into
+the shared action shade through `uikit-document-tab-action`; they have no shadow.
+These variables paint tab chrome only. The host still owns its body and terminal
+canvas colors, close guards, contextual actions, and view state.
+
 ## Code surfaces
 
 `CodeBlock` keeps its `bg-uikit-code` shell in both reading and editing modes.
