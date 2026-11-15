@@ -14,6 +14,8 @@ export interface TabRowItem {
   iconOnly?: boolean;
   /** Size this text tab to content, capped by preferredTabWidth. */
   fitContent?: boolean;
+  /** Fixed control before the label, outside both its button and the sticky end. */
+  leading?: ReactNode;
   /** Content beside the label button, such as a persistent reference action. */
   trailing?: ReactNode;
   title?: string;
@@ -100,6 +102,7 @@ export function TabRow({
               "--tab-row-min-width": `${iconWidth}px`,
               "--tab-row-preferred-width": `${iconWidth}px`,
             } as CSSProperties : undefined}>
+            {tab.leading != null && <span className="uikit-tab-row-item-leading">{tab.leading}</span>}
             <button id={tab.id} type="button" role="tab" className="uikit-tab-row-item-label uikit-document-tab-label"
               aria-label={iconOnly ? tab.label : undefined}
               aria-selected={tab.value === value} aria-controls={tab.panelId} aria-describedby={tab.descriptionId}
@@ -148,6 +151,7 @@ export function TabRow({
 const RED = "oklch(59% .18 25)";
 const OPEN = "160ms cubic-bezier(.2,.7,.3,1)";
 const CSS =
+  '.uikit-tab-row-item-leading{display:inline-flex;align-items:center;flex:none}' +
   '.uikit-tab-row-item-trailing{display:inline-flex;align-items:center;flex:none;margin-right:0}' +
   '.uikit-tab-row-item-icon{display:inline-flex;vertical-align:middle;margin-right:6px}' +
   '.uikit-tab-row-item[data-icon-only]{flex-shrink:0}' +

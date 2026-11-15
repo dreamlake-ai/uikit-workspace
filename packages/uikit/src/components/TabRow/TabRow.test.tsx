@@ -199,3 +199,43 @@ it('draws a hidden divider only before a non-first group start without breaking 
   expect(change).toHaveBeenCalledWith('session')
   expect(document.activeElement).toBe(tabs[2])
 })
+
+it('keeps item-leading controls independent of label selection and sticky end actions', () => {
+  const change = vi.fn()
+  const close = vi.fn()
+  const connect = vi.fn()
+  act(() => root.render(<TabRow value="other" onValueChange={change} onClose={close} tabs={[
+    { value: 'terminal', label: 'Terminal', leading: <button onClick={connect}>Connect</button>, trailing: <button>Reference</button> },
+    { value: 'other', label: 'Other' },
+  ]} />))
+  const item = container.querySelector('.uikit-tab-row-item')!
+  expect(Array.from(item.children).map(child => child.className)).toEqual([
+    'uikit-tab-row-item-leading',
+    'uikit-tab-row-item-label uikit-document-tab-label',
+    'uikit-document-tab-end',
+  ])
+  const button = item.querySelector<HTMLButtonElement>('.uikit-tab-row-item-leading button')!
+  expect(button.closest('[role="tab"], [aria-hidden="true"], .uikit-document-tab-end')).toBeNull()
+  act(() => button.click())
+  expect(connect).toHaveBeenCalledOnce()
+  expect(change).not.toHaveBeenCalled()
+  expect(close).not.toHaveBeenCalled()
+  button.focus()
+  expect(document.activeElement).toBe(button)
+  expect(getComputedStyle(button.parentElement!).flexShrink).toBe('0')
+  expect(item.querySelector('.uikit-document-tab-end .uikit-tab-row-item-trailing')?.textContent).toBe('Reference')
+  act(() => item.querySelector<HTMLButtonElement>('[aria-label="Close Terminal"]')!.click())
+  expect(close).toHaveBeenCalledExactlyOnceWith('terminal')
+  expect(change).not.toHaveBeenCalled()
+})
+
+it('keeps fitted nonclosable label padding constant across selection', () => {
+  const tabs = [{ value: 'first', label: 'First', closable: false, fitContent: true }, { value: 'second', label: 'Second' }]
+  act(() => root.render(<TabRow tabs={tabs} value="second" onValueChange={() => {}} onClose={() => {}} />))
+  const first = container.querySelector<HTMLElement>('[role="tab"]')!
+  const initial = getComputedStyle(first).paddingRight
+  act(() => root.render(<TabRow tabs={tabs} value="first" onValueChange={() => {}} onClose={() => {}} />))
+  expect(getComputedStyle(first).paddingRight).toBe(initial)
+  expect(initial).toBe('10px')
+  expect(first.parentElement?.querySelector('[aria-label="Close First"]')).toBeNull()
+})
