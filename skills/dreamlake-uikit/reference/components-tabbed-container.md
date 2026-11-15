@@ -44,3 +44,43 @@ to fork commands from one shared starting layout.
 Set `activationMode="hover"` to switch on mouse hover without moving keyboard focus.
 The default is `click`. Touch still selects by tapping, and click and keyboard controls
 work in both modes. The layout examples enable hover for quick comparisons.
+
+## Contextual actions
+
+Put a small group of actions for the visible view at the right of the tab row,
+instead of adding another header or toolbar. An item's `actions` show only
+while that tab is active; the container's `actions` show for every tab, after
+the active tab's own. The tab strip keeps the remaining width and scrolls when
+labels do not fit, so the actions never push the frame wider.
+
+Open memo}
+  items={[
+    {
+      value: "overview",
+      label: "Overview",
+      children: <p>Question, primary chart and conclusion.</p>,
+    },
+    {
+      value: "runs",
+      label: "Runs 25",
+      actions: Copy launch command,
+      children: <p>Plan versus actual, one row per config and seed.</p>,
+    },
+  ]}
+/>
+
+```tsx
+<TabbedContainer
+  aria-label="Experiment views"
+  actions={<Button variant="ghost" size="sm">Open memo</Button>}
+  items={[
+    { value: "overview", label: "Overview", children: <Overview /> },
+    {
+      value: "runs",
+      label: "Runs 25",
+      actions: <Button variant="ghost" size="sm">Copy launch command</Button>,
+      children: <RunsTable />,
+    },
+  ]}
+/>
+```

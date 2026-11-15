@@ -11,6 +11,9 @@
   --bg-dark: #2e2e35;
   --panel-bg-light: #fcfbf7;
   --panel-bg-dark: #2e2e35;
+  /* Continuous workspace behind document tabs and panel gutters. */
+  --uikit-workspace-bg-light: #f1eee7;
+  --uikit-workspace-bg-dark: #222226;
   --rail-bg-light: #fcfbf7;
   --rail-bg-dark: #2b2b31;
   /* Code surface — the CodeBlock body. Deliberately a touch warmer than
@@ -21,6 +24,7 @@
 
   --bg: var(--bg-light);
   --panel-bg: var(--panel-bg-light);
+  --uikit-workspace-bg: var(--uikit-workspace-bg-light);
   --rail-bg: var(--rail-bg-light);
   --code-bg: var(--code-bg-light);
 
@@ -159,21 +163,23 @@
   --wf-stage-border: rgba(255, 255, 255, 0.85);
 
   /* ── Typography ─────────────────────────────────────────────── */
-  --f-ui: 'Inter Tight', ui-sans-serif, system-ui, sans-serif;
-  --f-mono: 'JetBrains Mono', ui-monospace, monospace;
-  --f-hand: 'JetBrains Mono', ui-monospace, monospace;
+  --f-ui: "Inter Tight", ui-sans-serif, system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, monospace;
+  --f-hand: "JetBrains Mono", ui-monospace, monospace;
 }
 
-html[data-theme='light'] {
+html[data-theme="light"] {
   --bg: var(--bg-light);
   --panel-bg: var(--panel-bg-light);
+  --uikit-workspace-bg: var(--uikit-workspace-bg-light);
   --rail-bg: var(--rail-bg-light);
   --code-bg: var(--code-bg-light);
 }
 
-html[data-theme='dark'] {
+html[data-theme="dark"] {
   --bg: var(--bg-dark);
   --panel-bg: var(--panel-bg-dark);
+  --uikit-workspace-bg: var(--uikit-workspace-bg-dark);
   --rail-bg: var(--rail-bg-dark);
   --code-bg: var(--code-bg-dark);
 
@@ -244,9 +250,10 @@ html[data-theme='dark'] {
    Lower specificity than the explicit `[data-theme]` rules above, so an
    explicit user choice always wins. */
 @media (prefers-color-scheme: dark) {
-  html:not([data-theme='light']) {
+  html:not([data-theme="light"]) {
     --bg: var(--bg-dark);
     --panel-bg: var(--panel-bg-dark);
+    --uikit-workspace-bg: var(--uikit-workspace-bg-dark);
     --rail-bg: var(--rail-bg-dark);
     --code-bg: var(--code-bg-dark);
 
@@ -376,11 +383,19 @@ html[data-theme='dark'] {
   --color-uikit-ink-8: color-mix(in srgb, var(--ink) 8%, transparent);
   --color-uikit-ink-12: color-mix(in srgb, var(--ink) 12%, transparent);
   --color-uikit-ink-50: color-mix(in srgb, var(--ink) 50%, transparent);
-  --color-uikit-accent-12: color-mix(in srgb, var(--uikit-accent) 12%, transparent);
+  --color-uikit-accent-12: color-mix(
+    in srgb,
+    var(--uikit-accent) 12%,
+    transparent
+  );
   /* Search-match wash — `HighlightedText`. Mixed in oklab, not srgb: this one
      sits UNDER text that must stay readable in both themes, and a perceptual
      mix keeps the wash at the same apparent lightness as the accent moves. */
-  --color-uikit-accent-22: color-mix(in oklab, var(--uikit-accent) 22%, transparent);
+  --color-uikit-accent-22: color-mix(
+    in oklab,
+    var(--uikit-accent) 22%,
+    transparent
+  );
 
   /* Opaque twin of `ink-5`: the same 5% ink, but mixed over `--bg` rather
      than transparent, so a chip filled with it reads identically on any
@@ -463,9 +478,11 @@ html[data-theme='dark'] {
      the reference the same card casts almost nothing: peak delta 3, gone within
      4px, held off the page by its ring and its fill instead.
      So: the hairline does the work, and the pool is short and light. */
-  --shadow-uikit-soft: 0 0 0 1px var(--faint), 0 2px 8px -4px var(--shadow-panel-2);
+  --shadow-uikit-soft:
+    0 0 0 1px var(--faint), 0 2px 8px -4px var(--shadow-panel-2);
   --shadow-uikit-deep:
-    0 1px 2px var(--shadow-tint-1), 0 24px 60px var(--shadow-tint-3), inset 0 0 0 1px var(--faint);
+    0 1px 2px var(--shadow-tint-1), 0 24px 60px var(--shadow-tint-3),
+    inset 0 0 0 1px var(--faint);
 }
 
 /* ── Animations ─────────────────────────────────────────────────── */
@@ -526,35 +543,35 @@ html[data-theme='dark'] {
     uikit-unfold 320ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards,
     uikit-unfold-fade 120ms linear backwards;
 }
-.uikit-panel-in[data-unfold='tl'] {
+.uikit-panel-in[data-unfold="tl"] {
   --uikit-unfold-from: inset(-40px 100% 100% -40px);
   --uikit-unfold-origin: top left;
 }
-.uikit-panel-in[data-unfold='tr'] {
+.uikit-panel-in[data-unfold="tr"] {
   --uikit-unfold-from: inset(-40px -40px 100% 100%);
   --uikit-unfold-origin: top right;
 }
-.uikit-panel-in[data-unfold='bl'] {
+.uikit-panel-in[data-unfold="bl"] {
   --uikit-unfold-from: inset(100% 100% -40px -40px);
   --uikit-unfold-origin: bottom left;
 }
-.uikit-panel-in[data-unfold='br'] {
+.uikit-panel-in[data-unfold="br"] {
   --uikit-unfold-from: inset(100% -40px -40px 100%);
   --uikit-unfold-origin: bottom right;
 }
-.uikit-panel-in[data-unfold='t'] {
+.uikit-panel-in[data-unfold="t"] {
   --uikit-unfold-from: inset(-40px -40px 100% -40px);
   --uikit-unfold-origin: top center;
 }
-.uikit-panel-in[data-unfold='b'] {
+.uikit-panel-in[data-unfold="b"] {
   --uikit-unfold-from: inset(100% -40px -40px -40px);
   --uikit-unfold-origin: bottom center;
 }
-.uikit-panel-in[data-unfold='l'] {
+.uikit-panel-in[data-unfold="l"] {
   --uikit-unfold-from: inset(-40px 100% -40px -40px);
   --uikit-unfold-origin: center left;
 }
-.uikit-panel-in[data-unfold='r'] {
+.uikit-panel-in[data-unfold="r"] {
   --uikit-unfold-from: inset(-40px -40px -40px 100%);
   --uikit-unfold-origin: center right;
 }
@@ -625,10 +642,10 @@ html[data-theme='dark'] {
    (the slider's and the row's) read darker than every other hover. Selection
    keeps its fill. Unlayered, so it wins over the rows' `hover:bg-*` utilities. */
 [data-uikit-hover-host]
-  :is([role='option'], [role^='menuitem'], button, a[href]):hover:not(
-    [aria-selected='true'],
-    [data-selected='true'],
-    [aria-checked='true'],
+  :is([role="option"], [role^="menuitem"], button, a[href]):hover:not(
+    [aria-selected="true"],
+    [data-selected="true"],
+    [aria-checked="true"],
     [aria-current],
     [data-active-row],
     [data-danger]
@@ -667,7 +684,8 @@ html[data-theme='dark'] {
 @keyframes uikit-overlay-enter {
   from {
     opacity: 0;
-    translate: var(--uikit-overlay-enter-x, 0px) var(--uikit-overlay-enter-y, 0px);
+    translate: var(--uikit-overlay-enter-x, 0px)
+      var(--uikit-overlay-enter-y, 0px);
   }
   to {
     opacity: 1;
@@ -677,16 +695,16 @@ html[data-theme='dark'] {
 .uikit-overlay-enter {
   animation: uikit-overlay-enter 160ms ease-out;
 }
-.uikit-overlay-enter[data-side='top'] {
+.uikit-overlay-enter[data-side="top"] {
   --uikit-overlay-enter-y: 4px;
 }
-.uikit-overlay-enter[data-side='bottom'] {
+.uikit-overlay-enter[data-side="bottom"] {
   --uikit-overlay-enter-y: -4px;
 }
-.uikit-overlay-enter[data-side='left'] {
+.uikit-overlay-enter[data-side="left"] {
   --uikit-overlay-enter-x: 4px;
 }
-.uikit-overlay-enter[data-side='right'] {
+.uikit-overlay-enter[data-side="right"] {
   --uikit-overlay-enter-x: -4px;
 }
 @media (prefers-reduced-motion: reduce) {
@@ -775,24 +793,25 @@ html[data-theme='dark'] {
 .uikit-modal-panel {
   transform-origin: center;
 }
-.uikit-modal-panel[data-state='open'] {
+.uikit-modal-panel[data-state="open"] {
   animation: uikit-modal-in var(--uikit-dur-modal-in) backwards;
 }
-.uikit-modal-panel[data-state='closed'] {
-  animation: uikit-modal-out var(--uikit-dur-modal-out) cubic-bezier(0.4, 0, 1, 1) forwards;
+.uikit-modal-panel[data-state="closed"] {
+  animation: uikit-modal-out var(--uikit-dur-modal-out)
+    cubic-bezier(0.4, 0, 1, 1) forwards;
 }
-.uikit-modal-backdrop[data-state='open'] {
+.uikit-modal-backdrop[data-state="open"] {
   animation: uikit-modal-scrim-in var(--uikit-dur-scrim-in) ease-out backwards;
 }
-.uikit-modal-backdrop[data-state='closed'] {
+.uikit-modal-backdrop[data-state="closed"] {
   animation: uikit-modal-scrim-out var(--uikit-dur-scrim-out) ease-in forwards;
   pointer-events: none;
 }
 @media (prefers-reduced-motion: reduce) {
-  .uikit-modal-panel[data-state='open'] {
+  .uikit-modal-panel[data-state="open"] {
     animation: uikit-modal-fade-in var(--uikit-dur-scrim-in) ease-out backwards;
   }
-  .uikit-modal-panel[data-state='closed'] {
+  .uikit-modal-panel[data-state="closed"] {
     animation: uikit-modal-fade-out var(--uikit-dur-scrim-out) ease-in forwards;
   }
 }
@@ -832,7 +851,7 @@ html[data-theme='dark'] {
     opacity 200ms ease-out 40ms,
     transform var(--uikit-dur-collapse) var(--uikit-ease-collapse);
 }
-.uikit-collapsible-content[data-state='closed'] > .uikit-collapsible-inner {
+.uikit-collapsible-content[data-state="closed"] > .uikit-collapsible-inner {
   opacity: 0;
   transform: translateY(-4px);
   transition:
@@ -842,13 +861,13 @@ html[data-theme='dark'] {
 .uikit-collapsible-chevron {
   transition: transform var(--uikit-dur-collapse) var(--uikit-ease-collapse);
 }
-.uikit-collapsible-chevron[data-state='open'] {
+.uikit-collapsible-chevron[data-state="open"] {
   transform: rotate(90deg);
 }
 @media (prefers-reduced-motion: reduce) {
   .uikit-collapsible-content[data-measured],
   .uikit-collapsible-inner,
-  .uikit-collapsible-content[data-state='closed'] > .uikit-collapsible-inner,
+  .uikit-collapsible-content[data-state="closed"] > .uikit-collapsible-inner,
   .uikit-collapsible-chevron {
     transition: none;
   }
@@ -1035,7 +1054,9 @@ html[data-theme='dark'] {
     flex-wrap: nowrap;
   }
 
-  [data-uikit-card][data-uikit-top-actions] [data-uikit-header] [data-uikit-title-right] {
+  [data-uikit-card][data-uikit-top-actions]
+    [data-uikit-header]
+    [data-uikit-title-right] {
     display: none;
   }
 
@@ -1198,7 +1219,7 @@ html[data-theme='dark'] {
   gap: 2px;
   border: 0;
 }
-.uikit-tabbed-container-tabs [role='tab'] {
+.uikit-tabbed-container-tabs [role="tab"] {
   flex-shrink: 0;
   margin: 0 1px;
   padding: 3px 9px 4px;
@@ -1211,15 +1232,15 @@ html[data-theme='dark'] {
   color: var(--uikit-muted);
   font-weight: 500;
 }
-.uikit-tabbed-container-tabs [role='tab']:first-child {
+.uikit-tabbed-container-tabs [role="tab"]:first-child {
   margin-left: 0;
 }
-.uikit-tabbed-container-tabs [role='tab'][aria-selected='false']:hover {
+.uikit-tabbed-container-tabs [role="tab"][aria-selected="false"]:hover {
   border-color: var(--faint);
   border-bottom-color: transparent;
   color: var(--ink);
 }
-.uikit-tabbed-container-tabs [role='tab'][aria-selected='true'] {
+.uikit-tabbed-container-tabs [role="tab"][aria-selected="true"] {
   position: relative;
   z-index: 1;
   border-color: var(--faint);
@@ -1243,13 +1264,15 @@ html[data-theme='dark'] {
   padding: 16px;
   min-width: 0;
 }
-.uikit-tabbed-container[data-first-active='true'] > div > .uikit-tabbed-container-content {
+.uikit-tabbed-container[data-first-active="true"]
+  > div
+  > .uikit-tabbed-container-content {
   border-top-left-radius: 0;
 }
 .uikit-tabbed-container-content[hidden] {
   display: none;
 }
-.uikit-tabbed-container-tabs [role='tab']:focus-visible,
+.uikit-tabbed-container-tabs [role="tab"]:focus-visible,
 .uikit-tabbed-container-content:focus-visible {
   outline: 2px solid var(--ink);
   outline-offset: -3px;
@@ -1270,16 +1293,22 @@ html[data-theme='dark'] {
 .uikit-grip-pill {
   border-radius: 9999px;
   background: var(--uikit-grip-fill);
-  box-shadow: 0 0 0 1px var(--uikit-grip-ring), var(--uikit-grip-shadow);
+  box-shadow:
+    0 0 0 1px var(--uikit-grip-ring),
+    var(--uikit-grip-shadow);
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
   pointer-events: none;
 }
-.uikit-grip-pill[data-grip='hover'] {
-  box-shadow: 0 0 0 1px var(--uikit-grip-ring-hover), var(--uikit-grip-shadow);
+.uikit-grip-pill[data-grip="hover"] {
+  box-shadow:
+    0 0 0 1px var(--uikit-grip-ring-hover),
+    var(--uikit-grip-shadow);
 }
-.uikit-grip-pill[data-grip='active'] {
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--uikit-accent) 60%, transparent), var(--uikit-grip-shadow);
+.uikit-grip-pill[data-grip="active"] {
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--uikit-accent) 60%, transparent),
+    var(--uikit-grip-shadow);
 }
 
 /* One busy animation across UIKit, including internal component loaders. */
@@ -1300,8 +1329,19 @@ html[data-theme='dark'] {
   white-space: pre;
   animation: uikit-braille 800ms steps(10) infinite;
 }
-@keyframes uikit-braille { to { transform: translateY(-100%); } }
-@keyframes uikit-spinner-reveal { from { opacity: 0; } }
+@keyframes uikit-braille {
+  to {
+    transform: translateY(-100%);
+  }
+}
+@keyframes uikit-spinner-reveal {
+  from {
+    opacity: 0;
+  }
+}
 @media (prefers-reduced-motion: reduce) {
-  .uikit-spinner, .uikit-spinner-frames { animation: none; }
+  .uikit-spinner,
+  .uikit-spinner-frames {
+    animation: none;
+  }
 }

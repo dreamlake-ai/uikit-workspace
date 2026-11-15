@@ -102,7 +102,9 @@ it("puts the footer meta after the card's own footer content", () => {
   );
   const row = container.querySelector("[data-uikit-footer]")!;
   expect(row.hasAttribute("data-uikit-footer-meta-only")).toBe(false);
-  expect(row.lastElementChild!.hasAttribute("data-uikit-title-right-foot")).toBe(true);
+  expect(
+    row.lastElementChild!.hasAttribute("data-uikit-title-right-foot"),
+  ).toBe(true);
 });
 
 it("on touch, shows the meta bottom-right instead of in the title row", () => {
@@ -114,7 +116,10 @@ it("on touch, shows the meta bottom-right instead of in the title row", () => {
   );
   const rule = (sel: string) =>
     touch.match(
-      new RegExp(sel.replace(/[[\]]/g, "\\$&") + " \\{([^}]*)\\}"),
+      new RegExp(
+        sel.replace(/[[\]]/g, "\\$&").replace(/ /g, "\\s+") +
+          "\\s*\\{([^}]*)\\}",
+      ),
     )?.[1] ?? "";
   const scope = "[data-uikit-card][data-uikit-top-actions] ";
   expect(rule(scope + "[data-uikit-header]")).toMatch(/flex-wrap: nowrap/);
@@ -124,9 +129,20 @@ it("on touch, shows the meta bottom-right instead of in the title row", () => {
   expect(rule(scope + "[data-uikit-header] [data-uikit-title-right]")).toMatch(
     /display: none/,
   );
-  expect(rule(scope + "[data-uikit-title-right-foot]")).toMatch(/display: block/);
-  expect(rule(scope + "[data-uikit-footer-meta-only]")).toMatch(/display: flex/);
+  expect(rule(scope + "[data-uikit-title-right-foot]")).toMatch(
+    /display: block/,
+  );
+  expect(rule(scope + "[data-uikit-footer-meta-only]")).toMatch(
+    /display: flex/,
+  );
   // Pointer devices never see the copy or the meta-only row.
-  const base = css.slice(0, css.indexOf("@media (hover: none) {\n  [data-uikit-card][data-uikit-top-actions]"));
-  expect(base).toMatch(/\[data-uikit-title-right-foot\],\n\[data-uikit-footer-meta-only\] \{\n  display: none;/);
+  const base = css.slice(
+    0,
+    css.indexOf(
+      "@media (hover: none) {\n  [data-uikit-card][data-uikit-top-actions]",
+    ),
+  );
+  expect(base).toMatch(
+    /\[data-uikit-title-right-foot\],\n\[data-uikit-footer-meta-only\] \{\n  display: none;/,
+  );
 });
