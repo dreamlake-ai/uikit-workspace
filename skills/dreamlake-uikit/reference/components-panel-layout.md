@@ -49,8 +49,8 @@ splitter in an app looks alike. The dock handles on a panel header
 are drag handles, not splitters, and keep the grey `--uikit-handle` tokens.
 Values and contrast are in the [color tokens](reference/style-guide-color.md#drag-affordances).
 
-> **Note:** `PanelLayout` fills its container. Without an ancestor that has a real height it collapses to
->   nothing — the demos here sit in a fixed-height box.
+> **Note:** `PanelLayout` fills its container. Without an ancestor that has a real height
+>   it collapses to nothing — the demos here sit in a fixed-height box.
 
 ## Narrow screens
 
@@ -117,8 +117,15 @@ A `group` is a flat tab bar of panels sharing one region. By default, only the
 active tab is mounted. Enable `tabbed` to keep each view mounted and connected
 while switching tabs or docking it into another region. Groups normally arise from a user dropping one panel onto another's
 centre, so `panelGroup` is how you seed a layout that already has tabs. A tab
-can be dragged straight out of its group to dock elsewhere, and a group that
-loses its second-to-last tab collapses back into a plain panel.
+can be dragged straight out of its group to dock elsewhere. A group that loses
+its second-to-last tab becomes a singleton; `showSingleTab` determines whether
+that remaining view keeps its tab.
+
+The selected tab joins the body with curved feet on both sides. Background tabs
+use flat labels and separators, with a rounded rectangle on hover. The strip
+reserves eight pixels inside each scroll edge so the selected tab's feet remain
+visible. The close control stays at the visible right edge of its own tab while
+the strip scrolls; it always closes that leaf.
 
 A group's tab strip starts 10px from the panel's left edge and 8px from its
 top, under a 34px header row. Set `tabStripInset` (`{ left, top }`, in px) to
@@ -132,21 +139,38 @@ Use `tabbed` for editors, collaborative documents, and iframe previews that must
 retain their own state when hidden or moved. Each leaf keeps one connected body;
 inactive bodies are hidden. Closing a leaf disposes its body.
 
-A singleton uses the same header row without an extra tab strip. Multiple views
-show tabs beside the active view's header controls. Custom labels stay on one
-line and clip when they reach those controls.
+With `showSingleTab` enabled, a singleton uses the same selected tab, linked
+tabpanel semantics, and inside close control as a group. Hosts that omit it keep
+the plain singleton header. Both presentations keep the existing body mounted.
+Multiple views show tabs beside the active view's header controls. Custom labels
+stay on one line and clip when they reach those controls.
+
+Use `renderTabTrailing(leaf)` for a copyable reference or other independent tab
+action. It follows the label and precedes the shared close inside the sticky
+end area. Keep active-only reference visibility in the host; UIKit does not hide
+unrelated trailing actions on background tabs. `renderHeader` remains the active
+view's toolbar slot, so a tab change selects its contextual controls without
+moving the body or copying its controller.
+
+Both panel groups and compact `TabRow` selectors share the configurable
+[document-tab surfaces](reference/style-guide-color.md#document-tabs-and-workspace).
 
 ```tsx
 <PanelLayout
   ref={layout}
   tabbed
-  initial={() => panelGroup([panelLeaf({ view: 'editor', title: 'Draft' }), panelLeaf({ view: 'preview', title: 'Preview' })])}
+  initial={() =>
+    panelGroup([
+      panelLeaf({ view: "editor", title: "Draft" }),
+      panelLeaf({ view: "preview", title: "Preview" }),
+    ])
+  }
   renderTab={(leaf) => <span>{leaf.title}</span>}
   renderHeader={(leaf) => <ViewActions viewId={leaf.id} />}
   renderBody={(leaf) => <ViewBody viewId={leaf.id} kind={leaf.view} />}
   onFocusedLeafChange={(leaf) => setActiveView(leaf.id)}
   onRequestClose={(id) => {
-    if (canClose(id)) layout.current?.closeLeaf(id)
+    if (canClose(id)) layout.current?.closeLeaf(id);
   }}
 />
 ```
@@ -180,7 +204,11 @@ precisely because hiding the button is not enough: Delete never touches one, so
 the refusal lives next to the close handler and the affordances just reflect it.
 
 ```tsx
-<PanelLayout initial={initial} closable={(leaf) => leaf.view !== 'subject'} primaryView="subject" />
+<PanelLayout
+  initial={initial}
+  closable={(leaf) => leaf.view !== "subject"}
+  primaryView="subject"
+/>
 ```
 
 The imperative `closeLeaf` is deliberately NOT gated — a host taking a panel
@@ -234,9 +262,10 @@ const persisted = usePersistedPanelLayout({
 Returns `{ initial, onChange, clear, reset }`. A pending write is flushed on
 unmount and on `pagehide`, so the last drag of a session isn't lost.
 
-> **Warning:** `initial` RESTORES a layout, so wiring the toolbar's Reset to it hands back the very layout the
->   user is clearing. `reset()` is the other half — it forgets the saved layout and returns the
->   fallback. Pass it as `resetTo`, or call it yourself and give the result to `replaceRoot`.
+> **Warning:** `initial` RESTORES a layout, so wiring the toolbar's Reset to it hands back
+>   the very layout the user is clearing. `reset()` is the other half — it forgets
+>   the saved layout and returns the fallback. Pass it as `resetTo`, or call it
+>   yourself and give the result to `replaceRoot`.
 
 ## Scoped layouts
 
@@ -251,13 +280,13 @@ save it — so a later reader honours what was saved rather than re-deriving it
 from a rule that has since changed.
 
 ```tsx
-const scopeOf = (leaf) => (GLOBAL_VIEWS.has(leaf.view) ? 'global' : 'document')
+const scopeOf = (leaf) => (GLOBAL_VIEWS.has(leaf.view) ? "global" : "document");
 
 usePersistedPanelLayout({
   key: `doc:${docId}:layout`,
   fallback: freshDocLayout,
-  transform: (root) => scopeSubtree(root, 'document', scopeOf),
-})
+  transform: (root) => scopeSubtree(root, "document", scopeOf),
+});
 ```
 
 `pruneLeaves(node, keep)` is the primitive underneath, and is useful on its own
@@ -276,14 +305,21 @@ open that re-runs after the panel exists is a no-op rather than a second copy.
 ```tsx
 const plan = resolveViewSplit({
   root: panelRef.current?.getRoot() ?? null,
-  view: 'diff',
-  anchorView: 'editor', // open alongside the primary panel
+  view: "diff",
+  anchorView: "editor", // open alongside the primary panel
   fallbackLeafId: firstLeafId,
   prefs, // remembered { dir, before, px } per view
   widthOf: (id) => measure(id),
-})
-if (!('skip' in plan)) {
-  panelRef.current?.splitWith(plan.targetId, plan.dir, 'diff', 'Diff', plan.before, plan.fraction)
+});
+if (!("skip" in plan)) {
+  panelRef.current?.splitWith(
+    plan.targetId,
+    plan.dir,
+    "diff",
+    "Diff",
+    plan.before,
+    plan.fraction,
+  );
 }
 ```
 
@@ -307,9 +343,9 @@ focusable `separator` reporting `aria-valuenow/min/max`, and the keyboard runs
 through the same clamp as the pointer, so no key can push a panel below its
 minimum.
 
-> **Note:** Dragging a panel onto another's edge — or a tab out of its group — has no keyboard equivalent. The
->   split shortcut and the imperative handle cover creating and closing panels; rearranging them needs
->   a pointer.
+> **Note:** Dragging a panel onto another's edge — or a tab out of its group — has no
+>   keyboard equivalent. The split shortcut and the imperative handle cover
+>   creating and closing panels; rearranging them needs a pointer.
 
 ## Panel geometry without measuring
 
