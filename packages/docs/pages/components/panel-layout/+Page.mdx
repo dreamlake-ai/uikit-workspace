@@ -28,6 +28,8 @@ An IDE-style tiling workspace. Panels split, resize, drag onto each other's
 edges to re-dock, and merge into tab groups — all over a recursive tree the
 host can read, write, and persist.
 
+Overflowing document tabs have no visible scrollbar. Scroll or swipe horizontally: tabs on the right slide over tabs on the left, including the selected tab. Inactive tabs retain their rounded hover fill over an opaque backing, so covered labels cannot bleed through. Keyboard selection reveals the selected tab; reduced motion disables the automatic slide animation.
+
 It is **view-agnostic by construction**. A panel carries a `view` string that
 only your `renderBody` / `renderHeader` interpret; the layout never reads it.
 Everything a real app needs on top — which views may be tabbed, which one

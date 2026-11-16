@@ -36,10 +36,12 @@ it("reveals selected tabs on open and resize without scrolling the document or c
   >;
   vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
     function (this: HTMLElement) {
+      if (this.getAttribute("role") === "tab")
+        expect(this.style.position).toBe("static");
       const bar = host.querySelector("[role=tablist]") as HTMLElement | null;
       const left =
         this.getAttribute("role") === "tab"
-          ? (this.id.endsWith(chat.id) ? 140 : 0) - (bar?.scrollLeft ?? 0)
+          ? (this.id.endsWith(chat.id) ? 140 : 8) - (bar?.scrollLeft ?? 0)
           : 0;
       const w = this.getAttribute("role") === "tab" ? 60 : width;
       return {
@@ -69,10 +71,10 @@ it("reveals selected tabs on open and resize without scrolling the document or c
   try {
     render(chat.id);
     const bar = host.querySelector("[role=tablist]") as HTMLElement;
-    expect(bar.scrollLeft).toBe(40);
+    expect(bar.scrollLeft).toBe(48);
     width = 120;
     act(() => resize());
-    expect(bar.scrollLeft).toBe(80);
+    expect(bar.scrollLeft).toBe(88);
     render(note.id);
     expect(bar.scrollLeft).toBe(0);
     expect(document.activeElement).toBe(document.body);
