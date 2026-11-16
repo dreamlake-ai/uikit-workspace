@@ -11,19 +11,35 @@ beforeEach(() => {
   document.body.append(container)
   root = createRoot(container)
 })
-afterEach(() => { act(() => root.unmount()); container.remove() })
+afterEach(() => {
+  act(() => root.unmount())
+  container.remove()
+})
 function setup(query = 'pitch') {
   const onRemove = vi.fn()
   const onQuery = vi.fn()
   const ref = createRef<HTMLInputElement>()
-  act(() => root.render(<ListSearchInput query={query} onQuery={onQuery} searchRef={ref}
-    filter={{ label: 'yours', onRemove }} />))
+  act(() =>
+    root.render(
+      <ListSearchInput
+        query={query}
+        onQuery={onQuery}
+        searchRef={ref}
+        filter={{ label: 'yours', onRemove }}
+      />
+    )
+  )
   const input = ref.current!
   act(() => input.focus())
   return { input, onRemove, onQuery }
 }
 function backspace(input: HTMLInputElement, options: KeyboardEventInit = {}) {
-  const event = new KeyboardEvent('keydown', { key: 'Backspace', bubbles: true, cancelable: true, ...options })
+  const event = new KeyboardEvent('keydown', {
+    key: 'Backspace',
+    bubbles: true,
+    cancelable: true,
+    ...options,
+  })
   act(() => input.dispatchEvent(event))
   return event
 }
@@ -42,7 +58,12 @@ it('removes the badge from an empty search', () => {
 })
 it('preserves ordinary deletion, selections, composition and modified keys', () => {
   const { input, onRemove } = setup()
-  for (const [start, end, options] of [[2, 2, {}], [0, 3, {}], [0, 0, { isComposing: true }], [0, 0, { metaKey: true }]] as const) {
+  for (const [start, end, options] of [
+    [2, 2, {}],
+    [0, 3, {}],
+    [0, 0, { isComposing: true }],
+    [0, 0, { metaKey: true }],
+  ] as const) {
     input.setSelectionRange(start, end)
     expect(backspace(input, options).defaultPrevented).toBe(false)
   }
@@ -53,7 +74,10 @@ it('exposes only a removal button and returns focus to the input', () => {
   const button = container.querySelector('button')!
   expect(button.getAttribute('aria-label')).toBe('Remove yours filter')
   expect(container.querySelector('[role="combobox"]')).toBeNull()
-  act(() => { button.focus(); button.click() })
+  act(() => {
+    button.focus()
+    button.click()
+  })
   expect(onRemove).toHaveBeenCalledOnce()
   expect(document.activeElement).toBe(input)
 })
@@ -62,4 +86,33 @@ it('Escape blurs without clearing the query', () => {
   act(() => input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })))
   expect(document.activeElement).not.toBe(input)
   expect(onQuery).not.toHaveBeenCalled()
+})
+it('removes multiple chips from nearest to farthest, and each cross removes its own chip', () => {
+  const first = vi.fn(),
+    last = vi.fn()
+  const ref = createRef<HTMLInputElement>()
+  act(() =>
+    root.render(
+      <ListSearchInput
+        query="pitch"
+        onQuery={vi.fn()}
+        searchRef={ref}
+        filters={[
+          { label: 'public', onRemove: first },
+          { label: 'Owned by me', onRemove: last },
+        ]}
+      />
+    )
+  )
+  const input = ref.current!
+  act(() => input.focus())
+  input.setSelectionRange(0, 0)
+  backspace(input)
+  expect(last).toHaveBeenCalledOnce()
+  expect(first).not.toHaveBeenCalled()
+  expect(input.value).toBe('pitch')
+  const button = container.querySelector<HTMLButtonElement>('[aria-label="Remove public filter"]')!
+  act(() => button.click())
+  expect(first).toHaveBeenCalledOnce()
+  expect(document.activeElement).toBe(input)
 })
