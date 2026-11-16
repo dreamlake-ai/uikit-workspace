@@ -39,6 +39,11 @@ row, never in an extra header, toolbar or footer. The tab strip keeps the
 remaining width and scrolls, so the actions never widen the panel. See
 [TabbedContainer → Contextual actions](reference/components-tabbed-container.md#contextual-actions).
 
+Document and framed content tabs keep their label boxes steady across selection.
+Inactive rounded fills sit 2px inside the top and bottom of the tab box; hover
+changes the fill rather than the box size. Labels and trailing badges stay
+vertically centered, with compact space before the close control.
+
 ## Touch: card meta goes to the bottom-right corner
 
 A card header with always-visible actions on a touch device (`hover: none`) is

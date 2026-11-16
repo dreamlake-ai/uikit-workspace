@@ -1220,9 +1220,11 @@ html[data-theme="dark"] {
   border: 0;
 }
 .uikit-tabbed-container-tabs [role="tab"] {
+  position: relative;
+  isolation: isolate;
   flex-shrink: 0;
   margin: 0 1px;
-  padding: 3px 9px 4px;
+  padding: 4px 8px;
   border: 1px solid transparent;
   border-radius: 6px 6px 0 0;
   background: transparent;
@@ -1235,9 +1237,22 @@ html[data-theme="dark"] {
 .uikit-tabbed-container-tabs [role="tab"]:first-child {
   margin-left: 0;
 }
+.uikit-tabbed-container-tabs [role="tab"][aria-selected="false"]::before {
+  content: "";
+  position: absolute;
+  inset: calc(var(--uikit-document-inactive-inset, 2px) - 1px) 0;
+  z-index: -1;
+  border-radius: 6px;
+  background: var(--uikit-document-inactive-bg, transparent);
+  pointer-events: none;
+}
+.uikit-tabbed-container-tabs [role="tab"][aria-selected="false"]:hover::before {
+  background: var(
+    --uikit-document-hover-bg,
+    color-mix(in srgb, var(--ink) 4%, var(--bg))
+  );
+}
 .uikit-tabbed-container-tabs [role="tab"][aria-selected="false"]:hover {
-  border-color: var(--faint);
-  border-bottom-color: transparent;
   color: var(--ink);
 }
 .uikit-tabbed-container-tabs [role="tab"][aria-selected="true"] {

@@ -120,6 +120,11 @@ selected tab uses the body's surface. The first tab reserves only the 8px
 needed for its S-shaped foot; editor alignment can position it at the text column.
 The + control uses a subtle tint without a shadow.
 
+Background tabs use rounded rectangles inset equally above and below the fill.
+Their outer boxes stay the same height as the selected tab, keeping the label
+baseline and close targets steady when selection changes. Labels leave a compact
+gap before the close, while badges and close controls remain vertically centered.
+
 Set these CSS variables on the containing layout (or the `TabRow` style):
 
 | Variable                           | Default                   | Purpose                                                               |
@@ -128,6 +133,7 @@ Set these CSS variables on the containing layout (or the `TabRow` style):
 | `--uikit-document-surface`         | `--bg`                    | Selected tab; set this to the host body color.                        |
 | `--uikit-document-inactive-bg`     | Strip surface             | Background tabs blend into the workspace.                             |
 | `--uikit-document-hover-bg`        | 4% ink over strip surface | Hovered background tab.                                               |
+| `--uikit-document-inactive-inset`  | `2px`                     | Equal vertical space around the background tab fill.                  |
 | `--uikit-document-action-bg`       | 3% ink over strip surface | Subtle action tint in the specimens.                                  |
 | `--uikit-document-action-hover-bg` | 8% ink over strip surface | Hover shade for + and ↙.                                              |
 
