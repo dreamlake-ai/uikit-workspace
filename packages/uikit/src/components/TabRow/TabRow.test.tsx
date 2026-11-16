@@ -240,6 +240,7 @@ it("reveals the active tab together with its trailing and close controls", () =>
   Object.defineProperty(Element.prototype, "scrollIntoView", {
     configurable: true,
     value: function (this: Element) {
+      expect((this as HTMLElement).style.position).toBe("static");
       revealed.push(this);
     },
   });
@@ -299,6 +300,7 @@ it("keeps the complete active tab visible when its viewport narrows and disconne
   Object.defineProperty(Element.prototype, "scrollIntoView", {
     configurable: true,
     value: function (this: Element) {
+      expect((this as HTMLElement).style.position).toBe("static");
       revealed.push(this);
     },
   });

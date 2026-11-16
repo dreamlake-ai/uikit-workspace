@@ -76,27 +76,36 @@ export function TabRow({
     ? Math.max(minimum, preferredTabWidth)
     : Math.max(minimum, 170);
   useEffect(() => {
-    scrollRef.current
+    const tab = scrollRef.current
       ?.querySelector('[aria-selected="true"]')
-      ?.closest(".uikit-tab-row-item")
-      ?.scrollIntoView?.({
-        inline: "nearest",
-        block: "nearest",
-        behavior: "smooth",
-      });
+      ?.closest<HTMLElement>(".uikit-tab-row-item");
+    if (!tab) return;
+    // Measure the natural slot, not its sticky position under later tabs.
+    tab.style.position = "static";
+    tab.scrollIntoView?.({
+      inline: "nearest",
+      block: "nearest",
+      behavior: window.matchMedia?.("(prefers-reduced-motion: reduce)").matches
+        ? "auto"
+        : "smooth",
+    });
+    tab.style.removeProperty("position");
   }, [value, tabs.length]);
   useEffect(() => {
     const area = scrollRef.current;
     if (!area || typeof ResizeObserver === "undefined") return;
     const observer = new ResizeObserver(() => {
-      area
+      const tab = area
         .querySelector('[aria-selected="true"]')
-        ?.closest(".uikit-tab-row-item")
-        ?.scrollIntoView?.({
-          inline: "nearest",
-          block: "nearest",
-          behavior: "auto",
-        });
+        ?.closest<HTMLElement>(".uikit-tab-row-item");
+      if (!tab) return;
+      tab.style.position = "static";
+      tab.scrollIntoView?.({
+        inline: "nearest",
+        block: "nearest",
+        behavior: "auto",
+      });
+      tab.style.removeProperty("position");
     });
     observer.observe(area);
     return () => observer.disconnect();
@@ -205,7 +214,7 @@ export function TabRow({
                     event.preventDefault();
                     scrollRef.current
                       ?.querySelectorAll<HTMLButtonElement>('[role="tab"]')
-                      [next]?.focus();
+                      [next]?.focus({ preventScroll: true });
                     onValueChange(tabs[next].value);
                   }}
                 >
