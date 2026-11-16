@@ -115,7 +115,7 @@ it("fits opted-in text tabs intrinsically while retaining padding and keyboard n
   expect(fitted.flexShrink).toBe("0");
   expect(fitted.minWidth).toBe("0px");
   expect(fitted.maxWidth).toBe("var(--tab-row-preferred-width)");
-  expect(getComputedStyle(tabs[0]).paddingLeft).toBe("10px");
+  expect(getComputedStyle(tabs[0]).paddingLeft).toBe("8px");
   expect(tabs[1].parentElement?.hasAttribute("data-fit-content")).toBe(false);
   act(() =>
     tabs[1].dispatchEvent(
@@ -457,7 +457,7 @@ it("keeps fitted nonclosable label padding constant across selection", () => {
     ),
   );
   expect(getComputedStyle(first).paddingRight).toBe(initial);
-  expect(initial).toBe("10px");
+  expect(initial).toBe("8px");
   expect(
     first.parentElement?.querySelector('[aria-label="Close First"]'),
   ).toBeNull();

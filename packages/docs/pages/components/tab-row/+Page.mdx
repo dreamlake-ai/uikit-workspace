@@ -127,17 +127,15 @@ gap before the close, while badges and close controls remain vertically centered
 
 Set these CSS variables on the containing layout (or the `TabRow` style):
 
-| Variable                           | Default                   | Purpose                                                                            |
-| ---------------------------------- | ------------------------- | ---------------------------------------------------------------------------------- |
-| `--uikit-document-strip-surface`   | `--uikit-workspace-bg`    | Background around tabs; app layouts map this to `var(--dl-shell-bg)`.              |
-| `--uikit-document-surface`         | `--bg`                    | Selected tab; set this to the host body color.                                     |
-| `--uikit-document-inactive-bg`     | Strip surface             | Background tabs blend into the workspace.                                          |
-| `--uikit-document-hover-bg`        | 4% ink over strip surface | Hovered background tab.                                                            |
-| `--uikit-document-inactive-inset`  | `2px`                     | Equal vertical space around the background tab fill.                               |
-| `--uikit-document-label-start`     | `8px`                     | Label's starting inset; also the ending inset when there are no trailing controls. |
-| `--uikit-document-label-end`       | `4px`                     | Label space before trailing badges and close controls.                             |
-| `--uikit-document-action-bg`       | 3% ink over strip surface | Subtle action tint in the specimens.                                               |
-| `--uikit-document-action-hover-bg` | 8% ink over strip surface | Hover shade for + and ↙.                                                           |
+| Variable                           | Default                   | Purpose                                                               |
+| ---------------------------------- | ------------------------- | --------------------------------------------------------------------- |
+| `--uikit-document-strip-surface`   | `--uikit-workspace-bg`    | Background around tabs; app layouts map this to `var(--dl-shell-bg)`. |
+| `--uikit-document-surface`         | `--bg`                    | Selected tab; set this to the host body color.                        |
+| `--uikit-document-inactive-bg`     | Strip surface             | Background tabs blend into the workspace.                             |
+| `--uikit-document-hover-bg`        | 4% ink over strip surface | Hovered background tab.                                               |
+| `--uikit-document-inactive-inset`  | `2px`                     | Equal vertical space around the background tab fill.                  |
+| `--uikit-document-action-bg`       | 3% ink over strip surface | Subtle action tint in the specimens.                                  |
+| `--uikit-document-action-hover-bg` | 8% ink over strip surface | Hover shade for + and ↙.                                              |
 
 `--uikit-workspace-bg` defaults to `#f1eee7` in light mode and `#222226` in
 dark mode, matching the app's workspace shell. Explicit light/dark selection
