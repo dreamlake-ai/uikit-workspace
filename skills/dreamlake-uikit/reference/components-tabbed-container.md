@@ -4,6 +4,12 @@ A tab strip joined to one content frame. It generalizes the raised file-tab
 geometry of Dockit's code-block tabs to arbitrary React content. Colors use
 neutral UIKit surface, ink and hairline tokens in light and dark themes.
 
+Background tabs have rounded rectangular fills inset equally above and below.
+Their labels keep the same padding and vertical position when selected; hovering
+changes the fill without adding a tab-shaped border. The shared
+`--uikit-document-inactive-inset`, `--uikit-document-inactive-bg`, and
+`--uikit-document-hover-bg` variables also apply here.
+
 One shared starting point.</p>,
     },
     {
@@ -53,7 +59,9 @@ while that tab is active; the container's `actions` show for every tab, after
 the active tab's own. The tab strip keeps the remaining width and scrolls when
 labels do not fit, so the actions never push the frame wider.
 
-Open memo}
+      Open memo
+    
+  }
   items={[
     {
       value: "overview",
@@ -63,7 +71,11 @@ Open memo}
     {
       value: "runs",
       label: "Runs 25",
-      actions: Copy launch command,
+      actions: (
+        
+          Copy launch command
+        
+      ),
       children: <p>Plan versus actual, one row per config and seed.</p>,
     },
   ]}
@@ -72,13 +84,21 @@ Open memo}
 ```tsx
 <TabbedContainer
   aria-label="Experiment views"
-  actions={<Button variant="ghost" size="sm">Open memo</Button>}
+  actions={
+    <Button variant="ghost" size="sm">
+      Open memo
+    </Button>
+  }
   items={[
     { value: "overview", label: "Overview", children: <Overview /> },
     {
       value: "runs",
       label: "Runs 25",
-      actions: <Button variant="ghost" size="sm">Copy launch command</Button>,
+      actions: (
+        <Button variant="ghost" size="sm">
+          Copy launch command
+        </Button>
+      ),
       children: <RunsTable />,
     },
   ]}
