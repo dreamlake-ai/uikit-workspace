@@ -3,6 +3,7 @@ import { expect, test } from "@playwright/test";
 for (const kind of ["documents", "panels"] as const) {
   test(`${kind}: tabs keep their gap at rest and stack only during overflow`, async ({
     page,
+    isMobile,
   }) => {
     await page.goto(
       `/components/${kind === "documents" ? "tab-row" : "panel-layout"}`,
@@ -56,6 +57,12 @@ for (const kind of ["documents", "panels"] as const) {
         }),
       );
     const activeGeometry = await vertical();
+    const rowBounds = (await row.boundingBox())!;
+    for (const box of activeGeometry)
+      expect(
+        Math.abs(box.y + box.height / 2 - rowBounds.y - rowBounds.height / 2),
+      ).toBeLessThanOrEqual(1);
+
     await row.getByRole("tab").nth(1).click();
     await expect(first).toHaveAttribute("aria-selected", "false");
     expect(await vertical()).toEqual(activeGeometry);
@@ -80,14 +87,21 @@ for (const kind of ["documents", "panels"] as const) {
     await expect
       .poll(async () => (await geometry()).overflow)
       .toBeGreaterThan(0);
-    await row.evaluate((el) => {
-      el.scrollLeft = 70;
-    });
+    await row.hover();
+    // Mobile WebKit cannot synthesize a wheel; desktop checks use a real wheel.
+    if (isMobile)
+      await row.evaluate((el) => {
+        el.scrollLeft = 70;
+      });
+    else await page.mouse.wheel(0, 70);
+    await expect
+      .poll(() => row.evaluate((el) => el.scrollLeft))
+      .toBeGreaterThan(0);
     await expect
       .poll(async () => (await geometry()).gaps.some((gap) => gap < -1))
       .toBe(true);
-    // Later tabs own the overlapping pixels; the earlier tab must not hide
-    // them just because it is active. Test the actual hit target, not z-index.
+    // The active left tab keeps its right edge and controls above the stack.
+    // Check the overlapping hit target, not just a z-index declaration.
     expect(
       await row.evaluate((el) => {
         const tabs = [
@@ -96,11 +110,44 @@ for (const kind of ["documents", "panels"] as const) {
         const a = tabs[0].getBoundingClientRect(),
           b = tabs[1].getBoundingClientRect();
         const x = (Math.max(a.left, b.left) + Math.min(a.right, b.right)) / 2;
-        return tabs[1].contains(
+        return tabs[0].contains(
           document.elementFromPoint(x, b.top + b.height / 2),
         );
       }),
     ).toBe(true);
+    expect(
+      await firstFace.locator(".uikit-document-tab-close").evaluate((el) => {
+        const box = el.getBoundingClientRect();
+        return el.contains(
+          document.elementFromPoint(
+            box.x + box.width / 2,
+            box.y + box.height / 2,
+          ),
+        );
+      }),
+    ).toBe(true);
+    // Inactive tabs still slide over each other when a later tab is selected.
+    await row.getByRole("tab").last().click();
+    await row.evaluate((el) => {
+      el.scrollLeft = 70;
+    });
+    await expect
+      .poll(() =>
+        row.evaluate((el) => {
+          const tabs = [
+            ...el.querySelectorAll<HTMLElement>(".uikit-document-tab"),
+          ];
+          const a = tabs[0].getBoundingClientRect(),
+            b = tabs[1].getBoundingClientRect();
+          return tabs[1].contains(
+            document.elementFromPoint(
+              (Math.max(a.left, b.left) + Math.min(a.right, b.right)) / 2,
+              b.top + b.height / 2,
+            ),
+          );
+        }),
+      )
+      .toBe(true);
     const secondFace = row.locator(".uikit-document-tab").nth(1);
     const secondLabel =
       (await row.getByRole("tab").nth(1).getAttribute("aria-label")) ??
