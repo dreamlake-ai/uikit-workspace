@@ -80,6 +80,11 @@ with one panel. Compact rows center their labels against 32px navigation control
 preserving the standard TabRow appearance.
 Hosts choose the breakpoint.
 
+Document tabs share the TabRow spacing: background fills are rounded rectangles
+with equal space above and below, while selected and background labels keep the
+same vertical position. Label padding owns the compact gap before trailing
+badges and close controls; the tab group adds no second gap.
+
 For a utility such as a Sessions library that should become a tab when selected,
 use `panelAsAction={leaf => leaf.view === 'sessions'}`. At both widths an inactive
 utility is a leading action button outside the tab list; selection restores its
