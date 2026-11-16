@@ -451,7 +451,7 @@ const CSS = `
 .dl-tab-edge-study .uikit-tab-row-scroll{padding-left:8px;align-items:flex-end;flex:0 1 auto;touch-action:pan-x}
 .dl-tab-edge-study [data-overflow] .uikit-tab-row-scroll{flex:1 1 auto}
 .dl-tab-edge-study .uikit-tab-row-line{display:none}
-.dl-tab-edge-study .uikit-tab-row-controls{z-index:6;align-self:stretch;align-items:flex-start;margin-bottom:0;margin-left:auto;background:var(--uikit-document-strip-surface,var(--uikit-workspace-bg));gap:2px}
+.dl-tab-edge-study .uikit-tab-row-controls{z-index:6;align-self:stretch;align-items:flex-start;margin-top:0;margin-bottom:0;margin-left:auto;background:var(--uikit-document-strip-surface,var(--uikit-workspace-bg));gap:2px}
 .dl-tab-edge-study .uikit-tab-row-item-label{padding:4px 6px 4px 9px;opacity:.8}
 .dl-tab-edge-study .uikit-tab-row-item[data-active] .uikit-tab-row-item-label{opacity:1}
 .dl-tab-edge-study [data-tab-edge="straight"] .uikit-tab-row-item:first-child{border-top-left-radius:0}
