@@ -257,8 +257,11 @@ const CSS =
   ".uikit-tab-row-item[data-icon-only] .uikit-tab-row-item-icon{margin-right:0}" +
   ".uikit-tab-row{-webkit-user-select:none;user-select:none;position:relative;display:flex;align-items:flex-end;gap:6px;width:100%;min-width:0}" +
   ".uikit-tab-row-line{display:none}" +
-  ".uikit-tab-row-controls{position:relative;z-index:1;flex:0 0 auto;margin-bottom:4px;display:flex;align-items:center;gap:2px}" +
-  ".uikit-tab-row-compact .uikit-tab-row-controls{margin-bottom:0;align-self:center}" +
+  // The 4px spacer sits above the controls: the row keeps its height, and
+  // controls share the tabs' bottom edge, so they center on the tab boxes
+  // instead of riding above them.
+  ".uikit-tab-row-controls{position:relative;z-index:1;flex:0 0 auto;margin-top:4px;display:flex;align-items:center;gap:2px}" +
+  ".uikit-tab-row-compact .uikit-tab-row-controls{margin-top:0;margin-bottom:0;align-self:center}" +
   ".uikit-tab-row-item:focus-within .uikit-tab-row-item-x{width:16px;margin-right:0;opacity:.55}" +
   ".uikit-tab-row-item button:focus-visible{outline:2px solid var(--uikit-accent);outline-offset:-2px}" +
   ".uikit-tab-row-scroll{position:relative;z-index:1;display:flex;align-items:flex-end;gap:2px;" +

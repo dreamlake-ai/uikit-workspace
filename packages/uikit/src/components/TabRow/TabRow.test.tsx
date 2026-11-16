@@ -183,6 +183,7 @@ it("centers compact controls without changing default desktop alignment", () => 
     ".uikit-tab-row-controls",
   )) {
     expect(getComputedStyle(controls).alignSelf).toBe("center");
+    expect(getComputedStyle(controls).marginTop).toBe("0px");
     expect(getComputedStyle(controls).marginBottom).toBe("0px");
   }
   render(false);
@@ -190,7 +191,7 @@ it("centers compact controls without changing default desktop alignment", () => 
   expect(getComputedStyle(row).alignItems).toBe("flex-end");
   expect(
     getComputedStyle(row.querySelector<HTMLElement>(".uikit-tab-row-controls")!)
-      .marginBottom,
+      .marginTop,
   ).toBe("4px");
 });
 

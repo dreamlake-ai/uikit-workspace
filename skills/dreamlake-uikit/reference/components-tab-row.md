@@ -1,6 +1,6 @@
 # Tab Row
 
-A row of closable document tabs with a raised active tab. Tabs start at their preferred width, compress as space runs out, then scroll horizontally once they reach the minimum. Leading and trailing controls stay fixed.
+A row of closable document tabs with a raised active tab. Tabs start at their preferred width, compress as space runs out, then scroll horizontally once they reach the minimum. Leading and trailing controls stay fixed. On the default desktop row they share the tabs' bottom edge, with a 4px space above them, so a 28px icon button centers on the 26px tabs and the row height does not change.
 
 ## Workspace context
 
@@ -44,7 +44,8 @@ button remains inside the scrolling area, beside the truncated title.
 Use the existing `leading` slot for a subdued navigation control beside the
 scrolling tabs. Compact layouts use `minTabHeight={30}` and the
 `uikit-tab-row-compact` class to center 32px controls against the 30px labels
-plus their tab borders. The default desktop row spacing is unchanged. An item with `icon` and `iconOnly` occupies 32px; its `label`
+plus their tab borders; the compact class also removes the desktop space above
+the controls. An item with `icon` and `iconOnly` occupies 32px; its `label`
 remains the accessible name and tooltip. A closable icon tab reserves another
 22px for its close control. Other tabs retain their normal width and appearance.
 
