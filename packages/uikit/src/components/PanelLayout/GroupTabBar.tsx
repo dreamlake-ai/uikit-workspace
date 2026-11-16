@@ -222,7 +222,7 @@ export function GroupTabBar({
                 onActivate(leaf.id);
               }}
               className={cn(
-                "uikit-document-tab group/tab inline-flex items-center gap-1.5 pl-2.5 pr-0 cursor-pointer whitespace-nowrap",
+                "uikit-document-tab group/tab inline-flex items-center p-0 cursor-pointer whitespace-nowrap",
                 tabbed && "min-w-0 max-w-full shrink-0",
               )}
             >
