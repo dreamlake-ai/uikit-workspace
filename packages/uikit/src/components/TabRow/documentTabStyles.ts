@@ -18,6 +18,7 @@ export const documentTabStyles = `
 .uikit-document-tab[data-active]::after{left:100%;--uikit-tab-curve-origin:100%}
 .uikit-document-tab:not([data-active]):not(:last-child):not(:hover):not(:has(+ .uikit-document-tab:is([data-active],:hover)))::after{content:"";position:absolute;right:-2px;top:50%;width:1px;height:12px;transform:translateY(-50%);background:var(--faint);pointer-events:none}
 .uikit-document-tab-label{font-family:var(--font-uikit-mono,monospace);font-size:11px;line-height:14px;font-weight:500;letter-spacing:-.005em;padding:4px 4px 4px 8px}
+.uikit-document-tab > span.uikit-document-tab-label{align-self:stretch;padding-block:0}
 .uikit-document-tab:not(:has(> .uikit-document-tab-end:not(:empty))) > .uikit-document-tab-label{padding-right:8px}
 .uikit-document-tab[data-active] .uikit-document-tab-label{font-weight:600}
 .uikit-document-tab-end{position:sticky;right:0;z-index:2;display:inline-flex;align-items:center;flex:0 0 auto;gap:4px;align-self:stretch;background:var(--uikit-tab-fill);border-radius:0 7px 0 0;padding:2px 4px 2px 2px}

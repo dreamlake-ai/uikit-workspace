@@ -84,6 +84,8 @@ Document tabs share the TabRow spacing: background fills are rounded rectangles
 with equal space above and below, while selected and background labels keep the
 same vertical position. Label padding owns the compact gap before trailing
 badges and close controls; the tab group adds no second gap.
+Grouped labels stretch vertically and center their contents without additional
+vertical padding, so taller status badges fit inside the same tab height.
 
 For a utility such as a Sessions library that should become a tab when selected,
 use `panelAsAction={leaf => leaf.view === 'sessions'}`. At both widths an inactive
