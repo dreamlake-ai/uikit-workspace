@@ -59,45 +59,17 @@ while that tab is active; the container's `actions` show for every tab, after
 the active tab's own. The tab strip keeps the remaining width and scrolls when
 labels do not fit, so the actions never push the frame wider.
 
-      Open memo
-    
-  }
-  items={[
-    {
-      value: "overview",
-      label: "Overview",
-      children: <p>Question, primary chart and conclusion.</p>,
-    },
-    {
-      value: "runs",
-      label: "Runs 25",
-      actions: (
-        
-          Copy launch command
-        
-      ),
-      children: <p>Plan versus actual, one row per config and seed.</p>,
-    },
-  ]}
-/>
-
 ```tsx
 <TabbedContainer
   aria-label="Experiment views"
-  actions={
-    <Button variant="ghost" size="sm">
-      Open memo
-    </Button>
-  }
+  actions={<Button variant="ghost" size="sm" children="Open memo" />}
   items={[
     { value: "overview", label: "Overview", children: <Overview /> },
     {
       value: "runs",
       label: "Runs 25",
       actions: (
-        <Button variant="ghost" size="sm">
-          Copy launch command
-        </Button>
+        <Button variant="ghost" size="sm" children="Copy launch command" />
       ),
       children: <RunsTable />,
     },

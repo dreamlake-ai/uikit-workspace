@@ -5,7 +5,8 @@ order: 86.5
 description: A neutral framed tabbed surface for examples, scenarios and arbitrary content, based on CodeTabs.
 ---
 
-import { Button, TabbedContainer } from "@dreamlake/uikit";
+import { TabbedContainer } from "@dreamlake/uikit";
+import { ContextualActionsSpec } from "../../../components/specimens/components/tabbed-container/ContextualActionsSpec";
 
 # TabbedContainer
 
@@ -74,49 +75,19 @@ while that tab is active; the container's `actions` show for every tab, after
 the active tab's own. The tab strip keeps the remaining width and scrolls when
 labels do not fit, so the actions never push the frame wider.
 
-<TabbedContainer
-  aria-label="Experiment views"
-  actions={
-    <Button variant="ghost" size="sm">
-      Open memo
-    </Button>
-  }
-  items={[
-    {
-      value: "overview",
-      label: "Overview",
-      children: <p>Question, primary chart and conclusion.</p>,
-    },
-    {
-      value: "runs",
-      label: "Runs 25",
-      actions: (
-        <Button variant="ghost" size="sm">
-          Copy launch command
-        </Button>
-      ),
-      children: <p>Plan versus actual, one row per config and seed.</p>,
-    },
-  ]}
-/>
+<ContextualActionsSpec />
 
 ```tsx
 <TabbedContainer
   aria-label="Experiment views"
-  actions={
-    <Button variant="ghost" size="sm">
-      Open memo
-    </Button>
-  }
+  actions={<Button variant="ghost" size="sm" children="Open memo" />}
   items={[
     { value: "overview", label: "Overview", children: <Overview /> },
     {
       value: "runs",
       label: "Runs 25",
       actions: (
-        <Button variant="ghost" size="sm">
-          Copy launch command
-        </Button>
+        <Button variant="ghost" size="sm" children="Copy launch command" />
       ),
       children: <RunsTable />,
     },
