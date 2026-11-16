@@ -2,6 +2,7 @@
  * --uikit-document-surface is the panel body colour, defaulting to the chat's --bg.
  * Strip/inactive/hover/action colours can be overridden on a containing element.
  * Native selection scrolling reserves the same gutter as the curved feet.
+ * The strip owns the 8px gutter; a sticky left inset would apply it twice.
  * Sticky tabs stack in document order: tabs to the right cover those to the left.
  * The opaque backing keeps rounded inactive fills from exposing covered labels.
  * Sticky end controls belong to their original tab (no cloned close target).
@@ -12,7 +13,7 @@
 export const documentTabStyles = `
 .uikit-document-tab-strip{background:var(--uikit-document-strip-surface,var(--uikit-workspace-bg));padding-inline:8px;scroll-padding-inline:8px;scrollbar-width:none;scrollbar-gutter:auto;border:0;box-shadow:none}
 .uikit-document-tab-strip::-webkit-scrollbar{display:none;width:0;height:0}
-.uikit-document-tab{--uikit-tab-fill:var(--uikit-document-inactive-bg,var(--uikit-document-strip-surface,var(--uikit-workspace-bg)));--uikit-tab-line:var(--faint);position:sticky;left:8px;z-index:1;box-sizing:border-box;min-height:26px;overflow:visible;border:1px solid transparent;border-bottom:0;border-radius:0;background:var(--uikit-document-stack-surface,var(--uikit-document-strip-surface,var(--uikit-workspace-bg)));color:var(--uikit-muted);transition:color 120ms ease}
+.uikit-document-tab{--uikit-tab-fill:var(--uikit-document-inactive-bg,var(--uikit-document-strip-surface,var(--uikit-workspace-bg)));--uikit-tab-line:var(--faint);position:sticky;left:0;z-index:1;box-sizing:border-box;min-height:26px;overflow:visible;border:1px solid transparent;border-bottom:0;border-radius:0;background:var(--uikit-document-stack-surface,var(--uikit-document-strip-surface,var(--uikit-workspace-bg)));color:var(--uikit-muted);transition:color 120ms ease}
 .uikit-document-tab[data-active]{--uikit-tab-fill:var(--uikit-document-surface,var(--bg));z-index:1;border-radius:8px 8px 0 0;background:linear-gradient(var(--uikit-tab-fill),var(--uikit-tab-fill)) padding-box,linear-gradient(to bottom,var(--uikit-tab-line) calc(100% - 8px),var(--uikit-tab-fill) 0) border-box;color:var(--ink)}
 .uikit-document-tab:not([data-active]):hover{--uikit-tab-fill:var(--uikit-document-hover-bg,color-mix(in srgb,var(--ink) 4%,var(--uikit-document-strip-surface,var(--uikit-workspace-bg))))}
 .uikit-document-tab:not([data-active])::before{content:"";position:absolute;inset:calc(var(--uikit-document-inactive-inset,2px) - 1px) 0 var(--uikit-document-inactive-inset,2px);z-index:-1;border-radius:6px;background:var(--uikit-tab-fill);pointer-events:none}
