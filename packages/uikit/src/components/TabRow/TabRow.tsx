@@ -47,6 +47,8 @@ export interface TabRowProps {
   trailing?: ReactNode;
   /** Width in CSS pixels at which compression stops and scrolling begins. */
   minTabWidth?: number;
+  /** Flat first edge beside workspace ground; curved keeps the document foot. */
+  startEdge?: "curved" | "flush";
   /** Minimum label height in CSS pixels; use 44 for touch-oriented selectors. */
   minTabHeight?: number;
   /** Width in CSS pixels when enough room is available. */
@@ -65,6 +67,7 @@ export function TabRow({
   leading,
   trailing,
   minTabWidth = 80,
+  startEdge = "curved",
   preferredTabWidth = 170,
   minTabHeight,
   "aria-label": ariaLabel = "Open documents",
@@ -119,6 +122,7 @@ export function TabRow({
     <div
       className={cn("uikit-tab-row", className)}
       data-tab-count={tabs.length}
+      data-document-tab-edge={startEdge}
       style={
         {
           ...style,
@@ -266,7 +270,7 @@ const CSS =
   ".uikit-tab-row-item-icon{display:inline-flex;vertical-align:middle;margin-right:6px}" +
   ".uikit-tab-row-item[data-icon-only]{flex-shrink:0}" +
   ".uikit-tab-row-item[data-icon-only] .uikit-tab-row-item-icon{margin-right:0}" +
-  ".uikit-tab-row{-webkit-user-select:none;user-select:none;position:relative;display:flex;align-items:flex-end;gap:6px;width:100%;min-width:0}" +
+  ".uikit-tab-row{-webkit-user-select:none;user-select:none;position:relative;display:flex;align-items:flex-end;gap:4px;width:100%;min-width:0}" +
   ".uikit-tab-row-line{display:none}" +
   // The 4px spacer sits above the controls: the row keeps its height, and
   // controls share the tabs' bottom edge, so they center on the tab boxes

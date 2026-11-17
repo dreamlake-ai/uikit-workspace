@@ -119,9 +119,11 @@ export function PersistentPanels({
         const toolbar = toolbars.find(
           (node) => node.dataset.panelToolbar === tabSlot.dataset.panelTabSlot,
         );
-        // The header's trailing gutter plus a gap separates scrollable tabs
-        // from the active view's intrinsic-width Share/status controls.
-        tabSlot.style.right = `${(toolbar?.getBoundingClientRect().width ?? 0) + 28}px`;
+        // Reserve the controls' actual footprint, including the host's gutter.
+        // A fixed gutter over-reserves space when a host removes header padding.
+        const controls = toolbar?.getBoundingClientRect();
+        const region = tabSlot.parentElement?.getBoundingClientRect();
+        tabSlot.style.right = `${controls?.width && region ? Math.max(0, region.right - controls.left) + 4 : 0}px`;
       }
     };
     measure();

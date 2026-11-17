@@ -2,6 +2,8 @@
 
 A row of closable document tabs with a raised active tab. Tabs start at their preferred width, compress as space runs out, then scroll horizontally once they reach the minimum. Leading and trailing controls stay fixed. On the default desktop row they share the tabs' bottom edge, with a 4px space above them, so a 28px icon button centers on the 26px tabs and the row height does not change.
 
+The strip supplies the left gutter once: at rest, adjacent tabs keep their normal gap. Overflowing document tabs have no visible scrollbar. Use a mouse wheel, horizontal trackpad gesture, or touch swipe to scroll. Inactive tabs on the right slide over earlier tabs as rounded rectangles; the selected tab stays above them so its right edge and controls remain visible. Labels stay vertically centered in the gutter. Rounded opaque faces prevent covered labels from bleeding through. Keyboard selection reveals the selected tab; reduced motion disables the automatic slide animation.
+
 ## Workspace context
 
 **1.A — S-curved tabs beside the left panel, editor, and chat.** The
@@ -29,8 +31,9 @@ in the far-right gutter, aligned with the tab top. Editor tabs hide these chat c
 Wheel vertically or swipe to scroll. The below-strip popover has a pointing wedge
 and updates in place; on touch it dismisses about one second after scrolling
 stops. Hold for 500ms on touch to enter the same-row reorder demonstration.
-These are proposed shared styles, with runtime acceptance still pending;
-the demo does not establish cross-panel docking or physical-device acceptance.
+The shared visual and wheel behavior is implemented in UIKit. The reorder and
+popover gestures in this study remain docs-only; they do not establish cross-panel
+docking or physical-device acceptance.
 
 ## Compression and overflow
 
@@ -59,6 +62,24 @@ leaves no stray divider.
 
 ## Usage
 
+`TabRow` and `PanelLayout` share the shipped document-tab treatment: wheel/touch
+scrolling, hidden scrollbars, rounded inactive faces, and a protected active tab.
+Underline and segmented [Tabs](reference/components-tabs.md) remain separate styles for
+switching sections; they do not acquire document stacking or close buttons.
+
+Fixed action slots hug their controls, separated from the tab viewport by 4px.
+Keep the actions in the row's `trailing` slot instead of positioning a wide
+opaque container over the scrolling tabs.
+
+Use `startEdge="flush"` when a crowded strip reaches a background-colored
+neighbor; the first tab loses its left foot and gutter. Keep the default
+`"curved"` beside a white panel. This is a host choice, not automatic color
+sampling. The example above lets you compare both with the same tabs.
+
+For editor alignment, place the first tab's **text** at the title column, allowing
+for its border, label padding and any leading icon. When the tabs no longer fit,
+move the strip to the panel edge without moving the editor content.
+
 ```tsx
 import { TabRow } from "@dreamlake/uikit";
 
@@ -69,6 +90,7 @@ import { TabRow } from "@dreamlake/uikit";
   onClose={closeTab}
   minTabWidth={80}
   preferredTabWidth={170}
+  startEdge="curved"
   aria-label="Open notes"
 />;
 ```
@@ -121,6 +143,7 @@ examples demonstrate this caller-owned distinction without fabricating IDs.
 | `value`               | `string`                  | required         | Selected tab value.                                                                |
 | `onValueChange`       | `(value: string) => void` | required         | Selection callback.                                                                |
 | `onClose`             | `(value: string) => void` | —                | Close callback; enables close controls and middle-click closing.                   |
+| `startEdge`           | `"curved" \| "flush"`     | `"curved"`       | First-edge treatment beside white or background-colored panels.                    |
 | `minTabWidth`         | `number`                  | `80`             | Minimum CSS pixel width before overflow; clamped to at least 48px to fit controls. |
 | `preferredTabWidth`   | `number`                  | `170`            | Preferred CSS pixel width, clamped to the minimum.                                 |
 | `leading`, `trailing` | `ReactNode`               | —                | Fixed controls outside the scrolling area.                                         |

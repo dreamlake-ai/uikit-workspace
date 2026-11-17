@@ -10,6 +10,33 @@ for (const kind of ["documents", "panels"] as const) {
     );
     // Docs render HTML before their interactive specimens hydrate.
     await page.waitForLoadState("networkidle");
+    if (kind === "panels") {
+      const toolbar = page
+        .locator("[data-panel-toolbar]")
+        .filter({
+          has: page.getByRole("button", { name: "View options", exact: true }),
+        })
+        .filter({ visible: true })
+        .first();
+      await toolbar.scrollIntoViewIfNeeded();
+      const id = await toolbar.getAttribute("data-panel-toolbar");
+      const slot = page.locator(`[data-panel-tab-slot="${id}"]`);
+      await expect
+        .poll(async () => {
+          const a = (await toolbar.boundingBox())!,
+            b = (await slot.boundingBox())!;
+          return Math.round(a.x - b.x - b.width);
+        })
+        .toBe(4);
+      const controls = await toolbar
+        .locator("button")
+        .evaluateAll((nodes) =>
+          nodes.reduce((sum, el) => sum + el.getBoundingClientRect().width, 0),
+        );
+      expect(
+        (await toolbar.boundingBox())!.width - controls,
+      ).toBeLessThanOrEqual(6);
+    }
     const row =
       kind === "documents"
         ? page.getByRole("tablist", { name: "Example documents" })
@@ -177,5 +204,20 @@ for (const kind of ["documents", "panels"] as const) {
       "true",
     );
     await expect.poll(() => row.evaluate((el) => el.scrollLeft)).toBe(0);
+    if (kind === "documents") {
+      await page
+        .getByLabel("Left neighbor", { exact: true })
+        .selectOption("flush");
+      await expect(row).toHaveCSS("padding-left", "0px");
+      expect(
+        await firstFace.evaluate(
+          (el) => getComputedStyle(el, "::before").display,
+        ),
+      ).toBe("none");
+      await page
+        .getByLabel("Left neighbor", { exact: true })
+        .selectOption("curved");
+      await expect(row).toHaveCSS("padding-left", "8px");
+    }
   });
 }

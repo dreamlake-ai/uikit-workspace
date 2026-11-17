@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { Ellipsis, Plus } from "lucide-react";
 import { Button, Slider, TabRow } from "@dreamlake/uikit";
 
 /**
@@ -47,6 +47,7 @@ export function TabRowSpec() {
   const [minimum, setMinimum] = useState(80);
   const [preferred, setPreferred] = useState(170);
   const [width, setWidth] = useState(560);
+  const [startEdge, setStartEdge] = useState<"curved" | "flush">("curved");
 
   return (
     <div className="w-full min-w-0">
@@ -74,9 +75,23 @@ export function TabRowSpec() {
         />
       </div>
 
+      <label className="mb-4 flex items-center gap-2 text-sm">
+        Left neighbor
+        <select
+          aria-label="Left neighbor"
+          value={startEdge}
+          onChange={(event) =>
+            setStartEdge(event.target.value as "curved" | "flush")
+          }
+        >
+          <option value="curved">White panel — curved foot</option>
+          <option value="flush">Background panel — flush edge</option>
+        </select>
+      </label>
       <div className="max-w-full" style={{ width }}>
         <TabRow
           tabs={tabs}
+          startEdge={startEdge}
           value={value}
           onValueChange={setValue}
           minTabWidth={minimum}
@@ -99,6 +114,16 @@ export function TabRowSpec() {
               }}
             >
               <Plus size={14} />
+            </Button>
+          }
+          trailing={
+            <Button
+              icon
+              variant="ghost"
+              size="sm"
+              aria-label="Document options"
+            >
+              <Ellipsis size={14} />
             </Button>
           }
           onClose={(id) => {
