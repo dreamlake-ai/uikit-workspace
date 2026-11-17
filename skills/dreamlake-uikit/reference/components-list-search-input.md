@@ -10,6 +10,11 @@ Focus search to fold the category choices into a badge. The input takes the
 remaining width and its 1px baseline turns from hairline to ink. The badge has no dropdown: its × removes the filter, returning to all categories. Blurring an empty search restores the choices; a nonempty query
 keeps its category visible. Category state belongs to the host, not the input.
 
+## Multiple filters
+
+Ordered chips combine independent filters. Backspace removes the last chip, nearest
+the input, without changing the query. Each × removes only its own filter.
+
 ## Standard underline
 
 The default has a light baseline and fits toolbars that keep every filter visible.
@@ -24,6 +29,7 @@ Import `@dreamlake/uikit/styles.css` once with the app's shared tokens.
 | `placeholder` | `string` | `search` | Placeholder and accessible input name. |
 | `strongUnderline` | `boolean` | `false` | Keeps the ink baseline while a query is present, not only on focus. |
 | `filter` | `{ label: string; onRemove: () => void }` | — | Removable filter badge; omit for the unfiltered state. |
+| `filters` | `{ label: string; onRemove: () => void }[]` | — | Ordered removable chips; takes precedence over `filter`. |
 | `searchRef` | `RefObject<HTMLInputElement or null>` | — | Focus the underlying input from the host. |
 | `onKeyDown` | `KeyboardEventHandler` | — | Additional keyboard handling; preventDefault overrides built-in keyboard handling. |
 | `className` | `string` | — | Root layout classes. |

@@ -198,7 +198,10 @@ inactive bodies are hidden. Closing a leaf disposes its body.
 With `showSingleTab` enabled, a singleton uses the same selected tab, linked
 tabpanel semantics, and inside close control as a group. Hosts that omit it keep
 the plain singleton header. Both presentations keep the existing body mounted.
-Multiple views show tabs beside the active view's header controls. Custom labels
+Multiple views show tabs beside the active view's header controls. The strip
+reserves the toolbar's measured position plus a 4px gap, so removing a host header
+gutter gives that space back to the tabs. It does not cover background tabs with
+an oversized action container. Custom labels
 stay on one line and clip when they reach those controls.
 
 Use `renderTabTrailing(leaf)` for a copyable reference or other independent tab

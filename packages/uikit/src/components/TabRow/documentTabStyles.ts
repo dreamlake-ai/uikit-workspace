@@ -12,6 +12,9 @@
  */
 export const documentTabStyles = `
 .uikit-document-tab-strip{background:var(--uikit-document-strip-surface,var(--uikit-workspace-bg));padding-inline:8px;scroll-padding-inline:8px;scrollbar-width:none;scrollbar-gutter:auto;border:0;box-shadow:none}
+[data-document-tab-edge="flush"] .uikit-document-tab-strip{padding-left:0;scroll-padding-left:0}
+[data-document-tab-edge="flush"] .uikit-document-tab:first-child{border-top-left-radius:0;border-bottom-left-radius:0}
+[data-document-tab-edge="flush"] .uikit-document-tab:first-child[data-active]::before{display:none}
 .uikit-document-tab-strip::-webkit-scrollbar{display:none;width:0;height:0}
 .uikit-document-tab{--uikit-tab-fill:var(--uikit-document-inactive-bg,var(--uikit-document-strip-surface,var(--uikit-workspace-bg)));--uikit-tab-line:var(--faint);position:sticky;left:0;z-index:1;box-sizing:border-box;min-height:26px;overflow:visible;border:1px solid transparent;border-radius:6px;background:transparent;color:var(--uikit-muted);transition:color 120ms ease}
 .uikit-document-tab[data-active]{--uikit-tab-fill:var(--uikit-document-surface,var(--bg));z-index:3;border-radius:8px 8px 0 0;background:linear-gradient(var(--uikit-tab-fill),var(--uikit-tab-fill)) padding-box,linear-gradient(to bottom,var(--uikit-tab-line) calc(100% - 8px),var(--uikit-tab-fill) 0) border-box;color:var(--ink)}

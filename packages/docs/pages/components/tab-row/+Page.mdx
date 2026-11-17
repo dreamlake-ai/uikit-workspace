@@ -53,8 +53,9 @@ in the far-right gutter, aligned with the tab top. Editor tabs hide these chat c
 Wheel vertically or swipe to scroll. The below-strip popover has a pointing wedge
 and updates in place; on touch it dismisses about one second after scrolling
 stops. Hold for 500ms on touch to enter the same-row reorder demonstration.
-These are proposed shared styles, with runtime acceptance still pending;
-the demo does not establish cross-panel docking or physical-device acceptance.
+The shared visual and wheel behavior is implemented in UIKit. The reorder and
+popover gestures in this study remain docs-only; they do not establish cross-panel
+docking or physical-device acceptance.
 
 <Preview source={panelTabEdgesSrc} filename="PanelTabEdgesSpec.tsx">
   <PanelTabEdgesSpec />
@@ -99,6 +100,24 @@ leaves no stray divider.
 
 ## Usage
 
+`TabRow` and `PanelLayout` share the shipped document-tab treatment: wheel/touch
+scrolling, hidden scrollbars, rounded inactive faces, and a protected active tab.
+Underline and segmented [Tabs](/components/tabs) remain separate styles for
+switching sections; they do not acquire document stacking or close buttons.
+
+Fixed action slots hug their controls, separated from the tab viewport by 4px.
+Keep the actions in the row's `trailing` slot instead of positioning a wide
+opaque container over the scrolling tabs.
+
+Use `startEdge="flush"` when a crowded strip reaches a background-colored
+neighbor; the first tab loses its left foot and gutter. Keep the default
+`"curved"` beside a white panel. This is a host choice, not automatic color
+sampling. The example above lets you compare both with the same tabs.
+
+For editor alignment, place the first tab's **text** at the title column, allowing
+for its border, label padding and any leading icon. When the tabs no longer fit,
+move the strip to the panel edge without moving the editor content.
+
 ```tsx
 import { TabRow } from "@dreamlake/uikit";
 
@@ -109,6 +128,7 @@ import { TabRow } from "@dreamlake/uikit";
   onClose={closeTab}
   minTabWidth={80}
   preferredTabWidth={170}
+  startEdge="curved"
   aria-label="Open notes"
 />;
 ```
@@ -161,6 +181,7 @@ examples demonstrate this caller-owned distinction without fabricating IDs.
 | `value`               | `string`                  | required         | Selected tab value.                                                                |
 | `onValueChange`       | `(value: string) => void` | required         | Selection callback.                                                                |
 | `onClose`             | `(value: string) => void` | —                | Close callback; enables close controls and middle-click closing.                   |
+| `startEdge`           | `"curved" \| "flush"`     | `"curved"`       | First-edge treatment beside white or background-colored panels.                    |
 | `minTabWidth`         | `number`                  | `80`             | Minimum CSS pixel width before overflow; clamped to at least 48px to fit controls. |
 | `preferredTabWidth`   | `number`                  | `170`            | Preferred CSS pixel width, clamped to the minimum.                                 |
 | `leading`, `trailing` | `ReactNode`               | —                | Fixed controls outside the scrolling area.                                         |

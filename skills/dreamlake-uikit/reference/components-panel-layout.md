@@ -4,6 +4,8 @@ An IDE-style tiling workspace. Panels split, resize, drag onto each other's
 edges to re-dock, and merge into tab groups — all over a recursive tree the
 host can read, write, and persist.
 
+Overflowing document tabs have no visible scrollbar. Scroll or swipe horizontally: tabs on the right slide over tabs on the left, including the selected tab. Inactive tabs retain their rounded hover fill over an opaque backing, so covered labels cannot bleed through. Keyboard selection reveals the selected tab; reduced motion disables the automatic slide animation.
+
 It is **view-agnostic by construction**. A panel carries a `view` string that
 only your `renderBody` / `renderHeader` interpret; the layout never reads it.
 Everything a real app needs on top — which views may be tabbed, which one
@@ -154,7 +156,10 @@ inactive bodies are hidden. Closing a leaf disposes its body.
 With `showSingleTab` enabled, a singleton uses the same selected tab, linked
 tabpanel semantics, and inside close control as a group. Hosts that omit it keep
 the plain singleton header. Both presentations keep the existing body mounted.
-Multiple views show tabs beside the active view's header controls. Custom labels
+Multiple views show tabs beside the active view's header controls. The strip
+reserves the toolbar's measured position plus a 4px gap, so removing a host header
+gutter gives that space back to the tabs. It does not cover background tabs with
+an oversized action container. Custom labels
 stay on one line and clip when they reach those controls.
 
 Use `renderTabTrailing(leaf)` for a copyable reference or other independent tab
@@ -456,3 +461,5 @@ object — and a split that lost no children is rebuilt all the same. Compare by
 Set `compactBreakpoint={768}` to keep adjacent panels visible on tablets and show one panel below 768 CSS pixels. The default is no automatic collapse; `compact` overrides the breakpoint when supplied. Hidden panels stay mounted across the transition.
 
 Use `compactHeaderInTabRow={(leaf) => leaf.view === "note"}` to place that panel’s `renderHeader` controls beside the compact tabs. Only the active panel’s controls appear, and its separate header row is removed; the editor stays mounted.
+
+Document tab strips accept mouse-wheel scrolling as well as trackpad and touch gestures. Inactive tabs slide as rounded rectangles with centered labels; the active tab keeps its right edge and controls above the stack.
