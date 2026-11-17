@@ -1,6 +1,11 @@
 import { useRef, type RefObject, type KeyboardEventHandler } from 'react'
 import { cn } from '../../lib/utils'
 
+export interface SearchFilter {
+  label: string
+  onRemove: () => void
+}
+
 export interface ListSearchInputProps {
   query: string
   onQuery: (query: string) => void
@@ -9,7 +14,9 @@ export interface ListSearchInputProps {
   /** Ink underline while the field is active or holds a query. The input never becomes a badge. */
   strongUnderline?: boolean
   /** Active filter. Omit for the unfiltered state. */
-  filter?: { label: string; onRemove: () => void }
+  filter?: SearchFilter
+  /** Ordered chips; Backspace removes the last (nearest the input). */
+  filters?: SearchFilter[]
   onKeyDown?: KeyboardEventHandler<HTMLInputElement>
   className?: string
 }
@@ -21,13 +28,15 @@ export function ListSearchInput({
   searchRef,
   strongUnderline = false,
   filter,
+  filters,
   onKeyDown,
   className,
 }: ListSearchInputProps) {
   const ownRef = useRef<HTMLInputElement>(null)
   const inputRef = searchRef ?? ownRef
-  const removeFilter = () => {
-    filter?.onRemove()
+  const chips = filters ?? (filter ? [filter] : [])
+  const removeFilter = (chip: SearchFilter) => {
+    chip.onRemove()
     inputRef.current?.focus()
   }
   return (
@@ -36,15 +45,19 @@ export function ListSearchInput({
       data-strong={strongUnderline || undefined}
       data-has-query={query.length > 0 || undefined}
     >
-      {filter && (
-        <span className="uikit-search-filter">
-          {filter.label}
-          <button type="button" aria-label={`Remove ${filter.label} filter`}
-            onClick={removeFilter} className="uikit-search-filter-remove">
+      {chips.map((chip, index) => (
+        <span key={`${chip.label}:${index}`} className="uikit-search-filter">
+          {chip.label}
+          <button
+            type="button"
+            aria-label={`Remove ${chip.label} filter`}
+            onClick={() => removeFilter(chip)}
+            className="uikit-search-filter-remove"
+          >
             <span aria-hidden="true">×</span>
           </button>
         </span>
-      )}
+      ))}
       <span aria-hidden="true" data-search-separator className="uikit-search-separator">
         /
       </span>
@@ -64,11 +77,18 @@ export function ListSearchInput({
         onKeyDown={(event) => {
           onKeyDown?.(event)
           if (event.defaultPrevented || event.nativeEvent.isComposing) return
-          if (event.key === 'Backspace' && filter &&
-              event.currentTarget.selectionStart === 0 && event.currentTarget.selectionEnd === 0 &&
-              !event.altKey && !event.ctrlKey && !event.metaKey && !event.shiftKey) {
+          if (
+            event.key === 'Backspace' &&
+            chips.length > 0 &&
+            event.currentTarget.selectionStart === 0 &&
+            event.currentTarget.selectionEnd === 0 &&
+            !event.altKey &&
+            !event.ctrlKey &&
+            !event.metaKey &&
+            !event.shiftKey
+          ) {
             event.preventDefault()
-            removeFilter()
+            removeFilter(chips[chips.length - 1])
           }
           if (event.key === 'Escape') {
             event.preventDefault()
