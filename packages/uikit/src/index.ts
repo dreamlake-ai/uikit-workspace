@@ -10,6 +10,12 @@ export { cn } from "./lib/utils";
 export { useIsMobile } from "./lib/useIsMobile";
 export { useHiddenContentFocus } from "./lib/useHiddenContentFocus";
 export { useHoverSlider } from "./lib/useHoverSlider";
+export { useListSelection } from "./lib/useListSelection";
+export type {
+  ListSelectionApi,
+  ListSelectionModifiers,
+  UseListSelectionOptions,
+} from "./lib/useListSelection";
 // TreeDataItem / TreeDataItemWithMeta come from the TreeView component (./components).
 export type {
   DialSchema,
