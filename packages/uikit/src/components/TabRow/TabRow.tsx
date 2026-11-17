@@ -8,6 +8,7 @@ import {
 import { X } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { documentTabStyles } from "./documentTabStyles";
+import { useDocumentTabScroll } from "./useDocumentTabScroll";
 
 export interface TabRowItem {
   value: string;
@@ -71,6 +72,7 @@ export function TabRow({
   style,
 }: TabRowProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  useDocumentTabScroll(scrollRef);
   const minimum = Number.isFinite(minTabWidth) ? Math.max(48, minTabWidth) : 80;
   const preferred = Number.isFinite(preferredTabWidth)
     ? Math.max(minimum, preferredTabWidth)

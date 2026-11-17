@@ -6,6 +6,7 @@ import {
 } from "react";
 import { Button } from "../Button";
 import { documentTabStyles } from "../TabRow/documentTabStyles";
+import { useDocumentTabScroll } from "../TabRow/useDocumentTabScroll";
 import { cn } from "../../lib/utils";
 import { TAB_DRAG_THRESHOLD_PX, usePanelConfig } from "./config";
 import { CloseIcon } from "./PanelLeaf";
@@ -50,6 +51,7 @@ export function GroupTabBar({
   ) => void;
 }) {
   const barRef = useRef<HTMLDivElement>(null);
+  useDocumentTabScroll(barRef);
   // Affordances only — see the Delete case below for why the strip does not
   // enforce this itself.
   const { closable, renderTab, renderTabTrailing, tabbed, panelAsAction } =
