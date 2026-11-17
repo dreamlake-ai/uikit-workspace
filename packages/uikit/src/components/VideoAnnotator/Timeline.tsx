@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { createPortal } from "react-dom";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { Plus } from "lucide-react";
 import { cn } from "../../lib/utils";
+import { TimelineHover } from "./TimelineHover";
 import type { Segment, Track } from "./types";
-import { clamp, fmt, normalizeSegments, segmentIndexAtTime } from "./segments";
+import { clamp, normalizeSegments, segmentIndexAtTime } from "./segments";
 import { computeVaTicks, cullMinorLabels, formatMajorLabel, formatMinorLabel } from "./ruler-ticks";
 
 /**
@@ -51,17 +51,6 @@ export function Timeline({
   onAddTrack: () => void;
 }) {
   const timelineRef = useRef<HTMLDivElement>(null);
-  const [hoverFrac, setHoverFrac] = useState<number | null>(null);
-  // Viewport position of the hover-time bubble, so it can be portaled to <body>
-  // and never clipped by a scrolling/split parent's overflow.
-  const [hoverPos, setHoverPos] = useState<{ x: number; y: number } | null>(null);
-  // Per-segment hover tooltip (design .lab-tip--wide): the segment number, its
-  // caption, and — for edited segments — the pre-edit caption. Fixed-positioned
-  // (portaled to <body>) so a scrolling lane never clips it.
-  const [cellTip, setCellTip] = useState<
-    { n: number; cap: string; was: string | null; left: number; bottom: number } | null
-  >(null);
-
   // Three-tier ruler (major / minor / micro), ported from the shared
   // episode-timeline DLDetailRuler so it matches the design 1:1. The major step
   // is picked so ~8 land in the VISIBLE window (`D/zoom`); minor + micro
@@ -127,19 +116,15 @@ export function Timeline({
   // this exact mapping so a click lands where it's drawn. gutterPx=0 (single
   // lane) reduces `calc(0px + f*(100% - 0px))` to `f*100%` — the old behaviour.
   const posCss = (t: number) => `calc(${gutterPx}px + ${t / (D || 1)} * (100% - ${gutterPx}px))`;
-  const widCss = (dt: number) => `calc(${dt / (D || 1)} * (100% - ${gutterPx}px))`;
-  // Hover fraction (of the full width) → time, inverting the same fixed-px gutter.
-  // Display-only, so the measured wrapW here is fine (a pixel of slop is invisible).
-  const hoverTime = (frac: number) => ((frac * wrapW - gutterPx) / Math.max(1, wrapW - gutterPx)) * D;
   const selSet = useMemo(() => new Set(selectedTracks), [selectedTracks]);
 
   const { major, minor, ticks } = useMemo(
     () => computeVaTicks(D, zoom, vis.start, vis.end),
-    [D, zoom, vis.start, vis.end],
+    [D, zoom, vis.start, vis.end]
   );
   const keepMinor = useMemo(
     () => cullMinorLabels(ticks, major, minor, D, wrapW, gutterPx),
-    [ticks, major, minor, D, wrapW, gutterPx],
+    [ticks, major, minor, D, wrapW, gutterPx]
   );
 
   // Normalized segments per track. The active track reuses the already-normalized
@@ -147,107 +132,33 @@ export function Timeline({
   // re-renders don't re-run normalizeSegments for every inactive lane.
   const normTracks = useMemo(
     () => trackList.map((tr, ti) => (ti === active ? activeSegs : normalizeSegments(tr.segments, D))),
-    [trackList, active, activeSegs, D],
+    [trackList, active, activeSegs, D]
   );
 
   return (
-    <div
-      className="va-timeline"
-      ref={timelineRef}
-      style={{ width: `${zoom * 100}%` }}
-      onMouseDown={onScrubDown}
-      onMouseMove={(e) => {
-        const tl = timelineRef.current;
-        if (!tl) return;
-        const rect = tl.getBoundingClientRect();
-        const px = e.clientX - rect.left;
-        const frac = clamp(px / rect.width, 0, 1);
-        setHoverFrac(frac);
-        setHoverPos({ x: rect.left + frac * rect.width, y: rect.top });
-      }}
-      onMouseLeave={() => {
-        setHoverFrac(null);
-        setHoverPos(null);
-      }}
-    >
+    <div className="va-timeline" ref={timelineRef} style={{ width: `${zoom * 100}%` }} onMouseDown={onScrubDown}>
       <div className="va-tracks">
         {trackList.map((tr, ti) => {
-          const isActive = ti === active;
           const tsegs = normTracks[ti];
-          // Every lane highlights the segment under the PLAYHEAD, derived from
-          // currentTime — so the highlight tracks a scrub / timeline-drag in real
-          // time on ALL lanes, the active one included.
-          //
-          // The active lane used to read the host's `sel` instead. `sel` is
-          // committed only on mouse-UP (a drag's per-move `onSelectedChange`
-          // would fire the host's expensive review + auto-scroll side-effects and
-          // wrongly mark every passed-over segment reviewed), so its highlight
-          // lagged a drag until release while the other lanes moved live — the
-          // "middle track looks stuck" report. Visual highlight and committed
-          // selection are separate concerns: this is the visual one; `sel` still
-          // drives selection + review, synced on release. In steady state the two
-          // agree (every seek/select keeps the playhead in the selected segment),
-          // so this only changes the transient-drag frames.
-          // Selected lanes render it in full accent (.sel), unselected in a paler
-          // accent (.cur).
-          const curIdx = segmentIndexAtTime(tsegs, currentTime);
+          // Include the segments crossing either viewport edge, plus one neighbor
+          // for boundary handles. vis already includes a quarter-screen overscan.
+          const first = Math.max(0, segmentIndexAtTime(tsegs, vis.start) - 1);
+          const end = Math.min(tsegs.length, segmentIndexAtTime(tsegs, vis.end) + 2);
           return (
-            <div key={tr.id || ti} className={cn("va-track", !selSet.has(ti) && "va-unsel")} data-track={ti}>
-              {tsegs.map((p, i) => (
-                <div
-                  key={p.id ?? i}
-                  className={cn(
-                    "va-seg",
-                    isActive && i === curIdx && "sel",
-                    !isActive && i === curIdx && "cur",
-                    p.edited && "edited",
-                    p.resegmented && "reseg",
-                  )}
-                  style={{ left: posCss(p.start), width: widCss(p.end - p.start) }}
-                  onMouseEnter={(e) => {
-                    const r = e.currentTarget.getBoundingClientRect();
-                    const was = p.edited && p.original && p.original !== p.description ? p.original : null;
-                    // Only say what the lane doesn't already show: the caption when
-                    // it's cut off (width or the 3-line clamp), or the pre-edit
-                    // caption. A fully visible "1 approach" needs no second copy.
-                    const lab = e.currentTarget.querySelector<HTMLElement>(".va-seglabel");
-                    const cut = lab
-                      ? lab.scrollWidth > lab.clientWidth + 1 || lab.scrollHeight > lab.clientHeight + 1
-                      : !!p.description;
-                    if (!cut && was == null) return;
-                    // Sit above the whole timeline (ruler included), so the tip never
-                    // covers the ruler's ticks and numbers.
-                    const top = timelineRef.current?.getBoundingClientRect().top ?? r.top;
-                    setCellTip({
-                      n: i + 1,
-                      cap: p.description ?? "",
-                      was,
-                      left: r.left + r.width / 2,
-                      bottom: window.innerHeight - Math.min(top, r.top) + 6,
-                    });
-                  }}
-                  onMouseLeave={() => setCellTip(null)}
-                >
-                  <div className="va-seg-line">
-                    <span className="va-seg-n">{i + 1}</span>
-                    {p.description && <span className="va-seglabel">{p.description}</span>}
-                  </div>
-                </div>
-              ))}
-              {isActive &&
-                editable &&
-                tsegs.map((p, i) =>
-                  i > 0 ? (
-                    <div
-                      key={`h${p.id ?? i}`}
-                      className="va-handle"
-                      style={{ left: posCss(p.start) }}
-                      title="Drag to move"
-                      onMouseDown={(e) => onBoundaryDown(e, i)}
-                    />
-                  ) : null
-                )}
-            </div>
+            <TimelineLane
+              key={tr.id || ti}
+              segments={tsegs}
+              trackIndex={ti}
+              active={ti === active}
+              selected={selSet.has(ti)}
+              currentIndex={segmentIndexAtTime(tsegs, currentTime)}
+              first={first}
+              end={end}
+              D={D}
+              gutterPx={gutterPx}
+              editable={editable}
+              onBoundaryDown={onBoundaryDown}
+            />
           );
         })}
         {allowAddTracks && trackList.length >= 1 && (
@@ -279,57 +190,100 @@ export function Timeline({
           return (
             <div
               key={rt.t}
-              className={cn(
-                "va-tick",
-                `va-tick--${rt.tier}`,
-                i === 0 && "start",
-                i === ticks.length - 1 && "end",
-              )}
+              className={cn("va-tick", `va-tick--${rt.tier}`, i === 0 && "start", i === ticks.length - 1 && "end")}
               style={{ left: posCss(rt.t) }}
             >
               <span className="va-tickmark" />
-              {label && (
-                <span className={cn("va-ticklabel", `va-ticklabel--${rt.tier}`)}>{label}</span>
-              )}
+              {label && <span className={cn("va-ticklabel", `va-ticklabel--${rt.tier}`)}>{label}</span>}
             </div>
           );
         })}
       </div>
-      {/* Hover line + time bubble — suppressed while the cursor is over the label
-          gutter (where the time would be negative). */}
-      {hoverFrac != null && hoverTime(hoverFrac) >= 0 && (
-        <>
-          <div className="va-hoverline" style={{ left: `${hoverFrac * 100}%` }} />
-          {/* the time bubble is portaled to <body> (fixed-positioned) so it never gets
-              clipped by a scrolling/split parent's overflow */}
-          {hoverPos != null &&
-            typeof document !== "undefined" &&
-            createPortal(
-              <div
-                className="va-hovertime va-hovertime--fixed"
-                style={{ position: "fixed", left: hoverPos.x, top: hoverPos.y + 12 }}
-              >
-                {fmt(clamp(hoverTime(hoverFrac), 0, D))}
-              </div>,
-              document.body
-            )}
-        </>
-      )}
+      <TimelineHover
+        timelineRef={timelineRef}
+        tracks={normTracks}
+        D={D}
+        gutterPx={gutterPx}
+        zoom={zoom}
+        windowStart={vis.start}
+        windowEnd={vis.end}
+      />
       {activeSegs.length > 0 && currentTime >= 0 && (
         <div className="va-playhead" style={{ left: posCss(clamp(currentTime, 0, D)) }} />
       )}
-      {cellTip != null &&
-        typeof document !== "undefined" &&
-        createPortal(
-          <div className="va-celltip" role="tooltip" style={{ left: cellTip.left, bottom: cellTip.bottom }}>
-            <span>
-              <b>{cellTip.n}</b>
-              {cellTip.cap ? " " + cellTip.cap : ""}
-            </span>
-            {cellTip.was != null && <span className="va-celltip-was">was: {cellTip.was}</span>}
-          </div>,
-          document.body,
-        )}
     </div>
   );
 }
+
+// The heavy lane subtree only changes when its visible indices, data, or
+// highlighted segment change. Zoom positions remain CSS percentages; pointer
+// movement and playhead ticks within one segment never rebuild these nodes.
+const TimelineLane = memo(function TimelineLane({
+  segments,
+  trackIndex,
+  active,
+  selected,
+  currentIndex,
+  first,
+  end,
+  D,
+  gutterPx,
+  editable,
+  onBoundaryDown,
+}: {
+  segments: Segment[];
+  trackIndex: number;
+  active: boolean;
+  selected: boolean;
+  currentIndex: number;
+  first: number;
+  end: number;
+  D: number;
+  gutterPx: number;
+  editable: boolean;
+  onBoundaryDown: (e: React.MouseEvent, i: number) => void;
+}) {
+  const visible = segments.slice(first, end);
+  const posCss = (t: number) => `calc(${gutterPx}px + ${t / (D || 1)} * (100% - ${gutterPx}px))`;
+  const widCss = (dt: number) => `calc(${dt / (D || 1)} * (100% - ${gutterPx}px))`;
+  return (
+    <div className={cn("va-track", !selected && "va-unsel")} data-track={trackIndex}>
+      {visible.map((p, offset) => {
+        const i = first + offset;
+        return (
+          <div
+            key={p.id ?? i}
+            data-segment-index={i}
+            className={cn(
+              "va-seg",
+              i === currentIndex && (active ? "sel" : "cur"),
+              p.edited && "edited",
+              p.resegmented && "reseg"
+            )}
+            style={{ left: posCss(p.start), width: widCss(p.end - p.start) }}
+          >
+            <div className="va-seg-line">
+              <span className="va-seg-n">{i + 1}</span>
+              {p.description && <span className="va-seglabel">{p.description}</span>}
+            </div>
+          </div>
+        );
+      })}
+      {active &&
+        editable &&
+        visible.map((p, offset) => {
+          const i = first + offset;
+          return i > 0 ? (
+            <div
+              key={`h${p.id ?? i}`}
+              className="va-handle"
+              data-boundary-index={i}
+              style={{ left: posCss(p.start) }}
+              title="Drag to move"
+              onMouseDown={(e) => onBoundaryDown(e, i)}
+            />
+          ) : null;
+        })}
+    </div>
+  );
+});

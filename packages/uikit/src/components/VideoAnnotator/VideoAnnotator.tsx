@@ -160,9 +160,9 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
     // Multi-track (tracks) or single-track (segments): normalize both to one
     // track-list + active-index model so the rest of the component is uniform.
     const multi = tracks != null;
-    const trackList: Track[] = multi
-      ? tracks
-      : [{ id: "__single", name: laneLabel ?? "", segments: segments ?? [] }];
+    const trackList = useMemo<Track[]>(() => tracks ?? [
+      { id: "__single", name: laneLabel ?? "", segments: segments ?? [] },
+    ], [tracks, laneLabel, segments]);
     // Show the lane-label gutter (+ negative-tick ruler) either in multi-track OR
     // when a single-track host opts in via `laneLabel`, so both look consistent.
     const showLanes = multi || laneLabel != null;
@@ -578,7 +578,8 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
             // Resolve the click to (track, segment) using the row it landed in,
             // so the index is relative to that track's own segments.
             const row = segEl.closest(".va-track") as HTMLElement | null;
-            const i = row ? [...row.querySelectorAll(".va-seg")].indexOf(segEl) : -1;
+            // Visible DOM order is not the model index after timeline windowing.
+            const i = Number(segEl.dataset.segmentIndex ?? -1);
             const ti = row ? Number(row.dataset.track) : active;
             if (i >= 0) {
               // Selection + edits only ever act on the ACTIVE lane, and WHICH lane
