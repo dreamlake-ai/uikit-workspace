@@ -34,8 +34,15 @@ the one in force. It is the toggle the app wears in its navbar.
 — a sidebar footer, a collapsed rail, the marketing site's header — advancing
 `dark → system → light` on each click. `size` scales it and the glyph follows at
 half the box: 28 in the app's sidebar, 32 in the marketing header, which is the
-2:1 ratio both have always kept. `LiquidToggle` flips the liquid flag. Both must be inside a `ThemeProvider` (or, for
-`ThemeModeToggle`, driven as a controlled input — see below).
+2:1 ratio both have always kept. Both controls use Lucide icons with a 1.5px
+stroke: `Moon` for dark, `Sun` for light, and `SunMoon` for system. The system
+glyph mirrors to MoonSun when the OS prefers dark, including when that
+preference changes while the page is open. It follows the OS independently
+of the selected mode, including in controlled demos without a provider.
+
+`LiquidToggle` flips the liquid flag and requires a `ThemeProvider`.
+`ThemeModeToggle` and `ThemeCycleToggle` can read the provider or be driven
+as controlled inputs — see below.
 
 ```tsx
 import { ThemeModeToggle, ThemeCycleToggle, LiquidToggle } from '@dreamlake/uikit'
@@ -50,8 +57,8 @@ import { ThemeModeToggle, ThemeCycleToggle, LiquidToggle } from '@dreamlake/uiki
 </footer>
 ```
 
-The strip is **transparent at rest and takes the chip tint on hover**, with an
-elevated thumb riding in it. The frame is there to say "these three are one
+The strip is **transparent at rest and takes the chip tint on hover**, with a
+circular thumb riding in it. The frame is there to say "these three are one
 control" at the moment someone is about to use it; a permanent tinted slab in a
 quiet navbar is a box drawn around three icons that were reading fine without
 one.
@@ -75,8 +82,8 @@ uses for this, and it cycles `dark → system → light` — the app's order.
 
 The thumb runs on `--uikit-ease-thumb` / `--uikit-dur-thumb`, the same curve and
 duration as the segmented `ToggleButtons` highlight, so two of them on one page
-read as the same widget family. An unselected glyph sits at 85% and leans away
-from the thumb; `prefers-reduced-motion` drops every transition.
+read as the same widget family. Unselected glyphs stay in place at 70% opacity;
+`prefers-reduced-motion` drops the thumb and icon transitions.
 
 The demo above is **controlled**, which is why it can be live on a page whose
 own theme switch sits in the topbar: given `value` and `onValueChange` the

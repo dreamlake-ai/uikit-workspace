@@ -76,7 +76,16 @@ export function ThemeCycleToggle({
       )}
       {...props}
     >
-      <Icon size={size / 2} strokeWidth={1.5} aria-hidden />
+      <Icon
+        size={size / 2}
+        strokeWidth={1.5}
+        className={
+          baseTheme === "system"
+            ? "[@media(prefers-color-scheme:dark)]:-scale-x-100"
+            : undefined
+        }
+        aria-hidden
+      />
     </button>
   );
 }

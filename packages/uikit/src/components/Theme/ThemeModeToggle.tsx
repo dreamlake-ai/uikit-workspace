@@ -1,4 +1,4 @@
-import { Monitor, Moon, Sun } from "lucide-react";
+import { Moon, Sun, SunMoon } from "lucide-react";
 import { type ComponentProps, type CSSProperties, type ReactNode } from "react";
 import { cn } from "../../lib/utils";
 import { type BaseTheme, useThemeOptional } from "./ThemeProvider";
@@ -15,17 +15,23 @@ const SEGMENTS: Record<
 > = {
   light: {
     label: "Light mode",
-    icon: <Sun aria-hidden />,
+    icon: <Sun strokeWidth={1.5} aria-hidden />,
     rest: "[&>svg]:opacity-70",
   },
   system: {
     label: "System theme",
-    icon: <Monitor aria-hidden />,
+    icon: (
+      <SunMoon
+        strokeWidth={1.5}
+        className="[@media(prefers-color-scheme:dark)]:-scale-x-100"
+        aria-hidden
+      />
+    ),
     rest: "[&>svg]:opacity-70",
   },
   dark: {
     label: "Dark mode",
-    icon: <Moon aria-hidden />,
+    icon: <Moon strokeWidth={1.5} aria-hidden />,
     rest: "[&>svg]:opacity-70",
   },
 };
