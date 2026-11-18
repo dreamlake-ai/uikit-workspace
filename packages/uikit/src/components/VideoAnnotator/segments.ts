@@ -68,12 +68,14 @@ export function firstUnverified(segs: Segment[]): number {
  *  start is ≤ t. Used to keep the selection synced to the playhead during
  *  continuous playback. Returns 0 for empty input. */
 export function segmentIndexAtTime(segs: Segment[], t: number): number {
-  let idx = 0;
-  for (let i = 0; i < segs.length; i++) {
-    if (segs[i].start <= t + 1e-6) idx = i;
-    else break;
+  let lo = 0;
+  let hi = segs.length;
+  while (lo < hi) {
+    const mid = lo + Math.floor((hi - lo) / 2);
+    if (segs[mid].start <= t + 1e-6) lo = mid + 1;
+    else hi = mid;
   }
-  return idx;
+  return Math.max(0, lo - 1);
 }
 
 export type SplitResult = { segments: Segment[]; selected: number } | { error: string };

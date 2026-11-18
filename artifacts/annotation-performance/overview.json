@@ -1,0 +1,92 @@
+[
+  {
+    "label": "original",
+    "action": "hover",
+    "p50": 88.40000009536743,
+    "p95": 135.89999997615814,
+    "max": 187.19999992847443,
+    "long": 59,
+    "nodes": 6000,
+    "metrics": {
+      "TaskDuration": 5.655357,
+      "ScriptDuration": 1.035123,
+      "LayoutDuration": 0.018501,
+      "RecalcStyleDuration": 0.024348
+    }
+  },
+  {
+    "label": "original",
+    "action": "scrub",
+    "p50": 47.299999952316284,
+    "p95": 86.10000002384186,
+    "max": 115.79999995231628,
+    "long": 42,
+    "nodes": 6000,
+    "metrics": {
+      "TaskDuration": 9.236454,
+      "ScriptDuration": 0.8852099999999998,
+      "LayoutDuration": 0.025162,
+      "RecalcStyleDuration": 0.04893499999999999
+    }
+  },
+  {
+    "label": "original",
+    "action": "zoom",
+    "p50": 73,
+    "p95": 173,
+    "max": 192.30000007152557,
+    "long": 99,
+    "nodes": 6000,
+    "metrics": {
+      "TaskDuration": 17.091237,
+      "ScriptDuration": 3.0997579999999996,
+      "LayoutDuration": 2.451713,
+      "RecalcStyleDuration": 0.009770000000000001
+    }
+  },
+  {
+    "label": "candidate",
+    "action": "hover",
+    "p50": 18,
+    "p95": 21.899999976158142,
+    "max": 22.799999952316284,
+    "long": 0,
+    "nodes": 6000,
+    "metrics": {
+      "TaskDuration": 1.087816,
+      "ScriptDuration": 0.033436,
+      "LayoutDuration": 0.011197,
+      "RecalcStyleDuration": 0.015454
+    }
+  },
+  {
+    "label": "candidate",
+    "action": "scrub",
+    "p50": 17.90000009536743,
+    "p95": 33.299999952316284,
+    "max": 61.800000071525574,
+    "long": 0,
+    "nodes": 6000,
+    "metrics": {
+      "TaskDuration": 1.903845,
+      "ScriptDuration": 0.060929000000000004,
+      "LayoutDuration": 0.023612,
+      "RecalcStyleDuration": 0.02352
+    }
+  },
+  {
+    "label": "candidate",
+    "action": "zoom",
+    "p50": 25.799999952316284,
+    "p95": 42.40000009536743,
+    "max": 53.200000047683716,
+    "long": 2,
+    "nodes": 6000,
+    "metrics": {
+      "TaskDuration": 4.638522,
+      "ScriptDuration": 0.20147199999999998,
+      "LayoutDuration": 0.9718519999999999,
+      "RecalcStyleDuration": 0.008765000000000002
+    }
+  }
+]

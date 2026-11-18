@@ -238,7 +238,7 @@ export const CSS = `
 .va-track.va-unsel .va-seg.edited,
 .va-track.va-unsel .va-seg.reseg{background:color-mix(in srgb, var(--va-text) 3%, var(--va-bg));box-shadow:none}
 .va-track.va-unsel .va-seg:hover{background:color-mix(in srgb, var(--va-text) 6%, var(--va-bg));box-shadow:none}
-.va-track.va-unsel .va-seg-n,.va-track.va-unsel .va-seglabel{color:var(--va-muted);opacity:.7}
+.va-track.va-unsel .va-seg-n,.va-track.va-unsel .va-seglabel{--va-caption-color:var(--va-muted);--va-caption-alpha:70%}
 /* An unselected lane still highlights its current segment — the playhead one on
    a non-active lane (.cur), OR the selected one on a deselected-but-active lane
    (.sel) — in a PALER accent than a selected lane (design: "selected" is only a
@@ -247,7 +247,7 @@ export const CSS = `
 .va-track.va-unsel .va-seg.sel{background:color-mix(in srgb, var(--va-accent) 7%, var(--va-bg));
   box-shadow:inset 0 0 0 1.5px color-mix(in srgb, var(--va-accent) 40%, transparent)}
 .va-track.va-unsel .va-seg.cur .va-seg-n,.va-track.va-unsel .va-seg.cur .va-seglabel,
-.va-track.va-unsel .va-seg.sel .va-seg-n,.va-track.va-unsel .va-seg.sel .va-seglabel{opacity:.9}
+.va-track.va-unsel .va-seg.sel .va-seg-n,.va-track.va-unsel .va-seg.sel .va-seglabel{--va-caption-alpha:90%}
 /* Lane-label gutter (design .lab-rowlabs / .lab-rowlab) — overlaid on the left,
    outside the horizontal scroll so it stays put; vertically aligned with lanes
    (top 41 = .va-tracks margin-top; 48px rows + 6 gap match the lanes). */
@@ -290,7 +290,7 @@ export const CSS = `
    above a 2-line f-ui caption. Hover = quiet accent ring; selected = accent tint
    + accent ring; edited = green ring (outranks selection); resegmented = purple
    ring. All color-mix / accent-tinted, so light + dark read from the same rules. */
-.va-seg{position:absolute;top:0;bottom:0;border-radius:6px;padding:5px 6px;overflow:hidden;
+.va-seg{container-type:inline-size;position:absolute;top:0;bottom:0;border-radius:6px;padding:5px 6px;overflow:hidden;
   background:color-mix(in srgb, var(--va-text) 4%, var(--va-bg));box-shadow:none;
   display:flex;flex-direction:column;gap:2px;
   transition:background .12s ease, box-shadow .12s ease}
@@ -309,12 +309,20 @@ export const CSS = `
    (the app's structural-edit "reseg" reads as an edit here, per design). */
 .va-seg.edited,.va-seg.reseg,.va-seg.edited.sel,.va-seg.reseg.sel,.va-seg.edited.cur,.va-seg.reseg.cur{box-shadow:inset 0 0 0 1.5px var(--va-edit)}
 .va-seg-line{display:flex;align-items:baseline;gap:4px;min-width:0}
-.va-seg-n{flex:none;font-size:9px;line-height:1.25;opacity:.7;color:var(--va-muted);
+.va-seg-n{flex:none;font-size:9px;line-height:1.25;--va-caption-alpha:70%;--va-caption-color:var(--va-muted);
   font-family:var(--f-mono, ui-monospace, Menlo, monospace)}
-.va-seg.edited .va-seg-n,.va-seg.reseg .va-seg-n{color:var(--va-edit);opacity:1}
-.va-seglabel{flex:1;min-width:0;font-size:10px;line-height:1.2;color:var(--va-text);opacity:.75;
+.va-seg.edited .va-seg-n,.va-seg.reseg .va-seg-n{--va-caption-color:var(--va-edit);--va-caption-alpha:100%}
+.va-seglabel{flex:1;min-width:0;font-size:10px;line-height:1.2;--va-caption-color:var(--va-text);--va-caption-alpha:75%;
   font-family:var(--f-ui, "Inter Tight", ui-sans-serif, system-ui, sans-serif);
   display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;overflow-wrap:break-word}
+/* Text alpha belongs in its color, not an opacity effect on thousands of
+   clipped text boxes. Keep every segment in the overview, but skip text layout
+   when even its index cannot fit; zoom reveals it and hover keeps the caption. */
+.va-seg-n,.va-seglabel{color:color-mix(in srgb,var(--va-caption-color) var(--va-caption-alpha),transparent)}
+@container (max-width:24px){.va-seglabel{display:none}}
+@container (max-width:8px){.va-seg-line{display:none}}
+/* Only the two moving hover decorations get compositor layers, never cells. */
+.va-hoverline,.va-hovertime--fixed{will-change:transform}
 /* Segment hover tooltip (design .lab-tip--wide): a fixed chip (portaled to
    <body>, so no lane overflow clips it) — mono muted label, wrapped caption, and
    a struck-through "was:" line for edited cells. */
