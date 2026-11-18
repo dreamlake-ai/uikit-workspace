@@ -21,10 +21,11 @@ export const tabDomId = (leafId: string) => `tab-${leafId}`;
 /**
  * A group's flat TAB BAR: one tab per leaf, the active one lit.
  *
- * Each tab is also a drag handle — drag one out of the group to dock it
+ * The selected tab is also a drag handle — drag it out of the group to dock it
  * elsewhere, the same gesture as the panel header's grab handle. Because a tab
  * is BOTH a click target and a drag handle, the drag only becomes real once the
- * pointer has travelled `TAB_DRAG_THRESHOLD_PX`.
+ * pointer has travelled `TAB_DRAG_THRESHOLD_PX`. An inactive tab's first
+ * gesture only selects it, so incidental motion cannot tear it out.
  *
  * This is a purely presentational strip: the tree's `activeId` is the single
  * source of truth for which tab shows.
@@ -212,17 +213,20 @@ export function GroupTabBar({
               data-single-view-header={single ? leaf.id : undefined}
               onKeyDown={(e) => onKeyDown(e, index)}
               onPointerDown={(e) => {
-                // A tab is BOTH a click target and a drag handle, so the drag only
-                // becomes real once the pointer travels — otherwise every tab
-                // switch would flash the floating surrogate. A plain click falls
-                // through to onClick below.
+                // Selecting an inactive tab must not also arm a tear-out drag.
+                // Once selected, a separate press can drag it past the threshold.
                 if (
                   customTab &&
                   (e.target as HTMLElement).closest("button, a, [role=button]")
                 )
                   return;
-                if (e.button === 0)
-                  onHandleDown(leaf, e, TAB_DRAG_THRESHOLD_PX);
+                if (e.button !== 0) return;
+                if (!active) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  return;
+                }
+                onHandleDown(leaf, e, TAB_DRAG_THRESHOLD_PX);
               }}
               onClick={(e) => {
                 if (

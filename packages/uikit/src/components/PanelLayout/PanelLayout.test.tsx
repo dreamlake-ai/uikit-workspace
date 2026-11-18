@@ -589,7 +589,7 @@ it("closing an id that is not in the tree announces nothing", () => {
 
 // ── regressions ──────────────────────────────────────────────────────────────
 
-it("a TAB can be dragged out of its group (the tab bar is not inside the leaf)", () => {
+it("a selected TAB can be dragged out of its group (the tab bar is not inside the leaf)", () => {
   const a = panelLeaf({ view: "editor", title: "A" });
   const b = panelLeaf({ view: "editor", title: "B" });
   const tree: PanelNode = {
@@ -611,6 +611,8 @@ it("a TAB can be dragged out of its group (the tab bar is not inside the leaf)",
     container.querySelector(`[data-leaf-id="${b.id}"]`),
     "and an inactive tab has no leaf element to measure",
   ).toBeNull();
+
+  act(() => tab.click());
 
   act(() => {
     tab.dispatchEvent(
@@ -701,6 +703,55 @@ it("a plain tab CLICK switches tabs without ever starting a drag", () => {
   expect(r.kind === "group" && r.activeId, "the click did its job").toBe(b.id);
   expect(r.kind, "and nothing got docked").toBe("group");
 });
+
+it.each([false, true])(
+  "selecting a background tab with downward motion never tears it out (tabbed=%s)",
+  (tabbed) => {
+    vi.stubGlobal(
+      "ResizeObserver",
+      class {
+        observe() {}
+        disconnect() {}
+      },
+    );
+    const a = panelLeaf({ title: "Alpha" });
+    const b = panelLeaf({ title: "Beta" });
+    const ref = createRef<PanelLayoutHandle>();
+    const tree = panelGroup([a, b]);
+    render(<PanelLayout ref={ref} initial={() => tree} tabbed={tabbed} />);
+    const tab = container.querySelector<HTMLElement>(
+      `[data-tab-id="${b.id}"]`,
+    )!;
+    act(() =>
+      tab.dispatchEvent(
+        new PointerEvent("pointerdown", {
+          bubbles: true,
+          button: 0,
+          clientX: 20,
+          clientY: 10,
+        }),
+      ),
+    );
+    act(() =>
+      window.dispatchEvent(
+        new PointerEvent("pointermove", {
+          bubbles: true,
+          clientX: 20,
+          clientY: 20,
+        }),
+      ),
+    );
+    expect(document.body.style.cursor).not.toBe("grabbing");
+    expect(ref.current!.getRoot()).toEqual(tree);
+    act(() => {
+      window.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
+      tab.click();
+    });
+    const selected = ref.current!.getRoot();
+    expect(selected.kind === "group" && selected.activeId).toBe(b.id);
+    expect(selected.kind === "group" && selected.children).toHaveLength(2);
+  },
+);
 
 it("the tab bar is a real tablist: roving focus, arrow keys, linked panel", () => {
   const a = panelLeaf({ view: "editor", title: "Alpha" });
