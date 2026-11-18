@@ -4,10 +4,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Timeline } from "./Timeline";
 import type { Segment } from "./types";
-
-(
-  globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
+(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 let root: Root | null = null;
 let host: HTMLDivElement | null = null;
 afterEach(() => {
@@ -52,6 +49,13 @@ describe("segment hover tip", () => {
     mount([{ start: 0, end: 5, description: "approach", verified: false }]);
     hoverFirst();
     expect(tip()).toBeNull();
+  });
+
+  it("shows the caption when a dense overview hides its text", () => {
+    mount([{ start: 0, end: 5, description: "approach", verified: false }]);
+    document.querySelector<HTMLElement>(".va-seg-line")!.style.display = "none";
+    hoverFirst();
+    expect(tip()?.textContent).toContain("approach");
   });
 
   it("shows the caption when the lane cuts it off", () => {

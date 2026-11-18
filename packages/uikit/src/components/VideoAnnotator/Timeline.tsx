@@ -120,11 +120,11 @@ export function Timeline({
 
   const { major, minor, ticks } = useMemo(
     () => computeVaTicks(D, zoom, vis.start, vis.end),
-    [D, zoom, vis.start, vis.end]
+    [D, zoom, vis.start, vis.end],
   );
   const keepMinor = useMemo(
     () => cullMinorLabels(ticks, major, minor, D, wrapW, gutterPx),
-    [ticks, major, minor, D, wrapW, gutterPx]
+    [ticks, major, minor, D, wrapW, gutterPx],
   );
 
   // Normalized segments per track. The active track reuses the already-normalized
@@ -132,7 +132,7 @@ export function Timeline({
   // re-renders don't re-run normalizeSegments for every inactive lane.
   const normTracks = useMemo(
     () => trackList.map((tr, ti) => (ti === active ? activeSegs : normalizeSegments(tr.segments, D))),
-    [trackList, active, activeSegs, D]
+    [trackList, active, activeSegs, D],
   );
 
   return (
@@ -142,8 +142,11 @@ export function Timeline({
           const tsegs = normTracks[ti];
           // Include the segments crossing either viewport edge, plus one neighbor
           // for boundary handles. vis already includes a quarter-screen overscan.
-          const first = Math.max(0, segmentIndexAtTime(tsegs, vis.start) - 1);
-          const end = Math.min(tsegs.length, segmentIndexAtTime(tsegs, vis.end) + 2);
+          // Near the overview, culling saves few cells but crossing the
+          // viewport edge repeatedly mounts/unmounts them during zoom drags.
+          // Keep stable lanes until magnification makes windowing worthwhile.
+          const first = zoom <= 2 ? 0 : Math.max(0, segmentIndexAtTime(tsegs, vis.start) - 1);
+          const end = zoom <= 2 ? tsegs.length : Math.min(tsegs.length, segmentIndexAtTime(tsegs, vis.end) + 2);
           return (
             <TimelineLane
               key={tr.id || ti}
@@ -258,7 +261,7 @@ const TimelineLane = memo(function TimelineLane({
               "va-seg",
               i === currentIndex && (active ? "sel" : "cur"),
               p.edited && "edited",
-              p.resegmented && "reseg"
+              p.resegmented && "reseg",
             )}
             style={{ left: posCss(p.start), width: widCss(p.end - p.start) }}
           >

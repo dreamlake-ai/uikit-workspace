@@ -71,7 +71,10 @@ export function TimelineHover({
       const was = p.edited && p.original && p.original !== p.description ? p.original : null;
       const label = cell.querySelector<HTMLElement>(".va-seglabel");
       const cut = label
-        ? label.scrollWidth > label.clientWidth + 1 || label.scrollHeight > label.clientHeight + 1
+        ? getComputedStyle(label).display === "none" ||
+          (label.parentElement != null && getComputedStyle(label.parentElement).display === "none") ||
+          label.scrollWidth > label.clientWidth + 1 ||
+          label.scrollHeight > label.clientHeight + 1
         : !!p.description;
       if (!cut && was == null) {
         setTip(null);
@@ -119,7 +122,7 @@ export function TimelineHover({
           >
             {fmt(hover.time)}
           </div>,
-          document.body
+          document.body,
         )}
       {tip &&
         createPortal(
@@ -130,7 +133,7 @@ export function TimelineHover({
             </span>
             {tip.was != null && <span className="va-celltip-was">was: {tip.was}</span>}
           </div>,
-          document.body
+          document.body,
         )}
     </>
   );

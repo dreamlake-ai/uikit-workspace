@@ -93,7 +93,7 @@ describe("timeline windowing", () => {
     act(() =>
       host
         .querySelector(".va-timeline")!
-        .dispatchEvent(new MouseEvent("mousemove", { bubbles: true, clientX: 300, clientY: 60 }))
+        .dispatchEvent(new MouseEvent("mousemove", { bubbles: true, clientX: 300, clientY: 60 })),
     );
     flushFrame();
     expect(document.querySelector(".va-hovertime")).not.toBeNull();
@@ -106,7 +106,7 @@ describe("timeline windowing", () => {
     mountTimeline();
     scroll(5000);
     act(() =>
-      host.querySelector('[data-segment-index="5000"]')!.dispatchEvent(new MouseEvent("mouseover", { bubbles: true }))
+      host.querySelector('[data-segment-index="5000"]')!.dispatchEvent(new MouseEvent("mouseover", { bubbles: true })),
     );
     expect(document.querySelector(".va-celltip")?.textContent).toContain("5001 segment 5000");
     scroll(6000);
@@ -127,6 +127,24 @@ describe("timeline windowing", () => {
     expect(host.querySelector(".va-handle")).toBeNull();
   });
 
+  it("keeps every overview cell stable during low-magnification zoom", () => {
+    const segs = segments(1000);
+    const description = vi.fn(() => "observed caption");
+    Object.defineProperty(segs[10], "description", { get: description });
+    const props = mountTimeline(segs, false);
+    act(() => root.render(<Timeline {...props} D={1000} zoom={1} />));
+    const first = host.querySelector('[data-segment-index="0"]');
+    const last = host.querySelector('[data-segment-index="999"]');
+    description.mockClear();
+    for (const zoom of [1.4, 2, 1]) {
+      act(() => root.render(<Timeline {...props} D={1000} zoom={zoom} />));
+      expect(host.querySelectorAll(".va-seg")).toHaveLength(1000);
+      expect(host.querySelector('[data-segment-index="0"]')).toBe(first);
+      expect(host.querySelector('[data-segment-index="999"]')).toBe(last);
+    }
+    expect(description).not.toHaveBeenCalled();
+  });
+
   it("selects the model segment, not its position in the visible DOM", () => {
     vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(null);
     const onSelectedChange = vi.fn();
@@ -139,8 +157,8 @@ describe("timeline windowing", () => {
           onSelectedChange={onSelectedChange}
           onSegmentsChange={() => {}}
           enableKeyboard={false}
-        />
-      )
+        />,
+      ),
     );
     for (let i = 0; i < 7; i++) {
       act(() => (host.querySelector('[aria-label="Zoom in"]') as HTMLElement).click());

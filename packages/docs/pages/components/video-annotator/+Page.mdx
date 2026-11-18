@@ -66,6 +66,16 @@ boundary), `,`/`.` or `j`/`k` prev/next segment, `s` split, `Backspace` merge,
   <BasicSpec />
 </Preview>
 
+## Dense timelines
+
+The full overview keeps every segment visible as a colored cell. When a cell is
+narrower than its text, the caption — and, at the smallest widths, its index —
+is hidden instead of laying out unreadable text. Hover still shows the full
+caption; zooming in reveals the inline text again. Near the overview, cells stay
+mounted while you zoom; at higher magnification, only cells around the visible
+time window are rendered. Selection, scrubbing, and boundary edits continue to
+use the original segment indices.
+
 ## Multiple tracks
 
 Pass `tracks` instead of `segments` to label several parallel lanes over the
