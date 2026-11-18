@@ -10,7 +10,7 @@ All **6,000 cells remain mounted**, including during the native zoom drag from 1
 | Scrub at 1× | 47.3 / 86.1 ms | 17.9 / 33.3 ms | 42 / 0 |
 | Zoom from 1× | 73.0 / 173.0 ms | 25.8 / 42.4 ms | 99 / 2 |
 
-[Raw results](overview.json). [Before](before-overview.png) and [after](after-overview.png) show the same full-overview specimen and viewport. Unreadable text is hidden while all segment cells remain; hover retains captions and zoom reveals inline text.
+[Raw results](overview.json). [Before](before-overview.png) and [after](after-overview.png) show the same full-overview specimen and viewport after the injected component stylesheet has settled. Unreadable text is hidden while all segment cells remain; hover retains captions and zoom reveals inline text.
 
 Profiling identified two costs: lane reconstruction on pointer movement, and browser hit testing / layer processing / paint for thousands of clipped translucent captions. Isolating hover removes most JavaScript work. Density-aware text, alpha colors instead of individual opacity effects, and stable cell membership through 2× address the remaining full-overview costs. Higher zoom still uses the overscanned visible time window.
 
