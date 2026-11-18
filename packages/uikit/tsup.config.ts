@@ -19,7 +19,7 @@ const pkg = JSON.parse(
 };
 
 export default defineConfig({
-  entry: ["src/index.ts", "src/list.ts"],
+  entry: ["src/index.ts", "src/list.ts", "src/outline.ts"],
   format: ["esm"],
   dts: true,
   clean: true,
