@@ -299,3 +299,55 @@ it("keeps singleton close affordance policy while keyboard requests still reach 
     host.remove();
   }
 });
+
+it.each(["button", "a", "input", "select", "textarea"])(
+  "isolates %s actions from tab drag and parent selection",
+  (tag) => {
+    (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
+    const host = document.createElement("div");
+    document.body.append(host);
+    const root = createRoot(host);
+    const leaf = panelLeaf({ title: "Document" });
+    const group = panelGroup([leaf, panelLeaf({ title: "Other" })]) as Extract<PanelNode, { kind: "group" }>;
+    const parentClick = vi.fn(),
+      parentPointer = vi.fn(),
+      drag = vi.fn(),
+      activate = vi.fn(),
+      action = vi.fn();
+    const Control = tag as "button";
+    try {
+      act(() =>
+        root.render(
+          <div onClick={parentClick} onPointerDown={parentPointer}>
+            <PanelConfigContext.Provider
+              value={{
+                palette: DEFAULT_PALETTE,
+                renderTab: () => <Control data-control onClick={action} />,
+              }}
+            >
+              <GroupTabBar
+                group={group}
+                onActivate={activate}
+                onCloseTab={() => {}}
+                onHandleDown={drag}
+              />
+            </PanelConfigContext.Provider>
+          </div>,
+        ),
+      );
+      const control = host.querySelector<HTMLElement>("[data-control]")!;
+      act(() => {
+        control.dispatchEvent(new MouseEvent("pointerdown", { bubbles: true }));
+        control.click();
+      });
+      expect(action).toHaveBeenCalledOnce();
+      expect(parentClick).not.toHaveBeenCalled();
+      expect(parentPointer).not.toHaveBeenCalled();
+      expect(drag).not.toHaveBeenCalled();
+      expect(activate).not.toHaveBeenCalled();
+    } finally {
+      act(() => root.unmount());
+      host.remove();
+    }
+  },
+);

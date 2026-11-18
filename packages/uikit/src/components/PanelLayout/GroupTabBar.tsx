@@ -217,9 +217,13 @@ export function GroupTabBar({
                 // Once selected, a separate press can drag it past the threshold.
                 if (
                   customTab &&
-                  (e.target as HTMLElement).closest("button, a, [role=button]")
-                )
+                  (e.target as HTMLElement).closest(
+                    'button, a, input, select, textarea, [contenteditable=""], [contenteditable="true"], [role=button], [role=link], [role=combobox], [role=checkbox], [role=switch], [role=slider]',
+                  )
+                ) {
+                  e.stopPropagation();
                   return;
+                }
                 if (e.button !== 0) return;
                 if (!active) {
                   e.preventDefault();
@@ -231,9 +235,13 @@ export function GroupTabBar({
               onClick={(e) => {
                 if (
                   customTab &&
-                  (e.target as HTMLElement).closest("button, a, [role=button]")
-                )
+                  (e.target as HTMLElement).closest(
+                    'button, a, input, select, textarea, [contenteditable=""], [contenteditable="true"], [role=button], [role=link], [role=combobox], [role=checkbox], [role=switch], [role=slider]',
+                  )
+                ) {
+                  e.stopPropagation();
                   return;
+                }
                 // Drag handling cancels pointerdown's native focus. Move DOM focus
                 // off the old panel before activation hides its retained iframe.
                 e.currentTarget.focus({ preventScroll: true });

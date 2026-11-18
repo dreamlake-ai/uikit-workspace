@@ -1,4 +1,4 @@
-import { Spinner } from '../Spinner'
+import { Spinner } from "../Spinner";
 import {
   type AnchorHTMLAttributes,
   type ButtonHTMLAttributes,
@@ -249,7 +249,9 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
     const body = (
       <>
-        {loading && <Spinner size={12} aria-hidden="true" style={{ color: 'inherit' }} />}
+        {loading && (
+          <Spinner size={12} aria-hidden="true" style={{ color: "inherit" }} />
+        )}
         {!loading && leftIcon && (
           <span className="inline-flex shrink-0">{leftIcon}</span>
         )}
@@ -284,6 +286,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         <a
           ref={ref as unknown as Ref<HTMLAnchorElement>}
           href={inert ? undefined : href}
+          draggable={false}
           target={target}
           rel={rel}
           data-slot="button"
