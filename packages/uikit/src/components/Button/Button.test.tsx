@@ -78,3 +78,19 @@ it("an icon button and a link-button carry the ring too", () => {
   for (const el of [button, link])
     for (const c of RING) expect(el.className).toContain(c);
 });
+
+it("navigation links avoid native drag unless explicitly requested", () => {
+  act(() =>
+    root.render(
+      <>
+        <Button href="/project">Project</Button>
+        <Button href="/pin" draggable>
+          Pin
+        </Button>
+      </>,
+    ),
+  );
+  const links = container.querySelectorAll("a");
+  expect(links[0].draggable).toBe(false);
+  expect(links[1].draggable).toBe(true);
+});
