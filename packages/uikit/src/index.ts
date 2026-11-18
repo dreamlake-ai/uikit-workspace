@@ -26,3 +26,9 @@ export type {
   DialCustomRenderFn,
   NestedTypeDefinition,
 } from "./lib/dial-types";
+
+export {
+  OutlineRail,
+  type OutlineRailProps,
+} from "./components/OutlineRail/OutlineRail";
+export { outlinePosition } from "./components/OutlineRail/geometry";

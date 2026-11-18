@@ -1,7 +1,7 @@
 {
   "name": "@dreamlake/uikit",
-  "version": "0.2.11",
-  "description": "DreamLake UI kit — primitives + tokens",
+  "version": "0.2.12",
+  "description": "DreamLake UI kit \u2014 primitives + tokens",
   "license": "MIT",
   "type": "module",
   "sideEffects": [
@@ -13,7 +13,8 @@
     ".": "./src/index.ts",
     "./components/*": "./src/components/*.tsx",
     "./styles.css": "./src/styles.css",
-    "./list": "./src/list.ts"
+    "./list": "./src/list.ts",
+    "./outline": "./src/outline.ts"
   },
   "files": [
     "dist",
@@ -34,6 +35,10 @@
       "./list": {
         "types": "./dist/list.d.ts",
         "import": "./dist/list.js"
+      },
+      "./outline": {
+        "types": "./dist/outline.d.ts",
+        "import": "./dist/outline.js"
       }
     }
   },
