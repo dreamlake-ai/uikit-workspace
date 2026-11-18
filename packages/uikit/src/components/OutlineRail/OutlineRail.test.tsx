@@ -133,3 +133,14 @@ it("honors reduced motion and does not schedule animation", () => {
   expect(dotY()).toBeCloseTo(40);
   expect(frames).toHaveLength(0);
 });
+it("lights the square when the painted line enters its visible edge, before its center", () => {
+  render({ start: 0, end: 1.88 });
+  expect(terminal()).toBe("gray");
+  render({ start: 0, end: 1.9 });
+  expect(terminal()).toBe("gray");
+  settle();
+  expect(terminal()).toBe("red");
+  render({ start: 0, end: 1.88 });
+  settle();
+  expect(terminal()).toBe("gray");
+});

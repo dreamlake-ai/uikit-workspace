@@ -167,11 +167,12 @@ export function OutlineRail({
     const scheduled = performance.now();
     let start: number | null = null;
     function draw(length: number, end: number) {
-      // Follow the painted span, so the square lights only when animation arrives.
-      paintEnd(total - length < 0.01);
       position.current = length;
       trailStart.current = end;
       const head = lookup.pointAt(length);
+      // The square occupies the final 3.5px above the path endpoint. Light it
+      // when the painted span enters that area, rather than waiting for its center.
+      paintEnd(head.y >= rail.points[rail.points.length - 1].y - 3.5);
       const tip = lookup.pointAt(end);
       marker!.setAttribute("cx", String(tip.x));
       marker!.setAttribute("cy", String(tip.y));

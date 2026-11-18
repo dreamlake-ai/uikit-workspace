@@ -2,7 +2,8 @@
 
 A reusable version of the memo table-of-contents rail. The round dot marks the
 viewport's top edge; the accent span extends to its bottom edge and fades at the
-tail. The 7px terminal square lights when the animated span reaches the last row.
+tail. The 7px terminal square lights as soon as the animated span reaches its top
+edge, and dims again when the span retreats above it; it does not wait for the center.
 Both edges ease from their painted positions in either scroll direction, settling
 in 250ms. Reduced motion snaps immediately.
 
