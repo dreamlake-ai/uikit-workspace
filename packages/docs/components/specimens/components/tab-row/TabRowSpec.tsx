@@ -55,7 +55,7 @@ export function TabRowSpec() {
         <Knob
           label="Row width"
           value={width}
-          min={220}
+          min={120}
           max={800}
           onChange={setWidth}
         />
@@ -133,7 +133,7 @@ export function TabRowSpec() {
           }}
         />
         <p className="mt-4 text-sm text-uikit-muted">
-          Selected:{" "}
+          Scroll narrow rows to reach every tab. Selected:{" "}
           <code className="font-uikit-mono">
             {tabs.find((t) => t.value === value)?.label ?? "No documents"}
           </code>
