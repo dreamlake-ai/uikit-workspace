@@ -214,3 +214,5 @@ Tab focuses the selected tab. Left/Right arrows select adjacent tabs; Home/End s
 Use [Tabs](/components/tabs) for underline and segmented switches. Use Tab Row for open documents or pages that need close controls and width compression.
 
 Tab labels and controls do not select text during pointer drags or repeated taps. Text inside the associated content panels remains selectable.
+
+When the scrolling viewport is narrower than two minimum tab widths plus the 16px gutter, tabs scroll without sticky stacking. This keeps later labels reachable beside fixed controls; wider rows retain their usual stacking. The Row width example can be narrowed to 120px to exercise this behavior.

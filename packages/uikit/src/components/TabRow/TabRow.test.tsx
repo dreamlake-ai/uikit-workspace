@@ -324,8 +324,22 @@ it("keeps the complete active tab visible when its viewport narrows and disconne
     expect(observe).toHaveBeenCalledWith(
       container.querySelector(".uikit-tab-row-scroll"),
     );
+    const strip = container.querySelector<HTMLElement>(
+      ".uikit-tab-row-scroll",
+    )!;
+    Object.defineProperty(strip, "clientWidth", {
+      configurable: true,
+      value: 120,
+    });
     revealed.length = 0;
     act(() => resized([], {} as ResizeObserver));
+    expect(strip.hasAttribute("data-tab-linear")).toBe(true);
+    Object.defineProperty(strip, "clientWidth", {
+      configurable: true,
+      value: 560,
+    });
+    act(() => resized([], {} as ResizeObserver));
+    expect(strip.hasAttribute("data-tab-linear")).toBe(false);
     const visible = revealed.at(-1)!;
     expect(
       visible.contains(container.querySelector('[aria-selected="true"]')),

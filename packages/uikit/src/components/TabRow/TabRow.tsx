@@ -100,6 +100,12 @@ export function TabRow({
     const area = scrollRef.current;
     if (!area || typeof ResizeObserver === "undefined") return;
     const observer = new ResizeObserver(() => {
+      // A pinned active tab must not occupy the entire touch viewport and
+      // cover every sibling. Keep the usual stack when two minimum slots fit.
+      area.toggleAttribute(
+        "data-tab-linear",
+        area.clientWidth > 0 && area.clientWidth < minimum * 2 + 16,
+      );
       const tab = area
         .querySelector('[aria-selected="true"]')
         ?.closest<HTMLElement>(".uikit-tab-row-item");
@@ -114,7 +120,7 @@ export function TabRow({
     });
     observer.observe(area);
     return () => observer.disconnect();
-  }, []);
+  }, [minimum]);
 
   return (
     // `data-tab-count`: a host may draw a lone tab differently from a strip
@@ -282,6 +288,7 @@ const CSS =
   ".uikit-tab-row-scroll{position:relative;z-index:1;display:flex;align-items:flex-end;gap:2px;" +
   "flex:1;min-width:0;overflow-x:auto;scrollbar-width:none}" +
   ".uikit-tab-row-scroll::-webkit-scrollbar{display:none}" +
+  ".uikit-tab-row-scroll[data-tab-linear] > .uikit-document-tab{position:relative;left:auto}" +
   ".uikit-tab-row-divider{flex:none;align-self:center;width:1px;height:14px;margin:0 4px;background:var(--faint)}" +
   ".uikit-tab-row-item{display:flex;align-items:center;flex:0 1 var(--tab-row-preferred-width);overflow:visible;" +
   "box-sizing:border-box;min-width:var(--tab-row-min-width);max-width:var(--tab-row-preferred-width);" +

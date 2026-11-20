@@ -221,3 +221,46 @@ for (const kind of ["documents", "panels"] as const) {
     }
   });
 }
+
+test("document tabs remain clickable when fixed controls leave a one-tab viewport", async ({
+  page,
+}) => {
+  await page.goto("/components/tab-row");
+  await page.waitForLoadState("networkidle");
+  const row = page.getByRole("tablist", { name: "Example documents" });
+  await row.scrollIntoViewIfNeeded();
+  await row.getByRole("tab").first().click();
+  await row.evaluate((el) => {
+    el.style.minWidth = "120px";
+    el.style.maxWidth = "120px";
+  });
+  await expect(row).toHaveAttribute("data-tab-linear", "");
+  const last = row.getByRole("tab").last();
+  await last.scrollIntoViewIfNeeded();
+  await expect
+    .poll(() =>
+      last.evaluate((el) => {
+        const r = el.getBoundingClientRect();
+        return el.contains(
+          document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2),
+        );
+      }),
+    )
+    .toBe(true);
+  await last.click();
+  await expect(last).toHaveAttribute("aria-selected", "true");
+  await row.getByRole("tab").first().click();
+  await expect(row.getByRole("tab").first()).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+  await row.evaluate((el) => {
+    el.style.minWidth = "560px";
+    el.style.maxWidth = "560px";
+  });
+  await expect(row).not.toHaveAttribute("data-tab-linear");
+  await expect(row.locator(".uikit-document-tab").first()).toHaveCSS(
+    "position",
+    "sticky",
+  );
+});
