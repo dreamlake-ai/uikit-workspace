@@ -1,3 +1,4 @@
+import { useRef, useState } from 'react'
 import { PanelLayout, panelGroup, panelLeaf, panelSplit } from '@dreamlake/uikit'
 import { PanelStage } from './PanelStage'
 
@@ -23,8 +24,24 @@ const initial = () =>
     [28, 72],
   )
 
-export const TabsSpec = () => (
-  <PanelStage>
-    <PanelLayout tabbed initial={initial} className="p-2" />
+export function TabsSpec() {
+  const destination = useRef<HTMLDivElement>(null)
+  const [saved, setSaved] = useState<string[]>([])
+  return <PanelStage>
+    <div className="flex h-full">
+      <div ref={destination} className="w-40 shrink-0 border-r border-uikit-border p-3 text-uikit-12"
+        aria-label="Saved tab references">
+        <p>Drag a tab here to save its reference.</p>
+        {saved.map((title) => <p key={title}>{title}</p>)}
+      </div>
+      <PanelLayout tabbed initial={initial} className="min-w-0 flex-1 p-2"
+        externalDropTarget={(leaf, point) => {
+          const element = destination.current
+          if (!element || !element.contains(document.elementFromPoint(point.x, point.y))) return null
+          return { element, label: 'Save reference', onDrop: () => {
+            setSaved((previous) => [...new Set([...previous, leaf.title ?? leaf.id])])
+          } }
+        }} />
+    </div>
   </PanelStage>
-)
+}

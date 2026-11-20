@@ -1244,3 +1244,68 @@ it("connects a shown singleton tab to its retained tabpanel and keeps trailing a
   expect(container.querySelector("input")).toBe(originalInput);
   expect(originalInput.value).toBe("unsent draft");
 });
+
+it.each(["pointerup", "pointercancel", "escape", "withdraw"])(
+  "external tab copy handles %s without changing the source layout",
+  (ending) => {
+    const a = panelLeaf({ view: "editor", title: "A" });
+    const b = panelLeaf({ view: "editor", title: "B" });
+    const tree = panelGroup([a, b]);
+    const dropped = vi.fn();
+    const changed = vi.fn();
+    const destination = document.createElement("div");
+    document.body.append(destination);
+    let available = true;
+    render(
+      <PanelLayout
+        initial={() => tree}
+        onChange={changed}
+        externalDropTarget={(leaf, point) =>
+          available && point.x > 30 && leaf.id === a.id
+            ? { element: destination, label: "Save reference", onDrop: dropped }
+            : null
+        }
+      />,
+    );
+    const tab = container.querySelector(`[data-tab-id="${a.id}"]`)!;
+    act(() =>
+      tab.dispatchEvent(
+        new PointerEvent("pointerdown", {
+          bubbles: true,
+          button: 0,
+          clientX: 5,
+          clientY: 5,
+        }),
+      ),
+    );
+    act(() =>
+      window.dispatchEvent(
+        new PointerEvent("pointermove", {
+          bubbles: true,
+          clientX: 80,
+          clientY: 5,
+        }),
+      ),
+    );
+    expect(destination.getAttribute("data-panel-drop-target")).toBe("true");
+    expect(container.textContent).toContain("Save reference");
+    if (ending === "withdraw") available = false;
+    act(() => {
+      if (ending === "escape")
+        window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+      else
+        window.dispatchEvent(
+          new PointerEvent(ending === "withdraw" ? "pointerup" : ending, {
+            bubbles: true,
+            clientX: 80,
+            clientY: 5,
+          }),
+        );
+    });
+    expect(dropped).toHaveBeenCalledTimes(ending === "pointerup" ? 1 : 0);
+    expect(changed).not.toHaveBeenCalled();
+    expect(container.querySelectorAll('[role="tab"]')).toHaveLength(2);
+    expect(destination.hasAttribute("data-panel-drop-target")).toBe(false);
+    destination.remove();
+  },
+);
