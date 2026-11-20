@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { Ellipsis, Plus } from "lucide-react";
-import { Button, Slider, TabRow } from "@dreamlake/uikit";
+import { useState } from 'react'
+import { Ellipsis, Plus } from 'lucide-react'
+import { Button, DocumentTabHeading, Slider, TabRow } from '@dreamlake/uikit'
 
 /**
  * A demo knob: token-styled caption over a uikit Slider. Kept local to the
@@ -13,11 +13,11 @@ function Knob({
   max,
   onChange,
 }: {
-  label: string;
-  value: number;
-  min: number;
-  max: number;
-  onChange: (value: number) => void;
+  label: string
+  value: number
+  min: number
+  max: number
+  onChange: (value: number) => void
 }) {
   return (
     <div className="flex min-w-0 flex-1 basis-24 flex-col gap-2">
@@ -33,46 +33,38 @@ function Knob({
         max={max}
       />
     </div>
-  );
+  )
 }
 
 export function TabRowSpec() {
   const [tabs, setTabs] = useState([
-    { value: "plan", label: "Detailed Implementation Plan" },
-    { value: "hosts", label: "Enroll hosts through SSH" },
-    { value: "test", label: "Test host enrollment" },
-    { value: "release", label: "Release checklist" },
-  ]);
-  const [value, setValue] = useState("plan");
-  const [minimum, setMinimum] = useState(80);
-  const [preferred, setPreferred] = useState(170);
-  const [width, setWidth] = useState(560);
-  const [startEdge, setStartEdge] = useState<"curved" | "flush">("curved");
+    { value: 'plan', label: 'Detailed Implementation Plan' },
+    { value: 'hosts', label: 'Enroll hosts through SSH' },
+    { value: 'test', label: 'Test host enrollment' },
+    { value: 'release', label: 'Release checklist' },
+  ])
+  const [value, setValue] = useState('plan')
+  const [minimum, setMinimum] = useState(80)
+  const [preferred, setPreferred] = useState(170)
+  const [width, setWidth] = useState(560)
+  const [startEdge, setStartEdge] = useState<'curved' | 'flush'>('curved')
 
   return (
     <div className="w-full min-w-0">
+      <div className="mb-6 flex items-stretch bg-uikit-workspace pt-0.5">
+        <DocumentTabHeading>
+          <nav aria-label="Project breadcrumb">
+            <a href="#projects">Projects</a> / Example
+          </nav>
+        </DocumentTabHeading>
+        <Button className="ml-auto" variant="action" size="sm">
+          Refresh
+        </Button>
+      </div>
       <div className="mb-8 flex flex-wrap gap-x-6 gap-y-5">
-        <Knob
-          label="Row width"
-          value={width}
-          min={120}
-          max={800}
-          onChange={setWidth}
-        />
-        <Knob
-          label="Minimum"
-          value={minimum}
-          min={48}
-          max={140}
-          onChange={setMinimum}
-        />
-        <Knob
-          label="Preferred"
-          value={preferred}
-          min={140}
-          max={260}
-          onChange={setPreferred}
-        />
+        <Knob label="Row width" value={width} min={120} max={800} onChange={setWidth} />
+        <Knob label="Minimum" value={minimum} min={48} max={140} onChange={setMinimum} />
+        <Knob label="Preferred" value={preferred} min={140} max={260} onChange={setPreferred} />
       </div>
 
       <label className="mb-4 flex items-center gap-2 text-sm">
@@ -80,9 +72,7 @@ export function TabRowSpec() {
         <select
           aria-label="Left neighbor"
           value={startEdge}
-          onChange={(event) =>
-            setStartEdge(event.target.value as "curved" | "flush")
-          }
+          onChange={(event) => setStartEdge(event.target.value as 'curved' | 'flush')}
         >
           <option value="curved">White panel — curved foot</option>
           <option value="flush">Background panel — flush edge</option>
@@ -108,37 +98,32 @@ export function TabRowSpec() {
               className="size-6 rounded-uikit-badge"
               aria-label="New document"
               onClick={() => {
-                const id = crypto.randomUUID();
-                setTabs([...tabs, { value: id, label: "Untitled document" }]);
-                setValue(id);
+                const id = crypto.randomUUID()
+                setTabs([...tabs, { value: id, label: 'Untitled document' }])
+                setValue(id)
               }}
             >
               <Plus size={14} />
             </Button>
           }
           trailing={
-            <Button
-              icon
-              variant="ghost"
-              size="sm"
-              aria-label="Document options"
-            >
+            <Button icon variant="ghost" size="sm" aria-label="Document options">
               <Ellipsis size={14} />
             </Button>
           }
           onClose={(id) => {
-            const remaining = tabs.filter((t) => t.value !== id);
-            setTabs(remaining);
-            if (value === id) setValue(remaining[0]?.value ?? "");
+            const remaining = tabs.filter((t) => t.value !== id)
+            setTabs(remaining)
+            if (value === id) setValue(remaining[0]?.value ?? '')
           }}
         />
         <p className="mt-4 text-sm text-uikit-muted">
-          Scroll narrow rows to reach every tab. Selected:{" "}
+          Scroll narrow rows to reach every tab. Selected:{' '}
           <code className="font-uikit-mono">
-            {tabs.find((t) => t.value === value)?.label ?? "No documents"}
+            {tabs.find((t) => t.value === value)?.label ?? 'No documents'}
           </code>
         </p>
       </div>
     </div>
-  );
+  )
 }
