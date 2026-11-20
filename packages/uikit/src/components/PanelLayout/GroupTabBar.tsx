@@ -6,7 +6,10 @@ import {
 } from "react";
 import { Button } from "../Button";
 import { documentTabStyles } from "../TabRow/documentTabStyles";
-import { useDocumentTabScroll } from "../TabRow/useDocumentTabScroll";
+import {
+  useDocumentTabScroll,
+  revealDocumentTab,
+} from "../TabRow/useDocumentTabScroll";
 import { cn } from "../../lib/utils";
 import { TAB_DRAG_THRESHOLD_PX, usePanelConfig } from "./config";
 import { CloseIcon } from "./PanelLeaf";
@@ -65,26 +68,8 @@ export function GroupTabBar({
     if (!bar) return;
     const active = bar.querySelector<HTMLElement>('[aria-selected="true"]');
     if (!active) return;
-    const reveal = (smooth = false) => {
-      const viewport = bar.getBoundingClientRect();
-      // A stacked tab must reveal its original slot when selected.
-      active.style.position = "static";
-      const tab = active.getBoundingClientRect();
-      active.style.removeProperty("position");
-      if (!viewport.width || !tab.width) return;
-      const delta =
-        tab.left < viewport.left + 8
-          ? tab.left - viewport.left - 8
-          : Math.max(0, tab.right - viewport.right + 8);
-      if (!delta) return;
-      if (
-        smooth &&
-        bar.scrollBy &&
-        !window.matchMedia?.("(prefers-reduced-motion: reduce)").matches
-      )
-        bar.scrollBy({ left: delta, behavior: "smooth" });
-      else bar.scrollLeft += delta;
-    };
+    const reveal = (smooth = false) =>
+      revealDocumentTab(bar, active, smooth, 8);
     reveal(true);
     if (typeof ResizeObserver === "undefined") return;
     const observer = new ResizeObserver(() => reveal());

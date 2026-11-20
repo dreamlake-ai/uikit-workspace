@@ -8,7 +8,10 @@ import {
 import { X } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { documentTabStyles } from "./documentTabStyles";
-import { useDocumentTabScroll } from "./useDocumentTabScroll";
+import {
+  useDocumentTabScroll,
+  revealDocumentTab,
+} from "./useDocumentTabScroll";
 
 export interface TabRowItem {
   value: string;
@@ -85,16 +88,7 @@ export function TabRow({
       ?.querySelector('[aria-selected="true"]')
       ?.closest<HTMLElement>(".uikit-tab-row-item");
     if (!tab) return;
-    // Measure the natural slot, not its sticky position under later tabs.
-    tab.style.position = "static";
-    tab.scrollIntoView?.({
-      inline: "nearest",
-      block: "nearest",
-      behavior: window.matchMedia?.("(prefers-reduced-motion: reduce)").matches
-        ? "auto"
-        : "smooth",
-    });
-    tab.style.removeProperty("position");
+    revealDocumentTab(scrollRef.current!, tab, true);
   }, [value, tabs.length]);
   useEffect(() => {
     const area = scrollRef.current;
@@ -110,13 +104,7 @@ export function TabRow({
         .querySelector('[aria-selected="true"]')
         ?.closest<HTMLElement>(".uikit-tab-row-item");
       if (!tab) return;
-      tab.style.position = "static";
-      tab.scrollIntoView?.({
-        inline: "nearest",
-        block: "nearest",
-        behavior: "auto",
-      });
-      tab.style.removeProperty("position");
+      revealDocumentTab(area, tab);
     });
     observer.observe(area);
     return () => observer.disconnect();

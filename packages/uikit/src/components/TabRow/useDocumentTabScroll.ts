@@ -34,3 +34,30 @@ export function useDocumentTabScroll(ref: RefObject<HTMLDivElement | null>) {
     return () => strip.removeEventListener("wheel", onWheel);
   }, [ref]);
 }
+
+/** Reveal a natural tab slot without scrolling any document or dock ancestor. */
+export function revealDocumentTab(
+  strip: HTMLElement,
+  item: HTMLElement,
+  smooth = false,
+  inset = 0,
+) {
+  const viewport = strip.getBoundingClientRect();
+  const original = item.style.position;
+  item.style.position = "static";
+  const tab = item.getBoundingClientRect();
+  item.style.position = original;
+  if (!viewport.width || !tab.width) return;
+  const delta =
+    tab.left < viewport.left + inset || tab.width > viewport.width
+      ? tab.left - viewport.left - inset
+      : Math.max(0, tab.right - viewport.right + inset);
+  if (!delta) return;
+  if (
+    smooth &&
+    strip.scrollBy &&
+    !window.matchMedia?.("(prefers-reduced-motion: reduce)").matches
+  )
+    strip.scrollBy({ left: delta, behavior: "smooth" });
+  else strip.scrollLeft += delta;
+}

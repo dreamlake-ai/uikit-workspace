@@ -234,14 +234,19 @@ it("keeps trailing actions outside the tab button and preserves keyboard selecti
 it("reveals the active tab together with its trailing and close controls", () => {
   const previous = Object.getOwnPropertyDescriptor(
     Element.prototype,
-    "scrollIntoView",
+    "getBoundingClientRect",
   );
   const revealed: Element[] = [];
-  Object.defineProperty(Element.prototype, "scrollIntoView", {
+  Object.defineProperty(Element.prototype, "getBoundingClientRect", {
     configurable: true,
     value: function (this: Element) {
-      expect((this as HTMLElement).style.position).toBe("static");
-      revealed.push(this);
+      if (this.classList.contains("uikit-tab-row-item")) {
+        expect((this as HTMLElement).style.position).toBe("static");
+        revealed.push(this);
+        const strip = this.closest<HTMLElement>(".uikit-tab-row-scroll");
+        return new DOMRect(220 - (strip?.scrollLeft ?? 0), 0, 100, 26);
+      }
+      return new DOMRect(0, 0, (this as HTMLElement).clientWidth || 200, 26);
     },
   });
   try {
@@ -273,8 +278,12 @@ it("reveals the active tab together with its trailing and close controls", () =>
     ).toBeTruthy();
   } finally {
     if (previous)
-      Object.defineProperty(Element.prototype, "scrollIntoView", previous);
-    else Reflect.deleteProperty(Element.prototype, "scrollIntoView");
+      Object.defineProperty(
+        Element.prototype,
+        "getBoundingClientRect",
+        previous,
+      );
+    else Reflect.deleteProperty(Element.prototype, "getBoundingClientRect");
   }
 });
 
@@ -284,7 +293,7 @@ it("keeps the complete active tab visible when its viewport narrows and disconne
     disconnect = vi.fn();
   const previous = Object.getOwnPropertyDescriptor(
     Element.prototype,
-    "scrollIntoView",
+    "getBoundingClientRect",
   );
   const revealed: Element[] = [];
   vi.stubGlobal(
@@ -297,11 +306,16 @@ it("keeps the complete active tab visible when its viewport narrows and disconne
       disconnect = disconnect;
     },
   );
-  Object.defineProperty(Element.prototype, "scrollIntoView", {
+  Object.defineProperty(Element.prototype, "getBoundingClientRect", {
     configurable: true,
     value: function (this: Element) {
-      expect((this as HTMLElement).style.position).toBe("static");
-      revealed.push(this);
+      if (this.classList.contains("uikit-tab-row-item")) {
+        expect((this as HTMLElement).style.position).toBe("static");
+        revealed.push(this);
+        const strip = this.closest<HTMLElement>(".uikit-tab-row-scroll");
+        return new DOMRect(220 - (strip?.scrollLeft ?? 0), 0, 100, 26);
+      }
+      return new DOMRect(0, 0, (this as HTMLElement).clientWidth || 200, 26);
     },
   });
   try {
@@ -353,8 +367,12 @@ it("keeps the complete active tab visible when its viewport narrows and disconne
   } finally {
     vi.unstubAllGlobals();
     if (previous)
-      Object.defineProperty(Element.prototype, "scrollIntoView", previous);
-    else Reflect.deleteProperty(Element.prototype, "scrollIntoView");
+      Object.defineProperty(
+        Element.prototype,
+        "getBoundingClientRect",
+        previous,
+      );
+    else Reflect.deleteProperty(Element.prototype, "getBoundingClientRect");
   }
 });
 
@@ -478,4 +496,50 @@ it("keeps fitted nonclosable label padding constant across selection", () => {
   expect(
     first.parentElement?.querySelector('[aria-label="Close First"]'),
   ).toBeNull();
+});
+
+it("scrolls only its own tab strip, never the surrounding page or panel", () => {
+  const ancestor = vi
+    .spyOn(Element.prototype, "getBoundingClientRect")
+    .mockImplementation(function (this: Element) {
+      if (this.classList.contains("uikit-tab-row-item")) {
+        const strip = this.closest<HTMLElement>(".uikit-tab-row-scroll");
+        return new DOMRect(400 - (strip?.scrollLeft ?? 0), 0, 120, 26);
+      }
+      return new DOMRect(0, 0, 200, 26);
+    });
+  const old = Object.getOwnPropertyDescriptor(
+    Element.prototype,
+    "scrollIntoView",
+  );
+  const intoView = vi.fn();
+  Object.defineProperty(Element.prototype, "scrollIntoView", {
+    configurable: true,
+    value: intoView,
+  });
+  try {
+    container.scrollLeft = 23;
+    act(() =>
+      root.render(
+        <TabRow
+          value="third"
+          onValueChange={() => {}}
+          tabs={[
+            { value: "first", label: "First" },
+            { value: "second", label: "Second" },
+            { value: "third", label: "Third" },
+          ]}
+        />,
+      ),
+    );
+    expect(
+      container.querySelector<HTMLElement>(".uikit-tab-row-scroll")!.scrollLeft,
+    ).toBe(320);
+    expect(container.scrollLeft).toBe(23);
+    expect(intoView).not.toHaveBeenCalled();
+  } finally {
+    ancestor.mockRestore();
+    if (old) Object.defineProperty(Element.prototype, "scrollIntoView", old);
+    else Reflect.deleteProperty(Element.prototype, "scrollIntoView");
+  }
 });
