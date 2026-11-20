@@ -95,6 +95,7 @@ type DragState = {
   x: number; // current cursor position
   y: number;
   target: { id: string; side: DockSide; rect: PanelRect } | null;
+  external?: { element: HTMLElement; label: string; onDrop: () => void } | null;
 };
 
 /** One leaf's identity plus its live pixel rect — what `inspect()` returns. */
@@ -218,6 +219,14 @@ export interface PanelLayoutProps {
   resetTo?: () => PanelNode;
   className?: string;
 
+  /** Copy a tab to a host-owned destination outside the layout. Returning a
+   * target gives it precedence over docking; the source tree is never changed.
+   * Called again on release, so vanished or unavailable destinations cannot commit. */
+  externalDropTarget?: (
+    leaf: LeafNode,
+    point: { x: number; y: number },
+  ) => { element: HTMLElement; label: string; onDrop: () => void } | null;
+
   // ── policy seams ────────────────────────────────────────────────────────
   /** Which views may share a tab group. Default: every view may. Returning false
    *  makes a view a SINGLETON — the centre/tab drop zone is suppressed for it, in
@@ -291,6 +300,7 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(
       resetTo,
       className,
       isTabbable,
+      externalDropTarget,
       closable,
       primaryView,
       leafClassName,
@@ -384,6 +394,8 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(
     focusedLeafCallback.current = onFocusedLeafChange;
     const focusRef = useRef(focusedId);
     focusRef.current = focusedId;
+    const externalDropRef = useRef(externalDropTarget);
+    externalDropRef.current = externalDropTarget;
     const dragRef = useRef(drag);
     dragRef.current = drag;
     const onChangeRef = useRef(onChange);
@@ -693,6 +705,19 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(
           if (Math.hypot(x - d.x, y - d.y) < d.threshold) return;
           setDrag((prev) => (prev ? { ...prev, armed: true } : prev));
         }
+        const source = findLeaf(rootRef.current, d.srcId);
+        const external =
+          !d.wholeGroup && source
+            ? (externalDropRef.current?.(source, { x, y }) ?? null)
+            : null;
+        if (external) {
+          setDrag((prev) =>
+            prev
+              ? { ...prev, armed: true, x, y, target: null, external }
+              : prev,
+          );
+          return;
+        }
         const el = document.elementFromPoint(x, y) as HTMLElement | null;
         // Tab strips are sibling overlays above retained leaf surfaces. Resolve
         // their owning region explicitly: a header drop means "join these tabs",
@@ -774,11 +799,26 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(
             };
           }
         }
-        setDrag((prev) => (prev ? { ...prev, x, y, target } : prev));
+        setDrag((prev) =>
+          prev ? { ...prev, x, y, target, external: null } : prev,
+        );
       };
 
-      const finish = () => {
+      const finish = (event: PointerEvent) => {
         const d = dragRef.current;
+        const source = d && findLeaf(rootRef.current, d.srcId);
+        const external =
+          d?.armed && !d.wholeGroup && source
+            ? externalDropRef.current?.(source, {
+                x: event.clientX,
+                y: event.clientY,
+              })
+            : null;
+        if (external) {
+          setDrag(null);
+          external.onDrop();
+          return;
+        }
         // Never armed ⇒ the pointer went down and up without travelling: a click.
         // Let it through to the tab's own onClick instead of docking anything.
         if (d?.armed && d.target) {
@@ -806,6 +846,7 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(
         setDrag(null);
       };
 
+      const cancel = () => setDrag(null);
       const onKey = (e: KeyboardEvent) => {
         if (e.key === "Escape") {
           e.preventDefault();
@@ -815,16 +856,23 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(
 
       window.addEventListener("pointermove", onMove);
       window.addEventListener("pointerup", finish);
-      window.addEventListener("pointercancel", finish);
+      window.addEventListener("pointercancel", cancel);
       window.addEventListener("keydown", onKey, true);
       return () => {
         window.removeEventListener("pointermove", onMove);
         window.removeEventListener("pointerup", finish);
-        window.removeEventListener("pointercancel", finish);
+        window.removeEventListener("pointercancel", cancel);
         window.removeEventListener("keydown", onKey, true);
       };
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isDragging]);
+
+    useEffect(() => {
+      const element = drag?.external?.element;
+      if (!element) return;
+      element.setAttribute("data-panel-drop-target", "true");
+      return () => element.removeAttribute("data-panel-drop-target");
+    }, [drag?.external?.element]);
 
     // An iframe (artifact, embedded page) swallows pointer events, so the window
     // listeners above go silent once the cursor crosses one and the surrogate
@@ -1066,14 +1114,16 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(
           morphs to the target's half-rect when hovering another panel. */}
         {drag?.armed &&
           (() => {
-            const box = drag.target
-              ? dockRect(drag.target.rect, drag.target.side)
-              : {
-                  left: drag.x - drag.grabDX,
-                  top: drag.y - drag.grabDY,
-                  width: drag.srcW,
-                  height: drag.srcH,
-                };
+            const box = drag.external
+              ? drag.external.element.getBoundingClientRect()
+              : drag.target
+                ? dockRect(drag.target.rect, drag.target.side)
+                : {
+                    left: drag.x - drag.grabDX,
+                    top: drag.y - drag.grabDY,
+                    width: drag.srcW,
+                    height: drag.srcH,
+                  };
             return (
               <div
                 className={cn(
@@ -1095,7 +1145,7 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(
                 }}
               >
                 <span className="text-uikit-ink font-uikit-ui text-[13px] font-semibold">
-                  {drag.label}
+                  {drag.external?.label ?? drag.label}
                 </span>
               </div>
             );
