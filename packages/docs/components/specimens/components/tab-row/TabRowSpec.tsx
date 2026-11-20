@@ -78,7 +78,7 @@ export function TabRowSpec() {
           <option value="flush">Background panel — flush edge</option>
         </select>
       </label>
-      <div className="max-w-full" style={{ width }}>
+      <div className="min-w-0 max-w-full overflow-hidden" style={{ width }}>
         <TabRow
           tabs={tabs}
           startEdge={startEdge}
@@ -118,7 +118,7 @@ export function TabRowSpec() {
           }}
         />
         <p className="mt-4 text-sm text-uikit-muted">
-          Scroll narrow rows to reach every tab. Selected:{' '}
+          Only the tab strip scrolls; this content stays fixed. Selected:{' '}
           <code className="font-uikit-mono">
             {tabs.find((t) => t.value === value)?.label ?? 'No documents'}
           </code>
