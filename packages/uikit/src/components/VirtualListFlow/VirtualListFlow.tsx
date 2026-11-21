@@ -38,13 +38,16 @@ import {
   type ReactNode,
 } from "react";
 import { cn } from "../../lib/utils";
-import type { VirtualListProps } from "../VirtualList/types";
+import type { VirtualListFlowProps } from "./types";
 import { usePullToRefresh } from "./usePullToRefresh";
+import { PullRefreshDroplet } from "./PullRefreshDroplet";
+import { useLoadAhead } from "./useLoadAhead";
 import { useVirtualListFlow } from "./useVirtualListFlow";
 
 interface VirtualListFlowComponentProps<T>
-  extends Omit<ComponentProps<"div">, "children" | "onScroll">,
-    VirtualListProps<T> {
+  extends
+    Omit<ComponentProps<"div">, "children" | "onScroll">,
+    VirtualListFlowProps<T> {
   /** Pull down at the top with touch/trackpad; Alt+R while the list is focused. */
   onRefresh?: () => void;
   refreshing?: boolean;
@@ -66,6 +69,7 @@ function VirtualListFlowInner<T>(
     hasMore = false,
     loadingMore = false,
     onLoadMore,
+    loadMoreKey = items.length,
     loadMoreThreshold = 80,
     renderLoadingMore,
     stickyHeader,
@@ -139,17 +143,20 @@ function VirtualListFlowInner<T>(
 
   const handleScroll = useCallback(
     (e: React.UIEvent<HTMLDivElement>) => {
-      const { scrollTop: st, scrollHeight, clientHeight } = e.currentTarget;
+      const { scrollTop: st } = e.currentTarget;
       setScrollTop(st);
       onScroll?.(st);
-      if (hasMore && !loadingMore && onLoadMore) {
-        if (scrollHeight - st - clientHeight < loadMoreThreshold) {
-          onLoadMore();
-        }
-      }
     },
-    [hasMore, loadingMore, onLoadMore, loadMoreThreshold, onScroll],
+    [onScroll],
   );
+
+  useLoadAhead(containerRef, {
+    key: loadMoreKey,
+    enabled: hasMore && !refreshing,
+    loading: loadingMore,
+    threshold: loadMoreThreshold,
+    load: onLoadMore,
+  });
 
   const prevRangeRef = useRef({ start: -1, end: -1 });
   useEffect(() => {
@@ -197,17 +204,8 @@ function VirtualListFlowInner<T>(
       onScroll={handleScroll}
       {...props}
     >
-      {onRefresh && (refreshing || pullDistance > 0) && (
-        <div
-          role="status"
-          className="sticky top-0 z-20 bg-uikit-panel py-2 text-center font-uikit-ui text-xs text-uikit-muted"
-        >
-          {refreshing
-            ? "Refreshing…"
-            : pullDistance >= 64
-              ? "Release to refresh"
-              : "Pull to refresh"}
-        </div>
+      {onRefresh && (
+        <PullRefreshDroplet distance={pullDistance} refreshing={refreshing} />
       )}
       {stickyHeader && stickyHeaderHeight > 0 && (
         <div className="sticky top-0 z-10">{stickyHeader}</div>

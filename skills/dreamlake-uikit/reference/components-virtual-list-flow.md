@@ -22,13 +22,13 @@ or sections with layered structure inside them.
 
 ## When to pick which
 
-| | `VirtualList` (absolute) | `VirtualListFlow` (flow) |
-| --- | --- | --- |
-| Sticky inside an item | Pinned to item, not scroll container | Pinned to scroll container ✓ |
-| CSS `gap` / `margin` between items | Bake into item padding | Works natively ✓ |
-| Compositing layers | One per visible item | None per item ✓ |
-| Repositioning cost on scroll | Compositor only (cheap) | Layout (cheap, but heavier than compositor) |
-| Async height-change scroll drift | Possible | Browser scroll anchoring keeps stable ✓ |
+|                                    | `VirtualList` (absolute)             | `VirtualListFlow` (flow)                    |
+| ---------------------------------- | ------------------------------------ | ------------------------------------------- |
+| Sticky inside an item              | Pinned to item, not scroll container | Pinned to scroll container ✓                |
+| CSS `gap` / `margin` between items | Bake into item padding               | Works natively ✓                            |
+| Compositing layers                 | One per visible item                 | None per item ✓                             |
+| Repositioning cost on scroll       | Compositor only (cheap)              | Layout (cheap, but heavier than compositor) |
+| Async height-change scroll drift   | Possible                             | Browser scroll anchoring keeps stable ✓     |
 
 If a list doesn't need any of the flow-side wins, `VirtualList` is
 fine and slightly cheaper. For any list of cards, sections, or items
@@ -47,34 +47,51 @@ replace estimates.
 
 ## Infinite scroll
 
-Pass `hasMore`, `loadingMore`, and `onLoadMore`. The callback fires when
-the scroll position is within `loadMoreThreshold` px (default `80`) of
-the bottom.
+Pass `hasMore`, `loadingMore`, and `onLoadMore`. The callback fires when the remaining content is within `loadMoreThreshold` px
+(default `80`) of the bottom, including on first layout, viewport resizing, and
+after each page. The example starts with a short page and loads ahead by 240px;
+only the visible rows plus `overscan` are mounted.
+
+Each `loadMoreKey` is requested once (default: `items.length`). Pass the actual
+next-page cursor when filtering or deduplication can produce an empty page, and
+include query/refresh identity when restarting a list. A returned promise prevents
+concurrent requests even before `loadingMore` updates. Set `hasMore={false}` on an
+error and expose retry in the owning UI; loading completion alone never retries an
+unchanged key. Loading is paused while `refreshing` or the viewport has no height.
 
 ## Props
 
-`VirtualListFlow` re-exports the same `VirtualListProps` type as
-`VirtualList`, so callers can swap one for the other without rewriting
-JSX. The `style` argument passed to the `children` render fn is just
+`VirtualListFlowProps` extends `VirtualListProps` with `loadMoreKey`. The `style` argument passed to the `children` render fn is just
 `{ width: '100%' }` (plus `height` in fixed mode) — no positioning
 information, because items are in normal flow and don't need any.
 
-| Prop | Type | Default | Description |
-| --- | --- | --- | --- |
-| `items` | `T[]` | — | Array of items to render. |
-| `itemHeight` | `number \| "dynamic"` | — | Fixed height in px, or `"dynamic"` for content-driven heights. |
-| `estimatedItemHeight` | `number` | `40` | Initial height estimate used in dynamic mode. |
-| `height` | `number \| string` | `"100%"` | Container height. |
-| `overscan` | `number` | `3` | Extra items rendered outside the visible area. |
-| `getItemKey` | `(item, index) => string \| number` | `index` | Returns a stable key for each item. |
-| `children` | `(item, index, style) => ReactNode` | — | Render function. Applying `style` is optional in flow mode — only `width` (and `height` in fixed mode) are set. |
-| `hasMore` | `boolean` | `false` | Whether more items can be loaded. |
-| `loadingMore` | `boolean` | `false` | Shows a loading indicator at the bottom while true. |
-| `onLoadMore` | `() => void` | — | Called when scroll reaches the load-more threshold. |
-| `loadMoreThreshold` | `number` | `80` | Px from bottom that triggers `onLoadMore`. |
-| `renderLoadingMore` | `ReactNode` | `"Loading more…"` | Custom content shown while `loadingMore` is true. |
-| `onScroll` | `(scrollTop: number) => void` | — | Fires on scroll with the current `scrollTop` value. |
-| `onRangeChange` | `(start, end) => void` | — | Fires when the visible index range changes. |
-| `stickyHeader` | `ReactNode` | — | Header rendered inside the scroll container with `position: sticky`. |
-| `stickyHeaderHeight` | `number` | `0` | Height of `stickyHeader`. Subtracted from visible-area calculations so items don't render under it. |
-| `className` | `string` | — | Extra classes on the container. |
+| Prop                  | Type                                | Default           | Description                                                                                                     |
+| --------------------- | ----------------------------------- | ----------------- | --------------------------------------------------------------------------------------------------------------- |
+| `items`               | `T[]`                               | —                 | Array of items to render.                                                                                       |
+| `itemHeight`          | `number \| "dynamic"`               | —                 | Fixed height in px, or `"dynamic"` for content-driven heights.                                                  |
+| `estimatedItemHeight` | `number`                            | `40`              | Initial height estimate used in dynamic mode.                                                                   |
+| `height`              | `number \| string`                  | `"100%"`          | Container height.                                                                                               |
+| `overscan`            | `number`                            | `3`               | Extra items rendered outside the visible area.                                                                  |
+| `getItemKey`          | `(item, index) => string \| number` | `index`           | Returns a stable key for each item.                                                                             |
+| `children`            | `(item, index, style) => ReactNode` | —                 | Render function. Applying `style` is optional in flow mode — only `width` (and `height` in fixed mode) are set. |
+| `hasMore`             | `boolean`                           | `false`           | Whether more items can be loaded.                                                                               |
+| `loadingMore`         | `boolean`                           | `false`           | Shows a loading indicator at the bottom while true.                                                             |
+| `onLoadMore`          | `() => void \| Promise<unknown>`    | —                 | Called once per key within the threshold, including initial layout.                                             |
+| `loadMoreKey`         | `string \| number`                  | `items.length`    | Next cursor/query identity; advance after an empty page or explicit retry.                                      |
+| `loadMoreThreshold`   | `number`                            | `80`              | Px from bottom that triggers `onLoadMore`.                                                                      |
+| `renderLoadingMore`   | `ReactNode`                         | `"Loading more…"` | Custom content shown while `loadingMore` is true.                                                               |
+| `onScroll`            | `(scrollTop: number) => void`       | —                 | Fires on scroll with the current `scrollTop` value.                                                             |
+| `onRangeChange`       | `(start, end) => void`              | —                 | Fires when the visible index range changes.                                                                     |
+| `stickyHeader`        | `ReactNode`                         | —                 | Header rendered inside the scroll container with `position: sticky`.                                            |
+| `stickyHeaderHeight`  | `number`                            | `0`               | Height of `stickyHeader`. Subtracted from visible-area calculations so items don't render under it.             |
+| `className`           | `string`                            | —                 | Extra classes on the container.                                                                                 |
+
+## Pull to refresh
+
+Pass `onRefresh` and `refreshing` to enable a touch pull or trackpad overscroll
+at the top. A focused list also accepts Alt+R. Provide `tabIndex={0}` and an
+accessible label describing the shortcut. Existing rows remain visible while
+refreshing. A small Lucide droplet follows the physical pull without moving the
+rows, then springs away on release. It never appears for initial loading,
+background refresh, keyboard refresh, or pagination. Reduced-motion users get an
+immediate transition; hidden status text and `aria-busy` retain accessible feedback.
