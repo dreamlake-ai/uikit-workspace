@@ -12,6 +12,9 @@ import fixedSrc from '../../../components/specimens/components/virtual-list-flow
 import dynamicSrc from '../../../components/specimens/components/virtual-list-flow/DynamicHeightSpec.tsx?raw'
 import infiniteSrc from '../../../components/specimens/components/virtual-list-flow/InfiniteScrollSpec.tsx?raw'
 
+import { PullToRefreshSpec } from '../../../components/specimens/components/virtual-list-flow/PullToRefreshSpec'
+import refreshSrc from '../../../components/specimens/components/virtual-list-flow/PullToRefreshSpec.tsx?raw'
+
 # VirtualListFlow
 
 Same external API as [`VirtualList`](./virtual-list), but items render in
@@ -104,3 +107,15 @@ information, because items are in normal flow and don't need any.
 | `stickyHeader` | `ReactNode` | — | Header rendered inside the scroll container with `position: sticky`. |
 | `stickyHeaderHeight` | `number` | `0` | Height of `stickyHeader`. Subtracted from visible-area calculations so items don't render under it. |
 | `className` | `string` | — | Extra classes on the container. |
+
+
+## Pull to refresh
+
+Pass `onRefresh` and `refreshing` to enable a touch pull or trackpad overscroll
+at the top. A focused list also accepts Alt+R. Provide `tabIndex={0}` and an
+accessible label describing the shortcut. Existing rows remain visible while
+refreshing; normal scrolling and load-more behavior are retained.
+
+<Preview source={refreshSrc} filename="PullToRefreshSpec.tsx">
+  <PullToRefreshSpec />
+</Preview>
