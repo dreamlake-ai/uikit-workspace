@@ -29,6 +29,7 @@ export interface PanelConfig {
   headerContentClassName?: LeafClassName;
   contentColumnHeaderClass?: string;
   closable?: ClosablePredicate;
+  showTabClose?: ClosablePredicate;
   palette: readonly string[];
   /** Divider thickness in px (PanelLayout's `dividerPx`; DIVIDER_PX when unset). */
   dividerPx?: number;

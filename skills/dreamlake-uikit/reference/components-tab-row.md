@@ -41,7 +41,7 @@ Adjust the row width and tab limits below. Open more tabs with **+**, select a t
 Selection and row resizing scroll only the tab strip, leaving enclosing panels and the page in place. They reveal the whole active tab, including its trailing
 action and close button inside the strip's scroll gutters, so sticky controls do not cover the label.
 The flush edge preserves its zero left gutter while retaining the right gutter. Reduce the example width and select the last tab to check that the close
-button remains inside the scrolling area, beside the truncated title.
+button remains inside the scrolling area, beside the truncated title. With one document, the example moves its close control to the row’s end using `closeButton: false`; Delete on the focused tab still closes it. `PanelLayout.showTabClose` provides the same visual-only choice for panel tabs.
 
 ## Icon tabs and leading controls
 

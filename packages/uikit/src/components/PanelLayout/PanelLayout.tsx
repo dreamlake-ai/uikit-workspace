@@ -244,6 +244,8 @@ export interface PanelLayoutProps {
    *  `ClosablePredicate`. The imperative handle's `closeLeaf` is not gated by
    *  it, so a host can still take a panel away on its own terms. */
   closable?: ClosablePredicate;
+  /** Show a tab’s close affordance. Does not change close policy or keyboard closing. */
+  showTabClose?: ClosablePredicate;
   /** The app's PRIMARY view. When a panel closes next to a leaf carrying it, that
    *  leaf absorbs the whole freed slot, so the primary column recovers its width
    *  as auxiliary panels are dismissed. Default: every sibling grows
@@ -310,6 +312,7 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(
       isTabbable,
       externalDropTarget,
       closable,
+      showTabClose,
       primaryView,
       leafClassName,
       headerClassName,
@@ -377,7 +380,10 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(
     // while the cursor is over the source panel or empty space (the surrogate just
     // tracks the cursor at the panel's own size).
     const [drag, setDrag] = useState<DragState | null>(null);
-    const visualRoot = useSplitEntryMotion(root, animateSplitEntry && !compact && !drag);
+    const visualRoot = useSplitEntryMotion(
+      root,
+      animateSplitEntry && !compact && !drag,
+    );
 
     // Refs keep the window handlers stable while reading fresh state. Assigning
     // during render is what lets several mutations fired in one tick compose off
@@ -953,6 +959,7 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(
       headerContentClassName,
       contentColumnHeaderClass,
       closable,
+      showTabClose,
       palette,
       dividerPx,
       tabStripInset,
@@ -1076,6 +1083,7 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(
                   iconOnly: icon != null,
                   panelId: tabPanelDomId(leaf.id),
                   closable: closable?.(leaf) ?? true,
+                  closeButton: showTabClose?.(leaf) ?? true,
                 };
               })}
               value={activeId}
