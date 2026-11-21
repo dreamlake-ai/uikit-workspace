@@ -26,6 +26,7 @@ subtree in `TooltipProvider` to share an open delay.
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `side` | `'top' \| 'right' \| 'bottom' \| 'left'` | `'top'` | Preferred side. |
+| `followPointer` | `boolean` | `false` | Follow the mouse while retaining the trigger anchor for keyboard focus. |
 | `showArrow` | `boolean` | `true` | Show the trigger wedge; set false when a wedge is inappropriate. |
 | `sideOffset` | `number` | `6` | Gap from the trigger (px). |
 | `delayDuration` | `number` | `200` | Hover open delay (ms). |
@@ -42,3 +43,9 @@ entry. Motion uses CSS `translate` independently of positioning, so the surface
 and wedge move together without replacing the anchor coordinates.
 
 `TooltipContent motion={false}` disables entry for that tooltip.
+
+For contextual hints, combine `followPointer`, `side="bottom"`, and `showArrow={false}`.
+The hint follows mouse movement, still flips or shifts at viewport edges, and
+remains anchored to the trigger for keyboard focus. Escape dismisses it.
+`useTooltipPress` exposes controlled tooltip state and pointer handlers for
+controls that should dismiss a hint on press until the pointer leaves.

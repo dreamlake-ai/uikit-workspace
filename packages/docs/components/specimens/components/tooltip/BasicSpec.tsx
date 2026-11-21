@@ -10,6 +10,16 @@ export const BasicSpec = () => (
       </TooltipTrigger>
       <TooltipContent>Saves without leaving the page</TooltipContent>
     </Tooltip>
+    <Tooltip side="bottom" followPointer showArrow={false}>
+      <TooltipTrigger asChild>
+        <Button size="sm" variant="ghost">
+          Follow pointer
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>
+        Follows the mouse; keyboard focus stays anchored. Escape dismisses.
+      </TooltipContent>
+    </Tooltip>
     <Tooltip side="right">
       <TooltipTrigger asChild>
         <Button size="sm" variant="ghost">
@@ -19,7 +29,11 @@ export const BasicSpec = () => (
       <TooltipContent>Opens to the right; flips if it would clip.</TooltipContent>
     </Tooltip>
     <Tooltip showArrow={false}>
-      <TooltipTrigger asChild><Button size="sm" variant="ghost">No wedge</Button></TooltipTrigger>
+      <TooltipTrigger asChild>
+        <Button size="sm" variant="ghost">
+          No wedge
+        </Button>
+      </TooltipTrigger>
       <TooltipContent>Wedges can be omitted when they do not suit the content.</TooltipContent>
     </Tooltip>
   </div>
