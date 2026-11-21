@@ -40,18 +40,24 @@ export function revealDocumentTab(
   strip: HTMLElement,
   item: HTMLElement,
   smooth = false,
-  inset = 0,
+  inset?: number,
 ) {
   const viewport = strip.getBoundingClientRect();
+  // Sticky end controls pin inside the strip padding. Reveal the natural tab
+  // inside the same gutters so those controls cannot slide over its label.
+  const style = getComputedStyle(strip);
+  const leftInset = inset ?? (parseFloat(style.scrollPaddingLeft) || 0);
+  const rightInset = inset ?? (parseFloat(style.scrollPaddingRight) || 0);
   const original = item.style.position;
   item.style.position = "static";
   const tab = item.getBoundingClientRect();
   item.style.position = original;
   if (!viewport.width || !tab.width) return;
   const delta =
-    tab.left < viewport.left + inset || tab.width > viewport.width
-      ? tab.left - viewport.left - inset
-      : Math.max(0, tab.right - viewport.right + inset);
+    tab.left < viewport.left + leftInset ||
+    tab.width > viewport.width - leftInset - rightInset
+      ? tab.left - viewport.left - leftInset
+      : Math.max(0, tab.right - viewport.right + rightInset);
   if (!delta) return;
   if (
     smooth &&
