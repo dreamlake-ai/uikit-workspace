@@ -47,6 +47,7 @@ and wedge move together without replacing the anchor coordinates.
 For contextual hints, combine `followPointer`, `side="bottom"`, and `showArrow={false}`.
 The hint follows mouse movement, still flips or shifts at viewport edges, and
 remains anchored to the trigger for keyboard focus. Escape dismisses it, including
-when focus remains in an editor or terminal that consumes keyboard events.
+when focus remains in an editor or terminal that consumes keyboard events during
+target capture. Dismissing the hint does not prevent the editor from receiving Escape.
 `useTooltipPress` exposes controlled tooltip state and pointer handlers for
 controls that should dismiss a hint on press until the pointer leaves.

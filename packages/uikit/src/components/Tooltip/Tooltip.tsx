@@ -149,8 +149,20 @@ export function Tooltip({
   });
   const point = useClientPoint(context, { enabled: followPointer });
   const focus = useFocus(context);
-  // Focused editors/terminals may consume bubbling keys. Dismiss the hint first.
-  const dismiss = useDismiss(context, { capture: { escapeKey: true } });
+  // Native editors can stop Escape in target-capture (xterm does). Floating UI's
+  // capture option defers to target-bubble, which never runs in that case.
+  // Observe without consuming the key so the editor still receives it once.
+  useEffect(() => {
+    if (!open || !followPointer) return;
+    const doc = refs.domReference.current?.ownerDocument;
+    if (!doc) return;
+    const escape = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !event.isComposing) setOpen(false);
+    };
+    doc.addEventListener("keydown", escape, true);
+    return () => doc.removeEventListener("keydown", escape, true);
+  }, [open, followPointer, isControlled, onOpenChange, refs.domReference]);
+  const dismiss = useDismiss(context, { escapeKey: !followPointer });
   const role = useRole(context, { role: "tooltip" });
   const { getReferenceProps, getFloatingProps } = useInteractions([
     hover,
