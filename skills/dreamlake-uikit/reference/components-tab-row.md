@@ -38,8 +38,9 @@ docking or physical-device acceptance.
 ## Compression and overflow
 
 Adjust the row width and tab limits below. Open more tabs with **+**, select a tab, or close one with **×**. Long labels truncate; their full text remains available on hover.
-Selection and row resizing reveal the whole active tab, including its trailing
-action and close button. Reduce the example width and select the last tab to check that the close
+Selection and row resizing scroll only the tab strip, leaving enclosing panels and the page in place. They reveal the whole active tab, including its trailing
+action and close button inside the strip's scroll gutters, so sticky controls do not cover the label.
+The flush edge preserves its zero left gutter while retaining the right gutter. Reduce the example width and select the last tab to check that the close
 button remains inside the scrolling area, beside the truncated title.
 
 ## Icon tabs and leading controls
@@ -158,6 +159,7 @@ The row carries `data-tab-count` with the number of tabs, so a host can style a 
 | ------------ | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `value`      | `string`    | Unique tab identifier.                                                                                                                                                                                                                                                                                        |
 | `label`      | `string`    | Visible title and accessible name.                                                                                                                                                                                                                                                                            |
+| `labelContent` | `ReactNode` | Optional noninteractive title rendering; `label` stays the accessible name. Suppresses the automatic native title tooltip. |
 | `icon`       | `ReactNode` | Optional visual beside the label.                                                                                                                                                                                                                                                                             |
 | `iconOnly`   | `boolean`   | Display only the icon at compact width; preserve the text label for accessibility.                                                                                                                                                                                                                            |
 | `fitContent` | `boolean`   | Size a text tab to its label and controls, preserving padding and capping width at `preferredTabWidth`; longer labels use the existing ellipsis. A fitted tab without a close control keeps the same width when selected or hovered, so tabs after it do not move. Icon-only tabs retain their compact width. |
@@ -177,7 +179,4 @@ Use [Tabs](reference/components-tabs.md) for underline and segmented switches. U
 
 Tab labels and controls do not select text during pointer drags or repeated taps. Text inside the associated content panels remains selectable.
 
-When the tab viewport cannot fit two minimum-width slots plus the 16px gutter,
-`TabRow` uses linear scrolling so the pinned active tab cannot cover every
-sibling. Widening the viewport restores the normal sticky stack. This uses the
-existing resize observer and preserves selection, close controls, and panels.
+When the scrolling viewport is narrower than two minimum tab widths plus the 16px gutter, tabs scroll without sticky stacking. This keeps later labels reachable beside fixed controls; wider rows retain their usual stacking. The Row width example can be narrowed to 120px to exercise this behavior.
