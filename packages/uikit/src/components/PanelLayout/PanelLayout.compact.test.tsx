@@ -416,7 +416,7 @@ it.each([false, true])('shows inactive utility as a button and active utility as
 
 it('renders compact title details with a stable accessible name and separate actions', () => {
   const leaf = panelLeaf({ title: 'Session' })
-  act(() => root.render(<PanelLayout root={leaf} compact closable={() => false}
+  act(() => root.render(<PanelLayout root={panelSplit('row', [leaf, panelLeaf({ title: 'Other' })])} compact closable={() => false}
     compactPanelLabel={() => 'Session'}
     compactPanelTitle={() => <span data-title-details>Session <span aria-hidden>active</span></span>}
     compactPanelTrailing={() => <button aria-label="Copy reference">Copy</button>} />))
