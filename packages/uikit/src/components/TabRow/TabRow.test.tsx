@@ -543,3 +543,26 @@ it("scrolls only its own tab strip, never the surrounding page or panel", () => 
     else Reflect.deleteProperty(Element.prototype, "scrollIntoView");
   }
 });
+
+it("can move the close affordance to the row end without disabling keyboard closing", () => {
+  const close = vi.fn();
+  act(() =>
+    root.render(
+      <TabRow
+        value="one"
+        onValueChange={() => {}}
+        onClose={close}
+        tabs={[{ value: "one", label: "One", closeButton: false }]}
+        trailing={<button onClick={() => close("one")}>Close panel</button>}
+      />,
+    ),
+  );
+  expect(container.querySelector('[aria-label="Close One"]')).toBeNull();
+  const tab = container.querySelector('[role="tab"]')!;
+  act(() =>
+    tab.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "Delete", bubbles: true }),
+    ),
+  );
+  expect(close).toHaveBeenCalledExactlyOnceWith("one");
+});

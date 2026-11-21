@@ -36,6 +36,8 @@ export interface TabRowItem {
   /** Optional ID of the panel controlled by this tab. */
   panelId?: string;
   closable?: boolean;
+  /** Hide the visual close when a host supplies one elsewhere; keyboard closing remains available. */
+  closeButton?: boolean;
   /** Animate entry; callers own whether a tab is newly opened. */
   entering?: boolean;
   /** Start a new group: a thin divider precedes this tab. Ignored on the first tab. */
@@ -142,7 +144,10 @@ export function TabRow({
         {tabs.map((tab, index) => {
           const hasIcon = tab.icon != null && typeof tab.icon !== "boolean";
           const iconOnly = !!tab.iconOnly && hasIcon;
-          const iconWidth = onClose && tab.closable !== false ? 54 : 32;
+          const iconWidth =
+            onClose && tab.closable !== false && tab.closeButton !== false
+              ? 54
+              : 32;
           return (
             <Fragment key={tab.value}>
               {tab.groupStart && index > 0 && (
@@ -174,7 +179,9 @@ export function TabRow({
                   type="button"
                   role="tab"
                   className="uikit-tab-row-item-label uikit-document-tab-label"
-                  aria-label={iconOnly || tab.labelContent != null ? tab.label : undefined}
+                  aria-label={
+                    iconOnly || tab.labelContent != null ? tab.label : undefined
+                  }
                   aria-selected={tab.value === value}
                   aria-controls={tab.panelId}
                   aria-describedby={tab.descriptionId}
@@ -184,7 +191,10 @@ export function TabRow({
                       ? 0
                       : -1
                   }
-                  title={tab.title ?? (tab.labelContent == null ? tab.label : undefined)}
+                  title={
+                    tab.title ??
+                    (tab.labelContent == null ? tab.label : undefined)
+                  }
                   onClick={() => onValueChange(tab.value)}
                   onAuxClick={(event) => {
                     if (
@@ -233,17 +243,19 @@ export function TabRow({
                       {tab.trailing}
                     </span>
                   )}
-                  {onClose && tab.closable !== false && (
-                    <button
-                      type="button"
-                      className="uikit-tab-row-item-x uikit-document-tab-close"
-                      aria-label={`Close ${tab.label}`}
-                      title="Close tab"
-                      onClick={() => onClose(tab.value)}
-                    >
-                      <X size={10} strokeWidth={2.5} />
-                    </button>
-                  )}
+                  {onClose &&
+                    tab.closable !== false &&
+                    tab.closeButton !== false && (
+                      <button
+                        type="button"
+                        className="uikit-tab-row-item-x uikit-document-tab-close"
+                        aria-label={`Close ${tab.label}`}
+                        title="Close tab"
+                        onClick={() => onClose(tab.value)}
+                      >
+                        <X size={10} strokeWidth={2.5} />
+                      </button>
+                    )}
                 </span>
               </div>
             </Fragment>

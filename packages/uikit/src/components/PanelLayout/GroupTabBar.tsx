@@ -58,8 +58,14 @@ export function GroupTabBar({
   useDocumentTabScroll(barRef);
   // Affordances only — see the Delete case below for why the strip does not
   // enforce this itself.
-  const { closable, renderTab, renderTabTrailing, tabbed, panelAsAction } =
-    usePanelConfig();
+  const {
+    closable,
+    showTabClose,
+    renderTab,
+    renderTabTrailing,
+    tabbed,
+    panelAsAction,
+  } = usePanelConfig();
   // Keep programmatically opened/selected tabs reachable when their panel
   // narrows. Scroll only this strip: scrollIntoView can move the document or
   // another docked panel and steal the reader's place.
@@ -251,7 +257,7 @@ export function GroupTabBar({
               </span>
               <span className="uikit-document-tab-end">
                 {renderTabTrailing?.(leaf)}
-                {canClose(leaf) && (
+                {canClose(leaf) && showTabClose?.(leaf) !== false && (
                   <span
                     role="button"
                     tabIndex={-1}

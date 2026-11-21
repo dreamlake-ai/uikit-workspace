@@ -397,6 +397,12 @@ independent — a drag in one can never dock into another.
 
 ## Props
 
+`animateSplitEntry` opts into a 220 ms glide when a new right-hand panel splits
+the existing whole panel. The list really narrows while the detail widens; connected
+view surfaces remain mounted. The imperative example above enables it. Initial
+and restored layouts, tab changes, divider resizing, compact screens, and reduced
+motion stay immediate. Persistence and commands always see the final sizes.
+
 | Prop                       | Type                                      | Default             | Description                                                                                                                         |
 | -------------------------- | ----------------------------------------- | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | `initial`                  | `() => PanelNode`                         | 3-panel demo        | Builds the initial tree. Called once, on mount.                                                                                     |
@@ -463,3 +469,16 @@ Set `compactBreakpoint={768}` to keep adjacent panels visible on tablets and sho
 Use `compactHeaderInTabRow={(leaf) => leaf.view === "note"}` to place that panel’s `renderHeader` controls beside the compact tabs. Only the active panel’s controls appear, and its separate header row is removed; the editor stays mounted.
 
 Document tab strips accept mouse-wheel scrolling as well as trackpad and touch gestures. Inactive tabs slide as rounded rectangles with centered labels; the active tab keeps its right edge and controls above the stack.
+
+### Compact title details
+
+`compactPanelTitle(leaf, active)` optionally renders a rich, noninteractive title
+inside the compact tab. Keep `compactPanelLabel` as its stable accessible name.
+Use `compactPanelTrailing` for copy or other buttons outside the tab button;
+never nest an interactive control inside the title. A custom title suppresses
+the automatic native title tooltip so it can provide a shared contextual hint.
+
+`showTabClose(leaf)` controls only the tab’s visible close affordance. A host can
+hide it for a lone view and render a close button in its header, then restore
+tab closes for grouped views. `closable` still owns dismissal policy, and Delete
+on a focused tab continues through `onRequestClose` even when its icon is hidden.

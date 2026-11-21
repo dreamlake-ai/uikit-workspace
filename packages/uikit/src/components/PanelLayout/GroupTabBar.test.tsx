@@ -308,7 +308,10 @@ it.each(["button", "a", "input", "select", "textarea"])(
     document.body.append(host);
     const root = createRoot(host);
     const leaf = panelLeaf({ title: "Document" });
-    const group = panelGroup([leaf, panelLeaf({ title: "Other" })]) as Extract<PanelNode, { kind: "group" }>;
+    const group = panelGroup([leaf, panelLeaf({ title: "Other" })]) as Extract<
+      PanelNode,
+      { kind: "group" }
+    >;
     const parentClick = vi.fn(),
       parentPointer = vi.fn(),
       drag = vi.fn(),
@@ -351,3 +354,43 @@ it.each(["button", "a", "input", "select", "textarea"])(
     }
   },
 );
+
+it("hides only the close affordance while retaining the host's keyboard close guard", () => {
+  (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
+  const host = document.createElement("div");
+  document.body.append(host);
+  const root = createRoot(host);
+  const leaf = panelLeaf({ title: "Session" });
+  const group = {
+    kind: "group" as const,
+    id: "group",
+    activeId: leaf.id,
+    children: [leaf],
+  };
+  const close = vi.fn();
+  act(() =>
+    root.render(
+      <PanelConfigContext.Provider
+        value={{ palette: DEFAULT_PALETTE, showTabClose: () => false }}
+      >
+        <GroupTabBar
+          group={group}
+          onActivate={() => {}}
+          onCloseTab={close}
+          onHandleDown={() => {}}
+        />
+      </PanelConfigContext.Provider>,
+    ),
+  );
+  expect(host.querySelector('[aria-label="Close Session"]')).toBeNull();
+  act(() =>
+    host
+      .querySelector('[role="tab"]')!
+      .dispatchEvent(
+        new KeyboardEvent("keydown", { key: "Delete", bubbles: true }),
+      ),
+  );
+  expect(close).toHaveBeenCalledExactlyOnceWith(leaf.id);
+  act(() => root.unmount());
+  host.remove();
+});

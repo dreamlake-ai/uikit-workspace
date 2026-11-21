@@ -541,3 +541,8 @@ inside the compact tab. Keep `compactPanelLabel` as its stable accessible name.
 Use `compactPanelTrailing` for copy or other buttons outside the tab button;
 never nest an interactive control inside the title. A custom title suppresses
 the automatic native title tooltip so it can provide a shared contextual hint.
+
+`showTabClose(leaf)` controls only the tab’s visible close affordance. A host can
+hide it for a lone view and render a close button in its header, then restore
+tab closes for grouped views. `closable` still owns dismissal policy, and Delete
+on a focused tab continues through `onRequestClose` even when its icon is hidden.
