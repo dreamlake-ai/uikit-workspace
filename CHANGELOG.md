@@ -1,5 +1,11 @@
 # Release notes
 
+## 0.2.14 — 2026-11-21
+
+- Complete the shared editor `SlideToggle` with disabled behavior, button refs and native events, keyboard focus, and reduced-motion support. Preserve the 20px expanding-knob geometry.
+- Add `PreviewToggle` beside the blue-hover `VimToggle` preset so memo editors and session Chat controls share the same primitive.
+- Include the virtual-list pull droplet and automatic load-ahead, tab reveal gutters, and configurable panel close placement introduced since 0.2.13.
+
 ## 0.2.3 — 2026-09-26
 
 - Keep layout examples within the text column. Dockit ContentRow remains available for content that needs a wider row.

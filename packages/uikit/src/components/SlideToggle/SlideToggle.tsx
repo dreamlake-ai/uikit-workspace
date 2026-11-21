@@ -1,4 +1,10 @@
-import { type CSSProperties, type ReactNode, useState } from "react";
+import {
+  type ButtonHTMLAttributes,
+  type ReactNode,
+  forwardRef,
+  useState,
+} from "react";
+import { Eye } from "lucide-react";
 
 export interface ToggleFace {
   /** What the face shows — a word, a glyph, an icon. */
@@ -9,7 +15,10 @@ export interface ToggleFace {
   fontSize?: number;
 }
 
-export interface SlideToggleProps {
+export interface SlideToggleProps extends Omit<
+  ButtonHTMLAttributes<HTMLButtonElement>,
+  "children" | "type" | "value" | "defaultValue" | "onChange"
+> {
   on: boolean;
   onToggle: () => void;
   left: ToggleFace;
@@ -23,7 +32,6 @@ export interface SlideToggleProps {
   offColor?: string;
   slideMs?: number;
   bgMs?: number;
-  style?: CSSProperties;
 }
 
 const PAD = 2;
@@ -42,134 +50,186 @@ const PAD = 2;
  * on, amber while off — and knocks the exposed face to white, so the control
  * says what it will become before it is clicked.
  */
-export function SlideToggle({
-  on,
-  onToggle,
-  left,
-  right,
-  title,
-  label,
-  onColor = "var(--uikit-accent)",
-  // The app's literal, kept 1:1 — a vivid orange that is deliberately NOT one
-  // of the palette's six tones. `--tone-amber` is a dull mustard at this size
-  // and reads as a disabled state rather than as "this is off, click to change
-  // it". Do not "correct" it to a token.
-  offColor = "#f97316",
-  slideMs = 240,
-  bgMs = 240,
-  style,
-}: SlideToggleProps) {
-  const [hover, setHover] = useState(false);
+export const SlideToggle = forwardRef<HTMLButtonElement, SlideToggleProps>(
+  function SlideToggle(
+    {
+      on,
+      onToggle,
+      left,
+      right,
+      title,
+      label,
+      onColor = "var(--uikit-accent)",
+      // The app's literal, kept 1:1 — a vivid orange that is deliberately NOT one
+      // of the palette's six tones. `--tone-amber` is a dull mustard at this size
+      // and reads as a disabled state rather than as "this is off, click to change
+      // it". Do not "correct" it to a token.
+      offColor = "#f97316",
+      slideMs = 240,
+      bgMs = 240,
+      disabled = false,
+      className,
+      onClick,
+      onMouseEnter,
+      onMouseLeave,
+      style,
+      ...rest
+    },
+    ref,
+  ) {
+    const [hover, setHover] = useState(false);
+    const highlighted = hover && !disabled;
 
-  const splitX = PAD + left.w;
-  const width = splitX + right.w + PAD;
-  const knob = on
-    ? { left: splitX, width: right.w }
-    : { left: PAD, width: left.w };
+    const splitX = PAD + left.w;
+    const width = splitX + right.w + PAD;
+    const knob = on
+      ? { left: splitX, width: right.w }
+      : { left: PAD, width: left.w };
 
-  // `--chip-bg`, the kit's resting chip surface, rather than a hand-mixed
-  // percentage — and theme-aware where a black tint is not: it goes to white at
-  // 5% on dark, where black at 6% is invisible.
-  const pillBg = hover ? (on ? onColor : offColor) : "var(--chip-bg)";
+    // `--chip-bg`, the kit's resting chip surface, rather than a hand-mixed
+    // percentage — and theme-aware where a black tint is not: it goes to white at
+    // 5% on dark, where black at 6% is invisible.
+    const pillBg = highlighted ? (on ? onColor : offColor) : "var(--chip-bg)";
 
-  const face = (
-    side: "left" | "right",
-    f: ToggleFace,
-    x: number,
-    w: number,
-  ) => {
-    const active = side === "left" ? !on : on;
+    const face = (
+      side: "left" | "right",
+      f: ToggleFace,
+      x: number,
+      w: number,
+    ) => {
+      const active = side === "left" ? !on : on;
+      return (
+        <span
+          style={{
+            position: "absolute",
+            top: 0,
+            bottom: 0,
+            left: x,
+            width: w,
+            // Both faces sit ABOVE the knob, so the active label reads on the chip
+            // instead of being covered by it.
+            zIndex: 2,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontFamily: "var(--f-mono)",
+            fontSize: f.fontSize,
+            fontWeight: 600,
+            letterSpacing: "0.02em",
+            color: active
+              ? "var(--ink)"
+              : highlighted
+                ? "#fff"
+                : "var(--uikit-muted)",
+            opacity: active || highlighted ? 1 : 0.5,
+            transition: `color ${slideMs}ms ease, opacity ${slideMs}ms ease`,
+            pointerEvents: "none",
+          }}
+        >
+          {f.node}
+        </span>
+      );
+    };
+
     return (
-      <span
+      <button
+        {...rest}
+        ref={ref}
+        type="button"
+        disabled={disabled}
+        className={["uikit-slide-toggle", className].filter(Boolean).join(" ")}
+        onClick={(event) => {
+          onClick?.(event);
+          if (!disabled && !event.defaultPrevented) onToggle();
+        }}
+        onMouseEnter={(event) => {
+          if (!disabled) setHover(true);
+          onMouseEnter?.(event);
+        }}
+        onMouseLeave={(event) => {
+          setHover(false);
+          onMouseLeave?.(event);
+        }}
+        title={title}
+        aria-label={label ?? rest["aria-label"]}
+        aria-pressed={on}
         style={{
-          position: "absolute",
-          top: 0,
-          bottom: 0,
-          left: x,
-          width: w,
-          // Both faces sit ABOVE the knob, so the active label reads on the chip
-          // instead of being covered by it.
-          zIndex: 2,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontFamily: "var(--f-mono)",
-          fontSize: f.fontSize,
-          fontWeight: 600,
-          letterSpacing: "0.02em",
-          color: active ? "var(--ink)" : hover ? "#fff" : "var(--uikit-muted)",
-          opacity: active || hover ? 1 : 0.5,
-          transition: `color ${slideMs}ms ease, opacity ${slideMs}ms ease`,
-          pointerEvents: "none",
+          position: "relative",
+          width,
+          height: 20,
+          border: "none",
+          outline: "none",
+          boxShadow: "none",
+          WebkitTapHighlightColor: "transparent",
+          borderRadius: 5,
+          cursor: disabled ? "default" : "pointer",
+          flexShrink: 0,
+          overflow: "hidden",
+          background: pillBg,
+          transition: `background ${bgMs}ms ease`,
+          ...style,
         }}
       >
-        {f.node}
-      </span>
+        {face("left", left, PAD, left.w)}
+        <div
+          aria-hidden
+          style={{
+            position: "absolute",
+            top: 2,
+            height: 16,
+            borderRadius: 3,
+            zIndex: 1,
+            left: knob.left,
+            width: knob.width,
+            background: "var(--bg)",
+            transition: `left ${slideMs}ms ease, width ${slideMs}ms ease`,
+            pointerEvents: "none",
+          }}
+        />
+        {face("right", right, splitX, right.w)}
+        <style>{`
+        .uikit-slide-toggle:focus-visible{outline:2px solid var(--uikit-accent) !important;outline-offset:2px}
+        @media(prefers-reduced-motion:reduce){.uikit-slide-toggle,.uikit-slide-toggle>span,.uikit-slide-toggle>div{transition:none !important}}
+      `}</style>
+      </button>
     );
-  };
+  },
+);
 
-  return (
-    <button
-      type="button"
-      onClick={onToggle}
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
-      title={title}
-      aria-label={label}
-      aria-pressed={on}
-      style={{
-        position: "relative",
-        width,
-        height: 20,
-        border: "none",
-        outline: "none",
-        boxShadow: "none",
-        WebkitTapHighlightColor: "transparent",
-        borderRadius: 5,
-        cursor: "pointer",
-        flexShrink: 0,
-        overflow: "hidden",
-        background: pillBg,
-        transition: `background ${bgMs}ms ease`,
-        ...style,
-      }}
-    >
-      {face("left", left, PAD, left.w)}
-      <div
-        aria-hidden
-        style={{
-          position: "absolute",
-          top: 2,
-          height: 16,
-          borderRadius: 3,
-          zIndex: 1,
-          left: knob.left,
-          width: knob.width,
-          background: "var(--bg)",
-          transition: `left ${slideMs}ms ease, width ${slideMs}ms ease`,
-          pointerEvents: "none",
-        }}
-      />
-      {face("right", right, splitX, right.w)}
-    </button>
-  );
-}
-
-export interface VimToggleProps {
-  on: boolean;
-  onToggle: () => void;
-}
+export type VimToggleProps = Omit<SlideToggleProps, "left" | "right">;
 
 /** The `o` / `vim` sliding pill from the app's editor toolbar. */
-export function VimToggle({ on, onToggle }: VimToggleProps) {
+export function VimToggle({ on, ...props }: VimToggleProps) {
   return (
     <SlideToggle
       on={on}
-      onToggle={onToggle}
       label="Vim mode"
       title={on ? "Vim mode on" : "Vim mode off"}
+      onColor="#23aaff"
+      offColor="#23aaff"
+      {...props}
       left={{ node: "o", w: 14, fontSize: 9 }}
       right={{ node: "vim", w: 26, fontSize: 10 }}
+    />
+  );
+}
+
+export type PreviewToggleProps = Omit<SlideToggleProps, "left" | "right">;
+
+/** Raw markdown source / live preview, using the same editor pill geometry. */
+export function PreviewToggle({ on, ...props }: PreviewToggleProps) {
+  return (
+    <SlideToggle
+      on={on}
+      label="Live preview"
+      title={
+        on
+          ? "Live preview — click for raw source"
+          : "Raw source — click for live preview"
+      }
+      {...props}
+      left={{ node: "</>", w: 22, fontSize: 10 }}
+      right={{ node: <Eye size={13} aria-hidden="true" />, w: 20 }}
     />
   );
 }
