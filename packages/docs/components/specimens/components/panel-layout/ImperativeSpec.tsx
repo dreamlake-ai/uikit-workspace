@@ -59,6 +59,7 @@ export const ImperativeSpec = () => {
       <PanelStage height={320}>
         <PanelLayout
           ref={ref}
+          animateSplitEntry
           initial={() => panelLeaf({ view: 'chat', title: 'Chat' })}
           onChange={sync}
           primaryView="chat"

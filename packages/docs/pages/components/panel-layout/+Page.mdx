@@ -461,6 +461,12 @@ independent — a drag in one can never dock into another.
 
 ## Props
 
+`animateSplitEntry` opts into a 220 ms glide when a new right-hand panel splits
+the existing whole panel. The list really narrows while the detail widens; connected
+view surfaces remain mounted. The imperative example above enables it. Initial
+and restored layouts, tab changes, divider resizing, compact screens, and reduced
+motion stay immediate. Persistence and commands always see the final sizes.
+
 | Prop                       | Type                                      | Default             | Description                                                                                                                         |
 | -------------------------- | ----------------------------------------- | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | `initial`                  | `() => PanelNode`                         | 3-panel demo        | Builds the initial tree. Called once, on mount.                                                                                     |
