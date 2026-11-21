@@ -39,12 +39,16 @@ import {
 } from "react";
 import { cn } from "../../lib/utils";
 import type { VirtualListProps } from "../VirtualList/types";
+import { usePullToRefresh } from "./usePullToRefresh";
 import { useVirtualListFlow } from "./useVirtualListFlow";
 
 interface VirtualListFlowComponentProps<T>
-  extends
-    Omit<ComponentProps<"div">, "children" | "onScroll">,
-    VirtualListProps<T> {}
+  extends Omit<ComponentProps<"div">, "children" | "onScroll">,
+    VirtualListProps<T> {
+  /** Pull down at the top with touch/trackpad; Alt+R while the list is focused. */
+  onRefresh?: () => void;
+  refreshing?: boolean;
+}
 
 function VirtualListFlowInner<T>(
   {
@@ -66,11 +70,14 @@ function VirtualListFlowInner<T>(
     renderLoadingMore,
     stickyHeader,
     stickyHeaderHeight = 0,
+    onRefresh,
+    refreshing = false,
     ...props
   }: VirtualListFlowComponentProps<T>,
   ref: React.ForwardedRef<HTMLDivElement>,
 ) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const pullDistance = usePullToRefresh(containerRef, onRefresh, refreshing);
   const [scrollTop, setScrollTop] = useState(0);
   const [containerHeight, setContainerHeight] = useState(0);
 
@@ -107,10 +114,7 @@ function VirtualListFlowInner<T>(
   // useMemo. React 18 auto-batches the multiple bumpVersion calls that
   // happen inside a single ResizeObserver batch into one re-render.
   const measurementsRef = useRef<Map<number, number>>(new Map());
-  const [measurementVersion, bumpVersion] = useReducer(
-    (n: number) => n + 1,
-    0,
-  );
+  const [measurementVersion, bumpVersion] = useReducer((n: number) => n + 1, 0);
   const measureItem = useCallback(
     (index: number, height: number) => {
       const current = measurementsRef.current.get(index);
@@ -121,8 +125,8 @@ function VirtualListFlowInner<T>(
     [bumpVersion],
   );
 
-  const { visibleRange, spaceAbove, spaceBelow, itemStyle } = useVirtualListFlow(
-    {
+  const { visibleRange, spaceAbove, spaceBelow, itemStyle } =
+    useVirtualListFlow({
       itemCount: items.length,
       itemHeight,
       estimatedItemHeight,
@@ -131,8 +135,7 @@ function VirtualListFlowInner<T>(
       scrollTop,
       measurements: measurementsRef.current,
       measurementVersion,
-    },
-  );
+    });
 
   const handleScroll = useCallback(
     (e: React.UIEvent<HTMLDivElement>) => {
@@ -185,10 +188,27 @@ function VirtualListFlowInner<T>(
     <div
       ref={setRefs}
       className={cn("relative w-full overflow-auto", className)}
-      style={{ height, ...style }}
+      style={{
+        height,
+        ...(onRefresh ? { overscrollBehaviorY: "contain" as const } : {}),
+        ...style,
+      }}
+      aria-busy={refreshing || undefined}
       onScroll={handleScroll}
       {...props}
     >
+      {onRefresh && (refreshing || pullDistance > 0) && (
+        <div
+          role="status"
+          className="sticky top-0 z-20 bg-uikit-panel py-2 text-center font-uikit-ui text-xs text-uikit-muted"
+        >
+          {refreshing
+            ? "Refreshing…"
+            : pullDistance >= 64
+              ? "Release to refresh"
+              : "Pull to refresh"}
+        </div>
+      )}
       {stickyHeader && stickyHeaderHeight > 0 && (
         <div className="sticky top-0 z-10">{stickyHeader}</div>
       )}
