@@ -62,7 +62,14 @@ it("dismisses on Escape before a focused editor consumes the bubbling key", asyn
   document.body.append(host);
   const root = createRoot(host);
   await act(async () => root.render(<><Tooltip defaultOpen><TooltipTrigger asChild><button>Copy reference</button></TooltipTrigger><TooltipContent>Copy reference</TooltipContent></Tooltip><input onKeyDown={(event) => event.stopPropagation()} /></>));
+  let editorEscapes = 0;
+  // xterm installs its handler directly on its focused textarea.
+  host.querySelector("input")!.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") editorEscapes++;
+    event.stopPropagation();
+  });
   await act(async () => host.querySelector("input")!.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })));
+  expect(editorEscapes).toBe(1);
   expect(document.querySelector('[role="tooltip"]')).toBeNull();
   act(() => root.unmount());
   host.remove();
