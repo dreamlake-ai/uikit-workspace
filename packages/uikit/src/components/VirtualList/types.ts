@@ -16,7 +16,7 @@ export interface VirtualListProps<T> {
   // Infinite scroll
   hasMore?: boolean;
   loadingMore?: boolean;
-  onLoadMore?: () => void;
+  onLoadMore?: () => void | Promise<unknown>;
   loadMoreThreshold?: number;
   renderLoadingMore?: ReactNode;
   // Sticky header rendered inside the scroll container (aligns with items when scrollbar appears)

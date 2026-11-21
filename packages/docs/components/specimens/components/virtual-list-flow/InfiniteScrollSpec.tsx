@@ -1,24 +1,24 @@
-import { useState, useCallback } from 'react'
-import { VirtualListFlow } from '@dreamlake/uikit'
+import { useState, useCallback } from "react";
+import { VirtualListFlow } from "@dreamlake/uikit";
 
-const PAGE_SIZE = 30
-const TOTAL = 200
+const PAGE_SIZE = 6;
+const TOTAL = 200;
 
 const makeItems = (count: number) =>
-  Array.from({ length: count }, (_, i) => ({ id: i, label: `Item ${i + 1}` }))
+  Array.from({ length: count }, (_, i) => ({ id: i, label: `Item ${i + 1}` }));
 
 export const InfiniteScrollSpec = () => {
-  const [items, setItems] = useState(() => makeItems(PAGE_SIZE))
-  const [loadingMore, setLoadingMore] = useState(false)
-  const hasMore = items.length < TOTAL
+  const [items, setItems] = useState(() => makeItems(PAGE_SIZE));
+  const [loadingMore, setLoadingMore] = useState(false);
+  const hasMore = items.length < TOTAL;
 
   const handleLoadMore = useCallback(async () => {
-    if (loadingMore || !hasMore) return
-    setLoadingMore(true)
-    await new Promise(r => setTimeout(r, 800))
-    setItems(prev => makeItems(Math.min(prev.length + PAGE_SIZE, TOTAL)))
-    setLoadingMore(false)
-  }, [loadingMore, hasMore])
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    await new Promise((r) => setTimeout(r, 800));
+    setItems((prev) => makeItems(Math.min(prev.length + PAGE_SIZE, TOTAL)));
+    setLoadingMore(false);
+  }, [loadingMore, hasMore]);
 
   return (
     <div className="max-w-sm mx-auto">
@@ -33,6 +33,8 @@ export const InfiniteScrollSpec = () => {
           hasMore={hasMore}
           loadingMore={loadingMore}
           onLoadMore={handleLoadMore}
+          loadMoreThreshold={240}
+          overscan={6}
           getItemKey={(item) => item.id}
         >
           {(item, _index, style) => (
@@ -46,5 +48,5 @@ export const InfiniteScrollSpec = () => {
         </VirtualListFlow>
       </div>
     </div>
-  )
-}
+  );
+};

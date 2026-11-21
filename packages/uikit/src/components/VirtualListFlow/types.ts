@@ -7,13 +7,13 @@
 // makes sticky positioning, gap, and DOM-order semantics behave
 // naturally.
 //
-// We deliberately re-export the same prop types so callers can swap
-// VirtualList ↔ VirtualListFlow without rewriting their JSX.
-export type {
-  VirtualListProps as VirtualListFlowProps,
-  ItemHeight,
-  ItemMeasurement,
-} from "../VirtualList/types";
+export type { ItemHeight, ItemMeasurement } from "../VirtualList/types";
+import type { VirtualListProps } from "../VirtualList/types";
+
+export interface VirtualListFlowProps<T> extends VirtualListProps<T> {
+  /** Advance when the next cursor changes, including empty filtered pages. Defaults to items.length. */
+  loadMoreKey?: string | number;
+}
 
 import type { CSSProperties } from "react";
 
