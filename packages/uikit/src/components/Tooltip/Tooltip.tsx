@@ -149,7 +149,8 @@ export function Tooltip({
   });
   const point = useClientPoint(context, { enabled: followPointer });
   const focus = useFocus(context);
-  const dismiss = useDismiss(context);
+  // Focused editors/terminals may consume bubbling keys. Dismiss the hint first.
+  const dismiss = useDismiss(context, { capture: { escapeKey: true } });
   const role = useRole(context, { role: "tooltip" });
   const { getReferenceProps, getFloatingProps } = useInteractions([
     hover,

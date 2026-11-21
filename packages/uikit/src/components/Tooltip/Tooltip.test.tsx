@@ -55,3 +55,15 @@ it("keeps pointer-following hints keyboard accessible and dismisses on Escape", 
   act(() => root.unmount());
   host.remove();
 });
+
+
+it("dismisses on Escape before a focused editor consumes the bubbling key", async () => {
+  const host = document.createElement("div");
+  document.body.append(host);
+  const root = createRoot(host);
+  await act(async () => root.render(<><Tooltip defaultOpen><TooltipTrigger asChild><button>Copy reference</button></TooltipTrigger><TooltipContent>Copy reference</TooltipContent></Tooltip><input onKeyDown={(event) => event.stopPropagation()} /></>));
+  await act(async () => host.querySelector("input")!.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })));
+  expect(document.querySelector('[role="tooltip"]')).toBeNull();
+  act(() => root.unmount());
+  host.remove();
+});
