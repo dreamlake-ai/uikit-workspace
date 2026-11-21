@@ -4,8 +4,9 @@
   "before": "retained plain compact title fixture",
   "after": "real mobile title tap, title-only one-second preview",
   "browserLog": "/tmp/agent-terminal-touch-final-browser.log",
-  "browserResult": "1 passed, 22.5s case; includes full touch tap and timer dismissal",
+  "browserResult": "Final actual mobile/direct case passed40.7s, includes no nested buttons, full tap, one-second expiry, copy in viewport, Escape/focus, passive reload",
   "uikitRuntime": "4dd9568c931e19e6618bf15b51ad3914a3b2cbbb",
   "appTouchFix": "7ffcb9683",
-  "notes": "App integration also moves secondary toolbar to body header; UIKit API supplies rich title and separate trailing controls."
+  "notes": "App integration also moves secondary toolbar to body header; UIKit API supplies rich title and separate trailing controls.",
+  "validatedAt": "2026-11-21T00:44:36.431688+00:00"
 }
