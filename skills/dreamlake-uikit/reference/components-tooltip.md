@@ -9,13 +9,14 @@ subtree in `TooltipProvider` to share an open delay.
 
 ### `Tooltip`
 
-| Prop | Type | Default | Description |
-| --- | --- | --- | --- |
-| `side` | `'top' \| 'right' \| 'bottom' \| 'left'` | `'top'` | Preferred side. |
-| `showArrow` | `boolean` | `true` | Show the trigger wedge; set false when a wedge is inappropriate. |
-| `sideOffset` | `number` | `6` | Gap from the trigger (px). |
-| `delayDuration` | `number` | `200` | Hover open delay (ms). |
-| `open` / `defaultOpen` / `onOpenChange` | — | — | Controlled / uncontrolled open state. |
+| Prop                                    | Type                                     | Default | Description                                                             |
+| --------------------------------------- | ---------------------------------------- | ------- | ----------------------------------------------------------------------- |
+| `side`                                  | `'top' \| 'right' \| 'bottom' \| 'left'` | `'top'` | Preferred side.                                                         |
+| `followPointer`                         | `boolean`                                | `false` | Follow the mouse while retaining the trigger anchor for keyboard focus. |
+| `showArrow`                             | `boolean`                                | `true`  | Show the trigger wedge; set false when a wedge is inappropriate.        |
+| `sideOffset`                            | `number`                                 | `6`     | Gap from the trigger (px).                                              |
+| `delayDuration`                         | `number`                                 | `200`   | Hover open delay (ms).                                                  |
+| `open` / `defaultOpen` / `onOpenChange` | —                                        | —       | Controlled / uncontrolled open state.                                   |
 
 `TooltipTrigger` accepts `asChild`. `TooltipContent` accepts a `side` that
 overrides the `Tooltip`'s placement. `TooltipProvider` takes `delayDuration`.
@@ -27,3 +28,14 @@ entry. Motion uses CSS `translate` independently of positioning, so the surface
 and wedge move together without replacing the anchor coordinates.
 
 `TooltipContent motion={false}` disables entry for that tooltip.
+
+For contextual hints, combine `followPointer`, `side="bottom"`, and `showArrow={false}`.
+The hint follows mouse movement, still flips or shifts at viewport edges, and
+remains anchored to the trigger for keyboard focus. Escape dismisses it, including
+when focus remains in an editor or terminal that consumes keyboard events during
+target capture. Escape also cancels a pending hover delay, so a hint cannot appear
+after it has been dismissed. This applies to anchored and pointer-following hints.
+Dismissing the hint does not prevent the editor from receiving Escape; IME composition
+is left alone. Leave and re-enter the trigger (or blur and refocus it) to show it again.
+`useTooltipPress` exposes controlled tooltip state and pointer handlers for
+controls that should dismiss a hint on press until the pointer leaves.

@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { Code, Eye } from "lucide-react";
-import { SlideToggle, VimToggle } from "@dreamlake/uikit";
+import { SquareTerminal, MessageSquare } from "lucide-react";
+import { SlideToggle, VimToggle, PreviewToggle } from "@dreamlake/uikit";
 
 export const SlideToggleSpec = () => {
   const [vim, setVim] = useState(false);
   const [preview, setPreview] = useState(true);
+  const [chat, setChat] = useState(false);
   return (
     <div
       style={{
@@ -15,14 +16,15 @@ export const SlideToggleSpec = () => {
       }}
     >
       <VimToggle on={vim} onToggle={() => setVim((v) => !v)} />
+      <PreviewToggle on={preview} onToggle={() => setPreview((v) => !v)} />
       <SlideToggle
-        on={preview}
-        onToggle={() => setPreview((v) => !v)}
-        label="Markdown preview"
-        title={preview ? "Preview" : "Source"}
-        left={{ node: <Code size={11} />, w: 20 }}
-        right={{ node: <Eye size={11} />, w: 20 }}
+        on={chat}
+        onToggle={() => setChat((v) => !v)}
+        label="Chat"
+        left={{ node: <SquareTerminal size={14} aria-hidden />, w: 20 }}
+        right={{ node: <MessageSquare size={14} aria-hidden />, w: 20 }}
       />
+      <VimToggle on disabled onToggle={() => {}} label="Vim mode unavailable" />
       <span
         style={{
           fontFamily: "var(--f-mono)",
@@ -30,7 +32,8 @@ export const SlideToggleSpec = () => {
           color: "var(--uikit-muted)",
         }}
       >
-        {vim ? "vim" : "plain"} · {preview ? "preview" : "source"}
+        {vim ? "vim" : "plain"} · {preview ? "preview" : "source"} ·{" "}
+        {chat ? "chat" : "terminal"}
       </span>
     </div>
   );

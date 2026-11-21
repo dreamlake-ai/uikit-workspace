@@ -30,18 +30,34 @@ while off — and knocks the exposed face to white, so the control says what it
 will become before it is clicked. Pass `onColor` / `offColor` to change those
 tints.
 
-`VimToggle` is the `o` / `vim` preset from the app's editor toolbar.
+`VimToggle` is the `o` / `vim` preset from the app's editor toolbar, with the
+same blue hover in either state. `PreviewToggle` is its `</>` / eye companion.
+Both presets accept `disabled` and the generic toggle's native button attributes.
+
+The 20px control keeps its width while the knob moves, including unequal text
+faces. Use an accessible `label` for icon-only choices such as Terminal / Chat.
+The native toggle button exposes `aria-pressed`, activates with Space or Enter,
+shows a keyboard focus ring, and never submits a containing form. Pointer-down
+alone does not change state or capture dragging. Disabled controls neither
+activate nor highlight; reduced motion removes the slide and fade transitions.
 
 ### `SlideToggle`
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `on` | `boolean` | — | Which face is chosen: `false` = left, `true` = right. |
-| `onToggle` | `() => void` | — | Called on click. |
+| `onToggle` | `() => void` | — | Called on click, including native keyboard activation. |
 | `left` / `right` | `ToggleFace` | — | `{ node, w, fontSize? }`. `w` sizes the face **and** the knob when it lands there. |
 | `label` | `string` | — | Accessible name — the faces are usually too terse to serve as one. |
 | `onColor` / `offColor` | `string` | accent / `#f97316` | Hover tint per state. |
 | `slideMs` / `bgMs` | `number` | `240` | Knob travel and background fade. |
+| `disabled` | `boolean` | `false` | Disables activation and hover tint. |
+| `className` / `style` | `string` / `CSSProperties` | — | Additional button styling. |
+
+`SlideToggle` forwards its button ref and native `aria-*`, `data-*`, focus,
+keyboard and pointer attributes. A supplied `onClick` can prevent the toggle
+with `event.preventDefault()`. `VimToggle` and `PreviewToggle` supply their faces,
+labels and titles; all other toggle props remain available.
 
 ## Props
 
