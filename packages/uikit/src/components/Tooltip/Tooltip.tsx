@@ -153,7 +153,7 @@ export function Tooltip({
   // capture option defers to target-bubble, which never runs in that case.
   // Observe without consuming the key so the editor still receives it once.
   useEffect(() => {
-    if (!open) return;
+    if (!open || !followPointer) return;
     const doc = refs.domReference.current?.ownerDocument;
     if (!doc) return;
     const escape = (event: KeyboardEvent) => {
@@ -161,8 +161,8 @@ export function Tooltip({
     };
     doc.addEventListener("keydown", escape, true);
     return () => doc.removeEventListener("keydown", escape, true);
-  }, [open, isControlled, onOpenChange, refs.domReference]);
-  const dismiss = useDismiss(context, { escapeKey: false });
+  }, [open, followPointer, isControlled, onOpenChange, refs.domReference]);
+  const dismiss = useDismiss(context, { escapeKey: !followPointer });
   const role = useRole(context, { role: "tooltip" });
   const { getReferenceProps, getFloatingProps } = useInteractions([
     hover,

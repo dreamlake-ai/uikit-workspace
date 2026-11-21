@@ -61,13 +61,17 @@ it("dismisses without consuming Escape stopped by a native target-capture editor
   const host = document.createElement("div");
   document.body.append(host);
   const root = createRoot(host);
-  await act(async () => root.render(<><Tooltip defaultOpen><TooltipTrigger asChild><button>Copy reference</button></TooltipTrigger><TooltipContent>Copy reference</TooltipContent></Tooltip><input onKeyDown={(event) => event.stopPropagation()} /></>));
+  await act(async () => root.render(<><Tooltip followPointer defaultOpen><TooltipTrigger asChild><button>Copy reference</button></TooltipTrigger><TooltipContent>Copy reference</TooltipContent></Tooltip><input onKeyDown={(event) => event.stopPropagation()} /></>));
   let editorEscapes = 0;
   // xterm installs its handler directly on its focused textarea.
   host.querySelector("input")!.addEventListener("keydown", (event) => {
     if (event.key === "Escape") editorEscapes++;
     event.stopPropagation();
   }, true);
+  await act(async () => host.querySelector("input")!.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true, isComposing: true })));
+  expect(editorEscapes).toBe(1);
+  expect(document.querySelector('[role="tooltip"]')).not.toBeNull();
+  editorEscapes = 0;
   await act(async () => host.querySelector("input")!.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })));
   expect(editorEscapes).toBe(1);
   expect(document.querySelector('[role="tooltip"]')).toBeNull();
