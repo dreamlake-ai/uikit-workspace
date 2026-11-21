@@ -18,6 +18,8 @@ export interface TabRowItem {
   /** Optional DOM identity for aria-labelledby on the controlled panel. */
   id?: string;
   label: string;
+  /** Optional title rendering; label remains the accessible name. No interactive controls. */
+  labelContent?: ReactNode;
   /** Optional visual beside the label, or in its place with iconOnly. */
   icon?: ReactNode;
   /** Compact icon tab; label remains the accessible name and default tooltip. */
@@ -172,7 +174,7 @@ export function TabRow({
                   type="button"
                   role="tab"
                   className="uikit-tab-row-item-label uikit-document-tab-label"
-                  aria-label={iconOnly ? tab.label : undefined}
+                  aria-label={iconOnly || tab.labelContent != null ? tab.label : undefined}
                   aria-selected={tab.value === value}
                   aria-controls={tab.panelId}
                   aria-describedby={tab.descriptionId}
@@ -182,7 +184,7 @@ export function TabRow({
                       ? 0
                       : -1
                   }
-                  title={tab.title ?? tab.label}
+                  title={tab.title ?? (tab.labelContent == null ? tab.label : undefined)}
                   onClick={() => onValueChange(tab.value)}
                   onAuxClick={(event) => {
                     if (
@@ -223,7 +225,7 @@ export function TabRow({
                       {tab.icon}
                     </span>
                   )}
-                  {!iconOnly && tab.label}
+                  {!iconOnly && (tab.labelContent ?? tab.label)}
                 </button>
                 <span className="uikit-document-tab-end">
                   {tab.trailing != null && (

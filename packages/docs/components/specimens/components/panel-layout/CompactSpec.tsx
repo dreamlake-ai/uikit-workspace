@@ -30,6 +30,10 @@ export function CompactSpec() {
         compactPanelLabel={leaf => leaf.view === 'list' ? 'List'
           : leaf.view === 'notes' ? '@workspace/notes'
           : leaf.title ?? 'Document'}
+        compactPanelTitle={(leaf, active) => <span>
+          {leaf.view === 'notes' ? '@workspace/notes' : leaf.title ?? 'Document'}
+          {active && <span aria-hidden className="ml-1 text-uikit-muted">●</span>}
+        </span>}
         compactPanelFitContent={(leaf, active) => leaf.view === 'notes' && !active}
         closable={() => false}
         renderBody={leaf => <textarea
