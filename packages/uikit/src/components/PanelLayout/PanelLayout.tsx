@@ -157,6 +157,8 @@ export interface PanelLayoutProps {
   /** Product-specific compact names, independent of desktop titles. The second
    * argument identifies the selected compact panel. One-argument callbacks work. */
   compactPanelLabel?: (leaf: LeafNode, active: boolean) => string;
+  /** Optional compact title rendering; compactPanelLabel retains the accessible name. */
+  compactPanelTitle?: (leaf: LeafNode, active: boolean) => ReactNode;
   /** Fit individual compact text tabs to content; others keep standard widths. */
   compactPanelFitContent?: (leaf: LeafNode, active: boolean) => boolean;
   /** Content beside each compact label, outside its tab button. */
@@ -279,6 +281,7 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(
       compactLabel = "Workspace panels",
       compactHeaderInTabRow,
       compactPanelLabel,
+      compactPanelTitle,
       compactPanelFitContent,
       compactPanelTrailing,
       compactLeading,
@@ -1056,6 +1059,7 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(
                   value: leaf.id,
                   id: tabDomId(leaf.id),
                   label: compactName(leaf),
+                  labelContent: compactPanelTitle?.(leaf, leaf.id === activeId),
                   fitContent: compactPanelFitContent?.(
                     leaf,
                     leaf.id === activeId,
