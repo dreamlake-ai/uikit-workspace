@@ -19,6 +19,7 @@ import {
   flip,
   offset,
   shift,
+  useClientPoint,
   useDismiss,
   useFloating,
   useFocus,
@@ -85,6 +86,8 @@ export interface TooltipProps {
   side?: Side;
   /** Gap between trigger and tooltip, in px. Default 6. */
   sideOffset?: number;
+  /** Follow mouse position; keyboard focus remains anchored to the trigger. */
+  followPointer?: boolean;
   children: ReactNode;
 }
 
@@ -102,6 +105,7 @@ export function Tooltip({
   side = "top",
   sideOffset = 6,
   showArrow = true,
+  followPointer = false,
   children,
 }: TooltipProps) {
   const providerDelay = useContext(DelayContext);
@@ -143,11 +147,13 @@ export function Tooltip({
     move: false,
     delay: { open: delay, close: 80 },
   });
+  const point = useClientPoint(context, { enabled: followPointer });
   const focus = useFocus(context);
   const dismiss = useDismiss(context);
   const role = useRole(context, { role: "tooltip" });
   const { getReferenceProps, getFloatingProps } = useInteractions([
     hover,
+    point,
     focus,
     dismiss,
     role,
