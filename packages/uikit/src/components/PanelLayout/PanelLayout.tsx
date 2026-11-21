@@ -1,4 +1,5 @@
 import { useIsMobile } from "../../lib/useIsMobile";
+import { useSplitEntryMotion } from "./useSplitEntryMotion";
 import {
   forwardRef,
   useEffect,
@@ -135,6 +136,10 @@ export interface PanelLayoutHandle {
 }
 
 export interface PanelLayoutProps {
+  /** Glide the existing panel narrower when a new right-hand root split opens.
+   * Opt-in, 220ms; initial/restored layouts, resizing, tabs, compact and reduced
+   * motion stay immediate. The persisted tree always contains final sizes. */
+  animateSplitEntry?: boolean;
   /** Show one focused panel with a selector for every leaf, including inactive
    * group tabs. Pass a boolean at both widths to keep all view DOM mounted.
    * Selection and breakpoint changes leave the desktop tree/sizes untouched. */
@@ -313,6 +318,7 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(
       contentColumnHeaderClass,
       palette = DEFAULT_PALETTE,
       splitShortcut = { key: "d" },
+      animateSplitEntry = false,
     }: PanelLayoutProps,
     ref: ForwardedRef<PanelLayoutHandle>,
   ) {
@@ -371,6 +377,7 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(
     // while the cursor is over the source panel or empty space (the surrogate just
     // tracks the cursor at the panel's own size).
     const [drag, setDrag] = useState<DragState | null>(null);
+    const visualRoot = useSplitEntryMotion(root, animateSplitEntry && !compact && !drag);
 
     // Refs keep the window handlers stable while reading fresh state. Assigning
     // during render is what lets several mutations fired in one tick compose off
@@ -1088,7 +1095,7 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(
               />
             ) : (
               <RenderNode
-                node={root}
+                node={visualRoot}
                 box={rootBox}
                 draggingId={drag?.armed ? drag.srcId : null}
                 onFocus={focus}
@@ -1102,7 +1109,7 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(
             {persistent && (
               <PersistentPanels
                 compactId={compact ? activeId : undefined}
-                root={root}
+                root={visualRoot}
                 rootBox={rootBox}
                 draggingId={drag?.armed ? drag.srcId : null}
                 onFocus={focus}
