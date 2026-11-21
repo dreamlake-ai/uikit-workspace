@@ -57,7 +57,7 @@ it("keeps pointer-following hints keyboard accessible and dismisses on Escape", 
 });
 
 
-it("dismisses on Escape before a focused editor consumes the bubbling key", async () => {
+it("dismisses without consuming Escape stopped by a native target-capture editor", async () => {
   const host = document.createElement("div");
   document.body.append(host);
   const root = createRoot(host);
@@ -67,7 +67,7 @@ it("dismisses on Escape before a focused editor consumes the bubbling key", asyn
   host.querySelector("input")!.addEventListener("keydown", (event) => {
     if (event.key === "Escape") editorEscapes++;
     event.stopPropagation();
-  });
+  }, true);
   await act(async () => host.querySelector("input")!.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })));
   expect(editorEscapes).toBe(1);
   expect(document.querySelector('[role="tooltip"]')).toBeNull();
