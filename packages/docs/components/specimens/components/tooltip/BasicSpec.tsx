@@ -10,14 +10,14 @@ export const BasicSpec = () => (
       </TooltipTrigger>
       <TooltipContent>Saves without leaving the page</TooltipContent>
     </Tooltip>
-    <Tooltip side="bottom" followPointer showArrow={false}>
+    <Tooltip side="bottom" followPointer showArrow={false} delayDuration={600}>
       <TooltipTrigger asChild>
         <Button size="sm" variant="ghost">
           Follow pointer
         </Button>
       </TooltipTrigger>
       <TooltipContent>
-        Follows the mouse; keyboard focus stays anchored. Escape dismisses.
+        Follows the mouse; keyboard focus stays anchored. Escape also cancels the hover delay.
       </TooltipContent>
     </Tooltip>
     <Tooltip side="right">
