@@ -21,6 +21,12 @@ the track. Values snap to the nearest step.
 
 ## Props
 
+For media or chart surfaces, `usePointerDrag` shares the same press-and-drag
+interaction. Hover does not change the value. The pointer is captured until
+release; cancellation, Escape, loss of capture, and window blur end the gesture.
+The host supplies `touchAction` and keyboard controls. `onDrag` receives press,
+held movement, and release; `onCancel` ends without a release callback.
+
 | Prop            | Type                        | Default | Description                                   |
 | --------------- | --------------------------- | ------- | --------------------------------------------- |
 | `value`         | `number[]`                  | —       | Controlled thumb values. One entry per thumb. |

@@ -3,6 +3,7 @@ import { act, createRef, useEffect } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { PanelLayout, type PanelLayoutHandle } from './PanelLayout'
+import { PanelHeaderActions } from './PanelHeaderActions'
 import { panelGroup, panelLeaf, panelSplit, type LeafNode } from './panel-tree'
 
 let root: Root
@@ -427,4 +428,24 @@ it('renders compact title details with a stable accessible name and separate act
   const copy = container.querySelector('[aria-label="Copy reference"]')!
   expect(tab.contains(copy)).toBe(false)
   expect(copy.closest('.uikit-document-tab')).toBe(tab.closest('.uikit-document-tab'))
+})
+
+
+it('keeps leading and trailing header actions beside compact tabs and changes them with the selected view', () => {
+  const first = panelLeaf({ title: 'Visualize' })
+  const second = panelLeaf({ title: 'Editor' })
+  act(() => root.render(<PanelLayout
+    root={panelGroup([first, second], 0)} compact
+    compactHeaderInTabRow={() => true}
+    renderHeader={(leaf) => leaf.id === first.id
+      ? <PanelHeaderActions leading={<button>Row</button>} trailing={<button>Edit configuration</button>} />
+      : <button>Save file</button>}
+  />))
+  const selector = container.querySelector('[data-compact-selector]')!
+  expect(selector.querySelector('[data-panel-header-spread]')?.textContent).toContain('Row')
+  expect(selector.querySelector('[data-panel-header-spread]')?.textContent).toContain('Edit configuration')
+  const editor = Array.from(selector.querySelectorAll('[role="tab"]')).find(tab => tab.textContent?.includes('Editor'))!
+  act(() => editor.dispatchEvent(new MouseEvent('click', { bubbles: true })))
+  expect(selector.querySelector('[data-panel-header-spread]')).toBeNull()
+  expect(selector.textContent).toContain('Save file')
 })

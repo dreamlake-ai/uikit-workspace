@@ -10,6 +10,7 @@ export { cn } from "./lib/utils";
 export { useIsMobile } from "./lib/useIsMobile";
 export { useHiddenContentFocus } from "./lib/useHiddenContentFocus";
 export { useHoverSlider } from "./lib/useHoverSlider";
+export { usePointerDrag, type PointerDragOptions } from "./lib/usePointerDrag";
 export { useTooltipPress, type TooltipPress } from "./lib/tooltip-press";
 export { useListSelection } from "./lib/useListSelection";
 export type {

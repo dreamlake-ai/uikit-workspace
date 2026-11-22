@@ -53,3 +53,11 @@ sits in the card's bottom-right corner, right-aligned on the footer row. This
 overrides the narrow-card rule (meta on its own line below `20rem`) for touch
 cards with top-right actions only — pointer cards keep it.
 See [ProfileCard](reference/components-profile-card.md).
+
+## Media viewers and compact panel actions
+
+The shared [MediaViewerDialog](reference/components-media-viewer.md) uses 40px of desktop
+media padding. Below 640px it places the gallery rail below the media, with
+56px above and 16px beside the content to keep the close control clear.
+Compact panel action groups stay beside the tab row and reserve their measured
+width so tabs can scroll without overlapping the controls.

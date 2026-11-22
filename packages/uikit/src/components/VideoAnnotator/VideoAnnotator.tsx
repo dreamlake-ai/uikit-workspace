@@ -1,3 +1,4 @@
+import { usePointerDrag } from '../../lib/usePointerDrag';
 import { Spinner } from '../Spinner'
 import {
   forwardRef,
@@ -442,33 +443,18 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
       setBuffered(end);
     }, []);
 
-    // Click / drag anywhere on the bar to seek. `setPointerCapture` isn't used —
-    // a document listener keeps the drag alive even past the bar's edges.
-    const onSeekDown = useCallback(
-      (e: React.PointerEvent<HTMLDivElement>) => {
-        const v = videoRef.current;
-        if (!v || !D) return;
-        e.preventDefault();
+    const { isDragging: _seeking, ...seekHandlers } = usePointerDrag<HTMLDivElement>({
+      disabled: !D,
+      onDrag(e) {
+        if (!videoRef.current) return;
         const rect = e.currentTarget.getBoundingClientRect();
-        const seek = (clientX: number) => {
-          const t = clamp((clientX - rect.left) / rect.width, 0, 1) * D; // clip time
-          seekClip(t);
-          // Switch the selected segment immediately — don't wait for the video's
-          // `timeupdate` (which is delayed while the seeked frame buffers).
-          const idx = segmentIndexAtTime(segs, t);
-          if (idx !== sel) onSelectedChange(idx);
-        };
-        seek(e.clientX);
-        const onMove = (ev: PointerEvent) => seek(ev.clientX);
-        const onUp = () => {
-          document.removeEventListener("pointermove", onMove);
-          document.removeEventListener("pointerup", onUp);
-        };
-        document.addEventListener("pointermove", onMove);
-        document.addEventListener("pointerup", onUp);
+        if (rect.width <= 0) return;
+        const t = clamp((e.clientX - rect.left) / rect.width, 0, 1) * D;
+        seekClip(t);
+        const idx = segmentIndexAtTime(segs, t);
+        if (idx !== sel) onSelectedChange(idx);
       },
-      [D, segs, sel, onSelectedChange, seekClip]
-    );
+    });
 
     // ---- video element events ---------------------------------------------
     const onLoadedMetadata = useCallback(() => {
@@ -728,7 +714,7 @@ export const VideoAnnotator = forwardRef<VideoAnnotatorHandle, VideoAnnotatorPro
         {/* Shared scrub bar — a slim static progress rail BELOW the video stage
             (progress only; the transport holds the controls). Always visible. */}
         {showSeekBar && D > 0 && (
-          <div className="va-seek" onPointerDown={onSeekDown}>
+          <div className="va-seek" style={{ touchAction: "none" }} {...seekHandlers}>
             <div className="va-seek-track">
               <div className="va-seek-buf" style={{ width: `${clamp(buffered / D, 0, 1) * 100}%` }} />
               <div className="va-seek-fill" style={{ width: `${clamp(clipTime / D, 0, 1) * 100}%` }} />

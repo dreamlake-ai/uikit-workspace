@@ -1360,3 +1360,11 @@ html[data-theme="dark"] {
     animation: none;
   }
 }
+
+/* Shared editor, attachment and visualization media viewer. */
+.uikit-media-viewer { flex-direction: row; }
+.uikit-media-viewer-main { padding: 40px; }
+@media (max-width: 639px) {
+  .uikit-media-viewer { flex-direction: column; }
+  .uikit-media-viewer-main { padding: 56px 16px 20px; }
+}
