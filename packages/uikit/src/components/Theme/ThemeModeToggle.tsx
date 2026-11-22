@@ -1,6 +1,7 @@
 import { Moon, Sun, SunMoon } from "lucide-react";
 import { type ComponentProps, type CSSProperties, type ReactNode } from "react";
 import { cn } from "../../lib/utils";
+import { type ToggleShape, roundClass } from "../../lib/toggleShape";
 import { type BaseTheme, useThemeOptional } from "./ThemeProvider";
 
 // Unselected glyphs differ from selected in OPACITY ONLY. They used to shrink
@@ -56,11 +57,15 @@ export interface ThemeModeToggleProps extends Omit<
   /** Whether to offer the middle "follow the OS" segment. Defaults to whether
    *  the provider has system tracking on; in controlled mode, to `true`. */
   enableSystem?: boolean;
+  /** Corner shape. `square` (default): 6px badge-radius thumb in a concentric
+   *  8px card-radius track. `round`: circular thumb on a stadium track. */
+  shape?: ToggleShape;
 }
 
 /**
  * Segmented theme control: light · system · dark, picked directly, with a
- * circular thumb that slides to the chosen segment.
+ * thumb that slides to the chosen segment — square by default, circular with
+ * `shape="round"` (or `ThemeModeToggleRound`).
  *
  * This is the toggle the app has always shipped in its navbar, brought into
  * the kit. It differs from `ThemeColorToggle` in what it asks of the reader:
@@ -88,10 +93,16 @@ export function ThemeModeToggle({
   value,
   onValueChange,
   enableSystem,
+  shape = "square",
   className,
   style,
   ...props
 }: ThemeModeToggleProps) {
+  // Track radius = thumb radius + the 2px padding, so the curves nest.
+  const trackR =
+    shape === "round" ? "rounded-uikit-round" : "rounded-uikit-card";
+  const thumbR =
+    shape === "round" ? "rounded-uikit-round" : "rounded-uikit-badge";
   // Read without throwing: a controlled toggle is allowed to have no provider.
   const ctx = useThemeOptional();
   const controlled = value !== undefined;
@@ -120,6 +131,7 @@ export function ThemeModeToggle({
       role="group"
       aria-label="Theme"
       data-orientation={orientation}
+      data-shape={shape}
       className={cn(
         // Transparent at rest; the chip tint arrives with the pointer. The
         // frame is there to say "these three are one control" at the moment
@@ -130,7 +142,9 @@ export function ThemeModeToggle({
         // transparent strip over a `--bg` page is invisible — that is the bug
         // the permanent frame was added to fix — but an elevated thumb reads
         // on its own ground, so the frame does not have to carry it.
-        "relative isolate inline-flex shrink-0 items-center rounded-full p-0.5",
+        "relative isolate inline-flex shrink-0 items-center p-0.5",
+        trackR,
+        roundClass("theme-mode-toggle", shape),
         "bg-transparent hover:bg-uikit-chip transition-colors duration-[160ms]",
         orientation === "vertical" && "flex-col",
         className,
@@ -141,7 +155,8 @@ export function ThemeModeToggle({
       <span
         aria-hidden
         className={cn(
-          "absolute left-0.5 top-0.5 z-0 rounded-full bg-uikit-bg",
+          "absolute left-0.5 top-0.5 z-0 bg-uikit-bg",
+          thumbR,
           "transition-transform ease-[var(--uikit-ease-thumb)] duration-[var(--uikit-dur-thumb)]",
           "motion-reduce:transition-none",
         )}
@@ -169,7 +184,8 @@ export function ThemeModeToggle({
             aria-pressed={selected}
             onClick={() => pick(mode)}
             className={cn(
-              "relative z-10 inline-flex items-center justify-center rounded-full",
+              "relative z-10 inline-flex items-center justify-center",
+              thumbR,
               "text-uikit-muted hover:text-uikit-ink aria-pressed:text-uikit-ink",
               "cursor-pointer outline-none transition-colors duration-[250ms]",
               // Keyboard focus: inset, inside the pill track.
@@ -187,4 +203,11 @@ export function ThemeModeToggle({
       })}
     </div>
   );
+}
+
+/** `ThemeModeToggle` with `shape="round"` — circular thumb, stadium track. */
+export function ThemeModeToggleRound(
+  props: Omit<ThemeModeToggleProps, "shape">,
+) {
+  return <ThemeModeToggle {...props} shape="round" />;
 }

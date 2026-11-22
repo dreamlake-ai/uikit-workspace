@@ -449,6 +449,12 @@ html[data-theme="dark"] {
      radius keep using the runtime `var(--radius)` (10px). */
   --radius-uikit-badge: 6px; /* chips / badges / small controls */
   --radius-uikit-card: 8px; /* content cards */
+  /* Toggle shape. Toggles are square by default: a Switch track at 4px with
+     its thumb concentric 2px inside it (4 − 2px inset). `shape="round"`
+     opts back into the stadium track and circular thumb (`--radius-uikit-round`). */
+  --radius-uikit-toggle: 4px; /* switch track */
+  --radius-uikit-toggle-thumb: 2px; /* switch thumb */
+  --radius-uikit-round: 9999px; /* `shape="round"` toggles */
 
   /* ── Shadows — depth-based ────────────────────────────────────
      `sm`   for small controls (switch thumb, segmented slider).

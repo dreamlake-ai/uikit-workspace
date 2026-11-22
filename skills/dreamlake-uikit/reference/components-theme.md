@@ -28,8 +28,11 @@ export function App() {
 
 ## Toggles
 
-`ThemeModeToggle` shows all three modes at once and moves a circular thumb to
-the one in force. It is the toggle the app wears in its navbar.
+`ThemeModeToggle` shows all three modes at once and moves a thumb to the one
+in force. Like every toggle in the kit, it is **square by default** (a 6px
+thumb in an 8px track); `shape="round"` or `ThemeModeToggleRound` gives the
+circular thumb on a stadium track. `ThemeCycleToggle` (`ThemeCycleToggleRound`)
+and `LiquidToggle` (`LiquidToggleRound`) take the same `shape` prop. It is the toggle the app wears in its navbar.
 `ThemeCycleToggle` is the one-glyph version for a surface the strip doesn't fit
 — a sidebar footer, a collapsed rail, the marketing site's header — advancing
 `dark → system → light` on each click. `size` scales it and the glyph follows at
@@ -58,7 +61,7 @@ import { ThemeModeToggle, ThemeCycleToggle, LiquidToggle } from '@dreamlake/uiki
 ```
 
 The strip is **transparent at rest and takes the chip tint on hover**, with a
-circular thumb riding in it. The frame is there to say "these three are one
+thumb riding in it. The frame is there to say "these three are one
 control" at the moment someone is about to use it; a permanent tinted slab in a
 quiet navbar is a box drawn around three icons that were reading fine without
 one.
@@ -77,8 +80,8 @@ all three choices should stay directly clickable. The thumb travels the same
 distance, on the other axis.
 
 Both **replace** `ThemeColorToggle`, which was a rounded-square button on an
-ink-tint hover. `ThemeCycleToggle` is the borderless circle the app actually
-uses for this, and it cycles `dark → system → light` — the app's order.
+ink-tint hover. `ThemeCycleToggle` is the borderless button the app actually
+uses for this (square by default, a circle with `shape="round"`), and it cycles `dark → system → light` — the app's order.
 
 The thumb runs on `--uikit-ease-thumb` / `--uikit-dur-thumb`, the same curve and
 duration as the segmented `ToggleButtons` highlight, so two of them on one page
@@ -97,6 +100,7 @@ control now, move the state into `ThemeProvider` later.
 | `value` | `BaseTheme` | — | Controlled mode. Omit to read the `ThemeProvider`. |
 | `onValueChange` | `(t: BaseTheme) => void` | — | Controlled mode: called with the picked theme. |
 | `enableSystem` | `boolean` | provider's setting (`true` when controlled) | Whether to offer the middle "follow the OS" segment. |
+| `shape` | `'square' \| 'round'` | `'square'` | Corner shape. `round` = circular thumb, stadium track (`ThemeModeToggleRound`). Also on `ThemeCycleToggle` and `LiquidToggle`. |
 
 Uncontrolled, it needs a `ThemeProvider` above it and throws a named error if
 there isn't one. With `enableSystem={false}` on the provider, the middle
@@ -106,7 +110,7 @@ segment drops out on its own.
 
 Every theme toggle shows the kit's focus ring — a 2px `--uikit-accent`
 outline — on **keyboard** focus only (`:focus-visible`): inset on the
-`ThemeModeToggle` segments and `LiquidToggle`, 2px outside the round
+`ThemeModeToggle` segments and `LiquidToggle`, 2px outside
 `ThemeCycleToggle`.
 
 ## `useTheme`

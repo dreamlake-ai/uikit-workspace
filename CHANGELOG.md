@@ -21,6 +21,11 @@
 
 ## Unreleased
 
+- **Breaking visual default (release as minor, 0.3.0): all toggles are square.** `Switch` (track and thumb), `ThemeModeToggle` (track, thumb and segments), `ThemeCycleToggle` and `SlideToggle` lose their round corners by default. `Switch` and `SlideToggle` use the new `--radius-uikit-toggle` (4px) track and `--radius-uikit-toggle-thumb` (2px) thumb tokens; `ThemeModeToggle` uses a 6px thumb in an 8px track; `ThemeCycleToggle` uses the 6px badge radius. `Toggle`, `ToggleButtons`, `PillRadio`, `ChipMulti`, `LiquidToggle` and the `Tabs` segment control were already square and do not change.
+- Every toggle takes `shape?: "square" | "round"` (`ToggleShape`, default `"square"`). `shape="round"` keeps the stadium track and circular thumb, adds a `uikit-<control>-round` class and sets `data-shape="round"` on the root. Presets: `SwitchRound`, `ToggleRound`, `ToggleButtonsRound`, `TabsRound` (segment), `PillRadioRound`, `ChipMultiRound`, `SlideToggleRound`, `ThemeModeToggleRound`, `ThemeCycleToggleRound`, `LiquidToggleRound`. `toggleVariants({ shape })` accepts it too. New token `--radius-uikit-round` (9999px).
+- Migration: to keep the old look, replace `<Switch …>` with `<SwitchRound …>` (or add `shape="round"`); do the same for `ThemeModeToggle` and `ThemeCycleToggle`.
+- Docs: the Switch, Toggle, Tabs and Theme pages show each example in both shapes side by side; the Border & radius guide lists the toggle tokens.
+
 - `TabRow`: the label's right padding tightens on hover/selection only when the tab has a close control. A fitted (`fitContent`), non-closable tab previously narrowed by 6px when selected or hovered and moved every tab after it.
 - `TabRow` items accept `groupStart`: a thin, `aria-hidden` divider precedes that tab (ignored on the first tab) to separate tab groups. Tab semantics and arrow-key selection are unchanged.
 - Dark segmented controls (Tabs `segment`, ToggleButtons `primary`/`secondary`) mirror light: the selected thumb is the page colour (`--uikit-segment-thumb` back to `--bg`), and the track is a recess below the page — new `--uikit-segment-track`, `color-mix(in srgb, #000 32%, var(--bg))` in dark, unset in light so light is unchanged. Dark unselected Tabs text on the track goes 4.09:1 → 5.76:1.

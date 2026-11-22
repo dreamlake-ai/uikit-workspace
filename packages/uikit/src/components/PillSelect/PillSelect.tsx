@@ -5,6 +5,7 @@ import {
   useRef,
 } from "react";
 import { cn } from "../../lib/utils";
+import { type ToggleShape, roundClass } from "../../lib/toggleShape";
 
 export interface PillOption {
   value: string;
@@ -24,7 +25,7 @@ export interface PillOption {
 const PILL = [
   "inline-flex items-center justify-center gap-[5px] whitespace-nowrap select-none cursor-pointer",
   "font-uikit-mono text-uikit-11 leading-[14.5px] tracking-uikit-snug",
-  "px-2.5 py-[5px] rounded-uikit-badge",
+  "px-2.5 py-[5px]",
   "transition-[background-color,box-shadow,opacity,color] duration-[120ms]",
   // Rest is MUTED text on a hairline, no fill. The line marks where the
   // targets are; it is the one place this row departs from `Toggle`, which
@@ -54,6 +55,12 @@ const PILL = [
 // Single- and multi-select share it. What differs is how many are on at once,
 // which the control already shows.
 const SELECTED = "bg-uikit-chip text-uikit-ink shadow-none opacity-100";
+
+// Square (default) is the 6px badge radius Button uses; `round` the stadium.
+const SHAPE: Record<ToggleShape, string> = {
+  square: "rounded-uikit-badge",
+  round: "rounded-uikit-round",
+};
 
 // The glyph trails the label's weight rather than matching it: at this size a
 // full-strength icon beside 11px mono reads as the louder half of the pair.
@@ -91,6 +98,8 @@ export interface PillRadioProps extends Omit<
   value: string;
   onValueChange: (value: string) => void;
   options: PillOption[];
+  /** Corner shape: `square` (default, 6px) or `round` (stadium pills). */
+  shape?: ToggleShape;
 }
 
 /**
@@ -112,6 +121,7 @@ export function PillRadio({
   value,
   onValueChange,
   options,
+  shape = "square",
   className,
   ...props
 }: PillRadioProps) {
@@ -144,7 +154,12 @@ export function PillRadio({
     <div
       ref={ref}
       role="radiogroup"
-      className={cn("flex flex-wrap gap-1.5", className)}
+      data-shape={shape}
+      className={cn(
+        "flex flex-wrap gap-1.5",
+        roundClass("pill-radio", shape),
+        className,
+      )}
       onKeyDown={(event) => {
         if (event.key === "ArrowRight" || event.key === "ArrowDown")
           move(event, 1);
@@ -167,7 +182,7 @@ export function PillRadio({
             // within it. With nothing selected yet, the first option holds it.
             tabIndex={selected || (!value && option === options[0]) ? 0 : -1}
             onClick={() => onValueChange(option.value)}
-            className={cn(PILL, selected && SELECTED)}
+            className={cn(PILL, SHAPE[shape], selected && SELECTED)}
           >
             <PillLabel option={option} selected={selected} />
           </button>
@@ -185,6 +200,8 @@ export interface ChipMultiProps extends Omit<
   value: string[];
   onValueChange: (value: string[]) => void;
   options: PillOption[];
+  /** Corner shape: `square` (default, 6px) or `round` (stadium pills). */
+  shape?: ToggleShape;
 }
 
 /**
@@ -200,6 +217,7 @@ export function ChipMulti({
   value,
   onValueChange,
   options,
+  shape = "square",
   className,
   ...props
 }: ChipMultiProps) {
@@ -209,7 +227,15 @@ export function ChipMulti({
     );
 
   return (
-    <div className={cn("flex flex-wrap gap-1.5", className)} {...props}>
+    <div
+      data-shape={shape}
+      className={cn(
+        "flex flex-wrap gap-1.5",
+        roundClass("chip-multi", shape),
+        className,
+      )}
+      {...props}
+    >
       {options.map((option) => {
         const selected = value.includes(option.value);
         return (
@@ -219,7 +245,7 @@ export function ChipMulti({
             aria-pressed={selected}
             disabled={option.disabled}
             onClick={() => toggle(option.value)}
-            className={cn(PILL, selected && SELECTED)}
+            className={cn(PILL, SHAPE[shape], selected && SELECTED)}
           >
             <PillLabel option={option} selected={selected} />
           </button>
@@ -227,4 +253,14 @@ export function ChipMulti({
       })}
     </div>
   );
+}
+
+/** `PillRadio` with `shape="round"` — stadium pills. */
+export function PillRadioRound(props: Omit<PillRadioProps, "shape">) {
+  return <PillRadio {...props} shape="round" />;
+}
+
+/** `ChipMulti` with `shape="round"` — stadium pills. */
+export function ChipMultiRound(props: Omit<ChipMultiProps, "shape">) {
+  return <ChipMulti {...props} shape="round" />;
 }

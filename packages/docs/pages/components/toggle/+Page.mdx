@@ -24,6 +24,20 @@ on/off affordances. Controlled (`pressed` + `onPressedChange`) or uncontrolled
   <BasicSpec />
 </Preview>
 
+## Shape
+
+Every control on this page is **square by default**: `Toggle`, the
+`ToggleButtons` segments and the `PillRadio` / `ChipMulti` pills use the 6px
+badge radius (`--radius-uikit-badge`), the same corner as `Button`. The
+`ToggleButtons` track nests that at 10px (8px with `padding={false}`).
+Pass `shape="round"` to keep the stadium look. Each control also has a preset:
+`ToggleRound`, `ToggleButtonsRound`, `PillRadioRound` and `ChipMultiRound`.
+Every example on this page shows the two shapes side by side.
+
+Every toggle in the kit takes the same `shape` prop. The `round` value also
+has a `*Round` preset component and adds a `uikit-<control>-round` class and
+`data-shape="round"` to the root element, for stylesheet hooks.
+
 ## Sizes
 
 `size` scales the padding, text and icon together — `sm`, `base` (default), `lg`.
@@ -54,7 +68,8 @@ a field label in a form — a role, a priority, the teams to add someone to.
 Against `ToggleButtons` above: that control puts its options on a shared track
 with a sliding thumb, which suits two or three fixed segments in a toolbar.
 These wrap, carry longer labels, and live in forms — which is why they are on
-this page rather than in one of their own.
+this page rather than in one of their own. They are square by default (6px);
+`shape="round"` makes stadium pills.
 
 Against `Tag variant="pill"`: a Tag is a **label on an object** — a bindr, a
 status. These are a **control for choosing**, so they carry the app's mono
@@ -95,6 +110,7 @@ offset ring around a 24px pill collides with its neighbours in a wrapping row.
 | `value` | `string` / `string[]` | The selected value, or values for `ChipMulti`. |
 | `onValueChange` | `(v) => void` | Called with the next selection. |
 | `options` | `PillOption[]` | `{ value, label, disabled?, icon? }`. `icon` is a decorative glyph before the label (an 11px lucide icon), drawn at 50% — 75% when selected — so it trails the label. |
+| `shape` | `'square' \| 'round'` | Corner shape, default `'square'` (6px). `round` = stadium pills (`PillRadioRound` / `ChipMultiRound`). |
 
 Native `<div>` attributes are forwarded to the wrapping row on both.
 
@@ -117,6 +133,7 @@ outline-style variable, and without it the ring painted nothing.
 | `onPressedChange` | `(pressed: boolean) => void` | — | Fired on toggle. |
 | `variant` | `'primary' \| 'secondary'` | `'primary'` | Active fill style. |
 | `size` | `'sm' \| 'base' \| 'lg'` | `'base'` | Padding/text scale. |
+| `shape` | `'square' \| 'round'` | `'square'` | Corner shape. `square` = 6px badge radius; `round` = stadium (`ToggleRound`). `toggleVariants({ shape })` takes it too. |
 
 ### `ToggleButtons` / `ToggleButton`
 
@@ -127,6 +144,7 @@ outline-style variable, and without it the ring painted nothing.
 | `variant` | `'primary' \| 'secondary' \| 'ghost'` | `'primary'` | Highlight style. |
 | `size` | `'sm' \| 'md' \| 'lg'` | `'md'` | Item size. |
 | `padding` | `boolean` | `true` | Frame padding around the segments. Set `false` for a tighter, edge-to-edge group. |
+| `shape` | `'square' \| 'round'` | `'square'` | Corner shape. `square` = 6px segments in a 10px / 8px track; `round` = stadium track and segments (`ToggleButtonsRound`). |
 | `value` (item) | `string` | — | This button's value. |
 | `icon` (item) | `boolean` | `false` | Square icon-only sizing. |
 | `asChild` (item) | `boolean` | `false` | Render the single child instead of a `<button>`, forwarding the ref, selected state, and click. |

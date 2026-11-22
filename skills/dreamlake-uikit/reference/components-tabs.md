@@ -31,6 +31,12 @@ re-measured whenever a tab changes size (a label that loads late, a font swap, a
 container resize), so it never lags behind the tab it marks. `label` accepts any
 `ReactNode` — pass icons or text.
 
+The segment control is **square by default**: small per-size radii (3px at
+`xs` up to 8px at `lg`). Pass `shape="round"`, or use the `TabsRound` preset
+(a segment `Tabs` with `shape="round"`), for a stadium track, thumb and
+segments. The example shows both side by side. `shape` has no effect on the
+`underline` variant.
+
 ## Keyboard and screen readers
 
 - **Underline** is a WAI-ARIA tablist. The row is one Tab stop — the selected
@@ -56,6 +62,7 @@ container resize), so it never lags behind the tab it marks. `label` accepts any
 | `onValueChange` | `(value: string) => void` | — | Alias for `onChange`. |
 | `size` | `'xs' \| 'sm' \| 'md' \| 'lg'` | `'md'` | Controls text size and button dimensions across all variants. |
 | `indicatorHeight` | `number` | `4` | Indicator thickness in px. `underline` variant only. |
+| `shape` | `'square' \| 'round'` | `'square'` | Corner shape. `segment` variant only. `round` = stadium track and pill (`TabsRound`). |
 | `className` | `string` | — | Extra classes on the container. |
 
 ### Tab

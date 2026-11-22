@@ -1,5 +1,6 @@
 import { type ComponentProps } from "react";
 import { cn } from "../../lib/utils";
+import { type ToggleShape, roundClass } from "../../lib/toggleShape";
 import { type BaseTheme, useTheme, useThemeOptional } from "./ThemeProvider";
 import { Droplet, Moon, Sun, SunMoon } from "lucide-react";
 
@@ -14,6 +15,9 @@ export interface ThemeCycleToggleProps extends Omit<
    *  reading the `ThemeProvider` and reports upward instead. */
   value?: BaseTheme;
   onValueChange?: (theme: BaseTheme) => void;
+  /** Corner shape of the hover/focus box: `square` (default, the 6px badge
+   *  radius Button uses) or `round` (a circle). */
+  shape?: ToggleShape;
 }
 
 const NEXT: Record<BaseTheme, BaseTheme> = {
@@ -27,7 +31,8 @@ const NEXT: Record<BaseTheme, BaseTheme> = {
  * `dark → system → light`. For a surface the three-segment `ThemeModeToggle`
  * doesn't fit — a sidebar footer, a collapsed rail.
  *
- * Borderless on purpose: a transparent circle in muted ink, resting at 0.8 and
+ * Borderless on purpose: a transparent square (a circle with `shape="round"`)
+ * in muted ink, resting at 0.8 and
  * snapping to 1 under the pointer. `size` scales it and the glyph follows at
  * half the box — the 2:1 ratio the marketing header (32) and the sidebar
  * footer (28) both keep. It sits in chrome that is already
@@ -38,6 +43,7 @@ export function ThemeCycleToggle({
   size = 28,
   value,
   onValueChange,
+  shape = "square",
   className,
   style,
   ...props
@@ -64,9 +70,12 @@ export function ThemeCycleToggle({
       aria-label={label}
       title={label}
       data-theme-preference={baseTheme}
+      data-shape={shape}
       style={{ width: size, height: size, ...style }}
       className={cn(
-        "inline-flex shrink-0 items-center justify-center rounded-full",
+        "inline-flex shrink-0 items-center justify-center",
+        shape === "round" ? "rounded-uikit-round" : "rounded-uikit-badge",
+        roundClass("theme-cycle-toggle", shape),
         "border-0 bg-transparent p-0 text-uikit-muted opacity-80 hover:opacity-100",
         "cursor-pointer outline-none transition-opacity",
         // `outline-solid`: `outline-none` zeroes Tailwind v4's outline-style
@@ -91,7 +100,7 @@ export function ThemeCycleToggle({
 }
 
 const toggleClass =
-  "inline-flex items-center justify-center size-8 rounded-[var(--radius)] text-uikit-muted hover:bg-uikit-ink-5 hover:text-uikit-ink transition-colors cursor-pointer outline-none " +
+  "inline-flex items-center justify-center size-8 text-uikit-muted hover:bg-uikit-ink-5 hover:text-uikit-ink transition-colors cursor-pointer outline-none " +
   "focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-uikit-accent focus-visible:-outline-offset-2";
 
 function LiquidIcon({ on }: { on: boolean }) {
@@ -105,10 +114,17 @@ function LiquidIcon({ on }: { on: boolean }) {
   );
 }
 
-export interface LiquidToggleProps extends ComponentProps<"button"> {}
+export interface LiquidToggleProps extends ComponentProps<"button"> {
+  /** Corner shape: `square` (default, `--radius`) or `round` (a circle). */
+  shape?: ToggleShape;
+}
 
 /** Toggles the "liquid" theme flag. Drop-in for the legacy LiquidToggle. */
-export function LiquidToggle({ className, ...props }: LiquidToggleProps) {
+export function LiquidToggle({
+  shape = "square",
+  className,
+  ...props
+}: LiquidToggleProps) {
   const { isLiquid, toggleLiquid } = useTheme();
   return (
     <button
@@ -117,10 +133,29 @@ export function LiquidToggle({ className, ...props }: LiquidToggleProps) {
       aria-pressed={isLiquid}
       aria-label="Toggle liquid theme"
       title="Toggle liquid theme"
-      className={cn(toggleClass, isLiquid && "text-uikit-accent", className)}
+      data-shape={shape}
+      className={cn(
+        toggleClass,
+        shape === "round" ? "rounded-uikit-round" : "rounded-[var(--radius)]",
+        roundClass("liquid-toggle", shape),
+        isLiquid && "text-uikit-accent",
+        className,
+      )}
       {...props}
     >
       <LiquidIcon on={isLiquid} />
     </button>
   );
+}
+
+/** `ThemeCycleToggle` with `shape="round"` — a circular hover/focus box. */
+export function ThemeCycleToggleRound(
+  props: Omit<ThemeCycleToggleProps, "shape">,
+) {
+  return <ThemeCycleToggle {...props} shape="round" />;
+}
+
+/** `LiquidToggle` with `shape="round"`. */
+export function LiquidToggleRound(props: Omit<LiquidToggleProps, "shape">) {
+  return <LiquidToggle {...props} shape="round" />;
 }

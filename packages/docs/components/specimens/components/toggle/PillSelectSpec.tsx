@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Globe, Lock } from "lucide-react";
 import { ChipMulti, PillRadio, type PillOption } from "@dreamlake/uikit";
+import { ShapePair } from "../ShapePair";
 
 const ROLES: PillOption[] = [
   { value: "owner", label: "owner" },
@@ -28,28 +29,43 @@ export const PillSelectSpec = () => {
   const [teams, setTeams] = useState<string[]>(["perception", "fleet-ops"]);
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: 18,
-        maxWidth: 420,
-      }}
-    >
-      <Field label="visibility">
-        <PillRadio
-          value={visibility}
-          onValueChange={setVisibility}
-          options={VISIBILITY}
-        />
-      </Field>
-      <Field label="role">
-        <PillRadio value={role} onValueChange={setRole} options={ROLES} />
-      </Field>
-      <Field label="add to teams">
-        <ChipMulti value={teams} onValueChange={setTeams} options={TEAMS} />
-      </Field>
-    </div>
+    <ShapePair>
+      {(shape) => (
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 18,
+            maxWidth: 300,
+          }}
+        >
+          <Field label="visibility">
+            <PillRadio
+              shape={shape}
+              value={visibility}
+              onValueChange={setVisibility}
+              options={VISIBILITY}
+            />
+          </Field>
+          <Field label="role">
+            <PillRadio
+              shape={shape}
+              value={role}
+              onValueChange={setRole}
+              options={ROLES}
+            />
+          </Field>
+          <Field label="add to teams">
+            <ChipMulti
+              shape={shape}
+              value={teams}
+              onValueChange={setTeams}
+              options={TEAMS}
+            />
+          </Field>
+        </div>
+      )}
+    </ShapePair>
   );
 };
 

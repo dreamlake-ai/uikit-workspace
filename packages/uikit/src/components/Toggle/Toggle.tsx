@@ -1,5 +1,6 @@
 import { type ButtonHTMLAttributes, forwardRef, useState } from "react";
 import { cn } from "../../lib/utils";
+import { type ToggleShape, roundClass } from "../../lib/toggleShape";
 
 export type ToggleVariant = "primary" | "secondary";
 export type ToggleSize = "sm" | "base" | "lg";
@@ -25,15 +26,24 @@ const VARIANTS: Record<ToggleVariant, string> = {
 // stopped growing with its own text: 12px sides against 0 top and bottom read as
 // a squashed pill. 6px corner, not `--radius`'s 10px — that is the panel/row
 // step, and at 28px tall it rounds a small control most of the way to a stadium.
+// The corner is applied by `shape` below: `square` is that 6px badge radius,
+// `round` the full stadium.
+const SHAPES: Record<ToggleShape, string> = {
+  square: "rounded-uikit-badge",
+  round: "rounded-uikit-round",
+};
+
 const SIZES: Record<ToggleSize, string> = {
-  sm: "text-uikit-11 leading-[14.5px] gap-1 px-2.5 py-[5px] rounded-uikit-badge [&_svg:not([class*='size-'])]:size-3",
-  base: "text-uikit-12 leading-[16.5px] gap-1.5 px-3.5 py-[7px] rounded-uikit-badge [&_svg:not([class*='size-'])]:size-4",
-  lg: "text-uikit-14 leading-[18.5px] gap-1.5 px-[18px] py-[9px] rounded-uikit-badge [&_svg:not([class*='size-'])]:size-5",
+  sm: "text-uikit-11 leading-[14.5px] gap-1 px-2.5 py-[5px] [&_svg:not([class*='size-'])]:size-3",
+  base: "text-uikit-12 leading-[16.5px] gap-1.5 px-3.5 py-[7px] [&_svg:not([class*='size-'])]:size-4",
+  lg: "text-uikit-14 leading-[18.5px] gap-1.5 px-[18px] py-[9px] [&_svg:not([class*='size-'])]:size-5",
 };
 
 export interface ToggleVariantsOptions {
   variant?: ToggleVariant;
   size?: ToggleSize;
+  /** Corner shape: `square` (default, the 6px badge radius) or `round`. */
+  shape?: ToggleShape;
   className?: string;
 }
 
@@ -41,6 +51,7 @@ export interface ToggleVariantsOptions {
 export function toggleVariants({
   variant = "primary",
   size = "base",
+  shape = "square",
   className,
 }: ToggleVariantsOptions = {}) {
   return cn(
@@ -52,6 +63,8 @@ export function toggleVariants({
     "[&_svg]:shrink-0 [&_svg]:pointer-events-none",
     VARIANTS[variant],
     SIZES[size],
+    SHAPES[shape],
+    roundClass("toggle", shape),
     className,
   );
 }
@@ -65,6 +78,8 @@ export interface ToggleProps extends Omit<
   onPressedChange?: (pressed: boolean) => void;
   variant?: ToggleVariant;
   size?: ToggleSize;
+  /** Corner shape: `square` (default) or `round` (the stadium pill). */
+  shape?: ToggleShape;
 }
 
 /**
@@ -81,6 +96,7 @@ export const Toggle = forwardRef<HTMLButtonElement, ToggleProps>(
       onPressedChange,
       variant = "primary",
       size = "base",
+      shape = "square",
       disabled,
       className,
       ...rest
@@ -104,11 +120,20 @@ export const Toggle = forwardRef<HTMLButtonElement, ToggleProps>(
         type="button"
         aria-pressed={on}
         data-state={on ? "on" : "off"}
+        data-shape={shape}
         disabled={disabled}
         onClick={toggle}
-        className={toggleVariants({ variant, size, className })}
+        className={toggleVariants({ variant, size, shape, className })}
         {...rest}
       />
     );
   },
 );
+
+/** `Toggle` with `shape="round"` — the stadium pill. */
+export const ToggleRound = forwardRef<
+  HTMLButtonElement,
+  Omit<ToggleProps, "shape">
+>(function ToggleRound(props, ref) {
+  return <Toggle ref={ref} {...props} shape="round" />;
+});

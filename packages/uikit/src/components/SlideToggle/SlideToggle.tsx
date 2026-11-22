@@ -5,6 +5,7 @@ import {
   useState,
 } from "react";
 import { Eye } from "lucide-react";
+import { type ToggleShape, roundClass } from "../../lib/toggleShape";
 
 export interface ToggleFace {
   /** What the face shows — a word, a glyph, an icon. */
@@ -32,6 +33,10 @@ export interface SlideToggleProps extends Omit<
   offColor?: string;
   slideMs?: number;
   bgMs?: number;
+  /** Corner shape. `square` (default): `--radius-uikit-toggle` (4px) track
+   *  with a concentric `--radius-uikit-toggle-thumb` (2px) knob. `round`: a
+   *  stadium track and pill knob. */
+  shape?: ToggleShape;
 }
 
 const PAD = 2;
@@ -67,6 +72,7 @@ export const SlideToggle = forwardRef<HTMLButtonElement, SlideToggleProps>(
       offColor = "#f97316",
       slideMs = 240,
       bgMs = 240,
+      shape = "square",
       disabled = false,
       className,
       onClick,
@@ -137,7 +143,14 @@ export const SlideToggle = forwardRef<HTMLButtonElement, SlideToggleProps>(
         ref={ref}
         type="button"
         disabled={disabled}
-        className={["uikit-slide-toggle", className].filter(Boolean).join(" ")}
+        data-shape={shape}
+        className={[
+          "uikit-slide-toggle",
+          roundClass("slide-toggle", shape),
+          className,
+        ]
+          .filter(Boolean)
+          .join(" ")}
         onClick={(event) => {
           onClick?.(event);
           if (!disabled && !event.defaultPrevented) onToggle();
@@ -161,7 +174,10 @@ export const SlideToggle = forwardRef<HTMLButtonElement, SlideToggleProps>(
           outline: "none",
           boxShadow: "none",
           WebkitTapHighlightColor: "transparent",
-          borderRadius: 5,
+          borderRadius:
+            shape === "round"
+              ? "var(--radius-uikit-round, 9999px)"
+              : "var(--radius-uikit-toggle, 4px)",
           cursor: disabled ? "default" : "pointer",
           flexShrink: 0,
           overflow: "hidden",
@@ -177,7 +193,10 @@ export const SlideToggle = forwardRef<HTMLButtonElement, SlideToggleProps>(
             position: "absolute",
             top: 2,
             height: 16,
-            borderRadius: 3,
+            borderRadius:
+              shape === "round"
+                ? "var(--radius-uikit-round, 9999px)"
+                : "var(--radius-uikit-toggle-thumb, 2px)",
             zIndex: 1,
             left: knob.left,
             width: knob.width,
@@ -233,3 +252,11 @@ export function PreviewToggle({ on, ...props }: PreviewToggleProps) {
     />
   );
 }
+
+/** `SlideToggle` with `shape="round"` — stadium track and pill knob. */
+export const SlideToggleRound = forwardRef<
+  HTMLButtonElement,
+  Omit<SlideToggleProps, "shape">
+>(function SlideToggleRound(props, ref) {
+  return <SlideToggle ref={ref} {...props} shape="round" />;
+});

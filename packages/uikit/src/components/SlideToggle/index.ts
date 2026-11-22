@@ -1,4 +1,9 @@
-export { SlideToggle, VimToggle, PreviewToggle } from "./SlideToggle";
+export {
+  SlideToggle,
+  SlideToggleRound,
+  VimToggle,
+  PreviewToggle,
+} from "./SlideToggle";
 export type {
   SlideToggleProps,
   VimToggleProps,
