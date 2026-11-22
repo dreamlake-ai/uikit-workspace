@@ -1,5 +1,9 @@
 # Tab Row
 
+The shared [Panel tabs](reference/components-panel-tabs.md) page shows the production design
+for lists, documents, terminals, sessions and chats. Active faces are solid and
+borderless, with 8px shoulders and balanced close-button spacing.
+
 A row of closable document tabs with a raised active tab. Tabs start at their preferred width, compress as space runs out, then scroll horizontally once they reach the minimum. Leading and trailing controls stay fixed. On the default desktop row they share the tabs' bottom edge, with a 4px space above them, so a 28px icon button centers on the 26px tabs and the row height does not change.
 
 The strip supplies the left gutter once: at rest, adjacent tabs keep their normal gap. Overflowing document tabs have no visible scrollbar. Use a mouse wheel, horizontal trackpad gesture, or touch swipe to scroll. Inactive tabs on the right slide over earlier tabs as rounded rectangles; the selected tab stays above them so its right edge and controls remain visible. Labels stay vertically centered in the gutter. Rounded opaque faces prevent covered labels from bleeding through. Keyboard selection reveals the selected tab; reduced motion disables the automatic slide animation.

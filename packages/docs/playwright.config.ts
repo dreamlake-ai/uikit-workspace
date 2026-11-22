@@ -35,13 +35,13 @@ export default defineConfig({
       name: "Desktop Chrome",
       use: { ...devices["Desktop Chrome"] },
       testMatch:
-        /dropdown-exit|dialog-motion|split-button|loading-guide|tab-overflow|list-selection/,
+        /dropdown-exit|dialog-motion|split-button|loading-guide|tab-overflow|panel-tabs|list-selection/,
     },
     {
       name: "Desktop Safari",
       use: { ...devices["Desktop Safari"] },
       testMatch:
-        /dropdown-exit|dialog-motion|split-button|loading-guide|tab-overflow/,
+        /dropdown-exit|dialog-motion|split-button|loading-guide|tab-overflow|panel-tabs/,
     },
   ],
 });
