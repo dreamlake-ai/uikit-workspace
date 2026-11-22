@@ -8,6 +8,7 @@ import {
   isValidElement,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -33,8 +34,70 @@ import { cn } from '../../lib/utils'
 
 type Side = 'top' | 'right' | 'bottom' | 'left'
 
+/** A client rect without the DOMRect methods. */
+export interface TooltipRect {
+  x?: number
+  y?: number
+  width: number
+  height: number
+  top: number
+  right: number
+  bottom: number
+  left: number
+}
+/** Anything Floating UI can position against without a DOM node. */
+export interface TooltipVirtualAnchor {
+  getBoundingClientRect: () => DOMRect | TooltipRect
+  contextElement?: Element
+}
+/**
+ * A position anchor that replaces the trigger for placement only. A rect is
+ * applied when it changes; a getter (or virtual element) is re-read on every
+ * animation frame while the tooltip is open, so a moving anchor is followed.
+ */
+export type TooltipAnchor =
+  | DOMRect
+  | TooltipRect
+  | (() => DOMRect | TooltipRect)
+  | TooltipVirtualAnchor
+export type TooltipGlide = boolean | { durationMs?: number }
+
+const DEFAULT_GLIDE_MS = 160
+/** CSS ease-out (easeOutCubic). */
+const GLIDE_EASE = 'cubic-bezier(0.215, 0.61, 0.355, 1)'
+const EMPTY_RECT: TooltipRect = { width: 0, height: 0, top: 0, right: 0, bottom: 0, left: 0 }
+
+function readAnchor(anchor: TooltipAnchor): DOMRect | TooltipRect {
+  if (typeof anchor === 'function') return anchor()
+  if ('getBoundingClientRect' in anchor && typeof anchor.getBoundingClientRect === 'function')
+    return anchor.getBoundingClientRect()
+  return anchor as DOMRect | TooltipRect
+}
+
+function prefersReducedMotion() {
+  return (
+    typeof window !== 'undefined' &&
+    !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+  )
+}
+
+/** Resolves the `glide` prop to a duration in ms, or 0 when glide is off. */
+export function resolveGlideMs(glide: TooltipGlide | undefined, reducedMotion: boolean): number {
+  if (!glide || reducedMotion) return 0
+  if (glide === true) return DEFAULT_GLIDE_MS
+  return Math.max(0, glide.durationMs ?? DEFAULT_GLIDE_MS)
+}
+
+/** The transition a gliding surface (`transform`) or wedge (`left`/`top`) wears. */
+export function glideTransition(ms: number, properties: string[]): string | undefined {
+  if (!ms) return undefined
+  return properties.map((p) => `${p} ${ms}ms ${GLIDE_EASE}`).join(', ')
+}
+
 interface TooltipContextValue {
   showArrow: boolean
+  /** Glide duration in ms once the first position is painted; 0 = jump. */
+  glideMs: number
   arrowRef: React.RefObject<HTMLSpanElement | null>
   open: boolean
   refs: ReturnType<typeof useFloating>['refs']
@@ -77,6 +140,19 @@ export interface TooltipProps {
   sideOffset?: number
   /** Follow mouse position; keyboard focus remains anchored to the trigger. */
   followPointer?: boolean
+  /**
+   * Position against this rect (or rect getter / virtual element) instead of
+   * the trigger. Hover and focus still come from `TooltipTrigger` when one is
+   * rendered; without one, drive `open` yourself. Moving the anchor while open
+   * repositions the same content; children are never remounted.
+   */
+  anchorRect?: TooltipAnchor
+  /**
+   * Animate between positions when the anchor moves while open (ease-out,
+   * default 160 ms). The wedge follows. The first position after opening
+   * never glides. Off under `prefers-reduced-motion: reduce`.
+   */
+  glide?: TooltipGlide
   children: ReactNode
 }
 
@@ -95,6 +171,8 @@ export function Tooltip({
   sideOffset = 6,
   showArrow = true,
   followPointer = false,
+  anchorRect,
+  glide,
   children,
 }: TooltipProps) {
   const providerDelay = useContext(DelayContext)
@@ -114,11 +192,19 @@ export function Tooltip({
   // `side` prop on TooltipContent (drop-in parity with the Radix API).
   const [placement, setPlacement] = useState<Side>(side)
 
-  const { refs, floatingStyles, context } = useFloating({
+  const anchorRef = useRef(anchorRect)
+  anchorRef.current = anchorRect
+  const hasAnchor = anchorRect !== undefined
+  // A moving anchor (a getter, or a glide target) has no DOM resize or scroll
+  // to observe, so poll it each frame while open. Static trigger anchors keep
+  // the cheaper event-driven autoUpdate.
+  const pollFrames = hasAnchor || !!glide
+  const { refs, floatingStyles, context, update, isPositioned } = useFloating({
     open,
     onOpenChange: setOpen,
     placement,
-    whileElementsMounted: autoUpdate,
+    whileElementsMounted: (reference, floating, run) =>
+      autoUpdate(reference, floating, run, { animationFrame: pollFrames }),
     middleware: [
       offset(sideOffset + (showArrow ? 4 : 0)),
       // `crossAxis: false` so flip judges only the axis the placement is ON.
@@ -134,11 +220,74 @@ export function Tooltip({
     ],
   })
 
+  // One stable virtual element reads the latest anchor, so a new rect object
+  // every render neither re-subscribes autoUpdate nor remounts the content.
+  const virtualAnchor = useMemo(
+    () => ({
+      getBoundingClientRect: () => {
+        const a = anchorRef.current
+        const r = a ? readAnchor(a) : EMPTY_RECT
+        return {
+          x: r.left,
+          y: r.top,
+          width: r.width,
+          height: r.height,
+          top: r.top,
+          left: r.left,
+          right: r.right,
+          bottom: r.bottom,
+        }
+      },
+      get contextElement() {
+        const a = anchorRef.current
+        return a && typeof a === 'object' && 'contextElement' in a ? a.contextElement : undefined
+      },
+    }),
+    []
+  )
+  useLayoutEffect(() => {
+    if (!hasAnchor) return
+    refs.setPositionReference(virtualAnchor)
+    // Hand placement back to the trigger (if any) when the anchor goes away.
+    // Never pass null: Floating UI would drop the trigger reference too.
+    return () => {
+      const trigger = refs.domReference.current
+      if (trigger) refs.setPositionReference(trigger)
+    }
+  }, [hasAnchor, refs, virtualAnchor])
+  // A plain rect prop changes by value; recompute when the caller passes a new one.
+  useLayoutEffect(() => {
+    if (open && hasAnchor) update()
+  }, [anchorRect, open, hasAnchor, update])
+
+  // Glide engages one frame after the first painted position, so opening
+  // never slides in from the (0, 0) placeholder Floating UI starts at.
+  const [reducedMotion, setReducedMotion] = useState(prefersReducedMotion)
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const sync = () => setReducedMotion(mq.matches)
+    mq.addEventListener?.('change', sync)
+    return () => mq.removeEventListener?.('change', sync)
+  }, [])
+  const targetGlideMs = resolveGlideMs(glide, reducedMotion)
+  const [glideArmed, setGlideArmed] = useState(false)
+  useEffect(() => {
+    if (!open || !isPositioned || !targetGlideMs) {
+      setGlideArmed(false)
+      return
+    }
+    const raf = requestAnimationFrame(() => setGlideArmed(true))
+    return () => cancelAnimationFrame(raf)
+  }, [open, isPositioned, targetGlideMs])
+  const glideMs = glideArmed ? targetGlideMs : 0
+
   const hover = useHover(context, {
     move: false,
     delay: { open: delay, close: 80 },
   })
-  const point = useClientPoint(context, { enabled: followPointer })
+  // An explicit anchor wins over pointer following.
+  const point = useClientPoint(context, { enabled: followPointer && !hasAnchor })
   const focus = useFocus(context)
   // Native editors can stop Escape in target-capture (xterm does). Observe it
   // before that boundary without consuming the editor's key. Listen even while
@@ -146,8 +295,9 @@ export function Tooltip({
   // hover timers and focus reopening are cancelled along with visible hints.
   useEffect(() => {
     const reference = context.elements.domReference
-    if (!reference) return
-    const doc = reference.ownerDocument
+    // An anchor-only tooltip has no trigger; Escape still dismisses it.
+    if (!reference && !hasAnchor) return
+    const doc = reference?.ownerDocument ?? document
     let hovering = false
     const enter = () => {
       hovering = true
@@ -161,15 +311,15 @@ export function Tooltip({
       if (event.key === 'Escape' && !event.isComposing && (openRef.current || hovering))
         context.onOpenChange(false, event, 'escape-key')
     }
-    reference.addEventListener('mouseenter', enter)
-    reference.addEventListener('mouseleave', leave)
+    reference?.addEventListener('mouseenter', enter)
+    reference?.addEventListener('mouseleave', leave)
     doc.addEventListener('keydown', escape, true)
     return () => {
-      reference.removeEventListener('mouseenter', enter)
-      reference.removeEventListener('mouseleave', leave)
+      reference?.removeEventListener('mouseenter', enter)
+      reference?.removeEventListener('mouseleave', leave)
       doc.removeEventListener('keydown', escape, true)
     }
-  }, [context.elements.domReference, context.onOpenChange])
+  }, [context.elements.domReference, context.onOpenChange, hasAnchor])
   const dismiss = useDismiss(context, { escapeKey: false })
   const role = useRole(context, { role: 'tooltip' })
   const { getReferenceProps, getFloatingProps } = useInteractions([
@@ -183,6 +333,7 @@ export function Tooltip({
   const value = useMemo<TooltipContextValue>(
     () => ({
       showArrow,
+      glideMs,
       arrowRef,
       open,
       refs,
@@ -192,7 +343,7 @@ export function Tooltip({
       getFloatingProps,
       setPlacement,
     }),
-    [open, refs, floatingStyles, context, getReferenceProps, getFloatingProps, showArrow]
+    [open, refs, floatingStyles, context, getReferenceProps, getFloatingProps, showArrow, glideMs]
   )
 
   return <TooltipContext.Provider value={value}>{children}</TooltipContext.Provider>
@@ -270,13 +421,15 @@ export function TooltipContent({
     if (side) ctx.setPlacement(side)
   }, [side, ctx])
   if (!ctx.open) return null
+  const transition = glideTransition(ctx.glideMs, ['transform'])
   return (
     <FloatingPortal>
       <div
         ref={ctx.refs.setFloating as never}
         data-uikit-overlay="tooltip"
         data-side={ctx.context.placement.split('-')[0]}
-        style={{ ...ctx.floatingStyles, ...style }}
+        data-glide={ctx.glideMs ? '' : undefined}
+        style={{ ...ctx.floatingStyles, ...(transition ? { transition } : null), ...style }}
         className={cn(
           motion && 'uikit-overlay-enter',
           'z-[200] max-w-[260px] rounded-md px-2 py-1 font-uikit-ui text-uikit-11 leading-uikit-snug',
@@ -295,7 +448,9 @@ export function TooltipContent({
         {...ctx.getFloatingProps(props)}
       >
         {children}
-        {ctx.showArrow && <OverlayArrow arrowRef={ctx.arrowRef} context={ctx.context} />}
+        {ctx.showArrow && (
+          <OverlayArrow arrowRef={ctx.arrowRef} context={ctx.context} glideMs={ctx.glideMs} />
+        )}
       </div>
     </FloatingPortal>
   )

@@ -1,5 +1,11 @@
 # Release notes
 
+## 0.3.1 — 2026-11-22
+
+- `Tooltip` takes `anchorRect`: a `DOMRect`, a rect getter or a virtual element that replaces the trigger for placement. A getter is re-read on every animation frame while open, so one tooltip can serve a whole list (anchor it to the list's right edge at the hovered row's centre). Hover and focus still come from a `TooltipTrigger` when one is rendered; without one, drive `open`. Escape dismisses an anchor-only tooltip.
+- `Tooltip` takes `glide` (`true` or `{ durationMs }`): when the anchor moves while open, the surface eases to the new position (160 ms, ease-out) and the wedge follows, instead of jumping. The first position after opening never glides; `prefers-reduced-motion: reduce` turns it off. The content stays mounted as the anchor moves.
+- Docs: the Tooltip page shows a shared list popover that glides between rows.
+
 ## 0.2.14 — 2026-11-21
 
 - Complete the shared editor `SlideToggle` with disabled behavior, button refs and native events, keyboard focus, and reduced-motion support. Preserve the 20px expanding-knob geometry.
