@@ -24,6 +24,7 @@ export * from "./Inputs";
 export * from "./Kbd";
 export * from "./Label";
 export * from "./MediaTransport";
+export * from "./MediaViewerDialog";
 export * from "./Menu";
 export * from "./Modal";
 export * from "./PanelLayout";

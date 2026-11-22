@@ -1,0 +1,7 @@
+# Media Viewer
+
+`MediaViewerDialog` uses the editor's dark backdrop, close control, caption and optional gallery rail. The same shell holds images, videos, attachment browsers and live interactive plots. It preserves keyboard focus, restores the opener on close, and locks page scrolling while open.
+
+Pass `open`, `onClose`, an accessible `title`, and the content as `children`. Stop click propagation on interactive content so clicking it does not dismiss the backdrop. Give expanded plots `width: 100%`, `height: 100%` and `minHeight: 0` so they resize with the viewport.
+
+`caption`, `rail` and `actions` share the editor layout. `initialFocus` and `returnFocus` accept element refs. `dismissible={false}` keeps a pending attachment operation from being dismissed; it does not discard its draft. Escape and backdrop clicks dismiss the active viewer; native fullscreen retains Escape until fullscreen exits.

@@ -11,6 +11,8 @@ import { StepsSpec } from "../../../components/specimens/components/slider/Steps
 import basicSrc from "../../../components/specimens/components/slider/BasicSpec.tsx?raw";
 import rangeSrc from "../../../components/specimens/components/slider/RangeSpec.tsx?raw";
 import stepsSrc from "../../../components/specimens/components/slider/StepsSpec.tsx?raw";
+import { DragSurfaceSpec } from "../../../components/specimens/components/slider/DragSurfaceSpec";
+import dragSurfaceSrc from "../../../components/specimens/components/slider/DragSurfaceSpec.tsx?raw";
 
 # Slider
 
@@ -46,6 +48,16 @@ the track. Values snap to the nearest step.
 </Preview>
 
 ## Props
+
+For media or chart surfaces, `usePointerDrag` shares the same press-and-drag
+interaction. Hover does not change the value. The pointer is captured until
+release; cancellation, Escape, loss of capture, and window blur end the gesture.
+The host supplies `touchAction` and keyboard controls. `onDrag` receives press,
+held movement, and release; `onCancel` ends without a release callback.
+
+<Preview source={dragSurfaceSrc} filename="DragSurfaceSpec.tsx">
+  <DragSurfaceSpec />
+</Preview>
 
 | Prop            | Type                        | Default | Description                                   |
 | --------------- | --------------------------- | ------- | --------------------------------------------- |

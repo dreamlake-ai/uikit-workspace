@@ -37,7 +37,9 @@ Buffering uses the shared Braille `Spinner` with a static “Loading…” label
 Click the video frame to play/pause. Drag a boundary to move it, double-click a
 boundary to merge, click a segment to select it and seek to its start (click the
 already-selected segment again to seek to that exact spot within it), drag
-anywhere on the track to scrub.
+anywhere on the track to scrub. On the slim progress rail, press and hold to seek,
+then drag; hovering alone does not move playback. The rail captures the pointer
+until release, and cancels the drag on Escape, pointer cancellation, or window blur.
 Selecting never auto-plays — it preserves the current play/pause state. Use the
 `− N× +` control in the transport bar to magnify the timeline 1→2→4→8→16× when
 segments are crowded; the view centers on the playhead and can be scrolled

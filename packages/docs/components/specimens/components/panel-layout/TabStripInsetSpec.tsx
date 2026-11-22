@@ -1,33 +1,34 @@
 import {
   Button,
   PanelLayout,
+  PanelHeaderActions,
   panelGroup,
   panelLeaf,
   panelSplit,
-} from "@dreamlake/uikit";
-import { Plus, Ellipsis } from "lucide-react";
-import { PanelStage } from "./PanelStage";
+} from '@dreamlake/uikit'
+import { Plus, Ellipsis } from 'lucide-react'
+import { PanelStage } from './PanelStage'
 
 // The same tabbed layout as the Tab groups demo, with the tab strip pulled in
 // to 2px from the panel's left and top edges. The header row shrinks to
 // 2 + 26 = 28px, and the tabs still stand on the panel below and join it.
 const initial = () =>
   panelSplit(
-    "row",
+    'row',
     [
-      panelLeaf({ view: "files", title: "Files" }),
+      panelLeaf({ view: 'files', title: 'Files' }),
       panelGroup(
         [
-          panelLeaf({ view: "editor", title: "index.ts" }),
-          panelLeaf({ view: "editor", title: "utils.ts" }),
-          panelLeaf({ view: "editor", title: "README.md" }),
-          panelLeaf({ view: "chat", title: "Chat" }),
+          panelLeaf({ view: 'editor', title: 'index.ts' }),
+          panelLeaf({ view: 'editor', title: 'utils.ts' }),
+          panelLeaf({ view: 'editor', title: 'README.md' }),
+          panelLeaf({ view: 'chat', title: 'Chat' }),
         ],
-        3,
+        3
       ),
     ],
-    [28, 72],
-  );
+    [28, 72]
+  )
 
 export const TabStripInsetSpec = () => (
   <PanelStage>
@@ -36,17 +37,21 @@ export const TabStripInsetSpec = () => (
       tabStripInset={{ left: 2, top: 2 }}
       initial={initial}
       className="p-2"
-      headerClassName={() => "!pr-0"}
+      headerClassName={() => '!pr-0'}
       renderHeader={() => (
-        <>
-          <Button icon size="sm" variant="ghost" aria-label="New view">
-            <Plus size={14} />
-          </Button>
-          <Button icon size="sm" variant="ghost" aria-label="View options">
-            <Ellipsis size={14} />
-          </Button>
-        </>
+        <PanelHeaderActions
+          leading={
+            <Button icon size="sm" variant="ghost" aria-label="New view">
+              <Plus size={14} />
+            </Button>
+          }
+          trailing={
+            <Button icon size="sm" variant="ghost" aria-label="View options">
+              <Ellipsis size={14} />
+            </Button>
+          }
+        />
       )}
     />
   </PanelStage>
-);
+)

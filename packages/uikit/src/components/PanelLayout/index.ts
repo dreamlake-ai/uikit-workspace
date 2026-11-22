@@ -11,6 +11,7 @@
 // which panels stay transparent — is injected through props, never inferred.
 
 export { PanelLayout } from './PanelLayout'
+export { PanelHeaderActions } from './PanelHeaderActions'
 export type { PanelLayoutHandle, PanelLayoutProps, PanelLeafInfo } from './PanelLayout'
 export type { ClosablePredicate, LeafClassName, LeafRenderer, TabbablePredicate } from './types'
 

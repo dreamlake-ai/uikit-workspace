@@ -119,6 +119,18 @@ export function PersistentPanels({
         const toolbar = toolbars.find(
           (node) => node.dataset.panelToolbar === tabSlot.dataset.panelTabSlot,
         );
+        const spread = toolbar?.querySelector<HTMLElement>("[data-panel-header-spread]");
+        if (toolbar) {
+          if (spread) {
+            const region = tabSlot.parentElement?.getBoundingClientRect();
+            const tabs = Array.from(tabSlot.querySelectorAll<HTMLElement>("[data-tab-id]"));
+            const tabsWidth = tabs.reduce((sum, tab) => sum + tab.getBoundingClientRect().width + 2, 0);
+            const controlsWidth = Array.from(spread.querySelectorAll<HTMLElement>("[data-panel-header-control]"))
+              .reduce((sum, control) => sum + control.scrollWidth, 0) + 16;
+            const width = Math.max(controlsWidth, (region?.width ?? 0) - tabsWidth - 12);
+            toolbar.style.width = `${width}px`;
+          } else toolbar.style.removeProperty("width");
+        }
         // Reserve the controls' actual footprint, including the host's gutter.
         // A fixed gutter over-reserves space when a host removes header padding.
         const controls = toolbar?.getBoundingClientRect();
@@ -131,7 +143,10 @@ export function PersistentPanels({
     observer.observe(area);
     slots.forEach((slot) => observer.observe(slot));
     toolbars.forEach((toolbar) => observer.observe(toolbar));
-    return () => observer.disconnect();
+    // Portal content can add/remove leading controls without changing the tree.
+    const mutations = new MutationObserver(measure);
+    toolbars.forEach((toolbar) => mutations.observe(toolbar, { childList: true, subtree: true, attributes: true, attributeFilter: ["data-panel-header-spread"] }));
+    return () => { observer.disconnect(); mutations.disconnect(); };
   }, [root, showSingleTab, compactId, tabbed]);
   return (
     <div

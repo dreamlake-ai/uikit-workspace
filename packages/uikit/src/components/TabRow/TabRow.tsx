@@ -289,6 +289,9 @@ const CSS =
   ".uikit-tab-row-item button:focus-visible{outline:2px solid var(--uikit-accent);outline-offset:-2px}" +
   ".uikit-tab-row-scroll{position:relative;z-index:1;display:flex;align-items:flex-end;gap:2px;" +
   "flex:1;min-width:0;overflow-x:auto;scrollbar-width:none}" +
+  ".uikit-tab-row:has([data-panel-header-spread]) > .uikit-tab-row-scroll{flex:0 1 auto}" +
+  ".uikit-tab-row-controls:has([data-panel-header-spread]){flex:1 0 auto}" +
+  ".uikit-tab-row-controls:has([data-panel-header-spread]) > *{width:100%}" +
   ".uikit-tab-row-scroll::-webkit-scrollbar{display:none}" +
   ".uikit-tab-row-scroll[data-tab-linear] > .uikit-document-tab{position:relative;left:auto}" +
   ".uikit-tab-row-divider{flex:none;align-self:center;width:1px;height:14px;margin:0 4px;background:var(--faint)}" +
