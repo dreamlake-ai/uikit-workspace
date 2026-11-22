@@ -1,6 +1,8 @@
 /** Shared document-tab presentation; each existing component retains its controller.
  * --uikit-document-surface is the panel body colour, defaulting to the chat's --bg.
  * Strip/inactive/hover/action colours can be overridden on a containing element.
+ * Borderless faces, 8px shoulders and balanced close controls are shared by
+ * list headings, standalone rows and docked groups on every host page.
  * Native selection scrolling reserves the same gutter as the curved feet.
  * The strip owns the 8px gutter; a sticky left inset would apply it twice.
  * Inactive tabs stack in document order; the active tab and its controls stay above them.
@@ -16,8 +18,8 @@ export const documentTabStyles = `
 [data-document-tab-edge="flush"] .uikit-document-tab:first-child{border-top-left-radius:0;border-bottom-left-radius:0}
 [data-document-tab-edge="flush"] .uikit-document-tab:first-child[data-active]::before{display:none}
 .uikit-document-tab-strip::-webkit-scrollbar{display:none;width:0;height:0}
-.uikit-document-tab{--uikit-tab-fill:var(--uikit-document-inactive-bg,var(--uikit-document-strip-surface,var(--uikit-workspace-bg)));--uikit-tab-line:var(--faint);position:sticky;left:0;z-index:1;box-sizing:border-box;min-height:26px;overflow:visible;border:1px solid transparent;border-radius:6px;background:transparent;color:var(--uikit-muted);transition:color 120ms ease}
-.uikit-document-tab[data-active]{--uikit-tab-fill:var(--uikit-document-surface,var(--bg));z-index:3;border-radius:8px 8px 0 0;background:linear-gradient(var(--uikit-tab-fill),var(--uikit-tab-fill)) padding-box,linear-gradient(to bottom,var(--uikit-tab-line) calc(100% - 8px),var(--uikit-tab-fill) 0) border-box;color:var(--ink)}
+.uikit-document-tab{--uikit-tab-fill:var(--uikit-document-inactive-bg,var(--uikit-document-strip-surface,var(--uikit-workspace-bg)));--uikit-tab-line:transparent;position:sticky;left:0;z-index:1;box-sizing:border-box;min-height:26px;overflow:visible;border:1px solid transparent;border-radius:6px;background:transparent;color:var(--uikit-muted);transition:color 120ms ease}
+.uikit-document-tab[data-active]{--uikit-tab-fill:var(--uikit-document-surface,var(--bg));z-index:3;border-radius:8px 8px 0 0;border-bottom-width:0;background:var(--uikit-tab-fill);color:var(--ink)}
 .uikit-document-tab:not([data-active]):hover{--uikit-tab-fill:var(--uikit-document-hover-bg,color-mix(in srgb,var(--ink) 4%,var(--uikit-document-strip-surface,var(--uikit-workspace-bg))))}
 .uikit-document-tab:not([data-active])::before{content:"";position:absolute;inset:calc(var(--uikit-document-inactive-inset,2px) - 1px) 0;z-index:-1;border-radius:6px;background:linear-gradient(var(--uikit-tab-fill),var(--uikit-tab-fill)),var(--uikit-document-stack-surface,var(--uikit-document-strip-surface,var(--uikit-workspace-bg)));pointer-events:none}
 .uikit-document-tab[data-active]::before,.uikit-document-tab[data-active]::after{content:"";position:absolute;bottom:-1px;width:8px;height:8px;pointer-events:none;background:radial-gradient(circle at var(--uikit-tab-curve-origin) 0,transparent 7.25px,var(--uikit-tab-line) 7.5px,var(--uikit-tab-line) 8px,var(--uikit-tab-fill) 8.25px)}
@@ -28,7 +30,7 @@ export const documentTabStyles = `
 .uikit-document-tab > span.uikit-document-tab-label{align-self:stretch;padding-block:0}
 .uikit-document-tab:not(:has(> .uikit-document-tab-end:not(:empty))) > .uikit-document-tab-label{padding-right:8px}
 .uikit-document-tab[data-active] .uikit-document-tab-label{font-weight:600}
-.uikit-document-tab-end{position:sticky;right:0;z-index:2;display:inline-flex;align-items:center;flex:0 0 auto;gap:4px;align-self:stretch;background:var(--uikit-tab-fill);border-radius:0 7px 0 0;padding:2px 4px 2px 2px}
+.uikit-document-tab-end{position:sticky;right:0;z-index:2;display:inline-flex;align-items:center;flex:0 0 auto;gap:4px;align-self:stretch;background:var(--uikit-tab-fill);border-radius:0 7px 0 0;padding:2px 6px 2px 2px}
 .uikit-document-tab:not([data-active]) .uikit-document-tab-end{border-radius:0 6px 6px 0;background:transparent}
 .uikit-document-tab:not([data-active]) .uikit-document-tab-end::before{content:"";position:absolute;inset:calc(var(--uikit-document-inactive-inset,2px) - 1px) 0;z-index:-1;border-radius:inherit;background:linear-gradient(var(--uikit-tab-fill),var(--uikit-tab-fill)),var(--uikit-document-stack-surface,var(--uikit-document-strip-surface,var(--uikit-workspace-bg)));pointer-events:none}
 .uikit-document-tab-action{background:var(--uikit-document-action-bg,color-mix(in srgb,var(--ink) 3%,var(--uikit-document-strip-surface,var(--uikit-workspace-bg))));box-shadow:none;align-self:flex-start;margin-top:0}
@@ -38,4 +40,4 @@ export const documentTabStyles = `
 .uikit-document-tab-close:hover{opacity:1;color:oklch(59% .18 25);background:color-mix(in srgb,var(--ink) 5%,transparent)}
 .uikit-document-tab:focus-visible,.uikit-document-tab-label:focus-visible,.uikit-document-tab-close:focus-visible{outline:2px solid var(--uikit-accent);outline-offset:-2px}
 @media(prefers-reduced-motion:reduce){.uikit-document-tab{transition:none}}
-`;
+`
