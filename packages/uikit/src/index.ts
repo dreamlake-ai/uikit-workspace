@@ -7,6 +7,7 @@
 
 export * from "./components";
 export { cn } from "./lib/utils";
+export type { ToggleShape } from "./lib/toggleShape";
 export { useIsMobile } from "./lib/useIsMobile";
 export { useHiddenContentFocus } from "./lib/useHiddenContentFocus";
 export { useHoverSlider } from "./lib/useHoverSlider";

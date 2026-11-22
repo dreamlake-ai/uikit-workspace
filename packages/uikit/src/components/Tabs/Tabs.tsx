@@ -9,6 +9,7 @@ import {
   useState,
 } from "react";
 import { cn } from "../../lib/utils";
+import { type ToggleShape, roundClass } from "../../lib/toggleShape";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../Tooltip";
 
 // ── Compound (Radix-style) API ───────────────────────────────────────────────
@@ -48,6 +49,9 @@ export interface TabsProps {
   onValueChange?: (value: string) => void;
   variant?: TabsVariant;
   size?: TabsSize;
+  /** `segment` only — corner shape. `square` (default) keeps the small
+   *  per-size radii (3–8px); `round` makes track, thumb and segments stadiums. */
+  shape?: ToggleShape;
   /** Override indicator thickness (px). Default: 4. */
   indicatorHeight?: number;
   className?: string;
@@ -239,9 +243,12 @@ function TabsData({
   onValueChange,
   variant = "underline",
   size = "md",
+  shape = "square",
   indicatorHeight,
   className,
 }: TabsProps) {
+  const round = shape === "round";
+  const ROUND = "var(--radius-uikit-round, 9999px)";
   const [internalValue, setInternalValue] = useState(
     defaultValue ?? tabs?.[0]?.value ?? "",
   );
@@ -327,6 +334,7 @@ function TabsData({
       // tabs — a tablist may only own `tab`s, so it is a plain group.
       role={variant === "segment" ? "group" : "tablist"}
       onKeyDown={handleKeyDown}
+      data-shape={variant === "segment" ? shape : undefined}
       className={cn(
         "relative font-uikit-ui",
         variant === "underline" && "flex items-end",
@@ -334,6 +342,7 @@ function TabsData({
         // `--uikit-segment-track`; light falls back to ink-5 (unchanged).
         variant === "segment" &&
           "inline-flex bg-[var(--uikit-segment-track,var(--color-uikit-ink-5))]",
+        variant === "segment" && roundClass("tabs-segment", shape),
         className,
       )}
       style={
@@ -341,7 +350,7 @@ function TabsData({
           ? {
               padding: segCfg.inset,
               gap: 1,
-              borderRadius: segCfg.containerR,
+              borderRadius: round ? ROUND : segCfg.containerR,
             }
           : undefined
       }
@@ -375,7 +384,7 @@ function TabsData({
             left: 0,
             width: bar.width,
             transform: `translateX(${bar.left}px)`,
-            borderRadius: segCfg.pillR,
+            borderRadius: round ? ROUND : segCfg.pillR,
             opacity: bar.ready ? 1 : 0,
             // Position springs (--uikit-ease-thumb, the theme toggle's curve);
             // width does NOT. An overshoot is a thumb arriving with weight when
@@ -434,7 +443,7 @@ function TabsData({
             )}
             style={{
               padding: `${segCfg.padV}px ${segCfg.padH}px`,
-              borderRadius: segCfg.buttonR,
+              borderRadius: round ? ROUND : segCfg.buttonR,
               fontSize: segCfg.iconSize,
               lineHeight: 1,
             }}
@@ -558,4 +567,9 @@ export function TabsContent({
       {children}
     </div>
   );
+}
+
+/** `Tabs variant="segment"` with `shape="round"` — stadium track and pill. */
+export function TabsRound(props: Omit<TabsProps, "shape" | "variant">) {
+  return <Tabs {...props} variant="segment" shape="round" />;
 }

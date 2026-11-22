@@ -47,6 +47,7 @@ import { Button, cn } from '@dreamlake/uikit'
 - **SideNav** — Collapsible sidebar navigation
 - **Tabs** — Tab panel container
 - **Tag** — Label/chip component
+- **Switch** / **Toggle** / **ToggleButtons** / **PillRadio** / **ChipMulti** / **SlideToggle** / **ThemeModeToggle** — Toggles, square by default; `shape="round"` or a `*Round` preset (`SwitchRound`, `ToggleRound`, …) keeps the stadium look
 - **VirtualList** / **VirtualListFlow** — Virtualized scrolling lists
 
 ## Documentation

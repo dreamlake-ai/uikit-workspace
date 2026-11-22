@@ -4,6 +4,7 @@ import {
   ThemeModeToggle,
   type BaseTheme,
 } from "@dreamlake/uikit";
+import { ShapePair } from "../ShapePair";
 
 /**
  * Controlled, so picking a segment here does NOT drive the docs site's own
@@ -13,32 +14,56 @@ import {
 export const ModeToggleSpec = () => {
   const [theme, setTheme] = useState<BaseTheme>("system");
   return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 16,
-        flexWrap: "wrap",
-      }}
-    >
-      <ThemeModeToggle value={theme} onValueChange={setTheme} />
-      <ThemeModeToggle
-        value={theme}
-        onValueChange={setTheme}
-        enableSystem={false}
-      />
-      <ThemeModeToggle value={theme} onValueChange={setTheme} size={28} />
-      <ThemeCycleToggle size={28} value={theme} onValueChange={setTheme} />
-      <ThemeCycleToggle size={32} value={theme} onValueChange={setTheme} />
-      <span
-        style={{
-          fontFamily: "var(--f-mono)",
-          fontSize: 11,
-          color: "var(--uikit-muted)",
-        }}
-      >
-        {theme}
-      </span>
-    </div>
+    <ShapePair>
+      {(shape) => (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 16,
+            flexWrap: "wrap",
+          }}
+        >
+          <ThemeModeToggle
+            shape={shape}
+            value={theme}
+            onValueChange={setTheme}
+          />
+          <ThemeModeToggle
+            shape={shape}
+            value={theme}
+            onValueChange={setTheme}
+            enableSystem={false}
+          />
+          <ThemeModeToggle
+            shape={shape}
+            value={theme}
+            onValueChange={setTheme}
+            size={28}
+          />
+          <ThemeCycleToggle
+            shape={shape}
+            size={28}
+            value={theme}
+            onValueChange={setTheme}
+          />
+          <ThemeCycleToggle
+            shape={shape}
+            size={32}
+            value={theme}
+            onValueChange={setTheme}
+          />
+          <span
+            style={{
+              fontFamily: "var(--f-mono)",
+              fontSize: 11,
+              color: "var(--uikit-muted)",
+            }}
+          >
+            {theme}
+          </span>
+        </div>
+      )}
+    </ShapePair>
   );
 };

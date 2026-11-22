@@ -14,6 +14,7 @@ import {
   isValidElement,
 } from "react";
 import { cn } from "../../lib/utils";
+import { type ToggleShape, roundClass } from "../../lib/toggleShape";
 
 export type ToggleButtonsVariant = "primary" | "secondary" | "ghost";
 export type ToggleButtonSize = "sm" | "md" | "lg";
@@ -36,9 +37,9 @@ const CONTAINER: Record<ToggleButtonsVariant, string> = {
 // out loud: "Same shell as the kit's segmented controls (ToggleButtons / Tabs
 // `segment`): a chip-tinted frame with an elevated thumb riding inside it."
 const HIGHLIGHT: Record<ToggleButtonsVariant, string> = {
-  primary: "bg-[var(--uikit-segment-thumb,var(--bg))] shadow-uikit-sm rounded-uikit-badge",
-  secondary: "bg-[var(--uikit-segment-thumb,var(--bg))] shadow-uikit-sm rounded-uikit-badge",
-  ghost: "bg-uikit-chip shadow-uikit-sm rounded-uikit-badge",
+  primary: "bg-[var(--uikit-segment-thumb,var(--bg))] shadow-uikit-sm",
+  secondary: "bg-[var(--uikit-segment-thumb,var(--bg))] shadow-uikit-sm",
+  ghost: "bg-uikit-chip shadow-uikit-sm",
 };
 
 const BTN_VARIANT: Record<ToggleButtonsVariant, string> = {
@@ -82,6 +83,7 @@ interface Ctx {
   onValueChange: (value: string) => void;
   size: ToggleButtonSize;
   variant: ToggleButtonsVariant;
+  shape: ToggleShape;
   registerItem: (value: string, el: HTMLElement) => void;
   unregisterItem: (value: string) => void;
 }
@@ -96,6 +98,9 @@ export interface ToggleButtonsProps extends Omit<
   variant?: ToggleButtonsVariant;
   size?: ToggleButtonSize;
   padding?: boolean;
+  /** Corner shape: `square` (default — 6px segments in a concentric 10px /
+   *  8px track) or `round` (stadium track and pill segments). */
+  shape?: ToggleShape;
   children: ReactNode;
 }
 
@@ -113,6 +118,7 @@ export function ToggleButtons({
   size = "md",
   padding = true,
   variant = "primary",
+  shape = "square",
   ...props
 }: ToggleButtonsProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -164,22 +170,39 @@ export function ToggleButtons({
       onValueChange,
       size,
       variant,
+      shape,
       registerItem,
       unregisterItem,
     }),
-    [padding, value, onValueChange, size, variant, registerItem, unregisterItem],
+    [
+      padding,
+      value,
+      onValueChange,
+      size,
+      variant,
+      shape,
+      registerItem,
+      unregisterItem,
+    ],
   );
 
   return (
     <ToggleButtonsContext.Provider value={ctx}>
       <div
         ref={containerRef}
+        data-shape={shape}
         className={cn(
           "relative inline-flex items-center",
           // Track radius = thumb radius + inset, so the two curves are
           // concentric. 6 + 4 = 10 with `p-1`; 6 + 2 = 8 with `p-0.5`. Giving
           // both the same radius is what makes an inner corner look clipped.
-          padding ? "rounded-[10px]" : "rounded-[8px]",
+          // `round` swaps both curves for the stadium.
+          shape === "round"
+            ? "rounded-uikit-round"
+            : padding
+              ? "rounded-[10px]"
+              : "rounded-[8px]",
+          roundClass("toggle-buttons", shape),
           CONTAINER[variant],
           // A minimal frame even when padding={false}, so the full-size
           // selection pill has room to sit inside the container instead of
@@ -193,6 +216,7 @@ export function ToggleButtons({
           className={cn(
             "pointer-events-none absolute",
             HIGHLIGHT[variant],
+            shape === "round" ? "rounded-uikit-round" : "rounded-uikit-badge",
           )}
           style={{
             // Same motion as Tabs' segment pill and the app's theme toggle:
@@ -269,7 +293,8 @@ export function ToggleButton({
     "relative z-10 inline-flex items-center justify-center font-normal whitespace-nowrap transition-colors outline-none cursor-pointer",
     // Keyboard focus: inset, so the ring stays inside the segment's track.
     "focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-uikit-accent focus-visible:-outline-offset-2",
-    "disabled:pointer-events-none disabled:opacity-50 rounded-uikit-badge",
+    "disabled:pointer-events-none disabled:opacity-50",
+    ctx.shape === "round" ? "rounded-uikit-round" : "rounded-uikit-badge",
     "[&_svg]:shrink-0 [&_svg]:pointer-events-none",
     BTN_VARIANT[ctx.variant],
     btnSizeClass(ctx.size, icon, ctx.inset),
@@ -304,4 +329,9 @@ export function ToggleButton({
       {children}
     </button>
   );
+}
+
+/** `ToggleButtons` with `shape="round"` — stadium track and pill segments. */
+export function ToggleButtonsRound(props: Omit<ToggleButtonsProps, "shape">) {
+  return <ToggleButtons {...props} shape="round" />;
 }

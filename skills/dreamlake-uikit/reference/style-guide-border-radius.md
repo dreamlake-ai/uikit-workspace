@@ -10,6 +10,23 @@ inputs, 12 list rows. `--radius` (10px) is the canonical panel + input radius â€
 the resting search bar and palette button. List rows step up to 12 (rest, hover, and
 the selection-run ring all share that radius).
 
+## Toggle shape
+
+Toggles are **square by default**. `Toggle`, `ToggleButtons`, `PillRadio`,
+`ChipMulti` and `ThemeCycleToggle` use the 6px badge radius, the same corner as
+`Button`. Two tokens are for controls with a thumb inside a track:
+
+| Token | Value | Use |
+| --- | --- | --- |
+| `--radius-uikit-toggle` | `4px` | `Switch` and `SlideToggle` track. |
+| `--radius-uikit-toggle-thumb` | `2px` | `Switch` thumb and `SlideToggle` knob, 2px inside the track, so the corners are concentric. |
+| `--radius-uikit-round` | `9999px` | The `shape="round"` variant of every toggle. |
+
+Each toggle takes `shape="round"` to keep the stadium look, and has a `*Round`
+preset (`SwitchRound`, `ToggleRound`, `ToggleButtonsRound`, `TabsRound`,
+`PillRadioRound`, `ChipMultiRound`, `SlideToggleRound`, `ThemeModeToggleRound`,
+`ThemeCycleToggleRound`, `LiquidToggleRound`).
+
 ## Hairlines & dividers
 
 Every structural border on the page is `1px --faint` â€” `rgba(0,0,0,.08)` in light,
