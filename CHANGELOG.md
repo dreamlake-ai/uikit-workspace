@@ -1,5 +1,10 @@
 # Release notes
 
+## 0.3.2 — 2026-11-23
+
+- Add native `Checkbox`: an accent checkmark or mixed-state dash at rest, with an outline only on hover or keyboard focus. Supports controlled and uncontrolled state, native labels/forms, disabled controls, custom accents, and forced colors without animations.
+- Add the standard Checkbox reference and interactive example with keyboard and touch validation. Preserve the published 0.3.1 Tooltip anchor/glide API alongside newer tree-guide and tab-row improvements.
+
 ## 0.3.1 — 2026-11-22
 
 - `Tooltip` takes `anchorRect`: a `DOMRect`, a rect getter or a virtual element that replaces the trigger for placement. A getter is re-read on every animation frame while open, so one tooltip can serve a whole list (anchor it to the list's right edge at the hovered row's centre). Hover and focus still come from a `TooltipTrigger` when one is rendered; without one, drive `open`. Escape dismisses an anchor-only tooltip.
