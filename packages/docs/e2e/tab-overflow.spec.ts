@@ -264,3 +264,35 @@ test("document tabs remain clickable when fixed controls leave a one-tab viewpor
     "sticky",
   );
 });
+
+test("document tab shoulders and feet match panel corners, including the flush first edge", async ({
+  page,
+}) => {
+  await page.goto("/components/tab-row");
+  await page.waitForLoadState("networkidle");
+  const row = page.getByRole("tablist", { name: "Example documents" });
+  await row.scrollIntoViewIfNeeded();
+  const first = row.locator(".uikit-document-tab").first();
+  await expect(first).toHaveCSS("border-top-left-radius", "12px");
+  expect(
+    await first.evaluate((el) => getComputedStyle(el, "::after").height),
+  ).toBe("12px");
+  await expect(first.locator(".uikit-document-tab-label")).toHaveCSS(
+    "padding-left",
+    "12px",
+  );
+  await expect(
+    row
+      .locator(".uikit-document-tab")
+      .nth(1)
+      .locator(".uikit-document-tab-label"),
+  ).toHaveCSS("padding-left", "8px");
+  await page
+    .getByRole("combobox", { name: "Left neighbor" })
+    .selectOption("flush");
+  await expect(row).toHaveCSS("padding-left", "0px");
+  await expect(first).toHaveCSS("border-top-left-radius", "12px");
+  expect(
+    await first.evaluate((el) => getComputedStyle(el, "::before").display),
+  ).toBe("none");
+});

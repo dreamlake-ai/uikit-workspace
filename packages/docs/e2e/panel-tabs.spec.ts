@@ -20,7 +20,7 @@ test('panel tabs share their face and preserve inactive drafts', async ({ page }
     for (const tab of await demo.locator('.uikit-document-tab[data-active]').all()) {
       await expect(tab).toHaveCSS('background-image', 'none')
       await expect(tab).toHaveCSS('border-bottom-width', '0px')
-      await expect(tab).toHaveCSS('border-top-right-radius', '8px')
+      await expect(tab).toHaveCSS('border-top-right-radius', '12px')
     }
     await expect(demo.locator('[aria-label="Project list"] [data-example-body]')).toHaveCSS(
       'border-top-right-radius',

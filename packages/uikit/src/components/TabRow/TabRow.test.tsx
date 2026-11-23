@@ -115,7 +115,7 @@ it("fits opted-in text tabs intrinsically while retaining padding and keyboard n
   expect(fitted.flexShrink).toBe("0");
   expect(fitted.minWidth).toBe("0px");
   expect(fitted.maxWidth).toBe("var(--tab-row-preferred-width)");
-  expect(getComputedStyle(tabs[0]).paddingLeft).toBe("8px");
+  expect(getComputedStyle(tabs[0]).paddingLeft).toBe("12px");
   expect(tabs[1].parentElement?.hasAttribute("data-fit-content")).toBe(false);
   act(() =>
     tabs[1].dispatchEvent(
@@ -565,4 +565,60 @@ it("can move the close affordance to the row end without disabling keyboard clos
     ),
   );
   expect(close).toHaveBeenCalledExactlyOnceWith("one");
+});
+
+it("pads text-only and namespace-prefixed titles without moving icon titles", () => {
+  act(() =>
+    root.render(
+      <TabRow
+        value="plain"
+        onValueChange={() => {}}
+        tabs={[
+          { value: "plain", label: "Plain" },
+          {
+            value: "namespace",
+            label: "Other / Memo",
+            labelContent: (
+              <>
+                <span data-view-namespace>Other / </span>
+                <span>Memo</span>
+                <button aria-label="Pin">
+                  <svg />
+                </button>
+              </>
+            ),
+          },
+          { value: "icon", label: "Icon", icon: <svg /> },
+        ]}
+      />,
+    ),
+  );
+  const labels = container.querySelectorAll<HTMLElement>('[role="tab"]');
+  expect(
+    Array.from(labels, (label) => getComputedStyle(label).paddingLeft),
+  ).toEqual(["12px", "12px", "8px"]);
+});
+
+it("rounds the first flush active tab like the panel while retaining its zero strip inset", () => {
+  act(() =>
+    root.render(
+      <TabRow
+        value="one"
+        startEdge="flush"
+        onValueChange={() => {}}
+        tabs={[
+          { value: "one", label: "One" },
+          { value: "two", label: "Two" },
+        ]}
+      />,
+    ),
+  );
+  const tab = container.querySelector<HTMLElement>(
+    ".uikit-document-tab[data-active]",
+  )!;
+  expect(getComputedStyle(tab).borderTopLeftRadius).toBe("12px");
+  expect(
+    getComputedStyle(container.querySelector(".uikit-document-tab-strip")!)
+      .paddingLeft,
+  ).toBe("0px");
 });
