@@ -46,6 +46,12 @@ over `--bg` instead of over transparent, so a chip reads the same on every
 surface. Keep the translucent originals for washes that _should_ tint what they
 sit on.
 
+For drawer hierarchies that need a stronger connection, `TreeBranchGuides`
+uses `--tree-guide-strong` with `emphasis="strong"`: `#aaa8a2` in light and
+`#81818b` in dark, with a solid 2px stroke. Both are opaque colors; the
+component keeps opacity at 1. The file tree retains its existing normal token.
+See the [live drawer example](reference/components-tree-view.md#drawer-entries-with-visible-connections).
+
 ### Row states are luminance, not hue
 
 `--tree-hover` used to be a warm amber against a neutral `--tree-sel`, so hover
