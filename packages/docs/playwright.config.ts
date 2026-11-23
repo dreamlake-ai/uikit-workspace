@@ -35,7 +35,7 @@ export default defineConfig({
       name: "Desktop Chrome",
       use: { ...devices["Desktop Chrome"] },
       testMatch:
-        /dropdown-exit|dialog-motion|split-button|loading-guide|tab-overflow|panel-tabs|list-selection|drawer-branches/,
+        /dropdown-exit|dialog-motion|split-button|loading-guide|tab-overflow|panel-tabs|list-selection|drawer-branches|checkbox/,
     },
     {
       name: "Desktop Safari",

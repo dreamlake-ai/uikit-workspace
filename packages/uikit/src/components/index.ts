@@ -5,6 +5,7 @@ export * from "./BreadcrumbTree";
 export * from "./Button";
 export * from "./SplitButton";
 export * from "./Card";
+export * from "./Checkbox";
 export * from "./CodeBlock";
 export * from "./Collapsible";
 export * from "./CollectionEntry";
@@ -62,4 +63,4 @@ export * from "./WorkflowGraph";
 export * from "./TabRow";
 
 export * from "./ListSearchInput";
-export * from './TabbedContainer';
+export * from "./TabbedContainer";
