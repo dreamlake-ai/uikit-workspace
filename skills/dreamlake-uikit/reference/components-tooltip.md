@@ -16,6 +16,8 @@ subtree in `TooltipProvider` to share an open delay.
 | `showArrow`                             | `boolean`                                | `true`  | Show the trigger wedge; set false when a wedge is inappropriate.        |
 | `sideOffset`                            | `number`                                 | `6`     | Gap from the trigger (px).                                              |
 | `delayDuration`                         | `number`                                 | `200`   | Hover open delay (ms).                                                  |
+| `anchorRect`                            | `DOMRect \| (() => DOMRect) \| virtual element` | —  | Position against this rect instead of the trigger. A getter is re-read every frame while open. |
+| `glide`                                 | `boolean \| { durationMs?: number }`     | `false` | Ease to the new position (160 ms, ease-out) when the anchor moves while open. Off for reduced motion. |
 | `open` / `defaultOpen` / `onOpenChange` | —                                        | —       | Controlled / uncontrolled open state.                                   |
 
 `TooltipTrigger` accepts `asChild`. `TooltipContent` accepts a `side` that
@@ -39,3 +41,22 @@ Dismissing the hint does not prevent the editor from receiving Escape; IME compo
 is left alone. Leave and re-enter the trigger (or blur and refocus it) to show it again.
 `useTooltipPress` exposes controlled tooltip state and pointer handlers for
 controls that should dismiss a hint on press until the pointer leaves.
+
+## Shared list popover: `anchorRect` + `glide`
+
+One tooltip can serve a whole list. Render a single `Tooltip` with no
+trigger, drive `open` yourself, and pass `anchorRect` a getter that returns
+the list's right edge at the hovered row's vertical centre. With `glide`, the
+surface and its wedge ease to the next row (160 ms, ease-out) instead of
+jumping, and the content stays mounted, so an image inside it is not reloaded.
+Hover the rows below, or move through them with Tab.
+
+- A getter (or a virtual element with `getBoundingClientRect`) is polled on
+  every animation frame while open. A plain `DOMRect` is applied when you pass
+  a new one.
+- The first position after opening never glides. `prefers-reduced-motion:
+  reduce` turns the glide off.
+- When a `TooltipTrigger` is also rendered, it still opens the tooltip on
+  hover and focus; `anchorRect` only replaces where it is placed, and wins
+  over `followPointer`.
+- Escape dismisses an anchor-only tooltip through `onOpenChange(false)`.

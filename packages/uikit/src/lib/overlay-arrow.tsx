@@ -2,11 +2,14 @@ import type { RefObject } from 'react'
 import type { FloatingContext } from '@floating-ui/react'
 
 type Side = 'top' | 'right' | 'bottom' | 'left'
+const ARROW_EASE = 'cubic-bezier(0.215, 0.61, 0.355, 1)'
 
 /** The shared UIKit wedge. Coordinates come from Floating UI after flip/shift. */
-export function OverlayArrow({ arrowRef, context }: {
+export function OverlayArrow({ arrowRef, context, glideMs = 0 }: {
   arrowRef: RefObject<HTMLSpanElement | null>
   context: FloatingContext
+  /** Ease the wedge to its new offset in step with a gliding surface. */
+  glideMs?: number
 }) {
   const side = context.placement.split('-')[0] as Side
   const edge = {
@@ -18,5 +21,6 @@ export function OverlayArrow({ arrowRef, context }: {
   return <span ref={arrowRef} aria-hidden="true" data-uikit-overlay-arrow="" data-side={side}
     style={{ position: 'absolute', width: 7, height: 7,
       left: context.middlewareData.arrow?.x, top: context.middlewareData.arrow?.y,
-      ...edge, transform: 'rotate(45deg)', background: 'inherit', pointerEvents: 'none' }} />
+      ...edge, transform: 'rotate(45deg)', background: 'inherit', pointerEvents: 'none',
+      ...(glideMs ? { transition: `left ${glideMs}ms ${ARROW_EASE}, top ${glideMs}ms ${ARROW_EASE}` } : null) }} />
 }
