@@ -8,6 +8,9 @@ test("checkbox has an accent mark without a resting box, with native keyboard an
   await page.goto("/components/checkbox");
   const group = page.getByRole("group", { name: "Checkbox examples" });
   const curves = group.getByRole("checkbox", { name: "Show curves" });
+  await expect(
+    group.getByRole("checkbox", { name: "Mixed selection" }),
+  ).toHaveJSProperty("indeterminate", true);
   await expect(curves).toBeChecked();
   await group.scrollIntoViewIfNeeded();
   await page.mouse.move(0, 0);
@@ -40,6 +43,7 @@ test("checkbox has an accent mark without a resting box, with native keyboard an
   await curves.focus();
   await page.keyboard.press("Space");
   await expect(curves).not.toBeChecked();
+  await expect(group.locator("output")).toHaveText("Curves hidden");
   expect((await style()).outline).toBe("solid");
   expect((await style()).outlineWidth).toBe("2px");
   expect((await style()).border).not.toBe("rgba(0, 0, 0, 0)");
@@ -50,6 +54,13 @@ test("checkbox has an accent mark without a resting box, with native keyboard an
   await expect(curves).toBeChecked();
   const mixed = group.getByRole("checkbox", { name: "Mixed selection" });
   await expect(mixed).toHaveJSProperty("indeterminate", true);
+  expect(
+    await mixed.evaluate((el) =>
+      Array.from(el.parentElement!.querySelectorAll("svg")).map(
+        (svg) => getComputedStyle(svg).display,
+      ),
+    ),
+  ).toEqual(["none", "block"]);
   await mixed.focus();
   await page.keyboard.press("Space");
   await expect(mixed).toHaveJSProperty("indeterminate", false);
@@ -94,6 +105,9 @@ test("narrow touch label toggles once and native form reset restores state", asy
   await page.goto(`${test.info().project.use.baseURL}/components/checkbox/`);
   const group = page.getByRole("group", { name: "Checkbox examples" });
   const curves = group.getByRole("checkbox", { name: "Show curves" });
+  await expect(
+    group.getByRole("checkbox", { name: "Mixed selection" }),
+  ).toHaveJSProperty("indeterminate", true);
   await group.getByText("Show curves", { exact: true }).tap();
   await expect(curves).not.toBeChecked();
   await group.getByText("Show curves", { exact: true }).tap();

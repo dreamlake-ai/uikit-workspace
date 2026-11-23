@@ -38,7 +38,7 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
           type="checkbox"
           aria-checked={indeterminate ? "mixed" : props["aria-checked"]}
           className={cn(
-            "peer m-0 size-full appearance-none rounded-[2px] border border-transparent bg-transparent p-0 text-[var(--uikit-accent)]",
+            "peer m-0 size-full appearance-none transition-none duration-0 rounded-[2px] border border-transparent bg-transparent p-0 text-[var(--uikit-accent)]",
             "cursor-pointer enabled:hover:border-uikit-ink-50 focus-visible:border-[var(--uikit-accent)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--uikit-accent)]",
             "disabled:cursor-not-allowed forced-colors:appearance-auto",
             className,
@@ -55,7 +55,7 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
           aria-hidden="true"
           focusable="false"
           viewBox="0 0 16 16"
-          className="pointer-events-none absolute inset-0 hidden size-full text-[var(--uikit-accent)] peer-checked:block peer-indeterminate:hidden forced-colors:hidden"
+          className="pointer-events-none absolute inset-0 hidden size-full text-[var(--uikit-accent)] peer-checked:block peer-indeterminate:hidden forced-colors:hidden!"
           fill="none"
           stroke="currentColor"
           strokeWidth="2"
@@ -68,7 +68,7 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
           aria-hidden="true"
           focusable="false"
           viewBox="0 0 16 16"
-          className="pointer-events-none absolute inset-0 hidden size-full text-[var(--uikit-accent)] peer-indeterminate:block forced-colors:hidden"
+          className="pointer-events-none absolute inset-0 hidden size-full text-[var(--uikit-accent)] peer-indeterminate:block forced-colors:hidden!"
           fill="none"
           stroke="currentColor"
           strokeWidth="2"
