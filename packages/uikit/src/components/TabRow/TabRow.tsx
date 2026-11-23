@@ -54,7 +54,7 @@ export interface TabRowProps {
   trailing?: ReactNode;
   /** Width in CSS pixels at which compression stops and scrolling begins. */
   minTabWidth?: number;
-  /** Flat first edge beside workspace ground; curved keeps the document foot. */
+  /** Rounded first edge beside workspace ground; curved keeps the document foot. */
   startEdge?: "curved" | "flush";
   /** Minimum label height in CSS pixels; use 44 for touch-oriented selectors. */
   minTabHeight?: number;
