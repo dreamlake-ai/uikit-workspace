@@ -5,14 +5,14 @@ order: 260
 description: Two-state toggle button, a segmented ToggleButtons group, and the outlined pill rows.
 ---
 
-import { BasicSpec } from '../../../components/specimens/components/toggle/BasicSpec'
-import { SegmentedSpec } from '../../../components/specimens/components/toggle/SegmentedSpec'
-import { SizesSpec } from '../../../components/specimens/components/toggle/SizesSpec'
-import basicSrc from '../../../components/specimens/components/toggle/BasicSpec.tsx?raw'
-import segmentedSrc from '../../../components/specimens/components/toggle/SegmentedSpec.tsx?raw'
-import sizesSrc from '../../../components/specimens/components/toggle/SizesSpec.tsx?raw'
-import { PillSelectSpec } from '../../../components/specimens/components/toggle/PillSelectSpec'
-import pillSelectSrc from '../../../components/specimens/components/toggle/PillSelectSpec.tsx?raw'
+import { BasicSpec } from "../../../components/specimens/components/toggle/BasicSpec";
+import { SegmentedSpec } from "../../../components/specimens/components/toggle/SegmentedSpec";
+import { SizesSpec } from "../../../components/specimens/components/toggle/SizesSpec";
+import basicSrc from "../../../components/specimens/components/toggle/BasicSpec.tsx?raw";
+import segmentedSrc from "../../../components/specimens/components/toggle/SegmentedSpec.tsx?raw";
+import sizesSrc from "../../../components/specimens/components/toggle/SizesSpec.tsx?raw";
+import { PillSelectSpec } from "../../../components/specimens/components/toggle/PillSelectSpec";
+import pillSelectSrc from "../../../components/specimens/components/toggle/PillSelectSpec.tsx?raw";
 
 # Toggle
 
@@ -105,12 +105,12 @@ offset ring around a 24px pill collides with its neighbours in a wrapping row.
 
 ### `PillRadio` / `ChipMulti`
 
-| Prop | Type | Description |
-| --- | --- | --- |
-| `value` | `string` / `string[]` | The selected value, or values for `ChipMulti`. |
-| `onValueChange` | `(v) => void` | Called with the next selection. |
-| `options` | `PillOption[]` | `{ value, label, disabled?, icon? }`. `icon` is a decorative glyph before the label (an 11px lucide icon), drawn at 50% — 75% when selected — so it trails the label. |
-| `shape` | `'square' \| 'round'` | Corner shape, default `'square'` (6px). `round` = stadium pills (`PillRadioRound` / `ChipMultiRound`). |
+| Prop            | Type                  | Description                                                                                                                                                           |
+| --------------- | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `value`         | `string` / `string[]` | The selected value, or values for `ChipMulti`.                                                                                                                        |
+| `onValueChange` | `(v) => void`         | Called with the next selection.                                                                                                                                       |
+| `options`       | `PillOption[]`        | `{ value, label, disabled?, icon? }`. `icon` is a decorative glyph before the label (an 11px lucide icon), drawn at 50% — 75% when selected — so it trails the label. |
+| `shape`         | `'square' \| 'round'` | Corner shape, default `'square'` (6px). `round` = stadium pills (`PillRadioRound` / `ChipMultiRound`).                                                                |
 
 Native `<div>` attributes are forwarded to the wrapping row on both.
 
@@ -126,25 +126,36 @@ outline-style variable, and without it the ring painted nothing.
 
 ### `Toggle`
 
-| Prop | Type | Default | Description |
-| --- | --- | --- | --- |
-| `pressed` | `boolean` | — | Controlled state. Omit for uncontrolled. |
-| `defaultPressed` | `boolean` | `false` | Initial state when uncontrolled. |
-| `onPressedChange` | `(pressed: boolean) => void` | — | Fired on toggle. |
-| `variant` | `'primary' \| 'secondary'` | `'primary'` | Active fill style. |
-| `size` | `'sm' \| 'base' \| 'lg'` | `'base'` | Padding/text scale. |
-| `shape` | `'square' \| 'round'` | `'square'` | Corner shape. `square` = 6px badge radius; `round` = stadium (`ToggleRound`). `toggleVariants({ shape })` takes it too. |
+| Prop              | Type                         | Default     | Description                                                                                                             |
+| ----------------- | ---------------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `pressed`         | `boolean`                    | —           | Controlled state. Omit for uncontrolled.                                                                                |
+| `defaultPressed`  | `boolean`                    | `false`     | Initial state when uncontrolled.                                                                                        |
+| `onPressedChange` | `(pressed: boolean) => void` | —           | Fired on toggle.                                                                                                        |
+| `variant`         | `'primary' \| 'secondary'`   | `'primary'` | Active fill style.                                                                                                      |
+| `size`            | `'sm' \| 'base' \| 'lg'`     | `'base'`    | Padding/text scale.                                                                                                     |
+| `shape`           | `'square' \| 'round'`        | `'square'`  | Corner shape. `square` = 6px badge radius; `round` = stadium (`ToggleRound`). `toggleVariants({ shape })` takes it too. |
 
 ### `ToggleButtons` / `ToggleButton`
 
-| Prop | Type | Default | Description |
-| --- | --- | --- | --- |
-| `value` | `string` | — | Selected value (`ToggleButtons`). |
-| `onValueChange` | `(value: string) => void` | — | Fired on select. |
-| `variant` | `'primary' \| 'secondary' \| 'ghost'` | `'primary'` | Highlight style. |
-| `size` | `'sm' \| 'md' \| 'lg'` | `'md'` | Item size. |
-| `padding` | `boolean` | `true` | Frame padding around the segments. Set `false` for a tighter, edge-to-edge group. |
-| `shape` | `'square' \| 'round'` | `'square'` | Corner shape. `square` = 6px segments in a 10px / 8px track; `round` = stadium track and segments (`ToggleButtonsRound`). |
-| `value` (item) | `string` | — | This button's value. |
-| `icon` (item) | `boolean` | `false` | Square icon-only sizing. |
-| `asChild` (item) | `boolean` | `false` | Render the single child instead of a `<button>`, forwarding the ref, selected state, and click. |
+| Prop             | Type                                             | Default     | Description                                                                                                               |
+| ---------------- | ------------------------------------------------ | ----------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `value`          | `string`                                         | —           | Selected value (`ToggleButtons`).                                                                                         |
+| `onValueChange`  | `(value: string) => void`                        | —           | Fired on select.                                                                                                          |
+| `variant`        | `'primary' \| 'secondary' \| 'ghost' \| 'panel'` | `'primary'` | Highlight style.                                                                                                          |
+| `size`           | `'sm' \| 'md' \| 'lg'`                           | `'md'`      | Item size.                                                                                                                |
+| `padding`        | `boolean`                                        | `true`      | Frame padding around the segments. Set `false` for a tighter, edge-to-edge group.                                         |
+| `shape`          | `'square' \| 'round'`                            | `'square'`  | Corner shape. `square` = 6px segments in a 10px / 8px track; `round` = stadium track and segments (`ToggleButtonsRound`). |
+| `value` (item)   | `string`                                         | —           | This button's value.                                                                                                      |
+| `icon` (item)    | `boolean`                                        | `false`     | Square icon-only sizing.                                                                                                  |
+| `asChild` (item) | `boolean`                                        | `false`     | Render the single child instead of a `<button>`, forwarding the ref, selected state, and click.                           |
+
+## Compact panel groups
+
+`variant="panel"` keeps selection neutral and puts each item's optional
+`hoverColor` on the group background only while hovered or keyboard-focused.
+Buttons stay transparent. The complete group height is 26px (`sm`), 30px (`md`),
+or 34px (`lg`), including its fixed 2px inset; `padding` does not add another
+frame in this variant. Use an unpadded action row and match neighboring controls
+to that outer height. See the interactive [panel tab example](/components/panel-tabs#compact-view-controls).
+
+Inside a TabRow, the panel variant inherits `--uikit-document-control-height` so the whole group matches the inactive tab fill. Outside a row its compact default is 26px.

@@ -494,9 +494,9 @@ const CSS = `
 .dl-tabs-workspace-header .uikit-tab-row{width:auto;max-width:100%;flex:0 1 auto;align-self:stretch;padding-inline:0}
 
 .dl-tabs-workspace-header .uikit-tab-row-scroll{flex:0 1 auto}
-.dl-tabs-workspace-context-controls{display:flex;flex:0 0 auto;align-items:flex-start;gap:2px;margin-left:auto;margin-top:0}
+.dl-tabs-workspace-context-controls{display:flex;flex:0 0 auto;align-items:flex-start;gap:2px;margin-left:auto;margin-top:2px}
 .dl-tabs-workspace-context-controls:empty{display:none}
-.dl-tabs-workspace-action{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;min-width:32px;height:28px;border:0;border-radius:4px;padding:0 9px;margin:0;cursor:pointer}
+.dl-tabs-workspace-action{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;border:0;border-radius:4px;padding:0;margin:0;cursor:pointer}
 .dl-tabs-workspace-action:focus-visible,.dl-tabs-workspace-hash:focus-visible{outline:2px solid var(--uikit-accent);outline-offset:1px}
 .dl-tabs-workspace-scenarios{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;color:var(--uikit-muted)}
 .dl-tabs-workspace-scenarios select{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--faint);border-radius:4px;padding:5px 8px}
