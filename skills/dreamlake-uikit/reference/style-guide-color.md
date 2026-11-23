@@ -197,3 +197,10 @@ canvas colors, close guards, contextual actions, and view state.
 The Monaco content and gutter backgrounds are transparent, so switching modes
 or loading the editor preserves that surface. Syntax token colors follow
 Monaco's light or dark theme; they do not replace the surrounding surface tokens.
+
+## Panel control hover
+
+A view selector keeps its selected segment neutral. Optional mode color tints
+the shared track background on hover or keyboard focus; it does not fill the
+button or recolor the glyph. Use `ToggleButtons variant="panel"` and the item's
+`hoverColor`, as shown in [Panel tabs](reference/components-panel-tabs.md#compact-view-controls).

@@ -35,3 +35,17 @@ inactive work mounted in the product too; the tab row only controls selection.
 
 See [Tab Row](reference/components-tab-row.md) for props and overflow behavior and
 [Panel Layout](reference/components-panel-layout.md) for docking and split panels.
+
+## Compact view controls
+
+Use `ToggleButtons variant="panel" size="sm"` for the view selector beside a
+panel tab. Its **whole container is 26px high**, matching the inactive tab fill and its
+neighboring icon buttons. Do not add vertical padding around that group or set
+a minimum height on every descendant button. The segments already account for
+the track's inset. Short tab labels size to their content.
+
+Keep the selected segment neutral. Optional `hoverColor` belongs to the
+**group background on hover or keyboard focus**, not the button, icon, or
+selected segment. Moving between Terminal, Chat and Files below changes the
+background tint without changing the selection. Leaving the group clears it.
+Selecting a mode preserves its content; type in Chat, switch away, and return.

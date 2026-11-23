@@ -27,5 +27,5 @@ test('tab-row examples join their content, including headers with taller actions
   }
   // The explicit flush variant still has the shared rounded shoulder.
   await page.getByRole('combobox', { name: 'Left neighbor' }).selectOption('flush')
-  await expect(page.getByRole('tablist', { name: 'Example documents' }).locator('.uikit-document-tab').first()).toHaveCSS('border-top-left-radius', '12px')
+  await expect(page.getByRole('tablist', { name: 'Example documents' }).locator('.uikit-document-tab').first()).toHaveCSS('border-top-left-radius', '8px')
 })

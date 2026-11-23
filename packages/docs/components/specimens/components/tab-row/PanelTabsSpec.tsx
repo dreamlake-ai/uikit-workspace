@@ -1,19 +1,19 @@
-import { useState, type CSSProperties } from 'react'
-import { DocumentTabHeading, TabRow } from '@dreamlake/uikit'
+import { useState, type CSSProperties } from "react";
+import { DocumentTabHeading, TabRow } from "@dreamlake/uikit";
 
 /** Shared primitives, without application CSS or a second tab controller. */
 export function PanelTabsSpec() {
-  const [active, setActive] = useState('memo')
-  const [neighbor, setNeighbor] = useState('Terminal')
+  const [active, setActive] = useState("memo");
+  const [neighbor, setNeighbor] = useState("Terminal");
   const [tabs, setTabs] = useState([
-    { value: 'memo', label: 'Release memo', closable: false },
-    { value: 'review', label: 'A long project review title', closable: true },
-  ])
-  const [next, setNext] = useState(1)
+    { value: "memo", label: "Release memo", closable: false },
+    { value: "review", label: "A long project review title", closable: true },
+  ]);
+  const [next, setNext] = useState(1);
   return (
     <div
       data-panel-tabs-example=""
-      style={{ '--uikit-document-surface': 'var(--bg)' } as CSSProperties}
+      style={{ "--uikit-document-surface": "var(--bg)" } as CSSProperties}
     >
       <style>{`
       [data-panel-tabs-example]{background:var(--uikit-workspace-bg);border-radius:12px;padding:12px}
@@ -28,7 +28,7 @@ export function PanelTabsSpec() {
       [data-panel-tabs-example] textarea{box-sizing:border-box;width:100%;min-height:100px;resize:vertical;background:transparent;color:inherit;border:1px solid var(--faint);border-radius:6px;padding:8px}
       [data-panel-tabs-example] [data-workspace-panel]{--uikit-document-surface:var(--uikit-workspace-bg)}
       [data-panel-tabs-example] [data-workspace-panel] [data-example-body]{background:var(--uikit-workspace-bg)}
-      [data-panel-tabs-example] button[data-example-action]{margin-left:auto;background:transparent;color:inherit;border:0;border-radius:4px;cursor:pointer;min-width:28px;min-height:28px}
+      [data-panel-tabs-example] button[data-example-action]{margin-left:auto;color:inherit;cursor:pointer}
       [data-panel-tabs-example] button[data-example-action]:focus-visible{outline:2px solid var(--uikit-accent)}
       @media(max-width:600px){[data-panel-tabs-grid]{grid-template-columns:minmax(0,1fr)}}
     `}</style>
@@ -50,19 +50,19 @@ export function PanelTabsSpec() {
             aria-label="Workspace tools"
             value={neighbor}
             onValueChange={setNeighbor}
-            tabs={['Terminal', 'Sessions', 'Chat'].map((label) => ({
+            tabs={["Terminal", "Sessions", "Chat"].map((label) => ({
               value: label,
               label,
               fitContent: true,
             }))}
           />
           <div data-example-body="" role="tabpanel" aria-label={neighbor}>
-            {neighbor === 'Terminal' ? (
+            {neighbor === "Terminal" ? (
               <code>$ ready</code>
-            ) : neighbor === 'Sessions' ? (
-              'No active sessions.'
+            ) : neighbor === "Sessions" ? (
+              "No active sessions."
             ) : (
-              'Start a conversation.'
+              "Start a conversation."
             )}
           </div>
         </section>
@@ -70,25 +70,29 @@ export function PanelTabsSpec() {
       <section aria-label="Retained documents" style={{ marginTop: 12 }}>
         <TabRow
           aria-label="Project documents"
-          tabs={tabs.map((tab) => ({ ...tab, panelId: `panel-tabs-example-${tab.value}` }))}
+          tabs={tabs.map((tab) => ({
+            ...tab,
+            panelId: `panel-tabs-example-${tab.value}`,
+          }))}
           value={active}
           onValueChange={setActive}
           onClose={(value) => {
-            setTabs((current) => current.filter((tab) => tab.value !== value))
-            if (active === value) setActive('memo')
+            setTabs((current) => current.filter((tab) => tab.value !== value));
+            if (active === value) setActive("memo");
           }}
           trailing={
             <button
               data-example-action=""
+              className="uikit-document-tab-action"
               aria-label="Add document"
               onClick={() => {
-                const value = `draft-${next}`
+                const value = `draft-${next}`;
                 setTabs((current) => [
                   ...current,
                   { value, label: `Draft ${next}`, closable: true },
-                ])
-                setNext(next + 1)
-                setActive(value)
+                ]);
+                setNext(next + 1);
+                setActive(value);
               }}
             >
               +
@@ -107,9 +111,9 @@ export function PanelTabsSpec() {
               <textarea
                 aria-label={`${tab.label} draft`}
                 defaultValue={
-                  tab.value === 'memo'
-                    ? 'Edit this draft, switch tabs, and come back. Your work stays here.'
-                    : ''
+                  tab.value === "memo"
+                    ? "Edit this draft, switch tabs, and come back. Your work stays here."
+                    : ""
                 }
               />
             </div>
@@ -117,5 +121,5 @@ export function PanelTabsSpec() {
         </div>
       </section>
     </div>
-  )
+  );
 }

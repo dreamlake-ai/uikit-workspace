@@ -1,5 +1,11 @@
 # Release notes
 
+## 0.3.3 — 2026-11-23
+
+- Add compact panel toggle groups: neutral selection, mode-colored group background on hover and keyboard focus, and height inherited from tab gutters.
+- Reduce document-tab shoulders and feet to 8px; balance close-button top/right spacing. Gutter actions stay transparent until hover and match inactive tab fill height.
+- Update live tab-row examples and shared style guidance.
+
 ## 0.3.2 — 2026-11-23
 
 - Add native `Checkbox`: an accent checkmark or mixed-state dash at rest, with an outline only on hover or keyboard focus. Supports controlled and uncontrolled state, native labels/forms, disabled controls, custom accents, and forced colors without animations.
