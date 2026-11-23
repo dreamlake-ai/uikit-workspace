@@ -1377,3 +1377,56 @@ html[data-theme="dark"] {
   .uikit-media-viewer { flex-direction: column; }
   .uikit-media-viewer-main { padding: 56px 16px 20px; }
 }
+
+/* File drop feedback overlays only its owning panel, never the workspace. */
+.dl-file-drop-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  border: 1px dashed color-mix(in srgb, var(--ink) 44%, transparent);
+  border-radius: inherit;
+  background:
+    repeating-linear-gradient(
+      135deg,
+      transparent 0 8px,
+      color-mix(in srgb, var(--ink) 8%, transparent) 8px 9px
+    ),
+    color-mix(in srgb, var(--bg) 88%, transparent);
+  color: var(--ink);
+  pointer-events: none;
+}
+.dl-file-drop-overlay-prompt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  max-width: min(100%, 360px);
+  padding: 28px 36px;
+  background: var(--bg);
+  box-shadow: 0 0 32px 24px var(--bg);
+  text-align: center;
+}
+.dl-file-drop-overlay-prompt strong {
+  font: 500 16px var(--f-ui, sans-serif);
+  overflow-wrap: anywhere;
+}
+.dl-file-drop-overlay-prompt span {
+  font: 12px/1.5 var(--f-ui, sans-serif);
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+.dl-file-drop-overlay--compact {
+  padding: 4px 12px;
+}
+.dl-file-drop-overlay--compact .dl-file-drop-overlay-prompt {
+  flex-direction: row;
+  padding: 4px 10px;
+  gap: 8px;
+  box-shadow: 0 0 14px 8px var(--bg);
+}
+.dl-file-drop-overlay--compact strong {
+  font-size: 12px;
+}

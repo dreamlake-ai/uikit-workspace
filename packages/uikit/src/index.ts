@@ -35,3 +35,5 @@ export {
   type OutlineRailProps,
 } from "./components/OutlineRail/OutlineRail";
 export { outlinePosition } from "./components/OutlineRail/geometry";
+
+export { FileDropOverlay, isExternalFileDrag, useFileDropTarget } from "./components/FileDropOverlay";

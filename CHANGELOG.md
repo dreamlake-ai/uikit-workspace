@@ -1,5 +1,10 @@
 # Release notes
 
+## 0.3.4 — 2026-11-23
+
+- Add `FileDropOverlay` and `useFileDropTarget`: neutral hatch, dashed boundary, and clear prompt for exact pane or compact row targets. File-only handlers preserve text drags and internal moves; reset on drop, Escape, blur, and drag end.
+- Include an interactive standard example and file-drop lifecycle tests.
+
 ## 0.3.3 — 2026-11-23
 
 - Add compact panel toggle groups: neutral selection, mode-colored group background on hover and keyboard focus, and height inherited from tab gutters.
