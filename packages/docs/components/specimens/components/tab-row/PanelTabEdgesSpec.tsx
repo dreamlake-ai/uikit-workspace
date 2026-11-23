@@ -451,13 +451,13 @@ const CSS = `
 .dl-tab-edge-study .uikit-tab-row-scroll{padding-left:8px;align-items:flex-end;flex:0 1 auto;touch-action:pan-x}
 .dl-tab-edge-study [data-overflow] .uikit-tab-row-scroll{flex:1 1 auto}
 .dl-tab-edge-study .uikit-tab-row-line{display:none}
-.dl-tab-edge-study .uikit-tab-row-controls{z-index:6;align-self:stretch;align-items:flex-start;margin-top:0;margin-bottom:0;margin-left:auto;background:var(--uikit-document-strip-surface,var(--uikit-workspace-bg));gap:2px}
+.dl-tab-edge-study .uikit-tab-row-controls{z-index:6;align-self:center;align-items:center;margin-top:0;margin-bottom:2px;margin-left:auto;background:var(--uikit-document-strip-surface,var(--uikit-workspace-bg));gap:2px}
 .dl-tab-edge-study .uikit-tab-row-item-label{padding:4px 6px 4px 9px;opacity:.8}
 .dl-tab-edge-study .uikit-tab-row-item[data-active] .uikit-tab-row-item-label{opacity:1}
 .dl-tab-edge-study [data-tab-edge="straight"] .uikit-tab-row-item:first-child{border-top-left-radius:0}
 .dl-tab-edge-study [data-tab-edge="straight"] .uikit-tab-row-item:first-child::before{display:none}
 .dl-tab-reference{font:10px var(--font-uikit-mono,monospace);padding:1px 3px;border:1px solid var(--faint);border-radius:3px;white-space:nowrap}
-.dl-tab-action{min-width:32px;height:28px;padding:0 9px;margin:0;align-self:flex-start;box-shadow:none}
+.dl-tab-action{box-shadow:none}
 .dl-tab-edge-study [data-grabbed] .uikit-tab-row-scroll{cursor:grabbing;touch-action:none}
 .dl-tab-edge-content{position:relative;z-index:0;min-height:112px;padding:20px;background:var(--uikit-document-surface,var(--bg));border:0;box-shadow:none;border-radius:0 0 10px 10px;color:var(--ink);font-size:13px}
 .dl-tab-edge-content p{margin:8px 0 0;color:var(--muted);font-size:12px;line-height:1.5}

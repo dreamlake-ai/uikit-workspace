@@ -16,15 +16,20 @@ import tabRowSrc from "../../../components/specimens/components/tab-row/TabRowSp
 import { GroupedTabsSpec } from "../../../components/specimens/components/tab-row/GroupedTabsSpec";
 import groupedTabsSrc from "../../../components/specimens/components/tab-row/GroupedTabsSpec.tsx?raw";
 
+import { PanelModeControlsSpec } from "../../../components/specimens/components/tab-row/PanelModeControlsSpec";
+import panelModeControlsSrc from "../../../components/specimens/components/tab-row/PanelModeControlsSpec.tsx?raw";
+
 # Tab Row
 
 The shared [Panel tabs](/components/panel-tabs) page shows the production design
 for lists, documents, terminals, sessions and chats. Active faces are solid and
-borderless, with 12px shoulders and feet that match the panel corners, and balanced close-button spacing. Text-only titles have 12px left padding; titles with icons retain 8px. A flush first tab keeps its rounded shoulder without adding a left gutter.
+borderless, with compact 8px shoulders and feet, and balanced close-button spacing. Text-only titles have 12px left padding; titles with icons retain 8px. A flush first tab keeps its rounded shoulder without adding a left gutter.
 
-A row of closable document tabs with a raised active tab. Tabs start at their preferred width, compress as space runs out, then scroll horizontally once they reach the minimum. Leading and trailing controls stay fixed. On the default desktop row they share the tabs' bottom edge, with a 4px space above them, so a 28px icon button centers on the 26px tabs and the row height does not change.
+A row of closable document tabs with a raised active tab. Tabs start at their preferred width, compress as space runs out, then scroll horizontally once they reach the minimum. Leading and trailing controls stay fixed. Gutter actions use `uikit-document-tab-action`: transparent at rest, tinted on hover, and sized to the inactive tab fill. The default 26px tab has a 22px fill; `minTabHeight={28}` produces a 30px tab with a 26px fill. The whole toggle group follows that same height. Close buttons keep equal top/right space as the row height changes.
 
 The strip supplies the left gutter once: at rest, adjacent tabs keep their normal gap. Overflowing document tabs have no visible scrollbar. Use a mouse wheel, horizontal trackpad gesture, or touch swipe to scroll. Inactive tabs on the right slide over earlier tabs as rounded rectangles; the selected tab stays above them so its right edge and controls remain visible. Labels stay vertically centered in the gutter. Rounded opaque faces prevent covered labels from bleeding through. Keyboard selection reveals the selected tab; reduced motion disables the automatic slide animation.
+
+The active tab meets its content surface with no gap below the row. Put breathing room inside the content panel as padding, not as a margin between the strip and its body. If a header contains taller contextual controls, stretch the tab row to the header height so the tabs still reach the content edge.
 
 ## Workspace context
 
@@ -65,6 +70,14 @@ docking or physical-device acceptance.
   <PanelTabEdgesSpec />
 </Preview>
 
+## Compact session controls
+
+The group background carries the hovered mode color; its selection remains neutral. Both the complete group and neighboring actions match the inactive tab fill.
+
+<Preview source={panelModeControlsSrc} filename="PanelModeControlsSpec.tsx">
+  <PanelModeControlsSpec />
+</Preview>
+
 ## Compression and overflow
 
 Adjust the row width and tab limits below. Open more tabs with **+**, select a tab, or close one with **×**. Long labels truncate; their full text remains available on hover.
@@ -81,7 +94,7 @@ button remains inside the scrolling area, beside the truncated title. With one d
 
 Use the existing `leading` slot for a subdued navigation control beside the
 scrolling tabs. Compact layouts use `minTabHeight={30}` and the
-`uikit-tab-row-compact` class to center 32px controls against the 30px labels
+`uikit-tab-row-compact` class to center 28px gutter controls against the 30px labels
 plus their tab borders; the compact class also removes the desktop space above
 the controls. An item with `icon` and `iconOnly` occupies 32px; its `label`
 remains the accessible name and tooltip. A closable icon tab reserves another
@@ -146,7 +159,7 @@ Tabs sit on the workspace background. Borders follow the tab shapes only;
 there is no full-width rule above the body or border around the panel. The
 selected tab uses the body's surface. The first tab reserves only the 8px
 needed for its S-shaped foot; editor alignment can position it at the text column.
-The + control uses a subtle tint without a shadow.
+Gutter actions have no background until hover or keyboard focus.
 
 Background tabs use rounded rectangles inset equally above and below the fill.
 Their outer boxes stay the same height as the selected tab, keeping the label
@@ -162,7 +175,7 @@ Set these CSS variables on the containing layout (or the `TabRow` style):
 | `--uikit-document-inactive-bg`     | Strip surface             | Background tabs blend into the workspace.                             |
 | `--uikit-document-hover-bg`        | 4% ink over strip surface | Hovered background tab.                                               |
 | `--uikit-document-inactive-inset`  | `2px`                     | Equal vertical space around the background tab fill.                  |
-| `--uikit-document-action-bg`       | 3% ink over strip surface | Subtle action tint in the specimens.                                  |
+| `--uikit-document-action-bg`       | Transparent               | Action surface at rest.                                               |
 | `--uikit-document-action-hover-bg` | 8% ink over strip surface | Hover shade for + and ↙.                                              |
 
 `--uikit-workspace-bg` defaults to `#f1eee7` in light mode and `#222226` in
@@ -197,21 +210,21 @@ The row carries `data-tab-count` with the number of tabs, so a host can style a 
 
 ### TabRowItem
 
-| Field        | Type        | Description                                                                                                                                                                                                                                                                                                   |
-| ------------ | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `value`      | `string`    | Unique tab identifier.                                                                                                                                                                                                                                                                                        |
-| `label`      | `string`    | Visible title and accessible name.                                                                                                                                                                                                                                                                            |
-| `labelContent` | `ReactNode` | Optional noninteractive title rendering; `label` stays the accessible name. Suppresses the automatic native title tooltip. |
-| `icon`       | `ReactNode` | Optional visual beside the label.                                                                                                                                                                                                                                                                             |
-| `iconOnly`   | `boolean`   | Display only the icon at compact width; preserve the text label for accessibility.                                                                                                                                                                                                                            |
-| `fitContent` | `boolean`   | Size a text tab to its label and controls, preserving padding and capping width at `preferredTabWidth`; longer labels use the existing ellipsis. A fitted tab without a close control keeps the same width when selected or hovered, so tabs after it do not move. Icon-only tabs retain their compact width. |
-| `title`      | `string`    | Optional full tooltip, such as a path.                                                                                                                                                                                                                                                                        |
-| `trailing`   | `ReactNode` | A fixed control after the title, outside the tab button; selection reveals it together with the close control.                                                                                                                                                                                                |
-| `leading`    | `ReactNode` | A fixed control before the title, outside the tab button and sticky end. Interactive controls remain independently focusable and do not select or close the tab.                                                                                                                                              |
-| `panelId`    | `string`    | Optional ID of the corresponding content panel, used as `aria-controls`.                                                                                                                                                                                                                                      |
-| `closable`   | `boolean`   | Set to `false` to prevent closing this tab.                                                                                                                                                                                                                                                                   |
-| `entering`   | `boolean`   | Animate a newly opened tab; respects reduced motion.                                                                                                                                                                                                                                                          |
-| `groupStart` | `boolean`   | Draw a thin divider before this tab to start a new group; ignored on the first tab.                                                                                                                                                                                                                           |
+| Field          | Type        | Description                                                                                                                                                                                                                                                                                                   |
+| -------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `value`        | `string`    | Unique tab identifier.                                                                                                                                                                                                                                                                                        |
+| `label`        | `string`    | Visible title and accessible name.                                                                                                                                                                                                                                                                            |
+| `labelContent` | `ReactNode` | Optional noninteractive title rendering; `label` stays the accessible name. Suppresses the automatic native title tooltip.                                                                                                                                                                                    |
+| `icon`         | `ReactNode` | Optional visual beside the label.                                                                                                                                                                                                                                                                             |
+| `iconOnly`     | `boolean`   | Display only the icon at compact width; preserve the text label for accessibility.                                                                                                                                                                                                                            |
+| `fitContent`   | `boolean`   | Size a text tab to its label and controls, preserving padding and capping width at `preferredTabWidth`; longer labels use the existing ellipsis. A fitted tab without a close control keeps the same width when selected or hovered, so tabs after it do not move. Icon-only tabs retain their compact width. |
+| `title`        | `string`    | Optional full tooltip, such as a path.                                                                                                                                                                                                                                                                        |
+| `trailing`     | `ReactNode` | A fixed control after the title, outside the tab button; selection reveals it together with the close control.                                                                                                                                                                                                |
+| `leading`      | `ReactNode` | A fixed control before the title, outside the tab button and sticky end. Interactive controls remain independently focusable and do not select or close the tab.                                                                                                                                              |
+| `panelId`      | `string`    | Optional ID of the corresponding content panel, used as `aria-controls`.                                                                                                                                                                                                                                      |
+| `closable`     | `boolean`   | Set to `false` to prevent closing this tab.                                                                                                                                                                                                                                                                   |
+| `entering`     | `boolean`   | Animate a newly opened tab; respects reduced motion.                                                                                                                                                                                                                                                          |
+| `groupStart`   | `boolean`   | Draw a thin divider before this tab to start a new group; ignored on the first tab.                                                                                                                                                                                                                           |
 
 ## Keyboard interaction
 
@@ -222,3 +235,5 @@ Use [Tabs](/components/tabs) for underline and segmented switches. Use Tab Row f
 Tab labels and controls do not select text during pointer drags or repeated taps. Text inside the associated content panels remains selectable.
 
 When the scrolling viewport is narrower than two minimum tab widths plus the 16px gutter, tabs scroll without sticky stacking. This keeps later labels reachable beside fixed controls; wider rows retain their usual stacking. The Row width example can be narrowed to 120px to exercise this behavior.
+
+Gutter sizing inherits `--uikit-document-tab-height` and `--uikit-document-control-height`. Hosts with a different row height set these together: control height equals tab height minus twice `--uikit-document-inactive-inset`. Avoid adding vertical wrapper padding or overriding every descendant button’s minimum height.

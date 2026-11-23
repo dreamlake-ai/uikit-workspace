@@ -46,6 +46,12 @@ over `--bg` instead of over transparent, so a chip reads the same on every
 surface. Keep the translucent originals for washes that _should_ tint what they
 sit on.
 
+For drawer hierarchies that need a stronger connection, `TreeBranchGuides`
+uses `--tree-guide-strong` with `emphasis="strong"`: `#aaa8a2` in light and
+`#81818b` in dark, with a solid 2px stroke. Both are opaque colors; the
+component keeps opacity at 1. The file tree retains its existing normal token.
+See the [live drawer example](reference/components-tree-view.md#drawer-entries-with-visible-connections).
+
 ### Row states are luminance, not hue
 
 `--tree-hover` used to be a warm amber against a neutral `--tree-sel`, so hover
@@ -191,3 +197,10 @@ canvas colors, close guards, contextual actions, and view state.
 The Monaco content and gutter backgrounds are transparent, so switching modes
 or loading the editor preserves that surface. Syntax token colors follow
 Monaco's light or dark theme; they do not replace the surrounding surface tokens.
+
+## Panel control hover
+
+A view selector keeps its selected segment neutral. Optional mode color tints
+the shared track background on hover or keyboard focus; it does not fill the
+button or recolor the glyph. Use `ToggleButtons variant="panel"` and the item's
+`hoverColor`, as shown in [Panel tabs](reference/components-panel-tabs.md#compact-view-controls).

@@ -103,7 +103,11 @@ export function TabRowSpec() {
           <option value="flush">Background panel — flush edge</option>
         </select>
       </label>
-      <div className="min-w-0 max-w-full overflow-hidden" style={{ width }}>
+      <div
+        className="min-w-0 max-w-full overflow-hidden bg-uikit-workspace"
+        style={{ width }}
+        data-tab-row-example="compression"
+      >
         <TabRow
           tabs={tabs.map((tab) => ({
             ...tab,
@@ -121,10 +125,10 @@ export function TabRowSpec() {
               variant="ghost"
               icon
               size="sm"
-              // The row has its own radius vocabulary — 12px tabs, 4px close
+              // The row has its own radius vocabulary — 8px tabs, 4px close
               // buttons. Button's default 10px reads rounder than either on a
               // square, so the hover fill sits at the kit's small-control 6px.
-              className="size-6 rounded-uikit-badge"
+              className="uikit-document-tab-action"
               aria-label="New document"
               onClick={() => {
                 const id = crypto.randomUUID();
@@ -141,6 +145,7 @@ export function TabRowSpec() {
                 icon
                 variant="ghost"
                 size="sm"
+                className="uikit-document-tab-action"
                 aria-label="Document options"
               >
                 <Ellipsis size={14} />
@@ -150,6 +155,7 @@ export function TabRowSpec() {
                   icon
                   variant="ghost"
                   size="sm"
+                  className="uikit-document-tab-action"
                   aria-label="Close panel"
                   onClick={() => close(tabs[0].value)}
                 >
@@ -160,12 +166,15 @@ export function TabRowSpec() {
           }
           onClose={close}
         />
-        <p className="rounded-xl bg-uikit-bg p-4 text-sm text-uikit-muted">
+        <div
+          data-tab-row-body=""
+          className="bg-uikit-bg p-4 text-sm text-uikit-muted"
+        >
           Only the tab strip scrolls; this content stays fixed. Selected:{" "}
           <code className="font-uikit-mono">
             {tabs.find((t) => t.value === value)?.label ?? "No documents"}
           </code>
-        </p>
+        </div>
       </div>
     </div>
   );

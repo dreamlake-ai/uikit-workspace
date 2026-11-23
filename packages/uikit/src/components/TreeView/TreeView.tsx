@@ -9,6 +9,7 @@ import {
 } from "./hooks";
 import { type TreeDataItem, type TreeDataItemWithMeta } from "./types";
 import { cn } from "../../lib/utils";
+import { TreeBranchGuides } from "./TreeBranchGuides";
 import { ContextMenu, ContextMenuTrigger } from "../ContextMenu";
 
 /**
@@ -329,7 +330,8 @@ export function TreeEntryItem<T extends TreeDataItem>({
   };
   const continuesHover = (row?: TreeDataItemWithMeta<T>) =>
     inHoverBlock(row) && !paintsSelectionFill(row);
-  const hasPrevHover = rowIndex > 0 && continuesHover(dataWithMeta[rowIndex - 1]);
+  const hasPrevHover =
+    rowIndex > 0 && continuesHover(dataWithMeta[rowIndex - 1]);
   const hasNextHover =
     rowIndex >= 0 &&
     rowIndex < dataWithMeta.length - 1 &&
@@ -420,45 +422,15 @@ export function TreeEntryItem<T extends TreeDataItem>({
         if (e.shiftKey || e.ctrlKey || e.metaKey) e.preventDefault();
       }}
     >
-      {/* Guidelines */}
-      <div className="absolute top-0 left-[-0.28rem] z-0 flex h-full items-center">
-        {ancestors.map((ancestor, index) => {
-          const parentIsLast = dataWithMeta.find(
-            (d) => d.id === ancestor.id,
-          )?.isLast;
-          return (
-            <div
-              key={index}
-              className={cn(
-                "h-full w-[1.25rem]",
-                parentIsLast ? "" : "border-l",
-                "border-uikit-tree-guide",
-              )}
-            />
-          );
-        })}
-        {indent > 0 && (
-          <div className="relative h-full w-[1.24rem]">
-            {/* The branch into this row is an arc on EVERY row, not just the
-                last one. A tree's connectors are one drawn path, and a corner
-                that is square here and round there reads as two different
-                line systems in the same column. */}
-            <div
-              className={cn(
-                "absolute top-0 left-0 h-1/2 w-1/2 border-b border-l rounded-bl-md",
-                "border-uikit-tree-guide",
-              )}
-            />
-            {/* A row with siblings below it keeps an unbroken vertical running
-                past the branch — the arc leaves the trunk, it does not replace
-                it. (This used to start at the halfway mark, which was only
-                seamless while the corner was square.) */}
-            {!isLast && (
-              <div className="border-uikit-tree-guide absolute top-0 left-0 h-full border-l" />
-            )}
-          </div>
+      <TreeBranchGuides
+        ancestors={ancestors.map(
+          (ancestor) =>
+            !dataWithMeta.find((node) => node.id === ancestor.id)?.isLast,
         )}
-      </div>
+        branch={indent > 0}
+        isLast={isLast}
+        className="left-[-0.28rem]"
+      />
 
       <div
         className="text-uikit-12 z-10 flex w-full items-center justify-between gap-2 px-2 font-normal whitespace-nowrap"

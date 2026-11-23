@@ -61,3 +61,14 @@ media padding. Below 640px it places the gallery rail below the media, with
 56px above and 16px beside the content to keep the close control clear.
 Compact panel action groups stay beside the tab row and reserve their measured
 width so tabs can scroll without overlapping the controls.
+
+## Panel control height
+
+Measure the outside of a button group, including its track padding. A compact
+panel selector and its neighboring icon buttons share the inactive tab fill height
+(26px in the 30px-row example).
+Do not stack wrapper padding or a descendant minimum height onto the control.
+Use an unpadded flex row with centered items; the shared panel toggle already
+includes its 2px track inset.
+
+Tab gutter actions match the inactive tab fill, not the outer strip. Use `uikit-document-tab-action` and the row’s `--uikit-document-control-height` for this size. A 30px tab with a 2px fill inset gives a 26px control. Keep the close button’s top and right gaps equal, including in taller host rows. Tab shoulders and feet are 8px; panel card corners may remain 12px.

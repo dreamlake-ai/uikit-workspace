@@ -1,5 +1,22 @@
 # Release notes
 
+## 0.3.3 — 2026-11-23
+
+- Add compact panel toggle groups: neutral selection, mode-colored group background on hover and keyboard focus, and height inherited from tab gutters.
+- Reduce document-tab shoulders and feet to 8px; balance close-button top/right spacing. Gutter actions stay transparent until hover and match inactive tab fill height.
+- Update live tab-row examples and shared style guidance.
+
+## 0.3.2 — 2026-11-23
+
+- Add native `Checkbox`: an accent checkmark or mixed-state dash at rest, with an outline only on hover or keyboard focus. Supports controlled and uncontrolled state, native labels/forms, disabled controls, custom accents, and forced colors without animations.
+- Add the standard Checkbox reference and interactive example with keyboard and touch validation. Preserve the published 0.3.1 Tooltip anchor/glide API alongside newer tree-guide and tab-row improvements.
+
+## 0.3.1 — 2026-11-22
+
+- `Tooltip` takes `anchorRect`: a `DOMRect`, a rect getter or a virtual element that replaces the trigger for placement. A getter is re-read on every animation frame while open, so one tooltip can serve a whole list (anchor it to the list's right edge at the hovered row's centre). Hover and focus still come from a `TooltipTrigger` when one is rendered; without one, drive `open`. Escape dismisses an anchor-only tooltip.
+- `Tooltip` takes `glide` (`true` or `{ durationMs }`): when the anchor moves while open, the surface eases to the new position (160 ms, ease-out) and the wedge follows, instead of jumping. The first position after opening never glides; `prefers-reduced-motion: reduce` turns it off. The content stays mounted as the anchor moves.
+- Docs: the Tooltip page shows a shared list popover that glides between rows.
+
 ## 0.2.14 — 2026-11-21
 
 - Complete the shared editor `SlideToggle` with disabled behavior, button refs and native events, keyboard focus, and reduced-motion support. Preserve the 20px expanding-knob geometry.

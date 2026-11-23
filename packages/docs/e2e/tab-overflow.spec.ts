@@ -265,7 +265,7 @@ test("document tabs remain clickable when fixed controls leave a one-tab viewpor
   );
 });
 
-test("document tab shoulders and feet match panel corners, including the flush first edge", async ({
+test("document tabs use compact shoulders and feet, including the flush first edge", async ({
   page,
 }) => {
   await page.goto("/components/tab-row");
@@ -273,10 +273,10 @@ test("document tab shoulders and feet match panel corners, including the flush f
   const row = page.getByRole("tablist", { name: "Example documents" });
   await row.scrollIntoViewIfNeeded();
   const first = row.locator(".uikit-document-tab").first();
-  await expect(first).toHaveCSS("border-top-left-radius", "12px");
+  await expect(first).toHaveCSS("border-top-left-radius", "8px");
   expect(
     await first.evaluate((el) => getComputedStyle(el, "::after").height),
-  ).toBe("12px");
+  ).toBe("8px");
   await expect(first.locator(".uikit-document-tab-label")).toHaveCSS(
     "padding-left",
     "12px",
@@ -291,7 +291,7 @@ test("document tab shoulders and feet match panel corners, including the flush f
     .getByRole("combobox", { name: "Left neighbor" })
     .selectOption("flush");
   await expect(row).toHaveCSS("padding-left", "0px");
-  await expect(first).toHaveCSS("border-top-left-radius", "12px");
+  await expect(first).toHaveCSS("border-top-left-radius", "8px");
   expect(
     await first.evaluate((el) => getComputedStyle(el, "::before").display),
   ).toBe("none");

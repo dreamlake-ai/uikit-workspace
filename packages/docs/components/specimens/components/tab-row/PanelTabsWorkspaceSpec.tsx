@@ -488,16 +488,15 @@ const CSS = `
 .dl-tabs-workspace-grid{display:grid;grid-template-columns:minmax(150px,.65fr) minmax(220px,1.2fr) minmax(220px,1fr);gap:0;align-items:stretch}
 .dl-tabs-workspace-panel{min-width:0;display:flex;flex-direction:column}
 .dl-tabs-workspace-panel-caption{font-size:11px;color:var(--uikit-muted);margin-bottom:8px}
-.dl-tabs-workspace-header{display:flex;align-items:flex-start;gap:4px;min-width:0;padding:8px 0 0;background:var(--uikit-document-strip-surface,var(--uikit-workspace-bg));border:0;box-shadow:none}
+.dl-tabs-workspace-header{display:flex;align-items:flex-start;gap:4px;min-width:0;min-height:36px;box-sizing:border-box;padding:8px 0 0;background:var(--uikit-document-strip-surface,var(--uikit-workspace-bg));border:0;box-shadow:none}
 .dl-tabs-workspace-panel[data-workspace-panel="editor"][data-active-tab-kind="editor"] .dl-tabs-workspace-header{padding-left:max(0px,calc(var(--workspace-editor-inset,25px) - 8px))}
 .dl-tabs-workspace-panel[data-workspace-panel="editor"] .dl-tabs-workspace-header[data-editor-overflow]{padding-left:0}
-.dl-tabs-workspace-header .uikit-tab-row{width:auto;max-width:100%;flex:0 1 auto;padding-inline:0}
+.dl-tabs-workspace-header .uikit-tab-row{width:auto;max-width:100%;flex:0 1 auto;align-self:stretch;padding-inline:0}
 
 .dl-tabs-workspace-header .uikit-tab-row-scroll{flex:0 1 auto}
-.dl-tabs-workspace-header .uikit-tab-row-item-label{padding-inline:8px}
-.dl-tabs-workspace-context-controls{display:flex;flex:0 0 auto;align-items:flex-start;gap:2px;margin-left:auto;margin-top:0}
+.dl-tabs-workspace-context-controls{display:flex;flex:0 0 auto;align-items:flex-start;gap:2px;margin-left:auto;margin-top:2px}
 .dl-tabs-workspace-context-controls:empty{display:none}
-.dl-tabs-workspace-action{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;min-width:32px;height:28px;border:0;border-radius:4px;padding:0 9px;margin:0;cursor:pointer}
+.dl-tabs-workspace-action{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;border:0;border-radius:4px;padding:0;margin:0;cursor:pointer}
 .dl-tabs-workspace-action:focus-visible,.dl-tabs-workspace-hash:focus-visible{outline:2px solid var(--uikit-accent);outline-offset:1px}
 .dl-tabs-workspace-scenarios{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;color:var(--uikit-muted)}
 .dl-tabs-workspace-scenarios select{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--faint);border-radius:4px;padding:5px 8px}

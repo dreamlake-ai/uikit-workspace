@@ -123,6 +123,9 @@ export function TabRow({
       data-document-tab-edge={startEdge}
       style={
         {
+          "--uikit-document-tab-height": `${Math.max(26, (minTabHeight ?? 0) + 2)}px`,
+          "--uikit-document-control-height":
+            "calc(var(--uikit-document-tab-height) - 2 * var(--uikit-document-inactive-inset, 2px))",
           ...style,
           "--tab-row-min-height":
             minTabHeight == null ? undefined : `${Math.max(0, minTabHeight)}px`,
@@ -281,9 +284,9 @@ const CSS =
   ".uikit-tab-row{-webkit-user-select:none;user-select:none;position:relative;display:flex;align-items:flex-end;gap:4px;width:100%;min-width:0}" +
   ".uikit-tab-row-line{display:none}" +
   // The 4px spacer sits above the controls: the row keeps its height, and
-  // controls share the tabs' bottom edge, so they center on the tab boxes
-  // instead of riding above them.
-  ".uikit-tab-row-controls{position:relative;z-index:1;flex:0 0 auto;margin-top:4px;display:flex;align-items:center;gap:2px}" +
+  // controls leave the same lower inset as inactive tab fills. Their complete
+  // box matches that fill instead of exceeding the tab face.
+  ".uikit-tab-row-controls{position:relative;z-index:1;flex:0 0 auto;margin-top:4px;margin-bottom:var(--uikit-document-inactive-inset,2px);display:flex;align-items:center;gap:2px}" +
   ".uikit-tab-row-compact .uikit-tab-row-controls{margin-top:0;margin-bottom:0;align-self:center}" +
   ".uikit-tab-row-item:focus-within .uikit-tab-row-item-x{width:16px;margin-right:0;opacity:.55}" +
   ".uikit-tab-row-item button:focus-visible{outline:2px solid var(--uikit-accent);outline-offset:-2px}" +

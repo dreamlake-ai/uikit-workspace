@@ -616,7 +616,7 @@ it("rounds the first flush active tab like the panel while retaining its zero st
   const tab = container.querySelector<HTMLElement>(
     ".uikit-document-tab[data-active]",
   )!;
-  expect(getComputedStyle(tab).borderTopLeftRadius).toBe("12px");
+  expect(getComputedStyle(tab).borderTopLeftRadius).toBe("8px");
   expect(
     getComputedStyle(container.querySelector(".uikit-document-tab-strip")!)
       .paddingLeft,

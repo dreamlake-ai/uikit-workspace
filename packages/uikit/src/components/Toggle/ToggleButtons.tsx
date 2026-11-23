@@ -16,7 +16,7 @@ import {
 import { cn } from "../../lib/utils";
 import { type ToggleShape, roundClass } from "../../lib/toggleShape";
 
-export type ToggleButtonsVariant = "primary" | "secondary" | "ghost";
+export type ToggleButtonsVariant = "primary" | "secondary" | "ghost" | "panel";
 export type ToggleButtonSize = "sm" | "md" | "lg";
 
 const CONTAINER: Record<ToggleButtonsVariant, string> = {
@@ -25,6 +25,7 @@ const CONTAINER: Record<ToggleButtonsVariant, string> = {
   primary: "bg-[var(--uikit-segment-track,var(--chip-bg))]",
   secondary: "bg-[var(--uikit-segment-track,var(--chip-bg))]",
   ghost: "bg-transparent",
+  panel: "bg-[var(--chip-bg)]",
 };
 
 // The highlight marks *which segment you are on*, not a status, so it reads as
@@ -40,9 +41,11 @@ const HIGHLIGHT: Record<ToggleButtonsVariant, string> = {
   primary: "bg-[var(--uikit-segment-thumb,var(--bg))] shadow-uikit-sm",
   secondary: "bg-[var(--uikit-segment-thumb,var(--bg))] shadow-uikit-sm",
   ghost: "bg-uikit-chip shadow-uikit-sm",
+  panel: "bg-[var(--uikit-segment-thumb,var(--bg))]",
 };
 
 const BTN_VARIANT: Record<ToggleButtonsVariant, string> = {
+  panel: "text-uikit-muted data-[selected=true]:text-uikit-ink",
   primary: "text-uikit-ink data-[selected=true]:text-uikit-ink",
   secondary: "text-uikit-ink data-[selected=true]:text-uikit-ink",
   ghost:
@@ -95,6 +98,7 @@ export interface ToggleButtonsProps extends Omit<
 > {
   value: string;
   onValueChange: (value: string) => void;
+  /** Panel controls use a 26px compact track and neutral selection; item hoverColor tints the track only. */
   variant?: ToggleButtonsVariant;
   size?: ToggleButtonSize;
   padding?: boolean;
@@ -119,9 +123,25 @@ export function ToggleButtons({
   padding = true,
   variant = "primary",
   shape = "square",
+  style,
+  onPointerOver,
+  onPointerLeave,
+  onFocusCapture,
+  onBlurCapture,
   ...props
 }: ToggleButtonsProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const panel = variant === "panel";
+  const inset = panel ? 2 : padding ? 4 : 2;
+  const [hoverColor, setHoverColor] = useState<string | null>(null);
+  const [focusColor, setFocusColor] = useState<string | null>(null);
+  const tone = panel ? (hoverColor ?? focusColor) : null;
+  const itemTone = (target: EventTarget | null) =>
+    target instanceof Element
+      ? (target.closest<HTMLElement>("[data-toggle-hover-color]:not(:disabled)")
+          ?.dataset.toggleHoverColor ?? null)
+      : null;
+
   const [items, setItems] = useState<Map<string, HTMLElement>>(new Map());
   const [highlight, setHighlight] = useState<CSSProperties>({ opacity: 0 });
 
@@ -147,7 +167,7 @@ export function ToggleButtons({
         // Offset the highlight back over the button by the container's own
         // padding so the pill is button-sized and sits inside the frame — see
         // the matching `p-1` / `p-0.5` on the container below.
-        const offset = padding ? 4 : 2;
+        const offset = inset;
         setHighlight({
           width: r.width,
           height: r.height,
@@ -158,14 +178,14 @@ export function ToggleButtons({
       return () => cancelAnimationFrame(raf);
     }
     setHighlight((p) => ({ ...p, opacity: 0 }));
-  }, [value, items, padding, size, variant]);
+  }, [value, items, inset, size, variant]);
 
   // Memoize so the context identity is stable — otherwise every render makes a
   // new object, re-running each ToggleButton's register effect and churning the
   // measurement map, which can leave the sliding highlight stuck at opacity 0.
   const ctx = useMemo(
     () => ({
-      inset: padding ? 4 : 2,
+      inset,
       value,
       onValueChange,
       size,
@@ -175,7 +195,7 @@ export function ToggleButtons({
       unregisterItem,
     }),
     [
-      padding,
+      inset,
       value,
       onValueChange,
       size,
@@ -191,6 +211,7 @@ export function ToggleButtons({
       <div
         ref={containerRef}
         data-shape={shape}
+        data-toggle-variant={variant}
         className={cn(
           "relative inline-flex items-center",
           // Track radius = thumb radius + inset, so the two curves are
@@ -199,7 +220,7 @@ export function ToggleButtons({
           // `round` swaps both curves for the stadium.
           shape === "round"
             ? "rounded-uikit-round"
-            : padding
+            : inset === 4
               ? "rounded-[10px]"
               : "rounded-[8px]",
           roundClass("toggle-buttons", shape),
@@ -207,10 +228,49 @@ export function ToggleButtons({
           // A minimal frame even when padding={false}, so the full-size
           // selection pill has room to sit inside the container instead of
           // bleeding past its tight edge.
-          padding ? "p-1" : "p-0.5",
+          inset === 4 ? "p-1" : "p-0.5",
           className,
         )}
         {...props}
+        style={
+          {
+            ...(panel
+              ? {
+                  "--uikit-panel-control-height": `${{ sm: 26, md: 30, lg: 34 }[size]}px`,
+                  boxSizing: "border-box",
+                  height:
+                    "var(--uikit-document-control-height,var(--uikit-panel-control-height))",
+                  transition: "background-color 120ms ease",
+                  backgroundColor: tone
+                    ? `color-mix(in srgb, ${tone} 16%, var(--chip-bg))`
+                    : undefined,
+                }
+              : {}),
+            ...style,
+          } as CSSProperties
+        }
+        onPointerOver={(event) => {
+          if (panel) setHoverColor(itemTone(event.target));
+          onPointerOver?.(event);
+        }}
+        onPointerLeave={(event) => {
+          setHoverColor(null);
+          onPointerLeave?.(event);
+        }}
+        onFocusCapture={(event) => {
+          if (panel)
+            setFocusColor(
+              event.target.matches(":focus-visible")
+                ? itemTone(event.target)
+                : null,
+            );
+          onFocusCapture?.(event);
+        }}
+        onBlurCapture={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget))
+            setFocusColor(null);
+          onBlurCapture?.(event);
+        }}
       >
         <div
           className={cn(
@@ -247,6 +307,8 @@ export interface ToggleButtonProps extends ComponentProps<"button"> {
   value: string;
   icon?: boolean;
   asChild?: boolean;
+  /** With variant="panel", tint the group background on hover/focus. Selection remains neutral. */
+  hoverColor?: string;
 }
 
 export function ToggleButton({
@@ -255,6 +317,8 @@ export function ToggleButton({
   className,
   icon = false,
   asChild = false,
+  hoverColor,
+  style,
   ref: externalRef,
   ...props
 }: ToggleButtonProps) {
@@ -301,6 +365,25 @@ export function ToggleButton({
     className,
   );
 
+  const itemStyle: CSSProperties = {
+    ...(ctx.variant === "panel"
+      ? {
+          height:
+            "calc(var(--uikit-document-control-height,var(--uikit-panel-control-height)) - 4px)",
+          minHeight: 0,
+          ...(icon
+            ? {
+                width:
+                  "calc(var(--uikit-document-control-height,var(--uikit-panel-control-height)) - 4px)",
+                padding: 2,
+              }
+            : { paddingBlock: 0 }),
+          backgroundColor: "transparent",
+        }
+      : {}),
+    ...style,
+  };
+
   if (asChild && isValidElement(children)) {
     const child = children as ReactElement<{
       onClick?: (e: unknown) => void;
@@ -309,6 +392,12 @@ export function ToggleButton({
     return cloneElement(child as ReactElement<Record<string, unknown>>, {
       ref: setRef,
       "data-selected": isSelected,
+      "data-toggle-hover-color": hoverColor,
+      "aria-pressed": isSelected,
+      style: {
+        ...itemStyle,
+        ...(child.props as { style?: CSSProperties }).style,
+      },
       className: cn(classes, child.props.className),
       onClick: (e: unknown) => {
         child.props.onClick?.(e);
@@ -322,6 +411,9 @@ export function ToggleButton({
       ref={setRef}
       type="button"
       data-selected={isSelected}
+      data-toggle-hover-color={hoverColor}
+      aria-pressed={isSelected}
+      style={itemStyle}
       className={classes}
       onClick={() => ctx.onValueChange(value)}
       {...props}
