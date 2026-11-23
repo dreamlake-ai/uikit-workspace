@@ -103,7 +103,7 @@ export function TabRowSpec() {
           <option value="flush">Background panel — flush edge</option>
         </select>
       </label>
-      <div className="min-w-0 max-w-full overflow-hidden" style={{ width }}>
+      <div className="min-w-0 max-w-full overflow-hidden bg-uikit-workspace" style={{ width }} data-tab-row-example="compression">
         <TabRow
           tabs={tabs.map((tab) => ({
             ...tab,
@@ -160,12 +160,12 @@ export function TabRowSpec() {
           }
           onClose={close}
         />
-        <p className="rounded-xl bg-uikit-bg p-4 text-sm text-uikit-muted">
+        <div data-tab-row-body="" className="bg-uikit-bg p-4 text-sm text-uikit-muted">
           Only the tab strip scrolls; this content stays fixed. Selected:{" "}
           <code className="font-uikit-mono">
             {tabs.find((t) => t.value === value)?.label ?? "No documents"}
           </code>
-        </p>
+        </div>
       </div>
     </div>
   );

@@ -14,7 +14,7 @@ export function GroupedTabsSpec() {
     setSessions(sessions.filter(session => session !== closed))
     if (value === closed) setValue('brief')
   }
-  return <div className="max-w-md">
+  return <div className="max-w-md bg-uikit-workspace" data-tab-row-example="groups">
     <TabRow
       value={value}
       onValueChange={setValue}
@@ -27,8 +27,8 @@ export function GroupedTabsSpec() {
         ...sessions.map((session, index) => ({ value: session, label: session, groupStart: index === 0 })),
       ]}
     />
-    <p className="mt-3 text-sm text-uikit-muted">
+    <div data-tab-row-body="" className="bg-uikit-bg p-4 text-sm text-uikit-muted">
       {sessions.length ? 'Close every session tab to remove the divider.' : 'No sessions open; the divider is gone.'}
-    </p>
+    </div>
   </div>
 }

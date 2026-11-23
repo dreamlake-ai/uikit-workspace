@@ -5,7 +5,7 @@ import { Button, TabRow } from '@dreamlake/uikit'
 export function IconTabsSpec() {
   const [value, setValue] = useState('content')
   const [navigation, setNavigation] = useState(false)
-  return <div className="max-w-sm">
+  return <div className="max-w-sm bg-uikit-workspace" data-tab-row-example="icons">
     <TabRow
       value={value}
       onValueChange={setValue}
@@ -21,8 +21,8 @@ export function IconTabsSpec() {
         { value: 'content', label: 'Content' },
       ]}
     />
-    <p className="mt-3 text-sm text-uikit-muted">
+    <div data-tab-row-body="" className="bg-uikit-bg p-4 text-sm text-uikit-muted">
       {navigation ? 'Navigation is open.' : value === 'list' ? 'Select an item from the list.' : 'Selected item content.'}
-    </p>
+    </div>
   </div>
 }
