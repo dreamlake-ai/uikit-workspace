@@ -72,3 +72,12 @@ Use an unpadded flex row with centered items; the shared panel toggle already
 includes its 2px track inset.
 
 Tab gutter actions match the inactive tab fill, not the outer strip. Use `uikit-document-tab-action` and the row’s `--uikit-document-control-height` for this size. A 30px tab with a 2px fill inset gives a 26px control. Keep the close button’s top and right gaps equal, including in taller host rows. Tab shoulders and feet are 8px; panel card corners may remain 12px.
+
+## File-drop surfaces
+
+Use [FileDropOverlay](reference/components-file-drop-overlay.md) inside the exact positioned
+panel or destination row. Its dashed boundary follows that surface, with neutral
+diagonal hatching and a clear central prompt. Keep the content mounted and leave
+pointer events on the owning surface. Use the compact variant for folder and Bindr
+rows; place upload progress in the existing attachments panel. Provide a visible
+file-picker action for keyboard and touch users.
