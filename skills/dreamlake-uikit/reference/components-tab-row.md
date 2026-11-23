@@ -8,6 +8,8 @@ A row of closable document tabs with a raised active tab. Tabs start at their pr
 
 The strip supplies the left gutter once: at rest, adjacent tabs keep their normal gap. Overflowing document tabs have no visible scrollbar. Use a mouse wheel, horizontal trackpad gesture, or touch swipe to scroll. Inactive tabs on the right slide over earlier tabs as rounded rectangles; the selected tab stays above them so its right edge and controls remain visible. Labels stay vertically centered in the gutter. Rounded opaque faces prevent covered labels from bleeding through. Keyboard selection reveals the selected tab; reduced motion disables the automatic slide animation.
 
+The active tab meets its content surface with no gap below the row. Put breathing room inside the content panel as padding, not as a margin between the strip and its body. If a header contains taller contextual controls, stretch the tab row to the header height so the tabs still reach the content edge.
+
 ## Workspace context
 
 **1.A — S-curved tabs beside the left panel, editor, and chat.** The
