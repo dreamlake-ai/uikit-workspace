@@ -77,6 +77,7 @@
      the same line, just held still. */
 
   --tree-guide: #eae9e6;
+  --tree-guide-strong: #aaa8a2;
   --tree-sel: #ececec;
   --tree-sel-hover: #e3e3e3;
   --uikit-accent: #23aaff;
@@ -210,6 +211,7 @@ html[data-theme="dark"] {
   --selected-bg: #3d4856;
   --tree-hover: #37373d;
   --tree-guide: #3f3f45;
+  --tree-guide-strong: #81818b;
   --tree-sel: #45454a;
   --tree-sel-hover: #4d4d52;
   --accent-soft: rgba(35, 170, 255, 0.18);
@@ -284,6 +286,7 @@ html[data-theme="dark"] {
     --selected-bg: #3d4856;
     --tree-hover: #37373d;
     --tree-guide: #3f3f45;
+  --tree-guide-strong: #81818b;
     --tree-sel: #45454a;
     --tree-sel-hover: #4d4d52;
     --accent-soft: rgba(35, 170, 255, 0.18);

@@ -16,6 +16,9 @@ import selectableSrc from "../../../components/specimens/components/tree-view/Se
 import searchSrc from "../../../components/specimens/components/tree-view/SearchSpec.tsx?raw";
 import quietSrc from "../../../components/specimens/components/tree-view/QuietSpec.tsx?raw";
 
+import { DrawerBranchesSpec } from '../../../components/specimens/components/tree-view/DrawerBranchesSpec'
+import drawerBranchesSrc from '../../../components/specimens/components/tree-view/DrawerBranchesSpec.tsx?raw'
+
 # Tree View
 
 A hierarchical tree for scene graphs, file trees, and outlines. You supply a
@@ -56,6 +59,28 @@ It is legible on the page and faint where it crosses a filled row (1.03:1 in
 light). That is the cost of a neutral line in a tree whose surfaces sit within
 19 levels of each other — see
 [Color → Lines that cross rows](/style-guide/color#lines-that-cross-rows).
+
+## Drawer entries with visible connections
+
+`TreeBranchGuides` shares the file tree’s rounded elbows with rows owned by another
+list or a virtualizer. Pair it with `CollectionEntry` for a drawer disclosure while
+retaining the host’s focus, selection, and row actions. It is decorative and adds no
+keyboard target. Calculate continuation flags from the full visible hierarchy so
+unmounted rows do not break the line.
+
+The `strong` emphasis uses an opaque theme color and a solid 2px stroke. Both
+normal and strong guides have opacity 1; selection and hover fills cannot tint the
+connection. Switch this page’s light/dark theme to compare the live specimen.
+
+<Preview source={drawerBranchesSrc} filename="DrawerBranchesSpec.tsx">
+  <DrawerBranchesSpec />
+</Preview>
+
+Use `ancestors` for the outer trunks that continue through the row, `branch` for
+its own elbow, and `isLast` to stop the current trunk at the final sibling. Root
+rows and unresolved relationships have no branch. `step` sets the indentation
+column width (20px by default); the host uses the same width for row padding.
+The guide never infers parentage, collapses data, or grants access to related rows.
 
 ## Selectable
 

@@ -35,6 +35,24 @@ light). That is the cost of a neutral line in a tree whose surfaces sit within
 19 levels of each other — see
 [Color → Lines that cross rows](reference/style-guide-color.md#lines-that-cross-rows).
 
+## Drawer entries with visible connections
+
+`TreeBranchGuides` shares the file tree’s rounded elbows with rows owned by another
+list or a virtualizer. Pair it with `CollectionEntry` for a drawer disclosure while
+retaining the host’s focus, selection, and row actions. It is decorative and adds no
+keyboard target. Calculate continuation flags from the full visible hierarchy so
+unmounted rows do not break the line.
+
+The `strong` emphasis uses an opaque theme color and a solid 2px stroke. Both
+normal and strong guides have opacity 1; selection and hover fills cannot tint the
+connection. Switch this page’s light/dark theme to compare the live specimen.
+
+Use `ancestors` for the outer trunks that continue through the row, `branch` for
+its own elbow, and `isLast` to stop the current trunk at the final sibling. Root
+rows and unresolved relationships have no branch. `step` sets the indentation
+column width (20px by default); the host uses the same width for row padding.
+The guide never infers parentage, collapses data, or grants access to related rows.
+
 ## Selectable
 
 Set `isSelectable` and control selection with `selectedItemIds` /
