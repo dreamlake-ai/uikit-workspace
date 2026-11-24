@@ -28,7 +28,7 @@ export function GroupedTabsSpec() {
       ]}
     />
     <div data-tab-row-body="" className="bg-uikit-bg p-4 text-sm text-uikit-muted">
-      {sessions.length ? 'Close every session tab to remove the divider.' : 'No sessions open; the divider is gone.'}
+      {sessions.length ? 'Select a session to show its close button. Close both sessions to remove the group divider.' : 'No sessions open; the divider is gone.'}
     </div>
   </div>
 }

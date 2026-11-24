@@ -148,7 +148,10 @@ export function TabRow({
           const hasIcon = tab.icon != null && typeof tab.icon !== "boolean";
           const iconOnly = !!tab.iconOnly && hasIcon;
           const iconWidth =
-            onClose && tab.closable !== false && tab.closeButton !== false
+            onClose &&
+            tab.value === value &&
+            tab.closable !== false &&
+            tab.closeButton !== false
               ? 54
               : 32;
           return (
@@ -247,6 +250,7 @@ export function TabRow({
                     </span>
                   )}
                   {onClose &&
+                    tab.value === value &&
                     tab.closable !== false &&
                     tab.closeButton !== false && (
                       <button

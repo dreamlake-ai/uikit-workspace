@@ -257,7 +257,7 @@ export function GroupTabBar({
               </span>
               <span className="uikit-document-tab-end">
                 {renderTabTrailing?.(leaf)}
-                {canClose(leaf) && showTabClose?.(leaf) !== false && (
+                {active && canClose(leaf) && showTabClose?.(leaf) !== false && (
                   <span
                     role="button"
                     tabIndex={-1}

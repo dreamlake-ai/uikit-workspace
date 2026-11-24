@@ -175,3 +175,47 @@ test("tab row actions are quiet, compact and close buttons have balanced edge ga
   expect(Math.abs(sizes.top - sizes.right)).toBeLessThanOrEqual(1);
   expect(sizes.actionHeight).toBe(sizes.tabHeight - 4);
 });
+
+test("inactive document tabs keep short separators without close controls", async ({
+  page,
+}) => {
+  await page.goto("/components/tab-row");
+  const demo = page.locator('[data-tab-row-example="groups"]');
+  await expect(demo).toBeVisible();
+  const shell = demo.getByRole("tab", { name: "shell · 1", exact: true });
+  await expect(async () => {
+    await shell.click();
+    await expect(shell).toHaveAttribute("aria-selected", "true", {
+      timeout: 500,
+    });
+  }).toPass({ timeout: 30000 });
+  await expect(demo.getByRole("button", { name: /^Close / })).toHaveCount(1);
+  const inactive = demo.locator(".uikit-document-tab:not([data-active])");
+  await expect(inactive.locator(".uikit-document-tab-close")).toHaveCount(0);
+  const agents = demo
+    .getByRole("tab", { name: "Agents", exact: true })
+    .locator("..");
+  await agents.hover();
+  const divider = await agents.evaluate((node) => {
+    const style = getComputedStyle(node, "::after");
+    return {
+      content: style.content,
+      height: style.height,
+      width: style.width,
+      top: style.top,
+      tabHeight: node.getBoundingClientRect().height,
+    };
+  });
+  expect(divider.content).toBe('""');
+  expect(divider.height).toBe("12px");
+  expect(divider.width).toBe("1px");
+  expect(divider.tabHeight).toBeGreaterThan(12);
+  await expect(inactive.locator(".uikit-document-tab-close")).toHaveCount(0);
+  await demo
+    .getByRole("button", { name: "Close shell · 1", exact: true })
+    .click();
+  await expect(shell).toHaveCount(0);
+  await expect(
+    demo.getByRole("tab", { name: "Brief", exact: true }),
+  ).toHaveAttribute("aria-selected", "true");
+});

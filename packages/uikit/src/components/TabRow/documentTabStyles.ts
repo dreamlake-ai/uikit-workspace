@@ -25,7 +25,7 @@ export const documentTabStyles = `
 .uikit-document-tab[data-active]::before,.uikit-document-tab[data-active]::after{content:"";position:absolute;bottom:-1px;width:8px;height:8px;pointer-events:none;background:radial-gradient(circle at var(--uikit-tab-curve-origin) 0,transparent 7.25px,var(--uikit-tab-line) 7.5px,var(--uikit-tab-line) 8px,var(--uikit-tab-fill) 8.25px)}
 .uikit-document-tab[data-active]::before{right:100%;--uikit-tab-curve-origin:0%}
 .uikit-document-tab[data-active]::after{left:100%;--uikit-tab-curve-origin:100%}
-.uikit-document-tab:not([data-active]):not(:last-child):not(:hover):not(:has(+ .uikit-document-tab:is([data-active],:hover)))::after{content:"";position:absolute;right:-2px;top:50%;width:1px;height:12px;transform:translateY(-50%);background:var(--faint);pointer-events:none}
+.uikit-document-tab:not([data-active]):has(+ .uikit-document-tab:not([data-active]))::after{content:"";position:absolute;right:-2px;top:50%;width:1px;height:12px;transform:translateY(-50%);background:var(--faint);pointer-events:none}
 .uikit-document-tab-label{font-family:var(--font-uikit-mono,monospace);font-size:11px;line-height:14px;font-weight:500;letter-spacing:-.005em;padding:4px 4px 4px 8px}
 .uikit-document-tab-label:not(:has(.uikit-tab-row-item-icon,svg:not(button svg),img)){padding-left:12px}
 .uikit-document-tab > span.uikit-document-tab-label{align-self:stretch;padding-block:0}

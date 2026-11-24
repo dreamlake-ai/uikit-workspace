@@ -113,7 +113,7 @@ it("focuses the clicked tab before hiding a retained iframe and leaves nested ac
   const action = vi.fn();
   const close = vi.fn();
   try {
-    act(() =>
+    const render = () =>
       root.render(
         <PanelConfigContext.Provider
           value={{
@@ -134,17 +134,21 @@ it("focuses the clicked tab before hiding a retained iframe and leaves nested ac
             onHandleDown={(_leaf, event) => event.preventDefault()}
           />
         </PanelConfigContext.Provider>,
-      ),
-    );
+      );
+    act(render);
     const tab = host.querySelector<HTMLElement>(
       `[data-tab-id="${second.id}"]`,
     )!;
+    expect(tab.querySelector('[aria-label="Close Second"]')).toBeNull();
     frame.focus();
     expect(document.activeElement).toBe(frame);
     // Synthetic click has no native focus default: the handler must transfer
     // focus before activation can make the previously focused surface inert.
     act(() => tab.querySelector<HTMLElement>("[data-label]")!.click());
     expect(onActivate).toHaveBeenCalledExactlyOnceWith(second.id);
+    group.activeId = second.id;
+    act(render);
+    expect(host.querySelector('[aria-label="Close First"]')).toBeNull();
     onActivate.mockClear();
     const pin = tab.querySelector<HTMLButtonElement>("button")!;
     pin.focus();

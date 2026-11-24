@@ -415,7 +415,7 @@ it("keeps item-leading controls independent of label selection and sticky end ac
   act(() =>
     root.render(
       <TabRow
-        value="other"
+        value="terminal"
         onValueChange={change}
         onClose={close}
         tabs={[
@@ -455,6 +455,7 @@ it("keeps item-leading controls independent of label selection and sticky end ac
     item.querySelector(".uikit-document-tab-end .uikit-tab-row-item-trailing")
       ?.textContent,
   ).toBe("Reference");
+  expect(container.querySelector('[aria-label="Close Other"]')).toBeNull();
   act(() =>
     item
       .querySelector<HTMLButtonElement>('[aria-label="Close Terminal"]')!
