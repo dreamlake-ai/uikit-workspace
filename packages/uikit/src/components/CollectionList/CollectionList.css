@@ -120,7 +120,7 @@
   gap: 6px;
   opacity: 0;
   pointer-events: none;
-  background: var(--bg);
+  background: transparent;
   border-radius: 5px;
 }
 *:hover > .uikit-collection-line .uikit-collection-actions,
@@ -129,7 +129,21 @@
   opacity: 1;
   pointer-events: auto;
 }
+/* Reveal controls without painting a page-colored patch over the row tint.
+   Metadata keeps its layout width, but never shows through the action icons. */
+*:is(:hover, :focus-visible)
+  > .uikit-collection-line
+  .uikit-collection-end:has(.uikit-collection-actions)
+  .uikit-collection-meta,
+.uikit-collection-line:has(:focus-visible)
+  .uikit-collection-end:has(.uikit-collection-actions)
+  .uikit-collection-meta {
+  visibility: hidden;
+}
 @media (hover: none) {
+  .uikit-collection-end:has(.uikit-collection-actions) .uikit-collection-meta {
+    visibility: hidden;
+  }
   .uikit-collection-actions {
     opacity: 1;
     pointer-events: auto;
