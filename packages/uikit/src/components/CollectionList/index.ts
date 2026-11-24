@@ -9,3 +9,5 @@ export type {
   CollectionRowBodyProps,
   PinnedCollectionDrawerProps,
 } from "./CollectionList";
+export { ListDivider } from "./ListDivider";
+export type { ListDividerProps } from "./ListDivider";

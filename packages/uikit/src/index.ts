@@ -46,10 +46,12 @@ export {
   CollectionList,
   PinnedCollectionDrawer,
   PinnedPlaneIcon,
+  ListDivider,
   CollectionRow,
   CollectionRowBody,
 } from "./components/CollectionList";
 export type {
   CollectionRowBodyProps,
   PinnedCollectionDrawerProps,
+  ListDividerProps,
 } from "./components/CollectionList";
