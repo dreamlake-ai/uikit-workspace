@@ -87,7 +87,11 @@
 .uikit-collection-pin {
   display: inline-flex;
   flex-shrink: 0;
-  color: var(--muted, var(--uikit-muted));
+  color: var(--tone-amber, #c0922e);
+}
+.uikit-collection-pin > svg {
+  fill: currentColor;
+  fill-opacity: 0.2;
 }
 .uikit-collection-badge {
   flex-shrink: 0;
@@ -200,4 +204,57 @@
   font-family: var(--f-mono);
   font-size: 10px;
   color: var(--muted, var(--uikit-muted));
+}
+
+/* A shared motion vocabulary for collection type/status marks. Translucent
+   fills inherit the row tint; the fixed slot prevents label movement. */
+.uikit-collection-glyph {
+  --uikit-icon-active: 0;
+  position: relative;
+  display: inline-flex;
+  flex: none;
+  vertical-align: middle;
+}
+.uikit-collection-glyph > svg {
+  position: absolute;
+  inset: 0;
+  transition:
+    opacity 180ms ease-out,
+    transform 180ms ease-out;
+}
+.uikit-collection-glyph[data-open="true"],
+.uikit-collection-glyph:hover,
+.uikit-collection-row:is(:hover, :focus-visible, [aria-pressed="true"])
+  .uikit-collection-glyph,
+[data-keyboard-row]:is(:hover, :focus-visible, [aria-selected="true"])
+  .uikit-collection-glyph {
+  --uikit-icon-active: 1;
+}
+.uikit-folder-closed {
+  opacity: calc(1 - var(--uikit-icon-active));
+}
+.uikit-folder-open {
+  opacity: var(--uikit-icon-active);
+  transform: translateY(calc(var(--uikit-icon-active) * -1px));
+}
+.uikit-bindr-glyph > svg {
+  transform: translateY(calc(var(--uikit-icon-active) * -1px))
+    rotate(calc(var(--uikit-icon-active) * -4deg));
+  transform-origin: 50% 85%;
+}
+.uikit-pinned-plane-pin {
+  color: var(--tone-amber, #c0922e);
+  transform-origin: 12px 17px;
+  transition: transform 180ms ease-out;
+}
+.uikit-pinned-plane:hover .uikit-pinned-plane-pin,
+.uikit-pinned-drawer-trigger:is(:hover, :focus-visible, [data-state="open"])
+  .uikit-pinned-plane-pin {
+  transform: translateY(-1px) rotate(-5deg);
+}
+@media (prefers-reduced-motion: reduce) {
+  .uikit-collection-glyph > svg,
+  .uikit-pinned-plane-pin {
+    transition: none;
+  }
 }

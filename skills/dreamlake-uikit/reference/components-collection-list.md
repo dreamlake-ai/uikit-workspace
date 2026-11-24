@@ -15,8 +15,8 @@ Open a row's `…` menu and choose **Pin to top**. The same entry in the other
 examples stays where it was: pins belong to a collection. **Unpin from top**
 restores the ordinary sort position. Pinned rows appear once, in a drawer above
 the ordinary contents. The drawer starts open and can be collapsed with its
-header; the Lucide-derived pin over a perspective plane identifies the group. The pin indicator is status, not another
-button. Search still narrows the pinned entries. These examples keep state in
+header; an amber Lucide-derived pin over a translucent perspective plane identifies
+the group. The matching amber pin beside each title is status, not another button. Search still narrows the pinned entries. These examples keep state in
 memory; the product persists collection pins on the server and applies them
 before pagination, under the collection's write permissions.
 
@@ -54,6 +54,19 @@ rows as its children. It starts expanded (`defaultOpen=true`), supports controll
 `open` / `onOpenChange`, and uses the shared Collapsible for keyboard activation,
 height animation and inert hidden content. Render it only when matching pins
 exist. Reset expansion for a new collection and omit hidden rows from range
-selection. Optional `count` is appropriate when the total is known; paginated
-hosts can omit it. Filtering and loading more stay with the host list.
+selection. Pass `count` to show the number of matching pinned rows currently shown,
+including while collapsed. The count is also announced as the trigger description;
+it updates with filtering, pinning and loading more. Omit it only when unknown.
+Filtering and loading more stay with the host list.
 `PinnedPlaneIcon` is also exported for other contextual pin affordances.
+
+## Collection icons and motion
+
+`FolderCollectionIcon` and `BindrCollectionIcon` use the upstream Lucide folder,
+open-folder and folder-kanban paths with translucent fills. Hover or keyboard
+focus activates a short 180ms transition; `open` holds the active state for an
+expanded or selected collection. Folders crossfade to the open silhouette, Bindrs
+lift slightly, and the amber pin lifts above its shaded plane when its drawer is
+open. Every icon stays inside its original slot so the label never shifts.
+Reduced-motion users get immediate state changes. `size` defaults to 18 and
+`strokeWidth` to 1.5; use a lighter stroke for large icons.

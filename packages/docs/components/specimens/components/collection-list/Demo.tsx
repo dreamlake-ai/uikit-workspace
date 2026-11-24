@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import {
   CollectionList,
+  FolderCollectionIcon,
+  BindrCollectionIcon,
+  PinnedPlaneIcon,
   PinnedCollectionDrawer,
   CollectionRow,
   Button,
@@ -8,15 +11,7 @@ import {
   MenuItem,
   VirtualListFlow,
 } from "@dreamlake/uikit";
-import {
-  Folder,
-  Hash,
-  FileText,
-  MoreHorizontal,
-  Pin,
-  PinOff,
-  Boxes,
-} from "lucide-react";
+import { FileText, MoreHorizontal, Pin, PinOff, Boxes } from "lucide-react";
 
 const entries = [
   {
@@ -76,7 +71,11 @@ function Example({ kind }: { kind: "Folder" | "Bindr" | "Project" }) {
         }
       }}
       icon={
-        row.kind === "folder" ? <Folder size={18} /> : <FileText size={18} />
+        row.kind === "folder" ? (
+          <FolderCollectionIcon open={selected === row.id} />
+        ) : (
+          <FileText size={18} />
+        )
       }
       name={row.name}
       meta="2h"
@@ -149,9 +148,9 @@ function Example({ kind }: { kind: "Folder" | "Bindr" | "Project" }) {
         }}
       >
         {kind === "Folder" ? (
-          <Folder size={16} />
+          <FolderCollectionIcon size={16} />
         ) : kind === "Bindr" ? (
-          <Hash size={16} />
+          <BindrCollectionIcon size={16} />
         ) : (
           <Boxes size={16} />
         )}
@@ -217,6 +216,59 @@ export function LongList() {
           />
         )}
       </VirtualListFlow>
+    </div>
+  );
+}
+
+export function CollectionIconStates() {
+  const [open, setOpen] = useState(false);
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      <Button
+        variant="ghost"
+        aria-pressed={open}
+        onClick={() => setOpen(!open)}
+      >
+        {open ? "Show resting icons" : "Show active icons"}
+      </Button>
+      <CollectionRow
+        role="button"
+        tabIndex={0}
+        aria-pressed={open}
+        icon={<FolderCollectionIcon open={open} />}
+        name="Folder"
+        pinned
+      />
+      <CollectionRow
+        role="button"
+        tabIndex={0}
+        aria-pressed={open}
+        icon={<BindrCollectionIcon open={open} />}
+        name="Bindr"
+        pinned
+      />
+      <PinnedCollectionDrawer count={2} open={open} onOpenChange={setOpen}>
+        <CollectionRow
+          icon={<FileText size={18} />}
+          name="Research brief"
+          pinned
+        />
+        <CollectionRow
+          icon={<FolderCollectionIcon />}
+          name="Evaluation recordings"
+          pinned
+        />
+      </PinnedCollectionDrawer>
+      <span
+        style={{
+          display: "inline-flex",
+          gap: 9,
+          alignItems: "center",
+          color: "var(--muted)",
+        }}
+      >
+        <PinnedPlaneIcon /> Pinned collection
+      </span>
     </div>
   );
 }
