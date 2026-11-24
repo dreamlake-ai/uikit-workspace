@@ -46,6 +46,8 @@ export {
   CollectionList,
   PinnedCollectionDrawer,
   PinnedPlaneIcon,
+  FolderCollectionIcon,
+  BindrCollectionIcon,
   ListDivider,
   CollectionRow,
   CollectionRowBody,
@@ -55,3 +57,5 @@ export type {
   PinnedCollectionDrawerProps,
   ListDividerProps,
 } from "./components/CollectionList";
+
+export type { CollectionIconProps } from "./components/CollectionList";

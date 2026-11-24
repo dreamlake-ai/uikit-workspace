@@ -1,3 +1,4 @@
+import { useId } from "react";
 import type { HTMLAttributes, ReactNode, SVGProps } from "react";
 import { Pin } from "lucide-react";
 import {
@@ -175,9 +176,13 @@ export function CollectionRow({
 }
 
 /** A Lucide-derived pin landing on a perspective plane. */
-export function PinnedPlaneIcon(props: SVGProps<SVGSVGElement>) {
+export function PinnedPlaneIcon({
+  className = "",
+  ...props
+}: SVGProps<SVGSVGElement>) {
   return (
     <svg
+      className={`uikit-pinned-plane ${className}`}
       width={18}
       height={18}
       viewBox="0 0 24 24"
@@ -189,10 +194,22 @@ export function PinnedPlaneIcon(props: SVGProps<SVGSVGElement>) {
       aria-hidden="true"
       {...props}
     >
-      <path d="M8.5 2.5h7" />
-      <path d="M10 2.5V7l-2.5 4.5h9L14 7V2.5" />
-      <path d="M12 11.5v6" />
-      <path d="M8.5 14.75 3 17.5l9 4.5 9-4.5-5.5-2.75" />
+      <path
+        d="m12 13 9 4.5-9 4.5-9-4.5Z"
+        fill="currentColor"
+        fillOpacity={0.1}
+        stroke="none"
+      />
+      <path d="M8.5 14.75 3 17.5l9 4.5 9-4.5-5.5-2.75" opacity={0.65} />
+      <g className="uikit-pinned-plane-pin">
+        <path d="M8.5 2.5h7" />
+        <path
+          d="M10 2.5V7l-2.5 4.5h9L14 7V2.5Z"
+          fill="currentColor"
+          fillOpacity={0.2}
+        />
+        <path d="M12 11.5v6" />
+      </g>
     </svg>
   );
 }
@@ -215,6 +232,7 @@ export function PinnedCollectionDrawer({
   defaultOpen = true,
   onOpenChange,
 }: PinnedCollectionDrawerProps) {
+  const countId = useId();
   return (
     <Collapsible
       className="uikit-pinned-drawer"
@@ -225,12 +243,19 @@ export function PinnedCollectionDrawer({
       <CollapsibleTrigger
         className="uikit-pinned-drawer-trigger"
         aria-label="Pinned"
+        aria-describedby={count !== undefined ? countId : undefined}
         data-list-row="pinned"
       >
         <PinnedPlaneIcon />
         <span className="uikit-pinned-drawer-label">Pinned</span>
         {count !== undefined && (
-          <span className="uikit-pinned-drawer-count">{count}</span>
+          <span
+            id={countId}
+            className="uikit-pinned-drawer-count"
+            aria-label={`${count} pinned ${count === 1 ? "item" : "items"} shown`}
+          >
+            {count}
+          </span>
         )}
         <CollapsibleChevron />
       </CollapsibleTrigger>
