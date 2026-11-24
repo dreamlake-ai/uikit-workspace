@@ -181,6 +181,14 @@ for (const kind of ["documents", "panels"] as const) {
       (await row.getByRole("tab").nth(1).getAttribute("aria-label")) ??
       (await row.getByRole("tab").nth(1).textContent());
     const count = await row.getByRole("tab").count();
+    await expect(secondFace.locator(".uikit-document-tab-close")).toHaveCount(
+      0,
+    );
+    await row.getByRole("tab").nth(1).click();
+    await expect(row.getByRole("tab").nth(1)).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
     const end = secondFace.locator(".uikit-document-tab-close");
     const closeBox = (await end.boundingBox())!,
       rowBox = (await row.boundingBox())!;
