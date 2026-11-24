@@ -44,7 +44,9 @@ export {
 
 export {
   CollectionList,
+  ListDivider,
   CollectionRow,
   CollectionRowBody,
 } from "./components/CollectionList";
 export type { CollectionRowBodyProps } from "./components/CollectionList";
+export type { ListDividerProps } from "./components/CollectionList";
