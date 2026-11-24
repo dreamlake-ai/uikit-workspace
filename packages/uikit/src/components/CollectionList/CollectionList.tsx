@@ -175,7 +175,7 @@ export function CollectionRow({
   );
 }
 
-/** A Lucide-derived pin landing on a perspective plane. */
+/** A neutral Lucide-derived pin above three animated perspective sheets. */
 export function PinnedPlaneIcon({
   className = "",
   ...props
@@ -194,13 +194,27 @@ export function PinnedPlaneIcon({
       aria-hidden="true"
       {...props}
     >
-      <path
-        d="m12 13 9 4.5-9 4.5-9-4.5Z"
-        fill="currentColor"
-        fillOpacity={0.1}
-        stroke="none"
-      />
-      <path d="M8.5 14.75 3 17.5l9 4.5 9-4.5-5.5-2.75" opacity={0.65} />
+      <g className="uikit-pinned-paper uikit-pinned-paper-back" opacity={0.4}>
+        <path
+          d="m12 11.5 9 4.5-9 4.5-9-4.5Z"
+          fill="currentColor"
+          fillOpacity={0.08}
+        />
+      </g>
+      <g className="uikit-pinned-paper uikit-pinned-paper-middle" opacity={0.6}>
+        <path
+          d="m12 11.5 9 4.5-9 4.5-9-4.5Z"
+          fill="currentColor"
+          fillOpacity={0.1}
+        />
+      </g>
+      <g className="uikit-pinned-paper uikit-pinned-paper-front">
+        <path
+          d="m12 11.5 9 4.5-9 4.5-9-4.5Z"
+          fill="currentColor"
+          fillOpacity={0.14}
+        />
+      </g>
       <g className="uikit-pinned-plane-pin">
         <path d="M8.5 2.5h7" />
         <path

@@ -15,7 +15,7 @@ Open a row's `…` menu and choose **Pin to top**. The same entry in the other
 examples stays where it was: pins belong to a collection. **Unpin from top**
 restores the ordinary sort position. Pinned rows appear once, in a drawer above
 the ordinary contents. The drawer starts open and can be collapsed with its
-header; an amber Lucide-derived pin over a translucent perspective plane identifies
+header; a neutral Lucide-derived pin over three translucent paper sheets identifies
 the group. The matching amber pin beside each title is status, not another button. Search still narrows the pinned entries. These examples keep state in
 memory; the product persists collection pins on the server and applies them
 before pagination, under the collection's write permissions.
@@ -66,7 +66,10 @@ Filtering and loading more stay with the host list.
 open-folder and folder-kanban paths with translucent fills. Hover or keyboard
 focus activates a short 180ms transition; `open` holds the active state for an
 expanded or selected collection. Folders crossfade to the open silhouette, Bindrs
-lift slightly, and the amber pin lifts above its shaded plane when its drawer is
-open. Every icon stays inside its original slot so the label never shifts.
+lift slightly, and the neutral drawer pin sits above three perspective sheets. The paper stack
+starts tight, separates on hover or keyboard focus, compresses while pressed,
+and settles into wider spacing while expanded. Hovering an expanded drawer
+spreads it a little further; closing brings it back together. All three sheets
+and the pin animate through the sequence, rather than swapping static icons. Every icon stays inside its original slot so the label never shifts.
 Reduced-motion users get immediate state changes. `size` defaults to 18 and
 `strokeWidth` to 1.5; use a lighter stroke for large icons.

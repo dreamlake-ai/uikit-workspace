@@ -242,19 +242,66 @@
     rotate(calc(var(--uikit-icon-active) * -4deg));
   transform-origin: 50% 85%;
 }
+.uikit-pinned-plane {
+  --uikit-paper-gap: 0.6px;
+  --uikit-paper-fan: 0px;
+  --uikit-pin-lift: 0px;
+  --uikit-pin-tilt: 0deg;
+}
+.uikit-pinned-paper,
 .uikit-pinned-plane-pin {
-  color: var(--tone-amber, #c0922e);
-  transform-origin: 12px 17px;
+  transform-origin: 12px 16.5px;
   transition: transform 180ms ease-out;
 }
-.uikit-pinned-plane:hover .uikit-pinned-plane-pin,
-.uikit-pinned-drawer-trigger:is(:hover, :focus-visible, [data-state="open"])
-  .uikit-pinned-plane-pin {
-  transform: translateY(-1px) rotate(-5deg);
+.uikit-pinned-paper-back {
+  transform: translate(
+    calc(-1 * var(--uikit-paper-fan)),
+    var(--uikit-paper-gap)
+  );
+}
+.uikit-pinned-paper-middle {
+  transform: translateY(calc(-0.5 * var(--uikit-paper-gap)));
+}
+.uikit-pinned-paper-front {
+  transform: translate(
+    var(--uikit-paper-fan),
+    calc(-2 * var(--uikit-paper-gap))
+  );
+}
+.uikit-pinned-plane-pin {
+  transform: translateY(var(--uikit-pin-lift)) rotate(var(--uikit-pin-tilt));
+}
+.uikit-pinned-plane:hover,
+.uikit-pinned-drawer-trigger:is(:hover, :focus-visible) > .uikit-pinned-plane {
+  --uikit-paper-gap: 1.3px;
+  --uikit-paper-fan: 0.5px;
+  --uikit-pin-lift: -0.7px;
+  --uikit-pin-tilt: -4deg;
+}
+.uikit-pinned-drawer-trigger[data-state="open"] > .uikit-pinned-plane {
+  --uikit-paper-gap: 2px;
+  --uikit-paper-fan: 0.5px;
+  --uikit-pin-lift: -1px;
+  --uikit-pin-tilt: -5deg;
+}
+.uikit-pinned-drawer-trigger[data-state="open"]:is(:hover, :focus-visible)
+  > .uikit-pinned-plane {
+  --uikit-paper-gap: 2.4px;
+  --uikit-paper-fan: 0.8px;
+  --uikit-pin-lift: -1.2px;
+  --uikit-pin-tilt: -7deg;
+}
+/* Press compresses the stack; release settles into the new disclosure state. */
+.uikit-pinned-drawer-trigger[data-state]:active > .uikit-pinned-plane {
+  --uikit-paper-gap: 0.35px;
+  --uikit-paper-fan: 0px;
+  --uikit-pin-lift: 0.4px;
+  --uikit-pin-tilt: 0deg;
 }
 @media (prefers-reduced-motion: reduce) {
   .uikit-collection-glyph > svg,
-  .uikit-pinned-plane-pin {
+  .uikit-pinned-plane-pin,
+  .uikit-pinned-paper {
     transition: none;
   }
 }
