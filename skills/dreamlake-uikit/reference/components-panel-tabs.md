@@ -1,5 +1,7 @@
 # Panel tabs
 
+Compare [Tab surfaces](reference/style-guide-tab-surfaces.md) for document, panel and workspace-background styles, including a Terminal/Files switch whose selected tab follows the active content fill.
+
 Use the same tab face across every page: a solid selected surface, 8px rounded
 shoulders, curved feet into the content, and no top outline or bottom stroke.
 The first tab aligns with the panel's left edge, with the shell's small inset.
