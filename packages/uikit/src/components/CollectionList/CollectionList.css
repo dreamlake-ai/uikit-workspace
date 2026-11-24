@@ -242,61 +242,75 @@
     rotate(calc(var(--uikit-icon-active) * -4deg));
   transform-origin: 50% 85%;
 }
+/* A larger fixed canvas leaves room for the rounded sheets to fan in depth.
+   The pin leaves the stack entirely while the drawer is expanded. */
 .uikit-pinned-plane {
-  --uikit-paper-gap: 0.6px;
+  --uikit-paper-gap: 0.7px;
   --uikit-paper-fan: 0px;
+  --uikit-paper-turn: 1deg;
   --uikit-pin-lift: 0px;
-  --uikit-pin-tilt: 0deg;
+  --uikit-pin-drift: 0px;
+  --uikit-pin-tilt: -8deg;
+  --uikit-pin-opacity: 1;
 }
 .uikit-pinned-paper,
 .uikit-pinned-plane-pin {
-  transform-origin: 12px 16.5px;
-  transition: transform 180ms ease-out;
+  transform-origin: 14px 18.7px;
+  transition:
+    transform 240ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    opacity 180ms ease-out;
 }
 .uikit-pinned-paper-back {
   transform: translate(
-    calc(-1 * var(--uikit-paper-fan)),
-    var(--uikit-paper-gap)
-  );
+      calc(-1 * var(--uikit-paper-fan)),
+      var(--uikit-paper-gap)
+    )
+    rotate(calc(-1 * var(--uikit-paper-turn)));
 }
 .uikit-pinned-paper-middle {
   transform: translateY(calc(-0.5 * var(--uikit-paper-gap)));
 }
 .uikit-pinned-paper-front {
   transform: translate(
-    var(--uikit-paper-fan),
-    calc(-2 * var(--uikit-paper-gap))
-  );
+      var(--uikit-paper-fan),
+      calc(-2 * var(--uikit-paper-gap))
+    )
+    rotate(var(--uikit-paper-turn));
 }
 .uikit-pinned-plane-pin {
-  transform: translateY(var(--uikit-pin-lift)) rotate(var(--uikit-pin-tilt));
+  opacity: var(--uikit-pin-opacity);
+  transform: translate(var(--uikit-pin-drift), var(--uikit-pin-lift))
+    rotate(var(--uikit-pin-tilt));
 }
 .uikit-pinned-plane:hover,
 .uikit-pinned-drawer-trigger:is(:hover, :focus-visible) > .uikit-pinned-plane {
-  --uikit-paper-gap: 1.3px;
+  --uikit-paper-gap: 1.5px;
   --uikit-paper-fan: 0.5px;
-  --uikit-pin-lift: -0.7px;
-  --uikit-pin-tilt: -4deg;
+  --uikit-paper-turn: 5deg;
+  --uikit-pin-lift: -2px;
+  --uikit-pin-tilt: -16deg;
 }
 .uikit-pinned-drawer-trigger[data-state="open"] > .uikit-pinned-plane {
-  --uikit-paper-gap: 2px;
-  --uikit-paper-fan: 0.5px;
-  --uikit-pin-lift: -1px;
-  --uikit-pin-tilt: -5deg;
+  --uikit-paper-gap: 2.6px;
+  --uikit-paper-fan: 0.6px;
+  --uikit-paper-turn: 9deg;
+  --uikit-pin-lift: -12px;
+  --uikit-pin-drift: 5px;
+  --uikit-pin-tilt: 24deg;
+  --uikit-pin-opacity: 0;
 }
 .uikit-pinned-drawer-trigger[data-state="open"]:is(:hover, :focus-visible)
   > .uikit-pinned-plane {
-  --uikit-paper-gap: 2.4px;
-  --uikit-paper-fan: 0.8px;
-  --uikit-pin-lift: -1.2px;
-  --uikit-pin-tilt: -7deg;
+  --uikit-paper-gap: 2.9px;
+  --uikit-paper-fan: 0.9px;
+  --uikit-paper-turn: 12deg;
 }
-/* Press compresses the stack; release settles into the new disclosure state. */
+/* Press compresses the papers without flashing the departed pin back in.
+   Release fans out or closes the stack and brings the pin back. */
 .uikit-pinned-drawer-trigger[data-state]:active > .uikit-pinned-plane {
-  --uikit-paper-gap: 0.35px;
+  --uikit-paper-gap: 0.5px;
   --uikit-paper-fan: 0px;
-  --uikit-pin-lift: 0.4px;
-  --uikit-pin-tilt: 0deg;
+  --uikit-paper-turn: 1deg;
 }
 @media (prefers-reduced-motion: reduce) {
   .uikit-collection-glyph > svg,

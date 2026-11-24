@@ -183,12 +183,12 @@ export function PinnedPlaneIcon({
   return (
     <svg
       className={`uikit-pinned-plane ${className}`}
-      width={18}
-      height={18}
-      viewBox="0 0 24 24"
+      width={28}
+      height={28}
+      viewBox="0 0 28 28"
       fill="none"
       stroke="currentColor"
-      strokeWidth={1.7}
+      strokeWidth={1.35}
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"
@@ -196,33 +196,33 @@ export function PinnedPlaneIcon({
     >
       <g className="uikit-pinned-paper uikit-pinned-paper-back" opacity={0.4}>
         <path
-          d="m12 11.5 9 4.5-9 4.5-9-4.5Z"
+          d="M13 13.4Q14 12.9 15 13.4L24 18Q25.4 18.7 24 19.4L15 24Q14 24.5 13 24L4 19.4Q2.6 18.7 4 18Z"
           fill="currentColor"
           fillOpacity={0.08}
         />
       </g>
       <g className="uikit-pinned-paper uikit-pinned-paper-middle" opacity={0.6}>
         <path
-          d="m12 11.5 9 4.5-9 4.5-9-4.5Z"
+          d="M13 13.4Q14 12.9 15 13.4L24 18Q25.4 18.7 24 19.4L15 24Q14 24.5 13 24L4 19.4Q2.6 18.7 4 18Z"
           fill="currentColor"
           fillOpacity={0.1}
         />
       </g>
       <g className="uikit-pinned-paper uikit-pinned-paper-front">
         <path
-          d="m12 11.5 9 4.5-9 4.5-9-4.5Z"
+          d="M13 13.4Q14 12.9 15 13.4L24 18Q25.4 18.7 24 19.4L15 24Q14 24.5 13 24L4 19.4Q2.6 18.7 4 18Z"
           fill="currentColor"
           fillOpacity={0.14}
         />
       </g>
       <g className="uikit-pinned-plane-pin">
-        <path d="M8.5 2.5h7" />
+        <path d="M11 3h6" />
         <path
-          d="M10 2.5V7l-2.5 4.5h9L14 7V2.5Z"
+          d="M12 3v4l-2 4h8l-2-4V3Z"
           fill="currentColor"
           fillOpacity={0.2}
         />
-        <path d="M12 11.5v6" />
+        <path d="M14 11v5" />
       </g>
     </svg>
   );
