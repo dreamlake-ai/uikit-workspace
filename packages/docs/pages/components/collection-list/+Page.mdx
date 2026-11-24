@@ -92,10 +92,12 @@ Filtering and loading more stay with the host list.
 open-folder and folder-kanban paths with translucent fills. Hover or keyboard
 focus activates a short 180ms transition; `open` holds the active state for an
 expanded or selected collection. Folders crossfade to the open silhouette, Bindrs
-lift slightly, and the neutral drawer pin sits above three perspective sheets. The paper stack
-starts tight, separates on hover or keyboard focus, compresses while pressed,
-and settles into wider spacing while expanded. Hovering an expanded drawer
-spreads it a little further; closing brings it back together. All three sheets
-and the pin animate through the sequence, rather than swapping static icons. Every icon stays inside its original slot so the label never shifts.
-Reduced-motion users get immediate state changes. `size` defaults to 18 and
+lift slightly, and the pinned drawer uses a larger 28px canvas with three softly
+rounded, translucent perspective sheets. Its neutral pin lifts diagonally out and
+fades away when expanded, leaving the papers unobstructed. The sheets separate
+and rotate on hover or keyboard focus, compress on press, and fan wider while
+expanded. Expanded hover opens the fan a little further. Closing gathers the
+papers and brings the pin back. Paper transforms take 240ms and the pin fades in
+180ms; the fixed slot keeps the label still throughout the sequence.
+Reduced-motion users get immediate state changes. For folder and Bindr icons, `size` defaults to 18 and
 `strokeWidth` to 1.5; use a lighter stroke for large icons.
