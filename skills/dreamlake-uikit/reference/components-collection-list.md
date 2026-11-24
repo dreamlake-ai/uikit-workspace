@@ -1,0 +1,39 @@
+# CollectionList
+
+Folders, Bindrs and projects use the same row geometry: an 18px type icon,
+truncated title, optional location, pin indicator, quiet metadata and a `…` menu.
+`CollectionRowBody` also fits inside an existing link or selectable row, preserving
+its navigation, selection, drag and preview behavior. DreamLake uses it in its
+folder, Bindr and project list rows.
+
+## Contextual pins
+
+Open a row's `…` menu and choose **Pin to top**. The same entry in the other
+examples stays where it was: pins belong to a collection. **Unpin from top**
+restores the ordinary sort position. The pin indicator is status, not another
+button. Search still narrows the pinned entries. These examples keep state in
+memory; the product persists collection pins on the server and applies them
+before pagination, under the collection's write permissions.
+
+## Large lists
+
+Use the existing `VirtualListFlow` for long lists, with the same row renderer.
+Keep pagination, loading, errors, selection and data mutations in the host.
+Do not merge separately paginated families or sort only the loaded pages to
+implement pinning. Use `CollectionList` for a small list already in normal flow.
+
+## Row slots
+
+| Prop                 | Purpose                                                              |
+| -------------------- | -------------------------------------------------------------------- |
+| `icon`, `name`       | Type glyph and title. Long titles show their full text in a tooltip. |
+| `nameText`           | Plain tooltip text when the title includes search highlights.        |
+| `location`, `detail` | Inline location or secondary row content.                            |
+| `meta`, `actions`    | Quiet timestamp or count and independent action targets.             |
+| `pinned`             | Accessible “Pinned in this collection” indicator.                    |
+| `prefix`, `badge`    | Optional leading control and trailing status.                        |
+
+The host owns accessible names and keyboard selection. Action clicks and key
+presses do not activate the row. Preserve native links for navigation and use
+`useListSelection` for multi-selection. Keep the same row pattern at narrow
+widths and in both themes; do not create a separate list per resource kind.
