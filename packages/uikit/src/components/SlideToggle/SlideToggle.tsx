@@ -39,7 +39,14 @@ export interface SlideToggleProps extends Omit<
   shape?: ToggleShape;
 }
 
-const PAD = 2;
+import {
+  EDITOR_TOGGLE_INSET as PAD,
+  EDITOR_TOGGLE_MS,
+  EDITOR_TOGGLE_HOVER,
+  editorToggleTrackStyle,
+  editorToggleThumbStyle,
+  editorToggleFaceStyle,
+} from "../../lib/editorToggleStyle";
 
 /**
  * A two-state pill with a knob that slides between a left and a right face.
@@ -70,8 +77,8 @@ export const SlideToggle = forwardRef<HTMLButtonElement, SlideToggleProps>(
       // and reads as a disabled state rather than as "this is off, click to change
       // it". Do not "correct" it to a token.
       offColor = "#f97316",
-      slideMs = 240,
-      bgMs = 240,
+      slideMs = EDITOR_TOGGLE_MS,
+      bgMs = EDITOR_TOGGLE_MS,
       shape = "square",
       disabled = false,
       className,
@@ -95,7 +102,7 @@ export const SlideToggle = forwardRef<HTMLButtonElement, SlideToggleProps>(
     // `--chip-bg`, the kit's resting chip surface, rather than a hand-mixed
     // percentage — and theme-aware where a black tint is not: it goes to white at
     // 5% on dark, where black at 6% is invisible.
-    const pillBg = highlighted ? (on ? onColor : offColor) : "var(--chip-bg)";
+    const tone = highlighted ? (on ? onColor : offColor) : null;
 
     const face = (
       side: "left" | "right",
@@ -122,13 +129,7 @@ export const SlideToggle = forwardRef<HTMLButtonElement, SlideToggleProps>(
             fontSize: f.fontSize,
             fontWeight: 600,
             letterSpacing: "0.02em",
-            color: active
-              ? "var(--ink)"
-              : highlighted
-                ? "#fff"
-                : "var(--uikit-muted)",
-            opacity: active || highlighted ? 1 : 0.5,
-            transition: `color ${slideMs}ms ease, opacity ${slideMs}ms ease`,
+            ...editorToggleFaceStyle(active, highlighted, slideMs),
             pointerEvents: "none",
           }}
         >
@@ -169,20 +170,12 @@ export const SlideToggle = forwardRef<HTMLButtonElement, SlideToggleProps>(
         style={{
           position: "relative",
           width,
-          height: 20,
-          border: "none",
+          ...editorToggleTrackStyle(shape, tone, bgMs),
           outline: "none",
-          boxShadow: "none",
           WebkitTapHighlightColor: "transparent",
-          borderRadius:
-            shape === "round"
-              ? "var(--radius-uikit-round, 9999px)"
-              : "var(--radius-uikit-toggle, 4px)",
           cursor: disabled ? "default" : "pointer",
           flexShrink: 0,
           overflow: "hidden",
-          background: pillBg,
-          transition: `background ${bgMs}ms ease`,
           ...style,
         }}
       >
@@ -191,16 +184,10 @@ export const SlideToggle = forwardRef<HTMLButtonElement, SlideToggleProps>(
           aria-hidden
           style={{
             position: "absolute",
-            top: 2,
-            height: 16,
-            borderRadius:
-              shape === "round"
-                ? "var(--radius-uikit-round, 9999px)"
-                : "var(--radius-uikit-toggle-thumb, 2px)",
+            ...editorToggleThumbStyle(shape),
             zIndex: 1,
             left: knob.left,
             width: knob.width,
-            background: "var(--bg)",
             transition: `left ${slideMs}ms ease, width ${slideMs}ms ease`,
             pointerEvents: "none",
           }}
@@ -224,8 +211,8 @@ export function VimToggle({ on, ...props }: VimToggleProps) {
       on={on}
       label="Vim mode"
       title={on ? "Vim mode on" : "Vim mode off"}
-      onColor="#23aaff"
-      offColor="#23aaff"
+      onColor={EDITOR_TOGGLE_HOVER}
+      offColor={EDITOR_TOGGLE_HOVER}
       {...props}
       left={{ node: "o", w: 14, fontSize: 9 }}
       right={{ node: "vim", w: 26, fontSize: 10 }}

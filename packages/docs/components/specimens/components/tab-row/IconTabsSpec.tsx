@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { List, Menu } from "lucide-react";
+import { List, Menu, FileText } from "lucide-react";
 import { Button, TabRow } from "@dreamlake/uikit";
 
 export function IconTabsSpec() {
@@ -46,6 +46,54 @@ export function IconTabsSpec() {
           : value === "list"
             ? "Select an item from the list."
             : "Selected item content."}
+      </div>
+    </div>
+  );
+}
+
+export function LeadingIconsSpec() {
+  const [loaded, setLoaded] = useState(false);
+  const [value, setValue] = useState("ready");
+  return (
+    <div data-leading-icons-example="" className="bg-uikit-workspace">
+      <TabRow
+        aria-label="Leading icon states"
+        value={value}
+        onValueChange={setValue}
+        tabs={[
+          {
+            value: "ready",
+            label: "Ready",
+            icon: <FileText size={14} />,
+            fitContent: true,
+          },
+          {
+            value: "pending",
+            label: "Loading icon",
+            iconLoading: !loaded,
+            icon: loaded ? <FileText size={14} /> : undefined,
+            fitContent: true,
+          },
+          { value: "text", label: "Text only", fitContent: true },
+          {
+            value: "trailing",
+            label: "Trailing icon",
+            labelContent: (
+              <span>
+                Trailing icon <FileText size={14} className="inline" />
+              </span>
+            ),
+            fitContent: true,
+          },
+        ]}
+      />
+      <div className="p-3 text-sm text-uikit-muted">
+        <Button variant="ghost" size="sm" onClick={() => setLoaded(!loaded)}>
+          {loaded ? "Unload icon" : "Load pending icon"}
+        </Button>
+        <p>
+          Empty icon slots collapse; the compact leading inset stays unchanged.
+        </p>
       </div>
     </div>
   );

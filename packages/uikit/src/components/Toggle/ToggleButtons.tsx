@@ -16,6 +16,17 @@ import {
 import { cn } from "../../lib/utils";
 import { type ToggleShape, roundClass } from "../../lib/toggleShape";
 
+import {
+  EDITOR_TOGGLE_INSET,
+  EDITOR_TOGGLE_HEIGHT,
+  EDITOR_TOGGLE_MS,
+  EDITOR_TOGGLE_HOVER,
+  editorToggleTrackStyle,
+  editorToggleThumbStyle,
+  editorToggleFaceStyle,
+  editorToggleRadius,
+} from "../../lib/editorToggleStyle";
+
 export type ToggleButtonsVariant = "primary" | "secondary" | "ghost" | "panel";
 export type ToggleButtonSize = "sm" | "md" | "lg";
 
@@ -87,6 +98,7 @@ interface Ctx {
   size: ToggleButtonSize;
   variant: ToggleButtonsVariant;
   shape: ToggleShape;
+  highlighted: boolean;
   registerItem: (value: string, el: HTMLElement) => void;
   unregisterItem: (value: string) => void;
 }
@@ -98,7 +110,7 @@ export interface ToggleButtonsProps extends Omit<
 > {
   value: string;
   onValueChange: (value: string) => void;
-  /** Panel controls use a 26px compact track and neutral selection; item hoverColor tints the track only. */
+  /** Panel controls exactly share the memo Vim toggle: 20px track, 2px inset, 16px thumb; hoverColor fills the track only. */
   variant?: ToggleButtonsVariant;
   size?: ToggleButtonSize;
   padding?: boolean;
@@ -132,7 +144,7 @@ export function ToggleButtons({
 }: ToggleButtonsProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const panel = variant === "panel";
-  const inset = panel ? 2 : padding ? 4 : 2;
+  const inset = panel ? EDITOR_TOGGLE_INSET : padding ? 4 : 2;
   const [hoverColor, setHoverColor] = useState<string | null>(null);
   const [focusColor, setFocusColor] = useState<string | null>(null);
   const tone = panel ? (hoverColor ?? focusColor) : null;
@@ -191,6 +203,7 @@ export function ToggleButtons({
       size,
       variant,
       shape,
+      highlighted: !!tone,
       registerItem,
       unregisterItem,
     }),
@@ -201,6 +214,7 @@ export function ToggleButtons({
       size,
       variant,
       shape,
+      tone,
       registerItem,
       unregisterItem,
     ],
@@ -212,6 +226,7 @@ export function ToggleButtons({
         ref={containerRef}
         data-shape={shape}
         data-toggle-variant={variant}
+        data-editor-toggle={panel || undefined}
         className={cn(
           "relative inline-flex items-center",
           // Track radius = thumb radius + inset, so the two curves are
@@ -236,14 +251,7 @@ export function ToggleButtons({
           {
             ...(panel
               ? {
-                  "--uikit-panel-control-height": `${{ sm: 26, md: 30, lg: 34 }[size]}px`,
-                  boxSizing: "border-box",
-                  height:
-                    "var(--uikit-document-control-height,var(--uikit-panel-control-height))",
-                  transition: "background-color 120ms ease",
-                  backgroundColor: tone
-                    ? `color-mix(in srgb, ${tone} 16%, var(--chip-bg))`
-                    : undefined,
+                  ...editorToggleTrackStyle(shape, tone),
                 }
               : {}),
             ...style,
@@ -295,9 +303,18 @@ export function ToggleButtons({
               "opacity 120ms linear",
             ].join(", "),
             ...highlight,
+            ...(panel
+              ? {
+                  ...editorToggleThumbStyle(shape),
+                  transition: `transform ${EDITOR_TOGGLE_MS}ms ease, width ${EDITOR_TOGGLE_MS}ms ease, opacity 120ms linear`,
+                }
+              : {}),
           }}
         />
         {children}
+        {panel && (
+          <style>{`@media(prefers-reduced-motion:reduce){[data-editor-toggle],[data-editor-toggle]>button,[data-editor-toggle]>div{transition:none !important}}`}</style>
+        )}
       </div>
     </ToggleButtonsContext.Provider>
   );
@@ -317,7 +334,7 @@ export function ToggleButton({
   className,
   icon = false,
   asChild = false,
-  hoverColor,
+  hoverColor = EDITOR_TOGGLE_HOVER,
   style,
   ref: externalRef,
   ...props
@@ -368,16 +385,16 @@ export function ToggleButton({
   const itemStyle: CSSProperties = {
     ...(ctx.variant === "panel"
       ? {
-          height:
-            "calc(var(--uikit-document-control-height,var(--uikit-panel-control-height)) - 4px)",
+          height: EDITOR_TOGGLE_HEIGHT - 2 * EDITOR_TOGGLE_INSET,
           minHeight: 0,
-          ...(icon
-            ? {
-                width:
-                  "calc(var(--uikit-document-control-height,var(--uikit-panel-control-height)) - 4px)",
-                padding: 2,
-              }
-            : { paddingBlock: 0 }),
+          borderRadius: editorToggleRadius(ctx.shape, true),
+          paddingBlock: 0,
+          ...(icon ? { width: 20, padding: 0 } : {}),
+          fontFamily: "var(--f-mono)",
+          fontWeight: 600,
+          letterSpacing: "0.02em",
+          ...editorToggleFaceStyle(isSelected, ctx.highlighted),
+          ...(props.disabled ? { opacity: 0.5 } : {}),
           backgroundColor: "transparent",
         }
       : {}),

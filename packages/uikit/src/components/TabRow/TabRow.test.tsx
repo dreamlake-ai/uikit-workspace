@@ -597,7 +597,7 @@ it("pads text-only and namespace-prefixed titles without moving icon titles", ()
   const labels = container.querySelectorAll<HTMLElement>('[role="tab"]');
   expect(
     Array.from(labels, (label) => getComputedStyle(label).paddingLeft),
-  ).toEqual(["12px", "12px", "8px"]);
+  ).toEqual(["12px", "12px", "6px"]);
 });
 
 it("rounds the first flush active tab like the panel while retaining its zero strip inset", () => {

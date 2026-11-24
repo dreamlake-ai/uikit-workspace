@@ -70,7 +70,7 @@ test("panel tabs share their face and preserve inactive drafts", async ({
   ).toBeLessThanOrEqual(390);
 });
 
-test("panel mode controls tint only the track and match the inactive fill", async ({
+test("panel mode controls exactly match the memo Vim style", async ({
   page,
 }) => {
   await page.goto("/components/tab-row");
@@ -92,8 +92,8 @@ test("panel mode controls tint only the track and match the inactive fill", asyn
     await page.mouse.move(0, 0);
     await chat.blur();
     await expect
-      .poll(() => group.evaluate((el) => el.style.backgroundColor))
-      .toBe("");
+      .poll(() => group.evaluate((el) => el.style.background))
+      .toBe("var(--chip-bg)");
     await group.evaluate((el) =>
       Promise.all(el.getAnimations().map((animation) => animation.finished)),
     );
@@ -114,26 +114,33 @@ test("panel mode controls tint only the track and match the inactive fill", asyn
     await terminal.click();
     await page.mouse.move(0, 0);
     await expect(group).toHaveCSS("background-color", rest);
-    const dimensions = await demo.evaluate((el) => {
-      const inactive = el.querySelector(
-        ".uikit-document-tab:not([data-active])",
-      )!;
-      const rect = inactive.getBoundingClientRect();
-      const before = getComputedStyle(inactive, "::before");
-      const fillHeight =
-        rect.height -
-        2 * parseFloat(getComputedStyle(inactive).borderTopWidth) -
-        parseFloat(before.top) -
-        parseFloat(before.bottom);
-      return {
-        fillHeight,
-        controls: [
-          ...el.querySelectorAll("[data-panel-action], [data-toggle-variant]"),
-        ].map((el) => el.getBoundingClientRect().height),
-      };
+    const vim = demo.getByRole("button", { name: "Vim style reference" });
+    await expect(group).toHaveCSS("height", "20px");
+    await expect(thumb).toHaveCSS("height", "16px");
+    const geometry = async (locator: typeof group) =>
+      locator.evaluate((el) => {
+        const style = getComputedStyle(el);
+        return {
+          height: style.height,
+          radius: style.borderRadius,
+          background: style.backgroundColor,
+          duration: style.transitionDuration,
+        };
+      });
+    expect(await geometry(group)).toEqual(await geometry(vim));
+    const vimThumb = vim.locator(":scope > div").first();
+    expect(await geometry(thumb)).toMatchObject({
+      height: "16px",
+      radius: "2px",
+      background: (await geometry(vimThumb)).background,
     });
-    for (const height of dimensions.controls)
-      expect(Math.abs(height - dimensions.fillHeight)).toBeLessThanOrEqual(1);
+    await terminal.hover();
+    await expect(group).toHaveCSS("background-color", "rgb(35, 170, 255)");
+    await expect(chat).toHaveCSS("color", "rgb(255, 255, 255)");
+    await expect(chat).toHaveCSS("opacity", "1");
+    await expect(thumb).toHaveCSS("background-color", selected);
+    await page.mouse.move(0, 0);
+    await expect(chat).toHaveCSS("opacity", "0.5");
   }
   await chat.click();
   const draft = demo.getByRole("textbox", { name: "Example chat draft" });
@@ -224,4 +231,33 @@ test("inactive document tabs keep short separators without close controls", asyn
   await expect(
     demo.getByRole("tab", { name: "Brief", exact: true }),
   ).toHaveAttribute("aria-selected", "true");
+});
+
+test("leading tab icons stay compact while empty and trailing icons do not affect padding", async ({
+  page,
+}) => {
+  await page.goto("/components/tab-row");
+  await page.waitForLoadState("networkidle");
+  const demo = page.locator("[data-leading-icons-example]");
+  const pending = demo.getByRole("tab", { name: "Loading icon", exact: true });
+  const ready = demo.getByRole("tab", { name: "Ready", exact: true });
+  const text = demo.getByRole("tab", { name: "Text only", exact: true });
+  const trailing = demo.getByRole("tab", {
+    name: "Trailing icon",
+    exact: true,
+  });
+  for (const width of [1280, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    await expect(pending).toHaveCSS("padding-left", "6px");
+    await expect(ready).toHaveCSS("padding-left", "6px");
+    await expect(text).toHaveCSS("padding-left", "12px");
+    await expect(trailing).toHaveCSS("padding-left", "12px");
+    const slot = pending.locator("[data-tab-leading-icon]");
+    await expect(slot).toHaveCSS("display", "none");
+    await demo.getByRole("button", { name: "Load pending icon" }).click();
+    await expect(slot.locator("svg")).toBeVisible();
+    await expect(pending).toHaveCSS("padding-left", "6px");
+    await demo.getByRole("button", { name: "Unload icon" }).click();
+    await expect(slot).toHaveCSS("display", "none");
+  }
 });
