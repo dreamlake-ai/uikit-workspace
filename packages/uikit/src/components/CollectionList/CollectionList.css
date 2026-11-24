@@ -120,3 +120,43 @@
   color: var(--muted, var(--uikit-muted));
   min-width: 0;
 }
+
+.uikit-pinned-drawer {
+  min-width: 0;
+}
+.uikit-pinned-drawer-trigger {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 10px 14px 10px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+.uikit-pinned-drawer-trigger:hover {
+  background: color-mix(in srgb, var(--ink) 5%, var(--bg));
+}
+.uikit-pinned-drawer-trigger:focus-visible {
+  outline: 2px solid var(--uikit-accent, var(--ink));
+  outline-offset: -2px;
+}
+.uikit-pinned-drawer-trigger > svg {
+  flex-shrink: 0;
+  color: var(--muted, var(--uikit-muted));
+}
+.uikit-pinned-drawer-label {
+  font-family: var(--f-ui);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  flex: 1;
+}
+.uikit-pinned-drawer-count {
+  font-family: var(--f-mono);
+  font-size: 10px;
+  color: var(--muted, var(--uikit-muted));
+}

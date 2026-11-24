@@ -27,7 +27,9 @@ folder, Bindr and project list rows.
 
 Open a row's `…` menu and choose **Pin to top**. The same entry in the other
 examples stays where it was: pins belong to a collection. **Unpin from top**
-restores the ordinary sort position. The pin indicator is status, not another
+restores the ordinary sort position. Pinned rows appear once, in a drawer above
+the ordinary contents. The drawer starts open and can be collapsed with its
+header; the Lucide-derived pin over a perspective plane identifies the group. The pin indicator is status, not another
 button. Search still narrows the pinned entries. These examples keep state in
 memory; the product persists collection pins on the server and applies them
 before pagination, under the collection's write permissions.
@@ -58,3 +60,14 @@ The host owns accessible names and keyboard selection. Action clicks and key
 presses do not activate the row. Preserve native links for navigation and use
 `useListSelection` for multi-selection. Keep the same row pattern at narrow
 widths and in both themes; do not create a separate list per resource kind.
+
+## Pinned drawer
+
+Use `PinnedCollectionDrawer` before the ordinary contents and pass only pinned
+rows as its children. It starts expanded (`defaultOpen=true`), supports controlled
+`open` / `onOpenChange`, and uses the shared Collapsible for keyboard activation,
+height animation and inert hidden content. Render it only when matching pins
+exist. Reset expansion for a new collection and omit hidden rows from range
+selection. Optional `count` is appropriate when the total is known; paginated
+hosts can omit it. Filtering and loading more stay with the host list.
+`PinnedPlaneIcon` is also exported for other contextual pin affordances.

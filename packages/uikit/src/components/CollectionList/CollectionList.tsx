@@ -1,5 +1,11 @@
-import type { HTMLAttributes, ReactNode } from "react";
+import type { HTMLAttributes, ReactNode, SVGProps } from "react";
 import { Pin } from "lucide-react";
+import {
+  Collapsible,
+  CollapsibleTrigger,
+  CollapsibleContent,
+  CollapsibleChevron,
+} from "../Collapsible/Collapsible";
 import { TruncatedText } from "./TruncatedText";
 import "./CollectionList.css";
 
@@ -165,5 +171,72 @@ export function CollectionRow({
       />
       {children}
     </div>
+  );
+}
+
+/** A Lucide-derived pin landing on a perspective plane. */
+export function PinnedPlaneIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      width={18}
+      height={18}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.7}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      {...props}
+    >
+      <path d="M8.5 2.5h7" />
+      <path d="M10 2.5V7l-2.5 4.5h9L14 7V2.5" />
+      <path d="M12 11.5v6" />
+      <path d="M8.5 14.75 3 17.5l9 4.5 9-4.5-5.5-2.75" />
+    </svg>
+  );
+}
+
+export interface PinnedCollectionDrawerProps {
+  children: ReactNode;
+  /** Loaded pinned rows; omit when the total is not known. */
+  count?: number;
+  open?: boolean;
+  defaultOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
+/** Place before the collection's ordinary rows; render each item only once.
+ * The host keeps filtering, pagination and selection in the collection's scope. */
+export function PinnedCollectionDrawer({
+  children,
+  count,
+  open,
+  defaultOpen = true,
+  onOpenChange,
+}: PinnedCollectionDrawerProps) {
+  return (
+    <Collapsible
+      className="uikit-pinned-drawer"
+      open={open}
+      defaultOpen={defaultOpen}
+      onOpenChange={onOpenChange}
+    >
+      <CollapsibleTrigger
+        className="uikit-pinned-drawer-trigger"
+        aria-label="Pinned"
+        data-list-row="pinned"
+      >
+        <PinnedPlaneIcon />
+        <span className="uikit-pinned-drawer-label">Pinned</span>
+        {count !== undefined && (
+          <span className="uikit-pinned-drawer-count">{count}</span>
+        )}
+        <CollapsibleChevron />
+      </CollapsibleTrigger>
+      <CollapsibleContent role="group" aria-label="Pinned items">
+        <CollectionList>{children}</CollectionList>
+      </CollapsibleContent>
+    </Collapsible>
   );
 }

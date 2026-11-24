@@ -44,7 +44,12 @@ export {
 
 export {
   CollectionList,
+  PinnedCollectionDrawer,
+  PinnedPlaneIcon,
   CollectionRow,
   CollectionRowBody,
 } from "./components/CollectionList";
-export type { CollectionRowBodyProps } from "./components/CollectionList";
+export type {
+  CollectionRowBodyProps,
+  PinnedCollectionDrawerProps,
+} from "./components/CollectionList";
