@@ -44,9 +44,14 @@ export {
 
 export {
   CollectionList,
+  PinnedCollectionDrawer,
+  PinnedPlaneIcon,
   ListDivider,
   CollectionRow,
   CollectionRowBody,
 } from "./components/CollectionList";
-export type { CollectionRowBodyProps } from "./components/CollectionList";
-export type { ListDividerProps } from "./components/CollectionList";
+export type {
+  CollectionRowBodyProps,
+  PinnedCollectionDrawerProps,
+  ListDividerProps,
+} from "./components/CollectionList";

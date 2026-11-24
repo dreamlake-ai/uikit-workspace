@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
   CollectionList,
+  PinnedCollectionDrawer,
   CollectionRow,
   Button,
   Menu,
@@ -57,6 +58,78 @@ function Example({ kind }: { kind: "Folder" | "Bindr" | "Project" }) {
   const rows = entries
     .filter((row) => row.name.toLowerCase().includes(query.toLowerCase()))
     .sort((a, b) => Number(pins.includes(b.id)) - Number(pins.includes(a.id)));
+  const renderRow = (row: (typeof entries)[number]) => (
+    <CollectionRow
+      key={row.id}
+      role="button"
+      tabIndex={0}
+      aria-label={row.name}
+      aria-pressed={selected === row.id}
+      onClick={() => setSelected(row.id)}
+      onKeyDown={(event) => {
+        if (
+          event.target === event.currentTarget &&
+          ["Enter", " "].includes(event.key)
+        ) {
+          event.preventDefault();
+          setSelected(row.id);
+        }
+      }}
+      icon={
+        row.kind === "folder" ? <Folder size={18} /> : <FileText size={18} />
+      }
+      name={row.name}
+      meta="2h"
+      detail={row.detail}
+      pinned={pins.includes(row.id)}
+      actions={
+        <Menu
+          open={menu === row.id}
+          onOpenChange={(open) => setMenu(open ? row.id : null)}
+          align="right"
+          trigger={() => (
+            <Button
+              variant="ghost"
+              size="sm"
+              icon
+              aria-label={`More actions for ${row.name}`}
+              aria-haspopup="menu"
+            >
+              <MoreHorizontal size={14} />
+            </Button>
+          )}
+        >
+          <div
+            ref={menu === row.id ? content : undefined}
+            onKeyDown={(event) => {
+              if (["Enter", " "].includes(event.key)) {
+                event.preventDefault();
+                content.current
+                  ?.querySelector<HTMLElement>('[role="menuitem"]')
+                  ?.click();
+              }
+              if (event.key === "Tab") setMenu(null);
+            }}
+          >
+            <MenuItem
+              icon={
+                pins.includes(row.id) ? <PinOff size={14} /> : <Pin size={14} />
+              }
+              label={pins.includes(row.id) ? "Unpin from top" : "Pin to top"}
+              onClick={() => {
+                setMenu(null);
+                setPins((current) =>
+                  current.includes(row.id)
+                    ? current.filter((id) => id !== row.id)
+                    : [...current, row.id],
+                );
+              }}
+            />
+          </div>
+        </Menu>
+      }
+    />
+  );
   return (
     <section
       style={{
@@ -99,88 +172,14 @@ function Example({ kind }: { kind: "Folder" | "Bindr" | "Project" }) {
         }}
       />
       <CollectionList aria-label={`${kind} contents`}>
-        {rows.map((row) => (
-          <CollectionRow
-            key={row.id}
-            role="button"
-            tabIndex={0}
-            aria-label={row.name}
-            aria-pressed={selected === row.id}
-            onClick={() => setSelected(row.id)}
-            onKeyDown={(event) => {
-              if (
-                event.target === event.currentTarget &&
-                ["Enter", " "].includes(event.key)
-              ) {
-                event.preventDefault();
-                setSelected(row.id);
-              }
-            }}
-            icon={
-              row.kind === "folder" ? (
-                <Folder size={18} />
-              ) : (
-                <FileText size={18} />
-              )
-            }
-            name={row.name}
-            meta="2h"
-            detail={row.detail}
-            pinned={pins.includes(row.id)}
-            actions={
-              <Menu
-                open={menu === row.id}
-                onOpenChange={(open) => setMenu(open ? row.id : null)}
-                align="right"
-                trigger={() => (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    icon
-                    aria-label={`More actions for ${row.name}`}
-                    aria-haspopup="menu"
-                  >
-                    <MoreHorizontal size={14} />
-                  </Button>
-                )}
-              >
-                <div
-                  ref={menu === row.id ? content : undefined}
-                  onKeyDown={(event) => {
-                    if (["Enter", " "].includes(event.key)) {
-                      event.preventDefault();
-                      content.current
-                        ?.querySelector<HTMLElement>('[role="menuitem"]')
-                        ?.click();
-                    }
-                    if (event.key === "Tab") setMenu(null);
-                  }}
-                >
-                  <MenuItem
-                    icon={
-                      pins.includes(row.id) ? (
-                        <PinOff size={14} />
-                      ) : (
-                        <Pin size={14} />
-                      )
-                    }
-                    label={
-                      pins.includes(row.id) ? "Unpin from top" : "Pin to top"
-                    }
-                    onClick={() => {
-                      setMenu(null);
-                      setPins((current) =>
-                        current.includes(row.id)
-                          ? current.filter((id) => id !== row.id)
-                          : [...current, row.id],
-                      );
-                    }}
-                  />
-                </div>
-              </Menu>
-            }
-          />
-        ))}
+        {rows.some((row) => pins.includes(row.id)) && (
+          <PinnedCollectionDrawer
+            count={rows.filter((row) => pins.includes(row.id)).length}
+          >
+            {rows.filter((row) => pins.includes(row.id)).map(renderRow)}
+          </PinnedCollectionDrawer>
+        )}
+        {rows.filter((row) => !pins.includes(row.id)).map(renderRow)}
         {!rows.length && <p role="status">No matches in this collection.</p>}
       </CollectionList>
     </section>
