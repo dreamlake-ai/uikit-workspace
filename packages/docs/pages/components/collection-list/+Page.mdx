@@ -17,7 +17,10 @@ Folders, Bindrs and projects use the same row geometry: an 18px type icon,
 truncated title, optional location, pin indicator, quiet metadata and a `…` menu.
 `CollectionRowBody` also fits inside an existing link or selectable row, preserving
 its navigation, selection, drag and preview behavior. DreamLake uses it in its
-folder, Bindr and project list rows.
+folder, Bindr and project list rows. The `…` action wrapper is transparent, so
+hover and selection tints remain continuous across the row. Metadata yields to
+visible actions without changing the row width; there is no page-colored patch
+behind the button, including in dark mode.
 
 ## Contextual pins
 
