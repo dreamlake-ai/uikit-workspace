@@ -83,3 +83,5 @@ rows; place upload progress in the existing attachments panel. Provide a visible
 file-picker action for keyboard and touch users.
 
 Document tabs share one inactive treatment across TabRow and PanelLayout: hide the close control on inactive tabs, including on hover, without reserving its width. Keep short, vertically centered separators between adjacent inactive tabs. The active tab retains its close control; Delete and middle-click continue to close closable tabs.
+
+Background panels (Terminal, Sessions and Chat) need a visible active tab. On those `.uikit-document-tab` faces, set `--uikit-document-active-gradient: var(--uikit-document-subtle-gradient)`. The shared gradient uses an 8% ink tint at the top and fades into the panel surface, including the close-control area, in light and dark themes. Keep a lone list heading flat; use the gradient on list panels only when they share a row with other tabs. Inactive tabs remain flat, without a close control, and retain short separators.
