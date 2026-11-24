@@ -1,6 +1,6 @@
 ---
 name: dreamlake-uikit
-description: DreamLake uikit is the React component library and design contract — surfaces, ink, semantic color, type, geometry, and the zebra-list patterns shared by every DreamLake page. Use when answering questions about DreamLake (Overview, Avatar, Style guide, BreadcrumbTree, LLM-Readable Docs, Color, Typography, Spacing & layout, Iconography, Elevation & depth, Button, Border & radius, Split Button, Motion, CodeBlock, Loading & progress, Zebra lists, Dialog, Field, FilterBar, ListSearchInput, Menu, ProfileCard, ProfileLayout, ResizableLayout, PanelLayout, Layout controller, TabbedContainer, OutlineRail, Select, SideNav, Tabs, Panel tabs, Tab Row, Tag, TextField, VirtualList, VirtualListFlow, CollectionList, ListDivider, VideoAnnotator, Spinner, Checkbox, Skeleton, Switch, Badge, Collapsible, Card, Alert Dialog, Drawer, Toast, UIKit Badge, Pipeline Graph, Anatomy, Pipeline Graph JSON, Architecture & Roadmap, useIsMobile, Subtask Annotation, Label, Toggle, Workflow Canvas, Node Types, Toolbar, Modal, Form Layout, Input, Mouse Cursor Icons, Tooltip, Popover, Dropdown Menu, Theme, Tree View, Context Menu, Dial, Waterfall, Slider, Media Transport, Media Viewer, File Drop Overlay, Number Inputs, Layout, Sync Scroll).
+description: DreamLake uikit is the React component library and design contract — surfaces, ink, semantic color, type, geometry, and the zebra-list patterns shared by every DreamLake page. Use when answering questions about DreamLake (Overview, Avatar, Style guide, BreadcrumbTree, LLM-Readable Docs, Color, Typography, Spacing & layout, Iconography, Elevation & depth, Button, Border & radius, Split Button, Motion, CodeBlock, Loading & progress, Zebra lists, Dialog, Field, FilterBar, ListSearchInput, Menu, Tab surfaces, ProfileCard, ProfileLayout, ResizableLayout, PanelLayout, Layout controller, TabbedContainer, OutlineRail, Select, SideNav, Tabs, Panel tabs, Tab Row, Tag, TextField, VirtualList, VirtualListFlow, CollectionList, ListDivider, VideoAnnotator, Spinner, Checkbox, Skeleton, Switch, Badge, Collapsible, Card, Alert Dialog, Drawer, Toast, UIKit Badge, Pipeline Graph, Anatomy, Pipeline Graph JSON, Architecture & Roadmap, useIsMobile, Subtask Annotation, Label, Toggle, Workflow Canvas, Node Types, Toolbar, Modal, Form Layout, Input, Mouse Cursor Icons, Tooltip, Popover, Dropdown Menu, Theme, Tree View, Context Menu, Dial, Waterfall, Slider, Media Transport, Media Viewer, File Drop Overlay, Number Inputs, Layout, Sync Scroll).
 ---
 # DreamLake
 
@@ -103,6 +103,7 @@ file that matches the question; each is a self-contained markdown page.
 **Patterns**
 
 - `reference/style-guide-zebra-lists.md` — Zebra lists: DreamLake style guide: zebra lists.
+- `reference/style-guide-tab-surfaces.md` — Tab surfaces: Compare document, panel, workspace-background tabs and list headings, with matching tab and content fills.
 
 **Pipeline**
 
