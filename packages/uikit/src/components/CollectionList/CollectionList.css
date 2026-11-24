@@ -59,6 +59,7 @@
   min-width: 0;
 }
 .uikit-collection-icon {
+  position: relative;
   display: inline-flex;
   width: 18px;
   height: 18px;
@@ -66,7 +67,18 @@
   justify-content: center;
   flex-shrink: 0;
   color: var(--muted, var(--uikit-muted));
+}
+.uikit-collection-type-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
   opacity: 0.75;
+  transform-origin: left bottom;
+}
+.uikit-collection-icon[data-pinned] > .uikit-collection-type-icon {
+  transform: translate(-1px, 1px) scale(0.8);
 }
 .uikit-collection-title {
   display: flex;
@@ -85,8 +97,11 @@
   color: var(--ink);
 }
 .uikit-collection-pin {
+  position: absolute;
+  top: -3px;
+  right: 1px;
   display: inline-flex;
-  flex-shrink: 0;
+  pointer-events: none;
   color: var(--tone-amber, #c0922e);
 }
 .uikit-collection-pin > svg {

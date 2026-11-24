@@ -30,6 +30,12 @@ it("keeps menu actions independent of row navigation and exposes pin status", ()
     expect(
       host.querySelector('[aria-label="Pinned in this collection"]'),
     ).not.toBeNull();
+    // The badge remains announced after moving into the otherwise decorative icon slot.
+    expect(
+      host
+        .querySelector('[aria-label="Pinned in this collection"]')!
+        .closest('[aria-hidden="true"]'),
+    ).toBeNull();
     const button = host.querySelector("button")!;
     act(() => button.click());
     expect(pin).toHaveBeenCalledOnce();

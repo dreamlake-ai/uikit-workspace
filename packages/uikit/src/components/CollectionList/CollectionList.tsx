@@ -74,9 +74,20 @@ export function CollectionRowBody({
       <span className={`uikit-collection-line ${classNames.line ?? ""}`}>
         <span
           className={`uikit-collection-icon ${classNames.icon ?? ""}`}
-          aria-hidden="true"
+          data-pinned={pinned || undefined}
         >
-          {icon}
+          <span className="uikit-collection-type-icon" aria-hidden="true">
+            {icon}
+          </span>
+          {pinned && (
+            <span
+              className="uikit-collection-pin"
+              role="img"
+              aria-label="Pinned in this collection"
+            >
+              <Pin size={12} aria-hidden />
+            </span>
+          )}
         </span>
         {prefix}
         <span
@@ -92,15 +103,6 @@ export function CollectionRowBody({
           </TruncatedText>
           {location}
         </span>
-        {pinned && (
-          <span
-            className="uikit-collection-pin"
-            role="img"
-            aria-label="Pinned in this collection"
-          >
-            <Pin size={12} aria-hidden />
-          </span>
-        )}
         {badge && <span className="uikit-collection-badge">{badge}</span>}
         {(meta || actions) && (
           <span className={`uikit-collection-end ${classNames.end ?? ""}`}>

@@ -17,7 +17,7 @@ The stack separates and rotates on hover, compresses on press, and fans wider
 when expanded. The pin flies diagonally upward and fades out so the open papers
 have room to breathe; closing brings it back. Paper motion takes 240ms and the
 fade takes 180ms, with immediate state changes for reduced motion. Row pin status remains
-amber beside the title, preserving the original type glyph on the left.
+amber over the upper-right corner of the original type glyph on the left. The type glyph shrinks slightly under the badge; its slot stays fixed, the pin stays accessible, and no background patch is added. Apply the same badge to any pinned node or resource type.
 
 ## Categories
 

@@ -11,7 +11,20 @@ import {
   MenuItem,
   VirtualListFlow,
 } from "@dreamlake/uikit";
-import { FileText, MoreHorizontal, Pin, PinOff, Boxes } from "lucide-react";
+import {
+  FileText,
+  MoreHorizontal,
+  Pin,
+  PinOff,
+  Boxes,
+  Film,
+  AudioLines,
+  Image,
+  Braces,
+  Monitor,
+  Table2,
+  FolderArchive,
+} from "lucide-react";
 
 const entries = [
   {
@@ -269,6 +282,43 @@ export function CollectionIconStates() {
       >
         <PinnedPlaneIcon /> Pinned collection
       </span>
+    </div>
+  );
+}
+
+/** The pin decorates the existing type icon, regardless of resource kind. */
+export function PinnedResourceIcons() {
+  const [pinned, setPinned] = useState(true);
+  const icons = [
+    { name: "Memo", icon: <FileText size={18} /> },
+    { name: "Folder", icon: <FolderCollectionIcon /> },
+    { name: "Episode", icon: <FolderArchive size={18} /> },
+    { name: "Video", icon: <Film size={18} /> },
+    { name: "Audio", icon: <AudioLines size={18} /> },
+    { name: "Image", icon: <Image size={18} /> },
+    { name: "JSON", icon: <Braces size={18} /> },
+    { name: "Table", icon: <Table2 size={18} /> },
+    { name: "Computer", icon: <Monitor size={18} /> },
+    { name: "Bindr", icon: <BindrCollectionIcon /> },
+  ];
+  return (
+    <div>
+      <Button variant="ghost" size="sm" onClick={() => setPinned(!pinned)}>
+        {pinned ? "Show unpinned icons" : "Show pinned icons"}
+      </Button>
+      <div
+        aria-label="Resource pin icon examples"
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+          gap: 4,
+          marginTop: 8,
+        }}
+      >
+        {icons.map(({ name, icon }) => (
+          <CollectionRow key={name} name={name} icon={icon} pinned={pinned} />
+        ))}
+      </div>
     </div>
   );
 }

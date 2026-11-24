@@ -16,9 +16,15 @@ examples stays where it was: pins belong to a collection. **Unpin from top**
 restores the ordinary sort position. Pinned rows appear once, in a drawer above
 the ordinary contents. The drawer starts open and can be collapsed with its
 header; a neutral Lucide-derived pin over three translucent paper sheets identifies
-the group. The matching amber pin beside each title is status, not another button. Search still narrows the pinned entries. These examples keep state in
+the group. An amber pin overlays a slightly smaller type icon on each pinned row. It is status, not another button, and leaves the title clear. This treatment is independent of node or resource type. Search still narrows the pinned entries. These examples keep state in
 memory; the product persists collection pins on the server and applies them
 before pagination, under the collection's write permissions.
+
+### Pin badges across resource icons
+
+Use the same badge for every type glyph. Toggling status preserves the title's
+position; only the type glyph shrinks under its amber pin. The badge has no
+background box and keeps its accessible “Pinned in this collection” label.
 
 ## Large lists
 
