@@ -4,6 +4,33 @@
   gap: 2px;
   min-width: 0;
 }
+.uikit-list-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-sizing: border-box;
+  height: 36px;
+  min-width: 0;
+  padding: 0 10px;
+  color: var(--muted, var(--uikit-muted));
+  font-family: var(--f-ui);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 16px;
+  cursor: default;
+  user-select: none;
+}
+.uikit-list-divider > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.uikit-list-divider::after {
+  content: "";
+  flex: 1;
+  min-width: 16px;
+  border-top: 1px solid var(--faint, var(--uikit-border));
+}
 .uikit-collection-row {
   position: relative;
   min-width: 0;

@@ -17,6 +17,10 @@ before pagination, under the collection's write permissions.
 
 ## Large lists
 
+Use [ListDivider](/components/list-divider/) for labelled boundaries such as
+Today and Yesterday. Dividers are never selectable or collapsible; keep them
+outside the row selection array and keyboard navigation targets.
+
 Use the existing `VirtualListFlow` for long lists, with the same row renderer.
 Keep pagination, loading, errors, selection and data mutations in the host.
 Do not merge separately paginated families or sort only the loaded pages to
