@@ -36,4 +36,15 @@ export {
 } from "./components/OutlineRail/OutlineRail";
 export { outlinePosition } from "./components/OutlineRail/geometry";
 
-export { FileDropOverlay, isExternalFileDrag, useFileDropTarget } from "./components/FileDropOverlay";
+export {
+  FileDropOverlay,
+  isExternalFileDrag,
+  useFileDropTarget,
+} from "./components/FileDropOverlay";
+
+export {
+  CollectionList,
+  CollectionRow,
+  CollectionRowBody,
+} from "./components/CollectionList";
+export type { CollectionRowBodyProps } from "./components/CollectionList";
