@@ -42,7 +42,7 @@ docking or physical-device acceptance.
 
 ## Compact session controls
 
-The group background carries the hovered mode color; its selection remains neutral. Both the complete group and neighboring actions match the inactive tab fill.
+Panel mode groups use the memo editor’s Vim toggle style exactly: a 20px track, 2px inset, 16px background-colored thumb, 4px/2px corners, and 240ms ease motion. Hover fills the track; the selected icon stays on the neutral thumb and exposed icons turn white. The control is centered in the tab gutter. The live example includes Vim for direct comparison.
 
 ## Compression and overflow
 
@@ -191,3 +191,12 @@ Tab labels and controls do not select text during pointer drags or repeated taps
 When the scrolling viewport is narrower than two minimum tab widths plus the 16px gutter, tabs scroll without sticky stacking. This keeps later labels reachable beside fixed controls; wider rows retain their usual stacking. The Row width example can be narrowed to 120px to exercise this behavior.
 
 Gutter sizing inherits `--uikit-document-tab-height` and `--uikit-document-control-height`. Hosts with a different row height set these together: control height equals tab height minus twice `--uikit-document-inactive-inset`. Avoid adding vertical wrapper padding or overriding every descendant button’s minimum height.
+
+## Leading icons and loading
+
+A leading icon uses a compact 6px left inset; text-only labels use 12px.
+Trailing icons do not change the leading inset. Use `iconLoading` while an
+`icon` is unavailable: the compact inset stays stable, but no empty icon box or
+icon-to-label gap is reserved. Custom `labelContent` and `PanelLayout.renderTab`
+can use the exported `TabIcon` slot for the same behavior, including asynchronous
+or portaled icons. Empty slots collapse automatically.

@@ -1,3 +1,4 @@
+import { TabIcon } from "./TabIcon";
 import {
   Fragment,
   useEffect,
@@ -22,6 +23,8 @@ export interface TabRowItem {
   labelContent?: ReactNode;
   /** Optional visual beside the label, or in its place with iconOnly. */
   icon?: ReactNode;
+  /** Keep the compact icon inset while loading, without reserving an empty icon box. */
+  iconLoading?: boolean;
   /** Compact icon tab; label remains the accessible name and default tooltip. */
   iconOnly?: boolean;
   /** Size this text tab to content, capped by preferredTabWidth. */
@@ -145,7 +148,9 @@ export function TabRow({
         aria-label={tabs.length ? ariaLabel : undefined}
       >
         {tabs.map((tab, index) => {
-          const hasIcon = tab.icon != null && typeof tab.icon !== "boolean";
+          const hasIcon =
+            tab.iconLoading ||
+            (tab.icon != null && typeof tab.icon !== "boolean");
           const iconOnly = !!tab.iconOnly && hasIcon;
           const iconWidth =
             onClose &&
@@ -237,9 +242,9 @@ export function TabRow({
                   }}
                 >
                   {hasIcon && (
-                    <span className="uikit-tab-row-item-icon" aria-hidden>
+                    <TabIcon className="uikit-tab-row-item-icon" aria-hidden>
                       {tab.icon}
-                    </span>
+                    </TabIcon>
                   )}
                   {!iconOnly && (tab.labelContent ?? tab.label)}
                 </button>

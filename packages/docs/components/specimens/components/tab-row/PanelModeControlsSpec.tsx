@@ -1,5 +1,11 @@
 import { useState } from "react";
-import { Button, TabRow, ToggleButton, ToggleButtons } from "@dreamlake/uikit";
+import {
+  Button,
+  TabRow,
+  ToggleButton,
+  ToggleButtons,
+  VimToggle,
+} from "@dreamlake/uikit";
 import {
   ChevronDown,
   FolderTree,
@@ -13,15 +19,15 @@ const modes = [
     value: "terminal",
     label: "Terminal",
     icon: SquareTerminal,
-    color: "var(--ink)",
   },
-  { value: "chat", label: "Chat", icon: MessageSquare, color: "#2563eb" },
-  { value: "files", label: "Files", icon: FolderTree, color: "#c2410c" },
+  { value: "chat", label: "Chat", icon: MessageSquare },
+  { value: "files", label: "Files", icon: FolderTree },
 ];
 
-/** The group and neighboring actions match the 26px inactive tab fill. */
+/** Multi-mode controls share the memo Vim toggle geometry and hover treatment. */
 export function PanelModeControlsSpec() {
   const [mode, setMode] = useState("terminal");
+  const [vim, setVim] = useState(false);
   const [notice, setNotice] = useState("");
   return (
     <section data-panel-toggle-example="" aria-label="Compact session controls">
@@ -62,11 +68,10 @@ export function PanelModeControlsSpec() {
               role="group"
               aria-label="Session view"
             >
-              {modes.map(({ value, label, icon: Icon, color }) => (
+              {modes.map(({ value, label, icon: Icon }) => (
                 <ToggleButton
                   key={value}
                   value={value}
-                  hoverColor={color}
                   icon
                   aria-label={label}
                   title={label}
@@ -91,6 +96,23 @@ export function PanelModeControlsSpec() {
         }
       />
       <div data-panel-body="">
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            marginBottom: 12,
+          }}
+        >
+          <span style={{ fontSize: 11, color: "var(--muted)" }}>
+            Memo editor reference
+          </span>
+          <VimToggle
+            on={vim}
+            onToggle={() => setVim(!vim)}
+            label="Vim style reference"
+          />
+        </div>
         <div hidden={mode !== "terminal"}>
           <code>$ ready</code>
         </div>

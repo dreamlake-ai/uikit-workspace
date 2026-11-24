@@ -119,11 +119,14 @@ outline-style variable, and without it the ring painted nothing.
 
 ## Compact panel groups
 
-`variant="panel"` keeps selection neutral and puts each item's optional
-`hoverColor` on the group background only while hovered or keyboard-focused.
-Buttons stay transparent. The complete group height is 26px (`sm`), 30px (`md`),
-or 34px (`lg`), including its fixed 2px inset; `padding` does not add another
-frame in this variant. Use an unpadded action row and match neighboring controls
-to that outer height. See the interactive [panel tab example](reference/components-panel-tabs.md#compact-view-controls).
+`variant="panel"` shares the memo editor’s `VimToggle` style: a 20px track,
+2px inset, 16px background-colored thumb, 4px/2px corners, and 240ms ease motion.
+Icon segments are 20px wide. This geometry is fixed across `size` values and
+centers within a tab gutter; it does not grow to the row’s height.
 
-Inside a TabRow, the panel variant inherits `--uikit-document-control-height` so the whole group matches the inactive tab fill. Outside a row its compact default is 26px.
+Hover or keyboard focus fills the group background with `hoverColor` (Vim blue
+by default). Buttons stay transparent, the selected face stays inked on the
+neutral thumb, and exposed faces turn white. Resting inactive faces are muted
+at half opacity. Reduced motion removes the transitions. See the interactive
+[panel tab example](reference/components-tab-row.md#compact-view-controls), with a Vim
+reference control beside the three-mode example.
