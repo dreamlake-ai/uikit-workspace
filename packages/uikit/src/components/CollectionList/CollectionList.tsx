@@ -75,10 +75,15 @@ export function CollectionRowBody({
         <span
           className={`uikit-collection-icon ${classNames.icon ?? ""}`}
           data-pinned={pinned || undefined}
+          aria-hidden={pinned ? undefined : true}
         >
-          <span className="uikit-collection-type-icon" aria-hidden="true">
-            {icon}
-          </span>
+          {pinned ? (
+            <span className="uikit-collection-type-icon" aria-hidden="true">
+              {icon}
+            </span>
+          ) : (
+            icon
+          )}
           {pinned && (
             <span
               className="uikit-collection-pin"
