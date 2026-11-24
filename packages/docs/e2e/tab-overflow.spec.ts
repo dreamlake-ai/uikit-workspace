@@ -92,19 +92,20 @@ for (const kind of ["documents", "panels"] as const) {
 
     await row.getByRole("tab").nth(1).click();
     await expect(first).toHaveAttribute("aria-selected", "false");
-    expect(await vertical()).toEqual(activeGeometry);
+    const inactiveLabel = await firstFace
+      .locator(".uikit-document-tab-label")
+      .boundingBox();
+    expect({ y: inactiveLabel!.y, height: inactiveLabel!.height }).toEqual(
+      activeGeometry[0],
+    );
+    await expect(firstFace.locator(".uikit-document-tab-close")).toHaveCount(0);
     expect(
       await firstFace.evaluate(
         (el) => getComputedStyle(el, "::before").borderRadius,
       ),
     ).toBe("6px");
-    const closeBeforeHover = await firstFace
-      .locator(".uikit-document-tab-close")
-      .boundingBox();
     await firstFace.hover();
-    expect(
-      await firstFace.locator(".uikit-document-tab-close").boundingBox(),
-    ).toEqual(closeBeforeHover);
+    await expect(firstFace.locator(".uikit-document-tab-close")).toHaveCount(0);
     await first.click();
 
     await row.evaluate((el) => {

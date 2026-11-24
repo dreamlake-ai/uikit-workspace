@@ -184,7 +184,7 @@ it("closable refuses the close itself, not just the button — Delete never touc
     0,
   );
   expect(container.querySelectorAll('[aria-label="Close Files"]')).toHaveLength(
-    1,
+    0,
   );
 
   act(() => {
@@ -559,8 +559,8 @@ it("a grouped panel does not repeat its title and close button under the tab", (
   ).toHaveLength(0);
   expect(
     container.querySelectorAll('[role="button"][aria-label^="Close "]'),
-    "the tab still closes it",
-  ).toHaveLength(2);
+    "only the active tab shows its close control",
+  ).toHaveLength(1);
 
   // A CUSTOM header carries controls the tab cannot, so it still renders.
   render(

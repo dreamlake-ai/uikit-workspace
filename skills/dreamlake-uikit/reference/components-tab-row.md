@@ -27,8 +27,7 @@ layout proposal, not an application screenshot or a completed editor adapter.
 Both choices appear in roomy and crowded states; those are viewport states,
 not additional choices. Future questions use 2.A, 2.B, and so on. The selected tab matches the body and its
 curved feet extend into it. Inactive tabs are flat labels with faint vertical
-separators; hovering gives them a rounded rectangle. Separators beside the
-active or hovered tab disappear.
+separators; hovering gives them a rounded rectangle. Separators beside the active tab disappear. Inactive tabs keep their separators on hover and never show a close button.
 
 Only the foreground tab shows its canonical hash badge. It stays immediately
 before its close button, together at the right
@@ -60,8 +59,8 @@ scrolling tabs. Compact layouts use `minTabHeight={30}` and the
 `uikit-tab-row-compact` class to center 28px gutter controls against the 30px labels
 plus their tab borders; the compact class also removes the desktop space above
 the controls. An item with `icon` and `iconOnly` occupies 32px; its `label`
-remains the accessible name and tooltip. A closable icon tab reserves another
-22px for its close control. Other tabs retain their normal width and appearance.
+remains the accessible name and tooltip. The active closable icon tab reserves another
+22px for its close control; inactive icon tabs stay 32px wide. Other tabs retain their normal width and appearance.
 
 ## Tab groups
 
@@ -183,7 +182,7 @@ The row carries `data-tab-count` with the number of tabs, so a host can style a 
 
 ## Keyboard interaction
 
-Tab focuses the selected tab. Left/Right arrows select adjacent tabs; Home/End select the first/last tab. Delete requests closing the focused tab. Close buttons remain visible inside their owning tabs and are keyboard accessible. Selection scrolls into view.
+Tab focuses the selected tab. Left/Right arrows select adjacent tabs; Home/End select the first/last tab. Delete requests closing the focused tab. Only the active tab shows its close button. Inactive tabs have no close button or reserved close-button space, including on hover; short vertical separators divide adjacent inactive tabs. Delete and middle-click still close a closable tab. Selection scrolls into view.
 
 Use [Tabs](reference/components-tabs.md) for underline and segmented switches. Use Tab Row for open documents or pages that need close controls and width compression.
 
