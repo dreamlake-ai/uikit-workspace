@@ -67,6 +67,10 @@
   justify-content: center;
   flex-shrink: 0;
   color: var(--muted, var(--uikit-muted));
+  opacity: 0.75;
+}
+.uikit-collection-icon[data-pinned] {
+  opacity: 1;
 }
 .uikit-collection-type-icon {
   display: inline-flex;
