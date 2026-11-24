@@ -1,0 +1,28 @@
+# ListDivider
+
+Separate related rows with a quiet label and rule. Dividers are not selectable,
+focusable, draggable or collapsible. They have no chevron, checkbox or actions.
+The accessible separator name exposes the label without adding a keyboard stop.
+
+## Date groups
+
+Try clicking a date, moving between rows with the arrow keys, Shift-clicking
+across a date boundary, or selecting all with Ctrl/Cmd+A. Only sessions count
+toward selection. The date appears once above its rows, keeping their timestamps
+short: `just now`, `5min ago`, then `1:27 pm`.
+
+## Virtualized lists
+
+Render each divider as its own keyed entry in `VirtualList` or `VirtualListFlow`.
+Include it in layout measurements, but exclude it from the selectable item array,
+keyboard row selectors, selection counts, drag targets and bulk actions. The
+default height is 36px. A divider is a boundary, not a sticky or expandable group.
+
+| Prop                 | Purpose                                                      |
+| -------------------- | ------------------------------------------------------------ |
+| `label`              | Required plain text, such as Today, Yesterday or Nov 21.     |
+| `className`, `style` | Host layout adjustments, including virtual-list positioning. |
+
+The host owns ordering, date formatting, timezone and group boundaries. Preserve
+related parent/child rows together; retain an inline date when a child's timestamp
+differs from its group's date. Show the full timestamp in the row's details.
