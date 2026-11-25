@@ -184,11 +184,12 @@ export function CollectionRow({
   );
 }
 
-/** A neutral Lucide-derived pin above three animated perspective sheets. */
+/** A neutral Lucide-derived pin above three translucent perspective sheets. */
 export function PinnedPlaneIcon({
   className = "",
   ...props
 }: SVGProps<SVGSVGElement>) {
+  const glassId = useId();
   return (
     <svg
       className={`uikit-pinned-plane ${className}`}
@@ -203,13 +204,29 @@ export function PinnedPlaneIcon({
       aria-hidden="true"
       {...props}
     >
-      <g className="uikit-pinned-paper uikit-pinned-paper-back">
+      <defs>
+        <linearGradient id={glassId} x1="0" y1="0" x2="0.35" y2="1">
+          <stop stopColor="var(--bg, #fff)" stopOpacity={0.78} />
+          <stop offset="0.5" stopColor="currentColor" stopOpacity={0.1} />
+          <stop offset="1" stopColor="currentColor" stopOpacity={0.26} />
+        </linearGradient>
+      </defs>
+      <g
+        className="uikit-pinned-paper uikit-pinned-paper-back"
+        fill={`url(#${glassId})`}
+      >
         <path d="M13 13.4Q14 12.9 15 13.4L24 18Q25.4 18.7 24 19.4L15 24Q14 24.5 13 24L4 19.4Q2.6 18.7 4 18Z" />
       </g>
-      <g className="uikit-pinned-paper uikit-pinned-paper-middle">
+      <g
+        className="uikit-pinned-paper uikit-pinned-paper-middle"
+        fill={`url(#${glassId})`}
+      >
         <path d="M13 13.4Q14 12.9 15 13.4L24 18Q25.4 18.7 24 19.4L15 24Q14 24.5 13 24L4 19.4Q2.6 18.7 4 18Z" />
       </g>
-      <g className="uikit-pinned-paper uikit-pinned-paper-front">
+      <g
+        className="uikit-pinned-paper uikit-pinned-paper-front"
+        fill={`url(#${glassId})`}
+      >
         <path d="M13 13.4Q14 12.9 15 13.4L24 18Q25.4 18.7 24 19.4L15 24Q14 24.5 13 24L4 19.4Q2.6 18.7 4 18Z" />
       </g>
       <g className="uikit-pinned-plane-pin">
