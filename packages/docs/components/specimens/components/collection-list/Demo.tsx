@@ -46,6 +46,58 @@ const entries = [
     kind: "memo",
   },
 ];
+
+/** Resize the panel without changing the browser width or remounting rows. */
+export function CompactList() {
+  const [width, setWidth] = useState(420);
+  const [selected, setSelected] = useState<string | null>(null);
+  return (
+    <section aria-label="Responsive collection example">
+      <label>
+        Panel width: {width}px
+        <input
+          aria-label="Panel width"
+          type="range"
+          min={140}
+          max={520}
+          value={width}
+          onChange={(event) => setWidth(Number(event.target.value))}
+        />
+      </label>
+      <CollectionList style={{ width, maxWidth: "100%" }}>
+        {entries.map((entry) => (
+          <CollectionRow
+            key={entry.id}
+            role="button"
+            tabIndex={0}
+            aria-label={entry.name}
+            aria-pressed={selected === entry.id}
+            onClick={() => setSelected(entry.id)}
+            onKeyDown={(event) => {
+              if (
+                event.target === event.currentTarget &&
+                ["Enter", " "].includes(event.key)
+              ) {
+                event.preventDefault();
+                setSelected(entry.id);
+              }
+            }}
+            icon={<FolderCollectionIcon />}
+            name={entry.name}
+            detail={entry.detail}
+            meta="Nov 25"
+            actions={
+              <button aria-label={`Actions for ${entry.name}`}>…</button>
+            }
+          />
+        ))}
+      </CollectionList>
+      <output aria-live="polite">
+        {selected ? `Selected: ${selected}` : "Choose a title"}
+      </output>
+    </section>
+  );
+}
 function Example({ kind }: { kind: "Folder" | "Bindr" | "Project" }) {
   const [pins, setPins] = useState<string[]>(
     kind === "Bindr" ? ["results"] : [],
