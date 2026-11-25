@@ -201,26 +201,14 @@ export function PinnedPlaneIcon({
       aria-hidden="true"
       {...props}
     >
-      <g className="uikit-pinned-paper uikit-pinned-paper-back" opacity={0.4}>
-        <path
-          d="M13 13.4Q14 12.9 15 13.4L24 18Q25.4 18.7 24 19.4L15 24Q14 24.5 13 24L4 19.4Q2.6 18.7 4 18Z"
-          fill="currentColor"
-          fillOpacity={0.08}
-        />
+      <g className="uikit-pinned-paper uikit-pinned-paper-back">
+        <path d="M13 13.4Q14 12.9 15 13.4L24 18Q25.4 18.7 24 19.4L15 24Q14 24.5 13 24L4 19.4Q2.6 18.7 4 18Z" />
       </g>
-      <g className="uikit-pinned-paper uikit-pinned-paper-middle" opacity={0.6}>
-        <path
-          d="M13 13.4Q14 12.9 15 13.4L24 18Q25.4 18.7 24 19.4L15 24Q14 24.5 13 24L4 19.4Q2.6 18.7 4 18Z"
-          fill="currentColor"
-          fillOpacity={0.1}
-        />
+      <g className="uikit-pinned-paper uikit-pinned-paper-middle">
+        <path d="M13 13.4Q14 12.9 15 13.4L24 18Q25.4 18.7 24 19.4L15 24Q14 24.5 13 24L4 19.4Q2.6 18.7 4 18Z" />
       </g>
       <g className="uikit-pinned-paper uikit-pinned-paper-front">
-        <path
-          d="M13 13.4Q14 12.9 15 13.4L24 18Q25.4 18.7 24 19.4L15 24Q14 24.5 13 24L4 19.4Q2.6 18.7 4 18Z"
-          fill="currentColor"
-          fillOpacity={0.14}
-        />
+        <path d="M13 13.4Q14 12.9 15 13.4L24 18Q25.4 18.7 24 19.4L15 24Q14 24.5 13 24L4 19.4Q2.6 18.7 4 18Z" />
       </g>
       <g className="uikit-pinned-plane-pin">
         <path d="M11 3h6" />
