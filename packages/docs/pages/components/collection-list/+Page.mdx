@@ -11,8 +11,9 @@ import {
   CollectionIconStates,
   PinnedResourceIcons,
   CompactList,
-} from "../../../components/specimens/components/collection-list/Demo";
-import source from "../../../components/specimens/components/collection-list/Demo.tsx?raw";
+  CompactGrid,
+} from '../../../components/specimens/components/collection-list/Demo'
+import source from '../../../components/specimens/components/collection-list/Demo.tsx?raw'
 
 # CollectionList
 
@@ -136,3 +137,17 @@ papers and brings the pin back. Paper transforms take 240ms and the pin fades in
 180ms; the fixed slot keeps the label still throughout the sequence.
 Reduced-motion users get immediate state changes. For folder and Bindr icons, `size` defaults to 18 and
 `strokeWidth` to 1.5; use a lighter stroke for large icons.
+
+## Compact grid
+
+Choose an exact number of columns without widening the panel. `columns={3}`
+keeps three equal columns at any width; use `CollectionLayoutProvider` to share
+that choice across nested groups. `CollectionRowBody` uses its optional
+`thumbnail` in grid mode and otherwise keeps the type icon. Names retain their
+full-text hover label. Arrow keys move focus through the visible grid; item
+activation and selection remain owned by the caller. Use `data-collection-item`
+on custom focusable rows and `data-collection-span` on section headers/status.
+
+<Preview source={source} filename="Demo.tsx">
+  <CompactGrid />
+</Preview>

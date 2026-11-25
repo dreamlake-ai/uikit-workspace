@@ -44,6 +44,8 @@ export {
 
 export {
   CollectionList,
+  CollectionLayoutProvider,
+  useCollectionColumns,
   PinnedCollectionDrawer,
   PinnedPlaneIcon,
   FolderCollectionIcon,

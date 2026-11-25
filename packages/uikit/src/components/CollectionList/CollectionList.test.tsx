@@ -2,7 +2,11 @@
 import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { expect, it, vi } from "vitest";
-import { CollectionRow, PinnedCollectionDrawer } from "./CollectionList";
+import {
+  CollectionList,
+  CollectionRow,
+  PinnedCollectionDrawer,
+} from "./CollectionList";
 
 it("keeps menu actions independent of row navigation and exposes pin status", () => {
   (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
@@ -83,6 +87,81 @@ it("opens pins by default, links the disclosure, and makes collapsed children in
     expect(content.hasAttribute("inert")).toBe(true);
     act(() => trigger.click());
     expect(trigger.getAttribute("aria-expanded")).toBe("true");
+  } finally {
+    act(() => root.unmount());
+    host.remove();
+  }
+});
+
+it("retains row DOM and follows grid geometry while ignoring hidden items", () => {
+  (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
+  const host = document.createElement("div");
+  document.body.append(host);
+  const root = createRoot(host);
+  const render = (columns: number) => (
+    <CollectionList columns={columns}>
+      {[0, 1, 2, 3, 4, 5].map((id) => (
+        <CollectionRow
+          key={id}
+          role="button"
+          tabIndex={0}
+          icon={null}
+          name={`file-${id}`}
+        />
+      ))}
+    </CollectionList>
+  );
+  try {
+    act(() => root.render(render(1)));
+    const rows = Array.from(
+      host.querySelectorAll<HTMLElement>("[data-collection-item]"),
+    );
+    act(() => root.render(render(3)));
+    expect(Array.from(host.querySelectorAll("[data-collection-item]"))).toEqual(
+      rows,
+    );
+    rows.forEach((row, i) => {
+      const rect = {
+        x: (i % 3) * 90,
+        y: Math.floor(i / 3) * 80,
+        width: 80,
+        height: 70,
+      } as DOMRect;
+      row.getBoundingClientRect = () => rect;
+      row.getClientRects = () => [rect] as unknown as DOMRectList;
+    });
+    rows[0].focus();
+    act(() =>
+      rows[0].dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "ArrowRight",
+          bubbles: true,
+          cancelable: true,
+        }),
+      ),
+    );
+    expect(document.activeElement).toBe(rows[1]);
+    act(() =>
+      rows[1].dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "ArrowDown",
+          bubbles: true,
+          cancelable: true,
+        }),
+      ),
+    );
+    expect(document.activeElement).toBe(rows[4]);
+    rows[5].setAttribute("inert", "");
+    act(() =>
+      rows[4].dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "ArrowRight",
+          bubbles: true,
+          cancelable: true,
+        }),
+      ),
+    );
+    expect(document.activeElement).not.toBe(rows[5]);
   } finally {
     act(() => root.unmount());
     host.remove();

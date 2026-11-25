@@ -396,3 +396,76 @@
     transition: none;
   }
 }
+
+/* Explicit density is a user choice, including three columns in a 280px panel. */
+.uikit-collection-list[data-columns] {
+  gap: 6px;
+  align-items: start;
+}
+.uikit-collection-list[data-columns] > * {
+  min-width: 0;
+}
+.uikit-collection-list[data-columns] > [data-collection-span],
+.uikit-collection-list[data-columns] > .uikit-pinned-drawer {
+  grid-column: 1 / -1;
+}
+.uikit-collection-line[data-presentation="tile"] {
+  flex-direction: column;
+  gap: 6px;
+  align-items: stretch;
+}
+.uikit-collection-line[data-presentation="tile"] .uikit-collection-icon {
+  display: flex !important;
+  position: relative;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: 6px;
+  opacity: 1;
+  background: color-mix(in srgb, var(--ink) 4%, transparent);
+}
+.uikit-collection-line[data-presentation="tile"] .uikit-collection-title {
+  display: block;
+  width: 100%;
+}
+.uikit-collection-line[data-presentation="tile"] .uikit-collection-name {
+  font-size: 12px;
+}
+.uikit-collection-line[data-presentation="tile"]
+  :is(
+    .uikit-collection-end,
+    .uikit-collection-location,
+    .uikit-collection-prefix,
+    .uikit-collection-badge
+  ) {
+  display: none;
+}
+.uikit-collection-line[data-presentation="tile"] .uikit-collection-pin {
+  top: 3px;
+  left: 3px;
+}
+
+.uikit-collection-line[data-presentation="tile"] {
+  position: relative;
+}
+.uikit-collection-line[data-presentation="tile"]
+  .uikit-collection-end:has(.uikit-collection-actions) {
+  display: inline-flex !important;
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  height: 24px;
+  padding: 0;
+  margin: 0;
+  border-radius: 5px;
+}
+.uikit-collection-line[data-presentation="tile"] .uikit-collection-meta {
+  display: none;
+}
+
+.uikit-collection-line[data-presentation="tile"] .uikit-collection-name {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+}

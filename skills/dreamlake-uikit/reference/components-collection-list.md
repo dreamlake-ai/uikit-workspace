@@ -100,3 +100,13 @@ papers and brings the pin back. Paper transforms take 240ms and the pin fades in
 180ms; the fixed slot keeps the label still throughout the sequence.
 Reduced-motion users get immediate state changes. For folder and Bindr icons, `size` defaults to 18 and
 `strokeWidth` to 1.5; use a lighter stroke for large icons.
+
+### Explicit compact grids
+
+`CollectionList columns={2 | 3 | 4}` retains the chosen number of equal columns
+inside the available width, even in narrow panels. `CollectionLayoutProvider`
+shares the count across groups; `useCollectionColumns()` reads it. Rows stay
+mounted while the count changes. `CollectionRowBody.thumbnail` supplies an
+optional preview in grid mode. Mark custom focusable rows `data-collection-item`
+for directional keyboard navigation, and section headers `data-collection-span`
+to span every column. Product code owns selection and activation.
