@@ -374,3 +374,42 @@ export function PinnedResourceIcons() {
     </div>
   );
 }
+
+/** An exact density choice even when the available panel width is only 280px. */
+export function CompactGrid() {
+  const [columns, setColumns] = useState(3);
+  return (
+    <section
+      aria-label="Compact grid example"
+      style={{ width: 280, maxWidth: "100%" }}
+    >
+      <label>
+        Columns{" "}
+        <select
+          aria-label="Grid columns"
+          value={columns}
+          onChange={(event) => setColumns(Number(event.target.value))}
+        >
+          {[1, 2, 3, 4].map((n) => (
+            <option key={n} value={n}>
+              {n === 1 ? "List" : n}
+            </option>
+          ))}
+        </select>
+      </label>
+      <CollectionList columns={columns}>
+        {[...entries, ...entries].map((entry, i) => (
+          <CollectionRow
+            key={i}
+            role="button"
+            tabIndex={0}
+            icon={<FileText size={28} />}
+            name={entry.name}
+            nameText={entry.name}
+            aria-label={`${entry.name} ${i + 1}`}
+          />
+        ))}
+      </CollectionList>
+    </section>
+  );
+}

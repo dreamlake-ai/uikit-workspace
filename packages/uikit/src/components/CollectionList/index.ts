@@ -1,5 +1,7 @@
 export {
   CollectionList,
+  CollectionLayoutProvider,
+  useCollectionColumns,
   PinnedCollectionDrawer,
   PinnedPlaneIcon,
   CollectionRow,

@@ -1,5 +1,11 @@
-import { useId } from "react";
-import type { HTMLAttributes, ReactNode, SVGProps } from "react";
+import { createContext, useContext, useId } from "react";
+import type {
+  CSSProperties,
+  ComponentProps,
+  HTMLAttributes,
+  ReactNode,
+  SVGProps,
+} from "react";
 import { Pin } from "lucide-react";
 import {
   Collapsible,
@@ -10,17 +16,101 @@ import {
 import { TruncatedText } from "./TruncatedText";
 import "./CollectionList.css";
 
-/** Shared list geometry. Data, ordering, navigation and mutations belong to the caller.
- * For large inventories, render these rows through VirtualListFlow. */
+const CollectionColumns = createContext(1);
+/** Share an explicit column count across collection groups without resizing their panel. */
+export const CollectionLayoutProvider = CollectionColumns.Provider;
+export const useCollectionColumns = () => useContext(CollectionColumns);
+
+/** Data, ordering, navigation and mutations belong to the caller.
+ * `columns` stays exact even in narrow panels. Mark section headers/status with
+ * data-collection-span to span the grid. Rows remain mounted when switching. */
 export function CollectionList({
   children,
   className = "",
+  columns: explicitColumns,
+  style,
+  onKeyDown,
   ...props
-}: HTMLAttributes<HTMLDivElement>) {
+}: ComponentProps<"div"> & { columns?: number }) {
+  const inherited = useCollectionColumns();
+  const columns = Math.max(1, Math.floor(explicitColumns ?? inherited));
   return (
-    <div {...props} className={`uikit-collection-list ${className}`}>
-      {children}
-    </div>
+    <CollectionLayoutProvider value={columns}>
+      <div
+        {...props}
+        className={`uikit-collection-list ${className}`}
+        data-columns={columns > 1 ? columns : undefined}
+        style={
+          {
+            ...style,
+            ...(columns > 1
+              ? {
+                  display: "grid",
+                  gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
+                }
+              : {}),
+          } as CSSProperties
+        }
+        onKeyDown={(event) => {
+          onKeyDown?.(event);
+          if (
+            event.defaultPrevented ||
+            columns === 1 ||
+            event.shiftKey ||
+            event.metaKey ||
+            event.ctrlKey ||
+            event.altKey
+          )
+            return;
+          if (
+            !["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(
+              event.key,
+            )
+          )
+            return;
+          const target = event.target as HTMLElement;
+          if (!target.matches("[data-collection-item]")) return;
+          const origin = target.getBoundingClientRect();
+          const horizontal =
+            event.key === "ArrowLeft" || event.key === "ArrowRight";
+          const sign =
+            event.key === "ArrowLeft" || event.key === "ArrowUp" ? -1 : 1;
+          const center = (r: DOMRect) => [
+            r.x + r.width / 2,
+            r.y + r.height / 2,
+          ];
+          const start = center(origin);
+          const candidates = Array.from(
+            event.currentTarget.querySelectorAll<HTMLElement>(
+              "[data-collection-item]",
+            ),
+          )
+            .filter(
+              (row) =>
+                row !== target &&
+                !row.closest("[inert]") &&
+                row.getClientRects().length,
+            )
+            .map((row) => {
+              const c = center(row.getBoundingClientRect());
+              const forward =
+                (c[horizontal ? 0 : 1] - start[horizontal ? 0 : 1]) * sign;
+              const cross = Math.abs(
+                c[horizontal ? 1 : 0] - start[horizontal ? 1 : 0],
+              );
+              return { row, forward, score: forward + cross * 4 };
+            })
+            .filter(({ forward }) => forward > 1)
+            .sort((a, b) => a.score - b.score);
+          event.preventDefault();
+          event.stopPropagation();
+          candidates[0]?.row.focus({ preventScroll: true });
+          candidates[0]?.row.scrollIntoView?.({ block: "nearest" });
+        }}
+      >
+        {children}
+      </div>
+    </CollectionLayoutProvider>
   );
 }
 
@@ -39,6 +129,8 @@ export interface CollectionRowBodyProps {
     >
   >;
   icon: ReactNode;
+  /** Optional preview used only in the compact grid presentation. */
+  thumbnail?: ReactNode;
   name: ReactNode;
   nameId?: string;
   nameText?: string;
@@ -57,6 +149,7 @@ export interface CollectionRowBodyProps {
 export function CollectionRowBody({
   classNames = {},
   icon,
+  thumbnail,
   name,
   nameId,
   nameText,
@@ -69,15 +162,21 @@ export function CollectionRowBody({
   pinned,
   fillName,
 }: CollectionRowBodyProps) {
+  const tile = useCollectionColumns() > 1;
   return (
     <>
-      <span className={`uikit-collection-line ${classNames.line ?? ""}`}>
+      <span
+        className={`uikit-collection-line ${classNames.line ?? ""}`}
+        data-presentation={tile ? "tile" : undefined}
+      >
         <span
           className={`uikit-collection-icon ${classNames.icon ?? ""}`}
           data-pinned={pinned || undefined}
           aria-hidden={pinned ? undefined : true}
         >
-          {pinned ? (
+          {tile && thumbnail ? (
+            thumbnail
+          ) : pinned ? (
             <span className="uikit-collection-type-icon" aria-hidden="true">
               {icon}
             </span>
@@ -145,6 +244,7 @@ export function CollectionRowBody({
 export function CollectionRow({
   classNames,
   icon,
+  thumbnail,
   name,
   nameId,
   nameText,
@@ -161,11 +261,16 @@ export function CollectionRow({
   ...props
 }: CollectionRowBodyProps & HTMLAttributes<HTMLDivElement>) {
   return (
-    <div {...props} className={`uikit-collection-row ${className}`}>
+    <div
+      data-collection-item=""
+      {...props}
+      className={`uikit-collection-row ${className}`}
+    >
       <CollectionRowBody
         {...{
           classNames,
           icon,
+          thumbnail,
           name,
           nameId,
           nameText,
