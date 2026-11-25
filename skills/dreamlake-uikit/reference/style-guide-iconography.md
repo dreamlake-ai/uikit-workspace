@@ -13,7 +13,7 @@ current-color fills, so the selected row or dark surface still shows through. Fo
 The intentional custom exception is the pinned drawer icon: a neutral Lucide-derived
 pin over three softly rounded perspective papers in a fixed 28px canvas.
 The stack separates and rotates on hover, compresses on press, and fans wider
-when expanded. The stack uses opaque tonal fills so rear edges do not bleed through. The pin flies toward the top left and fades out so the open papers
+when expanded. The stack uses translucent surfaces, softly blurred rear edges and small contact shadows; the front edge stays crisp. The pin flies toward the top left and fades out so the open papers
 have room to breathe; closing brings it back. Paper motion takes 240ms and the
 fade takes 180ms, with immediate state changes for reduced motion. Row pin status remains
 amber, slanted over the upper-left corner of the original type glyph on the left. The type glyph shrinks and tilts in perspective with a subtle solid shadow under the badge; its slot stays fixed, the pin stays accessible, and no background patch is added. Apply the same badge to any pinned node or resource type.
