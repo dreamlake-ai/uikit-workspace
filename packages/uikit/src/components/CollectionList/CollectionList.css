@@ -4,6 +4,41 @@
   gap: 2px;
   min-width: 0;
 }
+/* The list's available width, independent of the window or neighbouring
+   panels. Virtualized hosts can opt in without an extra wrapper. */
+.uikit-collection-list,
+[data-collection-panel] {
+  container: uikit-list / inline-size;
+}
+.uikit-collection-prefix,
+.uikit-collection-location {
+  display: contents;
+}
+/* Explicit slots also let product-specific rows share the same policy.
+   display:none removes actions from keyboard navigation as well as sight. */
+@container uikit-list (max-width: 320px) {
+  .uikit-collection-end,
+  .uikit-collection-detail,
+  .uikit-collection-badge,
+  .uikit-collection-prefix,
+  .uikit-collection-location,
+  .uikit-pinned-drawer-count,
+  [data-collection-part="actions"],
+  [data-collection-part="meta"],
+  [data-collection-part="detail"] {
+    display: none !important;
+  }
+  .uikit-collection-title {
+    flex: 1 1 0%;
+  }
+}
+@container uikit-list (max-width: 200px) {
+  .uikit-collection-icon,
+  .uikit-pinned-drawer-trigger > svg,
+  [data-collection-part="icon"] {
+    display: none !important;
+  }
+}
 .uikit-list-divider {
   display: flex;
   align-items: center;

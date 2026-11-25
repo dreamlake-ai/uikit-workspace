@@ -310,6 +310,7 @@ export function ProfileCard({
       */}
       {(hoverActions || bottomRightActions) && (
         <div
+          data-uikit-bottom-actions-slot=""
           onClick={(e) => e.stopPropagation()}
           className={cn(
             'absolute right-3 bottom-[9px] z-10 inline-flex items-center gap-1.5',

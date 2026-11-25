@@ -10,6 +10,7 @@ import {
   LongList,
   CollectionIconStates,
   PinnedResourceIcons,
+  CompactList,
 } from "../../../components/specimens/components/collection-list/Demo";
 import source from "../../../components/specimens/components/collection-list/Demo.tsx?raw";
 
@@ -65,6 +66,27 @@ Use the existing `VirtualListFlow` for long lists, with the same row renderer.
 Keep pagination, loading, errors, selection and data mutations in the host.
 Do not merge separately paginated families or sort only the loaded pages to
 implement pinning. Use `CollectionList` for a small list already in normal flow.
+
+## Compact panels
+
+<Preview>
+  <CompactList />
+</Preview>
+
+Lists respond to their own available width. At **320px or less**, secondary
+details, dates, badges and row actions disappear. At **200px or less**, type
+icons and pin glyphs also disappear, leaving the titles. Widening the panel
+restores those slots without remounting rows or changing selection. Hidden
+actions leave the keyboard focus order; title links and selection still work.
+
+`CollectionList` provides the named `uikit-list` container automatically. For
+virtualized lists or existing panel wrappers, add `data-collection-panel` to
+the width-constrained host. Do not put containment on individual rows or
+inline elements. Product-specific rows can mark secondary slots with
+`data-collection-part="actions"`, `"meta"`, `"detail"`, or `"icon"`. Keep row
+navigation outside those slots. Use the same boundary around header actions
+when they should also disappear. Error messages, retry controls and pagination
+are not secondary row slots and remain available.
 
 ## Row slots
 

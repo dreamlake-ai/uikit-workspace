@@ -94,7 +94,7 @@ export function CollectionRowBody({
             </span>
           )}
         </span>
-        {prefix}
+        {prefix && <span className="uikit-collection-prefix">{prefix}</span>}
         <span
           className={`uikit-collection-title ${classNames.title ?? ""}`}
           style={fillName ? { flex: "1 1 0%" } : undefined}
@@ -106,7 +106,9 @@ export function CollectionRowBody({
           >
             {name}
           </TruncatedText>
-          {location}
+          {location && (
+            <span className="uikit-collection-location">{location}</span>
+          )}
         </span>
         {badge && <span className="uikit-collection-badge">{badge}</span>}
         {(meta || actions) && (
