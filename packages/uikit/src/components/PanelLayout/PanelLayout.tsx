@@ -378,9 +378,10 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(
       `Panel ${leaf.n}`;
     const compactActive = compact ? leaves.find((leaf) => leaf.id === activeId) : undefined;
     const activeLeading = compactActive && renderTabStripLeading?.(compactActive);
+    const hasActiveLeading = activeLeading != null && typeof activeLeading !== "boolean";
     const hasCompactSelector =
       !!compact &&
-      (leaves.length > 1 || compactLeading != null || activeLeading != null || utilityLeaves.length > 0);
+      (leaves.length > 1 || compactLeading != null || hasActiveLeading || utilityLeaves.length > 0);
     // Active drag: the floating surrogate + where it would dock. `target` is null
     // while the cursor is over the source panel or empty space (the surrogate just
     // tracks the cursor at the panel's own size).
@@ -1034,7 +1035,7 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(
                   : undefined;
               })()}
               leading={
-                utilityLeaves.length > 0 || activeLeading != null ? (
+                utilityLeaves.length > 0 || hasActiveLeading ? (
                   <>
                     {compactLeading}
                     {utilityLeaves.map((leaf) => {
