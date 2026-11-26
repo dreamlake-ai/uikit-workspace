@@ -202,6 +202,8 @@ export interface PanelLayoutProps {
   onResize?: (root: PanelNode) => void;
 
   // ── content ─────────────────────────────────────────────────────────────
+  /** Controls for the active leaf before the scrollable tabs on either layout. */
+  renderTabStripLeading?: LeafRenderer;
   /** Optional identity/eyebrow content inside a tab. */
   renderTab?: LeafRenderer;
   /** Reference/actions immediately before close; stays together at the scrolling edge. */
@@ -303,6 +305,7 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(
       onResize,
       renderTab,
       renderTabTrailing,
+      renderTabStripLeading,
       renderBody,
       renderHeader,
       showToolbar = false,
@@ -373,9 +376,11 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(
       compactPanelLabel?.(leaf, leaf.id === activeId)?.trim() ||
       leaf.title ||
       `Panel ${leaf.n}`;
+    const compactActive = compact ? leaves.find((leaf) => leaf.id === activeId) : undefined;
+    const activeLeading = compactActive && renderTabStripLeading?.(compactActive);
     const hasCompactSelector =
       !!compact &&
-      (leaves.length > 1 || compactLeading != null || utilityLeaves.length > 0);
+      (leaves.length > 1 || compactLeading != null || activeLeading != null || utilityLeaves.length > 0);
     // Active drag: the floating surrogate + where it would dock. `target` is null
     // while the cursor is over the source panel or empty space (the surrogate just
     // tracks the cursor at the panel's own size).
@@ -952,6 +957,7 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(
       showSingleTab,
       renderTab,
       renderTabTrailing,
+      renderTabStripLeading,
       renderBody,
       renderHeader,
       leafClassName,
@@ -1023,13 +1029,12 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(
               className="uikit-tab-row-compact"
               minTabHeight={30}
               trailing={(() => {
-                const active = leaves.find((leaf) => leaf.id === activeId);
-                return active && compactHeaderInTabRow?.(active)
-                  ? renderHeader?.(active)
+                return compactActive && compactHeaderInTabRow?.(compactActive)
+                  ? renderHeader?.(compactActive)
                   : undefined;
               })()}
               leading={
-                utilityLeaves.length > 0 ? (
+                utilityLeaves.length > 0 || activeLeading != null ? (
                   <>
                     {compactLeading}
                     {utilityLeaves.map((leaf) => {
@@ -1062,6 +1067,7 @@ export const PanelLayout = forwardRef<PanelLayoutHandle, PanelLayoutProps>(
                         </Button>
                       );
                     })}
+                    {activeLeading}
                   </>
                 ) : (
                   compactLeading

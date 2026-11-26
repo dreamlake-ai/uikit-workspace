@@ -63,6 +63,7 @@ export function GroupTabBar({
     showTabClose,
     renderTab,
     renderTabTrailing,
+    renderTabStripLeading,
     tabbed,
     panelAsAction,
   } = usePanelConfig();
@@ -149,6 +150,7 @@ export function GroupTabBar({
 
   // A single document uses the same tab semantics and inside close control.
   // Keep the marker used by hosts for title styling and docking targets.
+  const activeLeaf = group.children.find((leaf) => leaf.id === group.activeId);
   const single = tabbed && group.children.length === 1;
 
   return (
@@ -176,6 +178,7 @@ export function GroupTabBar({
           {leaf.title ?? `Panel ${leaf.n}`}
         </Button>
       ))}
+      {activeLeaf && renderTabStripLeading?.(activeLeaf)}
       <div
         ref={barRef}
         role="tablist"

@@ -21,6 +21,7 @@ export interface PanelConfig {
   tabbed?: boolean;
   showSingleTab?: ClosablePredicate;
   renderTab?: LeafRenderer;
+  renderTabStripLeading?: LeafRenderer;
   renderTabTrailing?: LeafRenderer;
   renderBody?: LeafRenderer;
   renderHeader?: LeafRenderer;

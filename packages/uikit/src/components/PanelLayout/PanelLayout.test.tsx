@@ -1309,3 +1309,21 @@ it.each(["pointerup", "pointercancel", "escape", "withdraw"])(
     destination.remove();
   },
 );
+
+it.each([false, true])("places the active pane's controls before the tabs, compact=%s", (compact) => {
+  const leaf = panelLeaf({ view: "chat", title: "Chat" });
+  act(() => root.render(
+    <PanelLayout
+      root={leaf}
+      compact={compact}
+      tabbed
+      showSingleTab={() => true}
+      renderTabStripLeading={(active) => <button>{active.title} history</button>}
+    />
+  ));
+  const row = container.querySelector(compact ? "[data-compact-selector]" : "[data-panel-tab-slot]")!;
+  const action = [...row.querySelectorAll("button")].find((button) => button.textContent === "Chat history")!;
+  const tabs = row.querySelector('[role="tablist"]')!;
+  expect(tabs.contains(action)).toBe(false);
+  expect(action.compareDocumentPosition(tabs) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+});
