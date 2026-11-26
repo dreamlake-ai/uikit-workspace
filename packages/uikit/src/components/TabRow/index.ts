@@ -3,3 +3,5 @@ export type { TabRowProps, TabRowItem } from "./TabRow";
 export { DocumentTabHeading } from "./DocumentTabHeading";
 
 export { TabIcon } from "./TabIcon";
+
+export { AdaptiveTabLabel } from "./AdaptiveTabLabel";
