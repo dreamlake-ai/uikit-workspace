@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Menu } from 'lucide-react'
+import { Menu, Link2 } from 'lucide-react'
 import { Button, PanelLayout, panelGroup, panelLeaf, panelSplit } from '@dreamlake/uikit'
 import { PanelStage } from './PanelStage'
 
@@ -34,6 +34,9 @@ export function CompactSpec() {
           {leaf.view === 'notes' ? '@workspace/notes' : leaf.title ?? 'Document'}
           {active && <span aria-hidden className="ml-1 text-uikit-muted">●</span>}
         </span>}
+        compactPanelLeading={leaf => leaf.title === 'Chat' ? (
+          <span title="Connected" className="inline-flex pl-1.5"><Link2 size={13} /></span>
+        ) : null}
         compactPanelFitContent={(leaf, active) => leaf.view === 'notes' && !active}
         closable={() => false}
         renderBody={leaf => <textarea
