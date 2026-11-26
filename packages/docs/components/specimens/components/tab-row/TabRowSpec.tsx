@@ -1,6 +1,12 @@
 import { useState } from "react";
 import { Ellipsis, FileText, Plus, X } from "lucide-react";
-import { Button, DocumentTabHeading, Slider, TabRow } from "@dreamlake/uikit";
+import {
+  AdaptiveTabLabel,
+  Button,
+  DocumentTabHeading,
+  Slider,
+  TabRow,
+} from "@dreamlake/uikit";
 
 /**
  * A demo knob: token-styled caption over a uikit Slider. Kept local to the
@@ -39,7 +45,7 @@ function Knob({
 export function TabRowSpec() {
   const [tabs, setTabs] = useState([
     { value: "plan", label: "Detailed Implementation Plan" },
-    { value: "hosts", label: "Enroll hosts through SSH" },
+    { value: "hosts", label: "geyang@training-host" },
     { value: "test", label: "Test host enrollment" },
     { value: "release", label: "Release checklist" },
   ]);
@@ -111,6 +117,13 @@ export function TabRowSpec() {
         <TabRow
           tabs={tabs.map((tab) => ({
             ...tab,
+            labelContent:
+              tab.value === "hosts" ? (
+                <AdaptiveTabLabel
+                  label={tab.label}
+                  alternatives={["g@training-host", "training-host"]}
+                />
+              ) : undefined,
             icon: tab.value === "hosts" ? <FileText size={12} /> : undefined,
             closeButton: tabs.length > 1,
           }))}

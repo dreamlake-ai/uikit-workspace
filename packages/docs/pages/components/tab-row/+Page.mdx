@@ -34,6 +34,12 @@ The strip supplies the left gutter once: at rest, adjacent tabs keep their norma
 
 The active tab meets its content surface with no gap below the row. Put breathing room inside the content panel as padding, not as a margin between the strip and its body. If a header contains taller contextual controls, stretch the tab row to the header height so the tabs still reach the content edge.
 
+Use `AdaptiveTabLabel` as `labelContent` when a tab has meaningful shorter names.
+Pass the full `label` and ordered `alternatives`; the widest fitting form is shown,
+with ellipsis only after the shortest form no longer fits. Its accessible name stays
+complete. The compression example includes `geyang@training-host`, `g@training-host`,
+and `training-host`.
+
 ## Workspace context
 
 **1.A — S-curved tabs beside the left panel, editor, and chat.** The
@@ -140,7 +146,6 @@ move the strip to the panel edge without moving the editor content.
 
 ```tsx
 import { TabRow } from "@dreamlake/uikit";
-
 <TabRow
   tabs={[{ value: "plan", label: "Implementation plan" }]}
   value={activeId}
