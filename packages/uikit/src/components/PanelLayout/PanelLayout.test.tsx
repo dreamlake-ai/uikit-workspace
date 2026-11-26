@@ -1309,3 +1309,29 @@ it.each(["pointerup", "pointercancel", "escape", "withdraw"])(
     destination.remove();
   },
 );
+
+it.each([false, true])("places the active pane's controls before the tabs, compact=%s", (compact) => {
+  const leaf = panelLeaf({ view: "chat", title: "Chat" });
+  act(() => root.render(
+    <PanelLayout
+      root={leaf}
+      compact={compact}
+      tabbed
+      showSingleTab={() => true}
+      renderTabStripLeading={(active) => <button>{active.title} history</button>}
+    />
+  ));
+  const row = container.querySelector(compact ? "[data-compact-selector]" : "[data-panel-tab-slot]")!;
+  const actions = [...row.querySelectorAll("button")].filter((button) => button.textContent === "Chat history");
+  expect(actions).toHaveLength(1);
+  const [action] = actions;
+  const tabs = row.querySelector('[role="tablist"]')!;
+  expect(tabs.contains(action)).toBe(false);
+  expect(action.compareDocumentPosition(tabs) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+});
+
+
+it("keeps the compact singleton header when its contextual controls return false", () => {
+  render(<PanelLayout compact root={panelLeaf({ view: "notes" })} renderTabStripLeading={() => false} />);
+  expect(container.querySelector("[data-compact-selector]")).toBeNull();
+});

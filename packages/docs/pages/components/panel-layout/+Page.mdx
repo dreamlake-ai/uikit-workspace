@@ -204,6 +204,10 @@ gutter gives that space back to the tabs. It does not cover background tabs with
 an oversized action container. Custom labels
 stay on one line and clip when they reach those controls.
 
+Use `renderTabStripLeading(leaf)` to put actions for the active leaf before the
+scrollable tab list. For example, a chat can place its History and New conversation
+buttons here on desktop and compact layouts.
+
 Use `renderTabTrailing(leaf)` for a copyable reference or other independent tab
 action. It follows the label and precedes the shared close inside the sticky
 end area. Keep active-only reference visibility in the host; UIKit does not hide
