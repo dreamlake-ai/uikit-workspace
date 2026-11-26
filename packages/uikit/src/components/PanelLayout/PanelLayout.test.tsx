@@ -27,6 +27,10 @@ beforeEach(() => {
   (
     globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }
   ).IS_REACT_ACT_ENVIRONMENT = true;
+  vi.stubGlobal("ResizeObserver", class {
+    observe() {}
+    disconnect() {}
+  });
   // jsdom has no `elementFromPoint` (it has no layout to hit-test against), and
   // the drag's drop targeting calls it on every pointermove. Stub it so a drag
   // can be exercised at all; with no target the surrogate simply follows the
