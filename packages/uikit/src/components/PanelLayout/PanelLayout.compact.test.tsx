@@ -420,11 +420,16 @@ it('renders compact title details with a stable accessible name and separate act
   act(() => root.render(<PanelLayout root={panelSplit('row', [leaf, panelLeaf({ title: 'Other' })])} compact closable={() => false}
     compactPanelLabel={() => 'Session'}
     compactPanelTitle={() => <span data-title-details>Session <span aria-hidden>active</span></span>}
+    compactPanelLeading={() => <button aria-label="Connection">Connected</button>}
     compactPanelTrailing={() => <button aria-label="Copy reference">Copy</button>} />))
   const tab = tabs()[0]
   expect(tab.getAttribute('aria-label')).toBe('Session')
   expect(tab.hasAttribute('title')).toBe(false)
   expect(tab.querySelector('[data-title-details]')).not.toBeNull()
+  const connection = container.querySelector('[aria-label="Connection"]')!
+  expect(tab.contains(connection)).toBe(false)
+  expect(connection.closest('.uikit-tab-row-item-leading')).not.toBeNull()
+  expect(connection.compareDocumentPosition(tab) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   const copy = container.querySelector('[aria-label="Copy reference"]')!
   expect(tab.contains(copy)).toBe(false)
   expect(copy.closest('.uikit-document-tab')).toBe(tab.closest('.uikit-document-tab'))
