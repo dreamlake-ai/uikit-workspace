@@ -1,11 +1,10 @@
-import { Spinner } from '../Spinner'
+import { Spinner } from "../Spinner";
 import {
   useState,
   useEffect,
   useRef,
   useCallback,
   useImperativeHandle,
-  Fragment,
   ReactNode,
   Ref,
 } from "react";
@@ -23,6 +22,7 @@ import { useComposedRef } from "../../lib/useModalPresence";
 import { ToggleButtons, ToggleButton } from "../Toggle/ToggleButtons";
 import { useBreadcrumbTree } from "./useBreadcrumbTree";
 import { TreeFlow } from "./TreeFlow";
+import { BreadcrumbTrail } from "./BreadcrumbTrail";
 import type {
   BreadcrumbNode,
   BreadcrumbView,
@@ -124,44 +124,6 @@ export interface BreadcrumbTreeProps {
 }
 
 // ── Internal trigger sub-components ──────────────────────────────────────────
-
-function BreadcrumbItem({
-  name,
-  isLeaf,
-  onClick,
-}: {
-  name: string;
-  isLeaf: boolean;
-  onClick: (e: React.MouseEvent) => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      data-leaf={isLeaf || undefined}
-      className={cn(
-        "appearance-none border-0 outline-none bg-transparent p-0 mr-1 cursor-pointer",
-        // Keyboard focus only (WCAG 2.4.7): `outline-none` above zeroes the
-        // style, so the ring needs `outline-solid` as well as a width.
-        "rounded-[2px] focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-uikit-accent focus-visible:outline-offset-2",
-        "font-normal leading-[1.1]",
-        // Inter Tight has heavy hhea metrics (ascent ~1.33em, descent ~0.33em),
-        // which push the baseline to the bottom of any line box tighter than
-        // ~1.66em. The visible cap-letters then sit visibly below the row's
-        // geometric center. A 1px optical shift restores alignment with the
-        // adjacent SVG icons (chevron, expand button).
-        "-translate-y-px",
-        "transition-[color,opacity] duration-[120ms]",
-        // Default: inherits parent muted color & opacity. Leaf: ink + full opacity.
-        "data-[leaf]:text-uikit-ink data-[leaf]:opacity-100",
-        // Hover: accent + full opacity.
-        "hover:text-uikit-accent hover:opacity-100",
-      )}
-    >
-      {name}
-    </button>
-  );
-}
 
 function ChevronToggle({
   open,
@@ -563,23 +525,18 @@ export function BreadcrumbTree({
   );
 
   const handleBreadcrumbClick = useCallback(
-    (node: BreadcrumbNode, idx: number, e: React.MouseEvent) => {
-      e.stopPropagation();
+    (node: BreadcrumbNode, idx: number) => {
       onNavigate(node, path.slice(0, idx + 1));
       setOpen(false);
     },
     [path, onNavigate],
   );
 
-  const handleRootPathClick = useCallback(
-    (e: React.MouseEvent) => {
-      e.stopPropagation();
-      if (path.length === 0) return;
-      onNavigate({ id: rootPath!, name: rootPath! }, []);
-      setOpen(false);
-    },
-    [path.length, rootPath, onNavigate],
-  );
+  const handleRootPathClick = useCallback(() => {
+    if (path.length === 0) return;
+    onNavigate({ id: rootPath!, name: rootPath! }, []);
+    setOpen(false);
+  }, [path.length, rootPath, onNavigate]);
 
   const handleHeaderClick = useCallback(
     (depth: number) => {
@@ -866,63 +823,28 @@ export function BreadcrumbTree({
     <div
       ref={wrapRef}
       className={cn(
-        "relative inline-flex items-center font-uikit-ui",
+        "relative inline-flex w-full min-w-0 max-w-full items-center font-uikit-ui",
         className,
       )}
     >
       {/* ── Breadcrumb trigger ── */}
-      <div
-        role="navigation"
-        aria-label="Navigation path"
-        className={cn(
-          "inline-flex items-center gap-0 h-4 leading-4 whitespace-nowrap",
-          "font-uikit-ui text-uikit-12 tracking-uikit-snug",
-          "text-uikit-muted opacity-70",
-        )}
+      <BreadcrumbTrail
+        items={[
+          ...(rootPath
+            ? [{ key: "root", label: rootPath, onSelect: handleRootPathClick }]
+            : []),
+          ...path.map((node, i) => ({
+            key: `path:${node.id}`,
+            label: node.displayName ?? node.name,
+            onSelect: () => handleBreadcrumbClick(node, i),
+          })),
+        ]}
       >
-        {rootPath ? (
-          <>
-            <BreadcrumbItem
-              name={rootPath}
-              isLeaf={path.length === 0}
-              onClick={handleRootPathClick}
-            />
-            {path.length > 0 && (
-              <span
-                aria-hidden="true"
-                className="text-uikit-11 opacity-45 pr-1 select-none leading-none"
-              >
-                ›
-              </span>
-            )}
-          </>
-        ) : path.length === 0 ? (
+        {!rootPath && path.length === 0 && (
           <span className="mr-1">{placeholder}</span>
-        ) : null}
-
-        {path.map((node, i) => {
-          const isLeaf = i === path.length - 1;
-          return (
-            <Fragment key={node.id}>
-              <BreadcrumbItem
-                name={node.displayName ?? node.name}
-                isLeaf={isLeaf}
-                onClick={(e) => handleBreadcrumbClick(node, i, e)}
-              />
-              {!isLeaf && (
-                <span
-                  aria-hidden="true"
-                  className="text-uikit-11 opacity-45 pr-1 select-none leading-none"
-                >
-                  ›
-                </span>
-              )}
-            </Fragment>
-          );
-        })}
-
+        )}
         <ChevronToggle open={open} onClick={() => setOpen((v) => !v)} />
-      </div>
+      </BreadcrumbTrail>
 
       {/* ── Panel (portaled to body so it floats above any clipping ancestor) ── */}
       {presence.present &&

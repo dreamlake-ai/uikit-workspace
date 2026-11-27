@@ -5,7 +5,7 @@ order: 20
 description: Breadcrumb selector whose panel navigates deep hierarchies as Miller columns or as a column-wrapped tree.
 ---
 
-import { BreadcrumbTreeSpec } from '../../../components/specimens/components/breadcrumb-tree/BreadcrumbTreeSpec'
+import { BreadcrumbTreeSpec, BreadcrumbOverflowSpec } from '../../../components/specimens/components/breadcrumb-tree/BreadcrumbTreeSpec'
 import treeSrc from '../../../components/specimens/components/breadcrumb-tree/BreadcrumbTreeSpec.tsx?raw'
 
 # BreadcrumbTree
@@ -29,6 +29,18 @@ named "Browse folders" and reports `aria-expanded` while the panel is open.
 
 <Preview source={treeSrc} filename="BreadcrumbTreeSpec.tsx">
   <BreadcrumbTreeSpec />
+</Preview>
+
+## Long paths
+
+When a path exceeds its available width, middle ancestors collapse into an
+ellipsis menu. The root and current location stay visible; unusually long labels
+truncate with their full names available on hover. The menu preserves every
+hidden ancestor as a keyboard-accessible navigation target. Resizing the panel
+restores ancestors as space becomes available.
+
+<Preview source={treeSrc} filename="BreadcrumbTreeSpec.tsx">
+  <BreadcrumbOverflowSpec />
 </Preview>
 
 ## Layouts
