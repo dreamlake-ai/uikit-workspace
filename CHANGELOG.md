@@ -1,5 +1,10 @@
 # Release notes
 
+## 0.3.21 — 2026-11-27
+
+- `MediaViewerDialog` Close is now the shared `TransportButton` instead of a one-off 36px circle with a permanent grey fill: a quiet 30px square, 6px radius, hover wash, inset accent focus ring and a "Close" tooltip. The accessible name, `dismissible`, Escape, backdrop dismissal and focus handling are unchanged.
+- The viewer's action cluster takes the dark theme's ink and hover wash in every theme, so Close and `TransportButton`s passed as `actions` stay legible over the always-dark backdrop in a light app. Actions now sit 4px apart and are vertically centred.
+
 ## 0.3.4 — 2026-11-23
 
 - Add `FileDropOverlay` and `useFileDropTarget`: neutral hatch, dashed boundary, and clear prompt for exact pane or compact row targets. File-only handlers preserve text drags and internal moves; reset on drop, Escape, blur, and drag end.

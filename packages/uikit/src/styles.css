@@ -1373,6 +1373,15 @@ html[data-theme="dark"] {
 /* Shared editor, attachment and visualization media viewer. */
 .uikit-media-viewer { flex-direction: row; }
 .uikit-media-viewer-main { padding: 40px; }
+/* The backdrop is dark in every theme, so the action cluster (Close and the
+   caller's `actions`) takes the dark theme's ink and hover wash — the two
+   colours a TransportButton reads. The aliases are restated because they
+   resolve `--ink` where they are declared, not where they are used. */
+.uikit-media-viewer-actions {
+  --ink: #ececec;
+  --color-uikit-ink: var(--ink);
+  --color-uikit-ink-5: color-mix(in srgb, var(--ink) 5%, transparent);
+}
 @media (max-width: 639px) {
   .uikit-media-viewer { flex-direction: column; }
   .uikit-media-viewer-main { padding: 56px 16px 20px; }

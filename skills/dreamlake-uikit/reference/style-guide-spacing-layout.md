@@ -59,6 +59,8 @@ See [ProfileCard](reference/components-profile-card.md).
 The shared [MediaViewerDialog](reference/components-media-viewer.md) uses 40px of desktop
 media padding. Below 640px it places the gallery rail below the media, with
 56px above and 16px beside the content to keep the close control clear.
+Close and the viewer's actions are 30px transport buttons, 4px apart and 16px
+from the top-right corner, in dark-theme ink over the always-dark backdrop.
 Compact panel action groups stay beside the tab row and reserve their measured
 width so tabs can scroll without overlapping the controls.
 
