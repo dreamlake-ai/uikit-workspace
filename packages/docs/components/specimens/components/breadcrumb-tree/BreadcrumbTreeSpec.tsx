@@ -119,3 +119,23 @@ export const BreadcrumbTreeSpec = () => {
     </div>
   );
 };
+
+/** Resize the frame to see middle ancestors move into the menu. */
+export function BreadcrumbOverflowSpec() {
+  const [path, setPath] = useState<Node[]>([
+    { id: "datasets", name: "datasets" },
+    { id: "collected", name: "collected demonstrations" },
+    { id: "validated", name: "validated recordings" },
+    { id: "latest", name: "latest run" },
+  ]);
+  return (
+    <div className="w-full max-w-[420px] min-w-[180px] resize-x overflow-hidden border border-uikit-faint rounded p-3">
+      <BreadcrumbTree
+        rootPath="dreamlake"
+        path={path}
+        onNavigate={(_, next) => setPath(next)}
+        fetchChildren={async () => ({ items: [], totalPages: 1 })}
+      />
+    </div>
+  );
+}
