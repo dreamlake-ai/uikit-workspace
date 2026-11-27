@@ -469,3 +469,40 @@
   width: 100%;
   max-width: 100%;
 }
+
+/* Explicit compact rows share Threads' one-line geometry. Optional detail is
+   still content: omit it for a single line rather than silently discarding it. */
+.uikit-collection-row[data-compact] {
+  box-sizing: border-box;
+  min-height: 32px;
+  padding: 7px 10px;
+}
+.uikit-collection-row[data-compact] .uikit-collection-name {
+  font-size: 12px;
+  line-height: 18px;
+}
+.uikit-collection-row[data-compact] .uikit-collection-line {
+  gap: 6px;
+}
+.uikit-collection-row[data-compact] .uikit-collection-icon {
+  display: inline-flex !important;
+  opacity: 1;
+}
+.uikit-collection-row[data-compact] .uikit-collection-icon[data-interactive] {
+  z-index: 1;
+}
+.uikit-collection-row[data-compact]
+  .uikit-collection-end:has(.uikit-collection-actions) {
+  display: inline-flex !important;
+  gap: 6px;
+  padding-left: 4px;
+}
+.uikit-collection-row[data-compact] .uikit-collection-actions {
+  position: relative;
+  top: auto;
+  right: auto;
+  transform: none;
+  opacity: 1;
+  pointer-events: auto;
+  z-index: 1;
+}

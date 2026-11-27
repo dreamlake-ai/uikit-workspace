@@ -9,6 +9,15 @@ hover and selection tints remain continuous across the row. Metadata yields to
 visible actions without changing the row width; there is no page-colored patch
 behind the button, including in dark mode.
 
+## Compact connected rows
+
+`CollectionRow compact` uses 32px single-line geometry when `detail` is omitted.
+Icons and independent actions remain reachable in narrow panels, while optional
+metadata can hide. Compose it with existing `TreeBranchGuides` and `VirtualList`;
+see the [Compact tree list](reference/components-compact-tree-list.md) example for separate
+selection, disclosure and native source links. `actions` anchors keep their native
+navigation while remaining independent of the primary row action.
+
 ## Contextual pins
 
 Open a row's `…` menu and choose **Pin to top**. The same entry in the other

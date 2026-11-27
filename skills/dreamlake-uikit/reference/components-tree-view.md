@@ -21,7 +21,7 @@ The expand chevrons are lucide `ChevronRight` / `ChevronDown` at lucide's defaul
 The branch into a row is an arc on every row, not only the last child — a column
 of connectors is one drawn path, and a corner that is square here and round
 there reads as two line systems in the same rail. A row with siblings below it
-keeps an unbroken vertical running *past* its branch; the arc leaves the trunk
+keeps an unbroken vertical running _past_ its branch; the arc leaves the trunk
 rather than replacing it.
 
 The line is `--tree-guide`, **not** `--faint`. Rows hover and select, and a
@@ -34,6 +34,10 @@ It is legible on the page and faint where it crosses a filled row (1.03:1 in
 light). That is the cost of a neutral line in a tree whose surfaces sit within
 19 levels of each other — see
 [Color → Lines that cross rows](reference/style-guide-color.md#lines-that-cross-rows).
+
+For one-line rows with independent selection and source links, see the
+[Compact tree list](reference/components-compact-tree-list.md) composition. It reuses these
+guides without introducing another tree data model.
 
 ## Drawer entries with visible connections
 
@@ -104,7 +108,7 @@ the band left square corners butted against it — the one place a tree row
 showed a raw corner.
 
 **Give the run the same corner radius as the rows it wraps.** The ring is
-outset, so its inner curve *is* the run's radius: rows rounded any tighter pull
+outset, so its inner curve _is_ the run's radius: rows rounded any tighter pull
 away from it and leave a sliver at every corner. The default is `var(--radius)`;
 override it with `className` if your rows are rounded differently.
 

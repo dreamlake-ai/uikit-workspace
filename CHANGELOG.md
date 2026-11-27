@@ -1,5 +1,9 @@
 # Release notes
 
+## 0.3.24 — 2026-11-27
+
+- Add compact collection rows and a documented virtualized tree-list composition using existing branch guides. Keep independent disclosure and source-link actions reachable in narrow rows, preserve native action-link navigation, and leave hierarchy/selection/inspectors with the host.
+
 ## 0.3.23 — 2026-11-27
 
 - `ProgressRail` uses unframed accent-blue completion checks in both rail and compact presentations. Remove circular pending/current chrome; retain rail connectors, explicit error crosses, ordered state and current-step accessibility.
