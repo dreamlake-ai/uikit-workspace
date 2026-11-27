@@ -70,7 +70,7 @@ test("panel tabs share their face and preserve inactive drafts", async ({
   ).toBeLessThanOrEqual(390);
 });
 
-test("panel mode controls exactly match the memo Vim style", async ({
+test("panel mode controls share memo geometry and keep three-option hover neutral", async ({
   page,
 }) => {
   await page.goto("/components/tab-row");
@@ -107,7 +107,7 @@ test("panel mode controls exactly match the memo Vim style", async ({
     await terminal.hover();
     await expect
       .poll(() => group.evaluate((el) => getComputedStyle(el).backgroundColor))
-      .not.toBe(rest);
+      .toBe(rest);
     await expect(thumb).toHaveCSS("background-color", selected);
     await expect(terminal).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
     await expect(chat).toHaveAttribute("aria-pressed", "true");
@@ -135,9 +135,9 @@ test("panel mode controls exactly match the memo Vim style", async ({
       background: (await geometry(vimThumb)).background,
     });
     await terminal.hover();
-    await expect(group).toHaveCSS("background-color", "rgb(35, 170, 255)");
-    await expect(chat).toHaveCSS("color", "rgb(255, 255, 255)");
-    await expect(chat).toHaveCSS("opacity", "1");
+    await expect(group).toHaveCSS("background-color", rest);
+    await expect(chat).not.toHaveCSS("color", "rgb(255, 255, 255)");
+    await expect(chat).toHaveCSS("opacity", "0.5");
     await expect(thumb).toHaveCSS("background-color", selected);
     await page.mouse.move(0, 0);
     await expect(chat).toHaveCSS("opacity", "0.5");
@@ -260,4 +260,54 @@ test("leading tab icons stay compact while empty and trailing icons do not affec
     await demo.getByRole("button", { name: "Unload icon" }).click();
     await expect(slot).toHaveCSS("display", "none");
   }
+});
+
+test("four-size gutter keeps neutral hover and visible keyboard focus while two-choice tint remains", async ({
+  page,
+}) => {
+  await page.goto("/components/toggle");
+  const demo = page.locator("[data-gutter-sizes-example]").first();
+  const sizes = demo.getByRole("group", { name: "Preview size" });
+  const large = sizes.getByRole("button", { name: "L", exact: true });
+  await expect(async () => {
+    await large.click();
+    await expect(large).toHaveAttribute("aria-pressed", "true", {
+      timeout: 500,
+    });
+  }).toPass();
+  for (const theme of ["light", "dark"]) {
+    await page.evaluate(
+      (theme) => (document.documentElement.dataset.theme = theme),
+      theme,
+    );
+    await page.mouse.move(0, 0);
+    await large.blur();
+    await sizes.evaluate((el) =>
+      Promise.all(el.getAnimations().map((animation) => animation.finished)),
+    );
+    const rest = await sizes.evaluate(
+      (el) => getComputedStyle(el).backgroundColor,
+    );
+    for (const option of await sizes.getByRole("button").all()) {
+      await option.hover();
+      await expect(sizes).toHaveCSS("background-color", rest);
+      await expect(large).toHaveAttribute("aria-pressed", "true");
+    }
+    await large.focus();
+    await page.keyboard.press("Tab");
+    const xl = sizes.getByRole("button", { name: "XL", exact: true });
+    await expect(xl).toBeFocused();
+    await expect(xl).toHaveCSS("outline-style", "solid");
+    await expect(xl).toHaveCSS("outline-width", "2px");
+    await page.keyboard.press("Enter");
+    await expect(xl).toHaveAttribute("aria-pressed", "true");
+    await large.click();
+    const pair = demo.getByRole("group", { name: "Browse layout" });
+    await pair.getByRole("button", { name: "List", exact: true }).hover();
+    await expect(pair).toHaveCSS("background-color", "rgb(35, 170, 255)");
+  }
+  await page.setViewportSize({ width: 390, height: 850 });
+  expect(
+    await page.evaluate(() => document.documentElement.scrollWidth),
+  ).toBeLessThanOrEqual(390);
 });

@@ -110,7 +110,7 @@ export interface ToggleButtonsProps extends Omit<
 > {
   value: string;
   onValueChange: (value: string) => void;
-  /** Panel controls exactly share the memo Vim toggle: 20px track, 2px inset, 16px thumb; hoverColor fills the track only. */
+  /** Panel controls exactly share the memo Vim toggle: 20px track, 2px inset, 16px thumb. Only groups with at most two options tint the track on hover/focus. */
   variant?: ToggleButtonsVariant;
   size?: ToggleButtonSize;
   padding?: boolean;
@@ -147,7 +147,6 @@ export function ToggleButtons({
   const inset = panel ? EDITOR_TOGGLE_INSET : padding ? 4 : 2;
   const [hoverColor, setHoverColor] = useState<string | null>(null);
   const [focusColor, setFocusColor] = useState<string | null>(null);
-  const tone = panel ? (hoverColor ?? focusColor) : null;
   const itemTone = (target: EventTarget | null) =>
     target instanceof Element
       ? (target.closest<HTMLElement>("[data-toggle-hover-color]:not(:disabled)")
@@ -155,6 +154,9 @@ export function ToggleButtons({
       : null;
 
   const [items, setItems] = useState<Map<string, HTMLElement>>(new Map());
+  // Count every mounted option, including the selected or disabled one. A
+  // multi-choice gutter stays neutral; the thumb alone marks its selection.
+  const tone = panel && items.size <= 2 ? (hoverColor ?? focusColor) : null;
   const [highlight, setHighlight] = useState<CSSProperties>({ opacity: 0 });
 
   const registerItem = useCallback((v: string, el: HTMLElement) => {
@@ -324,7 +326,7 @@ export interface ToggleButtonProps extends ComponentProps<"button"> {
   value: string;
   icon?: boolean;
   asChild?: boolean;
-  /** With variant="panel", tint the group background on hover/focus. Selection remains neutral. */
+  /** With variant="panel", tint the group background on hover/focus only when at most two options are present. Selection remains neutral. */
   hoverColor?: string;
 }
 

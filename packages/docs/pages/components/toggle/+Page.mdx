@@ -5,6 +5,8 @@ order: 260
 description: Two-state toggle button, a segmented ToggleButtons group, and the outlined pill rows.
 ---
 
+import { GutterSizesSpec } from "../../../components/specimens/components/toggle/GutterSizesSpec";
+import gutterSizesSrc from "../../../components/specimens/components/toggle/GutterSizesSpec.tsx?raw";
 import { BasicSpec } from "../../../components/specimens/components/toggle/BasicSpec";
 import { SegmentedSpec } from "../../../components/specimens/components/toggle/SegmentedSpec";
 import { SizesSpec } from "../../../components/specimens/components/toggle/SizesSpec";
@@ -137,17 +139,18 @@ outline-style variable, and without it the ring painted nothing.
 
 ### `ToggleButtons` / `ToggleButton`
 
-| Prop             | Type                                             | Default     | Description                                                                                                               |
-| ---------------- | ------------------------------------------------ | ----------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `value`          | `string`                                         | —           | Selected value (`ToggleButtons`).                                                                                         |
-| `onValueChange`  | `(value: string) => void`                        | —           | Fired on select.                                                                                                          |
-| `variant`        | `'primary' \| 'secondary' \| 'ghost' \| 'panel'` | `'primary'` | Highlight style.                                                                                                          |
-| `size`           | `'sm' \| 'md' \| 'lg'`                           | `'md'`      | Item size.                                                                                                                |
-| `padding`        | `boolean`                                        | `true`      | Frame padding around the segments. Set `false` for a tighter, edge-to-edge group.                                         |
-| `shape`          | `'square' \| 'round'`                            | `'square'`  | Corner shape. `square` = 6px segments in a 10px / 8px track; `round` = stadium track and segments (`ToggleButtonsRound`). |
-| `value` (item)   | `string`                                         | —           | This button's value.                                                                                                      |
-| `icon` (item)    | `boolean`                                        | `false`     | Square icon-only sizing.                                                                                                  |
-| `asChild` (item) | `boolean`                                        | `false`     | Render the single child instead of a `<button>`, forwarding the ref, selected state, and click.                           |
+| Prop                | Type                                             | Default     | Description                                                                                                               |
+| ------------------- | ------------------------------------------------ | ----------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `value`             | `string`                                         | —           | Selected value (`ToggleButtons`).                                                                                         |
+| `onValueChange`     | `(value: string) => void`                        | —           | Fired on select.                                                                                                          |
+| `variant`           | `'primary' \| 'secondary' \| 'ghost' \| 'panel'` | `'primary'` | Highlight style.                                                                                                          |
+| `size`              | `'sm' \| 'md' \| 'lg'`                           | `'md'`      | Item size.                                                                                                                |
+| `padding`           | `boolean`                                        | `true`      | Frame padding around the segments. Set `false` for a tighter, edge-to-edge group.                                         |
+| `shape`             | `'square' \| 'round'`                            | `'square'`  | Corner shape. `square` = 6px segments in a 10px / 8px track; `round` = stadium track and segments (`ToggleButtonsRound`). |
+| `value` (item)      | `string`                                         | —           | This button's value.                                                                                                      |
+| `hoverColor` (item) | `string`                                         | `"#23aaff"` | Track tint on hover/focus in `panel` groups with at most two options. Ignored in larger groups.                           |
+| `icon` (item)       | `boolean`                                        | `false`     | Square icon-only sizing.                                                                                                  |
+| `asChild` (item)    | `boolean`                                        | `false`     | Render the single child instead of a `<button>`, forwarding the ref, selected state, and click.                           |
 
 ## Compact panel groups
 
@@ -156,9 +159,20 @@ outline-style variable, and without it the ring painted nothing.
 Icon segments are 20px wide. This geometry is fixed across `size` values and
 centers within a tab gutter; it does not grow to the row’s height.
 
-Hover or keyboard focus fills the group background with `hoverColor` (Vim blue
-by default). Buttons stay transparent, the selected face stays inked on the
-neutral thumb, and exposed faces turn white. Resting inactive faces are muted
-at half opacity. Reduced motion removes the transitions. See the interactive
-[panel tab example](/components/tab-row#compact-view-controls), with a Vim
-reference control beside the three-mode example.
+A gutter toggle with **more than two options, including the selected option,
+never adds a hover background color**. Its track remains neutral, the selected
+thumb stays visible, and inactive labels remain muted. This applies to three-mode
+controls and to S / M / L / XL preview sizes. Count options that are present,
+including disabled options; do not count only the alternatives to the selection.
+
+Groups with one or two options keep the memo toggle treatment: hover or keyboard
+focus fills the track with `hoverColor` (Vim blue by default), the selected face
+stays inked on the neutral thumb, and exposed faces turn white. Every group keeps
+its keyboard focus outline. Reduced motion removes transitions.
+
+<Preview source={gutterSizesSrc} filename="GutterSizesSpec.tsx">
+  <GutterSizesSpec />
+</Preview>
+
+See the [panel tab example](/components/tab-row#compact-session-controls) and the
+[tab surface style guide](/style-guide/tab-surfaces#gutter-toggle-groups).

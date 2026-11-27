@@ -30,3 +30,15 @@ Set `--uikit-document-surface` on the shared owner of the tab row and content, a
 The first tab aligns with its panel's left edge. Contextual actions stay at the right of the tab row. Do not add a top border around the content. The tab primitives continue to own the curved feet, focus, overflow and keyboard navigation.
 
 See [Panel tabs](reference/components-panel-tabs.md) for composition and [Tab Row](reference/components-tab-row.md) for API details.
+
+## Gutter toggle groups
+
+Use `ToggleButtons variant="panel"` for compact choices beside tabs. **If more
+than two options are present, including the selected option, do not show a hover
+background color.** Keep the track neutral and mark selection with the existing
+thumb. Disabled options still count; removing an option changes the count.
+Do not whiten the other labels on hover. Keep the keyboard focus outline.
+
+S / M / L / XL is a four-option group, so its hover state stays neutral. A
+List / Grid pair keeps the two-option hover tint. These rules belong to UIKit;
+callers should not add per-page hover overrides.

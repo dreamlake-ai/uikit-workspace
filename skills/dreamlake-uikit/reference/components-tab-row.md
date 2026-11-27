@@ -10,6 +10,12 @@ The strip supplies the left gutter once: at rest, adjacent tabs keep their norma
 
 The active tab meets its content surface with no gap below the row. Put breathing room inside the content panel as padding, not as a margin between the strip and its body. If a header contains taller contextual controls, stretch the tab row to the header height so the tabs still reach the content edge.
 
+Use `AdaptiveTabLabel` as `labelContent` when a tab has meaningful shorter names.
+Pass the full `label` and ordered `alternatives`; the widest fitting form is shown,
+with ellipsis only after the shortest form no longer fits. Its accessible name stays
+complete. The compression example includes `geyang@training-host`, `g@training-host`,
+and `training-host`.
+
 ## Workspace context
 
 **1.A — S-curved tabs beside the left panel, editor, and chat.** The
@@ -42,7 +48,7 @@ docking or physical-device acceptance.
 
 ## Compact session controls
 
-Panel mode groups use the memo editor’s Vim toggle style exactly: a 20px track, 2px inset, 16px background-colored thumb, 4px/2px corners, and 240ms ease motion. Hover fills the track; the selected icon stays on the neutral thumb and exposed icons turn white. The control is centered in the tab gutter. The live example includes Vim for direct comparison.
+Panel mode groups use the memo editor’s Vim toggle style exactly: a 20px track, 2px inset, 16px background-colored thumb, 4px/2px corners, and 240ms ease motion. With one or two options, hover fills the track; the selected icon stays on the neutral thumb and exposed icons turn white. With more than two options, counting the selected option, hover never recolors the track. The neutral selection thumb and keyboard focus outline remain. The control is centered in the tab gutter. The live example includes Vim for direct comparison.
 
 ## Compression and overflow
 
@@ -92,7 +98,6 @@ move the strip to the panel edge without moving the editor content.
 
 ```tsx
 import { TabRow } from "@dreamlake/uikit";
-
 <TabRow
   tabs={[{ value: "plan", label: "Implementation plan" }]}
   value={activeId}

@@ -101,12 +101,28 @@ papers and brings the pin back. Paper transforms take 240ms and the pin fades in
 Reduced-motion users get immediate state changes. For folder and Bindr icons, `size` defaults to 18 and
 `strokeWidth` to 1.5; use a lighter stroke for large icons.
 
-### Explicit compact grids
+## Compact grid
 
-`CollectionList columns={2 | 3 | 4}` retains the chosen number of equal columns
-inside the available width, even in narrow panels. `CollectionLayoutProvider`
-shares the count across groups; `useCollectionColumns()` reads it. Rows stay
-mounted while the count changes. `CollectionRowBody.thumbnail` supplies an
-optional preview in grid mode. Mark custom focusable rows `data-collection-item`
-for directional keyboard navigation, and section headers `data-collection-span`
-to span every column. Product code owns selection and activation.
+Choose an exact number of columns without widening the panel. `columns={3}`
+keeps three equal columns at any width; use `CollectionLayoutProvider` to share
+that choice across nested groups. `CollectionRowBody` uses its optional
+`thumbnail` in grid mode and otherwise keeps the type icon. Names retain their
+full-text hover label. Arrow keys move focus through the visible grid; item
+activation and selection remain owned by the caller. Use `data-collection-item`
+on custom focusable rows and `data-collection-span` on section headers/status.
+
+## One-column preview grids
+
+Set `grid` when a responsive preview layout fits only one column. This preserves
+thumbnails, tile typography and arrow-key navigation while `columns={1}` alone
+keeps the compact list presentation. Entries stay mounted when switching.
+
+```tsx
+<CollectionList grid columns={columnsThatFit}>
+  <CollectionRow
+    name="Scene.usdz"
+    icon={<Boxes />}
+    thumbnail={<ScenePreview />}
+  />
+</CollectionList>
+```
