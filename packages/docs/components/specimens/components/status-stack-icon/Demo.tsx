@@ -25,6 +25,16 @@ const examples: {
     complete: true,
   },
   {
+    label: "Running with mixed outcomes",
+    counts: { passed: 4, failed: 1, running: 2, other: 1 },
+    complete: false,
+  },
+  {
+    label: "Running without failures",
+    counts: { passed: 4, failed: 0, running: 2, other: 1 },
+    complete: false,
+  },
+  {
     label: "Other outcomes",
     counts: { passed: 0, failed: 0, other: 4 },
     complete: true,

@@ -11,9 +11,19 @@ import source from "../../../components/specimens/components/status-stack-icon/D
 # StatusStackIcon
 
 Use an 18px stack in a group row to summarize recorded descendant outcomes.
-Green means passed, red means failed, and neutral means other. Layers indicate
+Green means passed, red means failed, amber means running, and neutral means other. Layers indicate
 which categories are present; their area and number are **not percentages**.
 Exact counts remain in the accessible label or the containing control's description.
+
+A clear lower-right outcome mark leads: red × when any entry failed, amber running
+when an entry is running and none failed, or the blue completion check described
+below. Failure takes priority over running. Other states have no outcome mark; the counts remain available to assistive technology.
+
+Layers use faint opaque pastel fills. Lower layers fade toward the neutral surface so
+foreground status remains clear without colors showing through overlapping layers.
+Two- and three-layer stacks share close, evenly spaced geometry; four categories
+use a slightly tighter gap to stay within the same bounds. Two categories
+stay centered in the same 18px slot. The completion check remains blue.
 
 <Preview source={source} filename="Demo.tsx">
   <Demo />
@@ -21,9 +31,10 @@ Exact counts remain in the accessible label or the containing control's descript
 
 ## Counts and completeness are explicit
 
-Pass `counts={{ passed, failed, other }}` and the required `complete` boolean.
-Count every expected leaf once, independently of collapsed groups, filtering or
-pagination. The caller maps its domain outcomes. Missing, running, skipped,
+Pass `counts={{ passed, failed, running, other }}` and the required `complete` boolean.
+`running` is optional and defaults to zero for existing callers. Use it only for
+explicitly executing entries, not queued or missing reports. Count every expected leaf once, independently of collapsed groups, filtering or
+pagination. The caller maps its domain outcomes. Missing, queued, skipped,
 deselected, cancelled or inconclusive entries cannot silently become passes;
 `other` is deliberately not called pending because some of these are terminal.
 Execution errors may be classified as failed by the caller's policy.

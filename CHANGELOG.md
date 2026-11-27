@@ -1,5 +1,9 @@
 # Release notes
 
+## 0.3.30 — 2026-11-27
+
+- Refine StatusStackIcon with opaque pastel layers, subdued lower layers and closer centered two-category geometry. Add optional explicit running counts with amber layers; up to four categories remain within the icon bounds. Use a dominant red failure or amber running badge before the larger blue completion check; preserve exact counts and explicit completeness.
+
 ## 0.3.29 — 2026-11-27
 
 - Add StatusStackIcon for explicit passed/failed/other group counts and inventory completeness. Colored category layers stay compact; a blue completion check appears only for a nonempty, complete, all-passed group. Include accessible counts and a standard example.
