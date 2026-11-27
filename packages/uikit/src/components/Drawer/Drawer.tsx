@@ -13,6 +13,14 @@ import {
 } from 'react'
 import { createPortal } from 'react-dom'
 import { cn } from '../../lib/utils'
+import {
+  FloatingFocusManager,
+  FloatingPortal,
+  useDismiss,
+  useFloating,
+  useInteractions,
+} from '@floating-ui/react'
+import { useComposedRef } from '../../lib/useModalPresence'
 
 export type DrawerDirection = 'top' | 'bottom' | 'left' | 'right'
 
@@ -68,7 +76,12 @@ export function Drawer({
 export interface DrawerTriggerProps extends ComponentProps<'button'> {
   asChild?: boolean
 }
-export function DrawerTrigger({ asChild = false, onClick, children, ...props }: DrawerTriggerProps) {
+export function DrawerTrigger({
+  asChild = false,
+  onClick,
+  children,
+  ...props
+}: DrawerTriggerProps) {
   const { setOpen } = useCtx('DrawerTrigger')
   if (asChild && isValidElement(children)) {
     const child = children as ReactElement<{ onClick?: (e: MouseEvent) => void }>
@@ -132,14 +145,32 @@ const PANEL_POS: Record<DrawerDirection, string> = {
   right: 'inset-y-0 right-0 w-[340px] max-w-[85vw] rounded-l-[14px]',
 }
 
-export type DrawerContentProps = ComponentProps<'div'>
-export function DrawerContent({ className, children, style, ...props }: DrawerContentProps) {
+export interface DrawerContentProps extends ComponentProps<'div'> {
+  /** Trap focus inside the drawer and restore its opener on close. */
+  managedFocus?: boolean
+  initialFocus?: ComponentProps<typeof FloatingFocusManager>['initialFocus']
+  returnFocus?: ComponentProps<typeof FloatingFocusManager>['returnFocus']
+}
+export function DrawerContent({
+  className,
+  children,
+  style,
+  managedFocus = false,
+  initialFocus,
+  returnFocus,
+  ref,
+  ...props
+}: DrawerContentProps) {
   const { open, setOpen, direction } = useCtx('DrawerContent')
+  const { refs, context } = useFloating({ open, onOpenChange: setOpen })
+  const dismiss = useDismiss(context, { enabled: managedFocus && open, outsidePress: false })
+  const { getFloatingProps } = useInteractions([dismiss])
+  const panelRef = useComposedRef<HTMLDivElement>(ref, managedFocus ? refs.setFloating : null)
 
   useEffect(() => {
     if (!open) return
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false)
+      if (!managedFocus && e.key === 'Escape') setOpen(false)
     }
     document.addEventListener('keydown', onKey)
     const prev = document.body.style.overflow
@@ -148,23 +179,26 @@ export function DrawerContent({ className, children, style, ...props }: DrawerCo
       document.removeEventListener('keydown', onKey)
       document.body.style.overflow = prev
     }
-  }, [open, setOpen])
+  }, [open, setOpen, managedFocus])
 
   if (!open || typeof document === 'undefined') return null
 
-  return createPortal(
+  const content = (
     <div
       data-slot="drawer-overlay"
       onClick={() => setOpen(false)}
       className="fixed inset-0 z-[100] bg-[var(--scrim)] font-uikit-ui"
     >
       <div
+        ref={panelRef}
+        {...(managedFocus ? getFloatingProps() : {})}
+        data-direction={direction}
         role="dialog"
         aria-modal="true"
         data-slot="drawer-content"
         onClick={(e) => e.stopPropagation()}
         className={cn(
-          'fixed z-[101] flex h-auto flex-col bg-uikit-panel text-uikit-ink border-uikit-faint p-6 shadow-uikit-deep',
+          'uikit-drawer-panel fixed z-[101] flex h-auto flex-col bg-uikit-panel text-uikit-ink border-uikit-faint p-6 shadow-uikit-deep',
           direction === 'top' || direction === 'bottom' ? 'border-y' : 'border-x',
           PANEL_POS[direction],
           className,
@@ -177,24 +211,54 @@ export function DrawerContent({ className, children, style, ...props }: DrawerCo
         )}
         {children}
       </div>
-    </div>,
-    document.body,
+    </div>
+  )
+  return managedFocus ? (
+    <FloatingPortal>
+      <FloatingFocusManager
+        context={context}
+        initialFocus={initialFocus}
+        returnFocus={returnFocus}
+        modal
+        restoreFocus
+        outsideElementsInert
+      >
+        {content}
+      </FloatingFocusManager>
+    </FloatingPortal>
+  ) : (
+    createPortal(content, document.body)
   )
 }
 
 export function DrawerHeader({ className, ...props }: ComponentProps<'div'>) {
-  return <div data-slot="drawer-header" className={cn('flex flex-col gap-2 pb-4', className)} {...props} />
+  return (
+    <div
+      data-slot="drawer-header"
+      className={cn('flex flex-col gap-2 pb-4', className)}
+      {...props}
+    />
+  )
 }
 
 export function DrawerFooter({ className, ...props }: ComponentProps<'div'>) {
-  return <div data-slot="drawer-footer" className={cn('mt-auto flex flex-col gap-3 pt-4', className)} {...props} />
+  return (
+    <div
+      data-slot="drawer-footer"
+      className={cn('mt-auto flex flex-col gap-3 pt-4', className)}
+      {...props}
+    />
+  )
 }
 
 export function DrawerTitle({ className, ...props }: ComponentProps<'h2'>) {
   return (
     <h2
       data-slot="drawer-title"
-      className={cn('m-0 text-uikit-17 font-semibold leading-[1.2] tracking-uikit-tight', className)}
+      className={cn(
+        'm-0 text-uikit-17 font-semibold leading-[1.2] tracking-uikit-tight',
+        className,
+      )}
       {...props}
     />
   )

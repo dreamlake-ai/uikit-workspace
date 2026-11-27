@@ -1430,3 +1430,15 @@ html[data-theme="dark"] {
 .dl-file-drop-overlay--compact strong {
   font-size: 12px;
 }
+
+/* Side panels enter from their anchored edge, respecting reduced motion. */
+@keyframes uikit-drawer-in {
+  from { transform: translate(var(--uikit-drawer-x, 0), var(--uikit-drawer-y, 0)); opacity: 0; }
+  to { transform: translate(0, 0); opacity: 1; }
+}
+.uikit-drawer-panel { animation: uikit-drawer-in 180ms ease-out; }
+.uikit-drawer-panel[data-direction="right"] { --uikit-drawer-x: 100%; }
+.uikit-drawer-panel[data-direction="left"] { --uikit-drawer-x: -100%; }
+.uikit-drawer-panel[data-direction="top"] { --uikit-drawer-y: -100%; }
+.uikit-drawer-panel[data-direction="bottom"] { --uikit-drawer-y: 100%; }
+@media (prefers-reduced-motion: reduce) { .uikit-drawer-panel { animation: none; } }

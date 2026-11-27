@@ -17,7 +17,7 @@ export const BasicSpec = () => (
         Open filters
       </Button>
     </DrawerTrigger>
-    <DrawerContent>
+    <DrawerContent managedFocus aria-label="Filters">
       <DrawerHeader>
         <DrawerTitle>Filters</DrawerTitle>
         <DrawerDescription>Refine the dataset list.</DrawerDescription>
