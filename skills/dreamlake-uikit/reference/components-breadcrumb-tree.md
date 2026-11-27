@@ -17,6 +17,14 @@ The crumbs and the chevron are buttons, so Tab reaches them; on keyboard focus
 each shows the kit's 2px accent ring (pointer clicks show none). The chevron is
 named "Browse folders" and reports `aria-expanded` while the panel is open.
 
+## Long paths
+
+When a path exceeds its available width, middle ancestors collapse into an
+ellipsis menu. The root and current location stay visible; unusually long labels
+truncate with their full names available on hover. The menu preserves every
+hidden ancestor as a keyboard-accessible navigation target. Resizing the panel
+restores ancestors as space becomes available.
+
 ## Layouts
 
 |  | `columns` (default) | `tree` |

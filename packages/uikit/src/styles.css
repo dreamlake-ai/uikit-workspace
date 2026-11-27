@@ -1442,3 +1442,53 @@ html[data-theme="dark"] {
 .uikit-drawer-panel[data-direction="top"] { --uikit-drawer-y: -100%; }
 .uikit-drawer-panel[data-direction="bottom"] { --uikit-drawer-y: 100%; }
 @media (prefers-reduced-motion: reduce) { .uikit-drawer-panel { animation: none; } }
+
+/* A collection's first cover remains readable; the rear covers suggest depth. */
+.uikit-preview-stack {
+  display: block;
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  perspective: 900px;
+  isolation: isolate;
+  pointer-events: none;
+  user-select: none;
+  --uikit-preview-fan: 0;
+}
+.uikit-preview-stack-layer {
+  position: absolute;
+  inset: 12% 8% 0 0;
+  overflow: hidden;
+  border-radius: 5px;
+  background: var(--color-uikit-panel);
+  border: 1px solid color-mix(in srgb, var(--color-uikit-ink) 12%, transparent);
+  box-shadow: 0 2px 5px rgb(0 0 0 / 10%);
+  transform-origin: 50% 100%;
+  transition: transform 180ms ease-out;
+}
+.uikit-preview-stack-layer > * { width: 100%; height: 100%; }
+.uikit-preview-stack-layer img, .uikit-preview-stack-layer video { object-fit: cover; }
+.uikit-preview-stack-layer[data-depth="0"] { z-index: 3; }
+.uikit-preview-stack-layer[data-depth="1"] {
+  z-index: 2;
+  opacity: .75;
+  filter: blur(.35px);
+  backdrop-filter: blur(8px);
+  transform: translate3d(calc(4% + var(--uikit-preview-fan) * 1%), calc(-6% - var(--uikit-preview-fan) * 1%), -12px) rotate(calc(2deg + var(--uikit-preview-fan) * 1deg));
+}
+.uikit-preview-stack-layer[data-depth="2"] {
+  z-index: 1;
+  opacity: .45;
+  filter: blur(.6px);
+  backdrop-filter: blur(12px);
+  transform: translate3d(calc(8% + var(--uikit-preview-fan) * 1%), calc(-12% - var(--uikit-preview-fan) * 1%), -24px) rotate(calc(4deg + var(--uikit-preview-fan) * 1deg));
+}
+.uikit-preview-stack[data-layers="1"] .uikit-preview-stack-layer { inset: 0; }
+:is(button, a, [role="button"]):focus-visible .uikit-preview-stack { --uikit-preview-fan: 1; }
+@media (hover: hover) {
+  :is(button, a, [role="button"]):hover .uikit-preview-stack { --uikit-preview-fan: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .uikit-preview-stack { --uikit-preview-fan: 0 !important; }
+  .uikit-preview-stack-layer { transition: none; }
+}
