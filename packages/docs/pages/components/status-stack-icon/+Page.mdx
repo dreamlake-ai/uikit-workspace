@@ -1,0 +1,51 @@
+---
+title: StatusStackIcon
+section: Components
+order: 135
+description: Compact group status layers with explicit counts and completeness.
+---
+
+import { Demo } from "../../../components/specimens/components/status-stack-icon/Demo";
+import source from "../../../components/specimens/components/status-stack-icon/Demo.tsx?raw";
+
+# StatusStackIcon
+
+Use an 18px stack in a group row to summarize recorded descendant outcomes.
+Green means passed, red means failed, and neutral means other. Layers indicate
+which categories are present; their area and number are **not percentages**.
+Exact counts remain in the accessible label or the containing control's description.
+
+<Preview source={source} filename="Demo.tsx">
+  <Demo />
+</Preview>
+
+## Counts and completeness are explicit
+
+Pass `counts={{ passed, failed, other }}` and the required `complete` boolean.
+Count every expected leaf once, independently of collapsed groups, filtering or
+pagination. The caller maps its domain outcomes. Missing, running, skipped,
+deselected, cancelled or inconclusive entries cannot silently become passes;
+`other` is deliberately not called pending because some of these are terminal.
+Execution errors may be classified as failed by the caller's policy.
+
+The bottom-right check appears only when `complete === true`, at least one entry
+exists, and every counted entry passed. The stack is green in that case; the check
+is `#23aaff`. An incomplete inventory with only reported passes remains a green
+stack **without** a completion check. Do not invent an extra neutral entry to encode
+unknown cardinality: pass `complete={false}`. An empty inventory is neutral and
+never receives a check. Negative, fractional, non-finite or unsafe counts display
+neutral status unavailable rather than success.
+
+## Accessibility and compact rows
+
+By default the icon has `role="img"` and announces exact counts plus completeness.
+`label` prepends group context. The icon has no focus target or independent action.
+Use `decorative` when the containing button already announces the same counts.
+`CollectionRow`'s leading icon slot is decorative by default, so put exact counts
+in the group button's accessible description and use a decorative status stack.
+Keep the group title's expansion action and trailing chevron unchanged; this icon
+summarizes outcomes and does not control disclosure.
+
+The component has no evaluation schema, data fetching, inferred test hierarchy or
+status aggregation logic. Keep those responsibilities with the caller. It uses
+existing semantic green/red/neutral colors and stays within the icon bounds.

@@ -69,3 +69,4 @@ export {
 } from "./components/ProgressRail";
 
 export { TruncatedText } from "./components/CollectionList/TruncatedText";
+export { StatusStackIcon, type StatusStackCounts, type StatusStackIconProps } from './components/StatusStackIcon';

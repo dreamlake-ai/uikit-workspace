@@ -1,5 +1,10 @@
 # Release notes
 
+## 0.3.29 — 2026-11-27
+
+- Add StatusStackIcon for explicit passed/failed/other group counts and inventory completeness. Colored category layers stay compact; a blue completion check appears only for a nonempty, complete, all-passed group. Include accessible counts and a standard example.
+
+
 ## 0.3.28 — 2026-11-27
 
 - Contain retained moving-hover geometry inside the compact-tree example host across panel resizing. Document scoped overflow clipping without changing shared hover animation or selection semantics.

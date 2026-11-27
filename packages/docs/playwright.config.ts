@@ -35,13 +35,13 @@ export default defineConfig({
       name: "Desktop Chrome",
       use: { ...devices["Desktop Chrome"] },
       testMatch:
-        /dropdown-exit|dialog-motion|split-button|loading-guide|tab-overflow|panel-tabs|list-selection|drawer-branches|checkbox|collection-compact|preview-stack|progress-rail|compact-tree-list/,
+        /dropdown-exit|dialog-motion|split-button|loading-guide|tab-overflow|panel-tabs|list-selection|drawer-branches|checkbox|collection-compact|preview-stack|progress-rail|compact-tree-list|status-stack-icon/,
     },
     {
       name: "Desktop Safari",
       use: { ...devices["Desktop Safari"] },
       testMatch:
-        /dropdown-exit|dialog-motion|split-button|loading-guide|tab-overflow|panel-tabs|drawer-branches|collection-compact|preview-stack|progress-rail|compact-tree-list/,
+        /dropdown-exit|dialog-motion|split-button|loading-guide|tab-overflow|panel-tabs|drawer-branches|collection-compact|preview-stack|progress-rail|compact-tree-list|status-stack-icon/,
     },
   ],
 });
