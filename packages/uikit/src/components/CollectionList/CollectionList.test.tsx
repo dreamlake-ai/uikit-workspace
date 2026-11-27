@@ -199,3 +199,40 @@ it("keeps a one-column grid in tile presentation without replacing rows", () => 
     host.remove();
   }
 });
+
+it("keeps interactive icons announced and separate from row activation", () => {
+  (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
+  const host = document.createElement("div");
+  const root = createRoot(host);
+  const row = vi.fn(),
+    filter = vi.fn();
+  try {
+    act(() =>
+      root.render(
+        <CollectionRow
+          name="GPU tests"
+          iconInteractive
+          icon={
+            <button aria-label="Filter by passed" onClick={filter}>
+              ✓
+            </button>
+          }
+          onClick={row}
+          onKeyDown={row}
+        />,
+      ),
+    );
+    const button = host.querySelector("button")!;
+    expect(button.closest('[aria-hidden="true"]')).toBeNull();
+    act(() => button.click());
+    act(() =>
+      button.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "Enter", bubbles: true }),
+      ),
+    );
+    expect(filter).toHaveBeenCalledOnce();
+    expect(row).not.toHaveBeenCalled();
+  } finally {
+    act(() => root.unmount());
+  }
+});

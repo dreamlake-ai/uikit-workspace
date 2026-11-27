@@ -13,6 +13,7 @@ import {
   CompactList,
   CompactGrid,
   SingleColumnGrid,
+  InteractiveIcon,
 } from "../../../components/specimens/components/collection-list/Demo";
 import source from "../../../components/specimens/components/collection-list/Demo.tsx?raw";
 
@@ -172,3 +173,11 @@ keeps the compact list presentation. Entries stay mounted when switching.
   />
 </CollectionList>
 ```
+
+
+## Interactive icons
+
+Use `iconInteractive` when the leading icon is a button. Its accessible name stays
+exposed and clicks or keyboard actions stay independent of row navigation.
+
+<InteractiveIcon />

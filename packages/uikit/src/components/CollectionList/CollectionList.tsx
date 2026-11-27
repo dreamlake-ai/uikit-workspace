@@ -135,6 +135,8 @@ export interface CollectionRowBodyProps {
     >
   >;
   icon: ReactNode;
+  /** Keep an icon control accessible and independent of row navigation. */
+  iconInteractive?: boolean;
   /** Optional preview used only in the compact grid presentation. */
   thumbnail?: ReactNode;
   name: ReactNode;
@@ -155,6 +157,7 @@ export interface CollectionRowBodyProps {
 export function CollectionRowBody({
   classNames = {},
   icon,
+  iconInteractive,
   thumbnail,
   name,
   nameId,
@@ -179,12 +182,21 @@ export function CollectionRowBody({
         <span
           className={`uikit-collection-icon ${classNames.icon ?? ""}`}
           data-pinned={pinned || undefined}
-          aria-hidden={pinned ? undefined : true}
+          aria-hidden={pinned || iconInteractive ? undefined : true}
+          onClick={
+            iconInteractive ? (event) => event.stopPropagation() : undefined
+          }
+          onKeyDown={
+            iconInteractive ? (event) => event.stopPropagation() : undefined
+          }
         >
           {tile && thumbnail ? (
             thumbnail
           ) : pinned ? (
-            <span className="uikit-collection-type-icon" aria-hidden="true">
+            <span
+              className="uikit-collection-type-icon"
+              aria-hidden={iconInteractive ? undefined : true}
+            >
               {icon}
             </span>
           ) : (
@@ -251,6 +263,7 @@ export function CollectionRowBody({
 export function CollectionRow({
   classNames,
   icon,
+  iconInteractive,
   thumbnail,
   name,
   nameId,
@@ -277,6 +290,7 @@ export function CollectionRow({
         {...{
           classNames,
           icon,
+          iconInteractive,
           thumbnail,
           name,
           nameId,
