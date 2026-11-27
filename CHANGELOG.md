@@ -1,5 +1,9 @@
 # Release notes
 
+## 0.3.22 — 2026-11-27
+
+- `ProgressRail compact` reuses the dense checklist presentation: small unframed state icons, inline label/detail and no connector. Default rail layout and explicit accessible stage state are unchanged. The standard example compares both presentations using the same stages.
+
 ## 0.3.21 — 2026-11-27
 
 - `MediaViewerDialog` Close is now the shared `TransportButton` instead of a one-off 36px circle with a permanent grey fill: a quiet 30px square, 6px radius, hover wash, inset accent focus ring and a "Close" tooltip. The accessible name, `dismissible`, Escape, backdrop dismissal and focus handling are unchanged.

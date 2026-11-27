@@ -1,5 +1,5 @@
 import { type ReactNode } from "react";
-import { Check, X } from "lucide-react";
+import { Check, Circle, X } from "lucide-react";
 import { cn } from "../../lib/utils";
 
 export interface ProgressRailItem {
@@ -13,6 +13,8 @@ export interface ProgressRailProps {
   items: readonly ProgressRailItem[];
   "aria-label": string;
   className?: string;
+  /** Dense checklist rows with inline detail and no connected rail. */
+  compact?: boolean;
 }
 
 const nodeTone: Record<ProgressRailItem["state"], string> = {
@@ -26,6 +28,7 @@ const nodeTone: Record<ProgressRailItem["state"], string> = {
 export function ProgressRail({
   items,
   className,
+  compact = false,
   "aria-label": label,
 }: ProgressRailProps) {
   if (!items.length) return null;
@@ -33,6 +36,7 @@ export function ProgressRail({
     <ol
       role="list"
       aria-label={label}
+      data-variant={compact ? "compact" : "rail"}
       className={cn("m-0 min-w-0 list-none p-0 text-uikit-12", className)}
     >
       {items.map((item, index) => (
@@ -44,9 +48,14 @@ export function ProgressRail({
               ? "step"
               : undefined
           }
-          className="relative grid min-w-0 grid-cols-[19px_minmax(0,1fr)] gap-x-2 pb-4 last:pb-0"
+          className={cn(
+            "relative grid min-w-0 gap-x-2 last:pb-0",
+            compact
+              ? "grid-cols-[12px_minmax(0,1fr)] pb-[7px] text-uikit-11"
+              : "grid-cols-[19px_minmax(0,1fr)] pb-4",
+          )}
         >
-          {index < items.length - 1 && (
+          {!compact && index < items.length - 1 && (
             <span
               aria-hidden="true"
               className={cn(
@@ -60,20 +69,27 @@ export function ProgressRail({
           <span
             aria-hidden="true"
             className={cn(
-              "flex size-[19px] items-center justify-center rounded-full border",
+              "flex items-center justify-center",
+              compact ? "h-4 w-3" : "size-[19px] rounded-full border",
               nodeTone[item.state],
             )}
           >
             {item.state === "complete" && <Check size={11} />}
             {item.state === "error" && <X size={11} />}
+            {compact && item.state === "pending" && <Circle size={11} />}
             {item.state === "current" && (
               <span className="size-[5px] rounded-full bg-current" />
             )}
           </span>
-          <div className="min-w-0 [overflow-wrap:anywhere]">
+          <div
+            className={cn(
+              "min-w-0 [overflow-wrap:anywhere]",
+              compact && "flex items-start gap-x-2",
+            )}
+          >
             <div
               className={cn(
-                "leading-[19px]",
+                compact ? "min-w-0 flex-1 leading-4" : "leading-[19px]",
                 item.state === "pending"
                   ? "text-uikit-muted"
                   : "text-uikit-ink",
@@ -83,7 +99,14 @@ export function ProgressRail({
               <span className="sr-only">: {item.state}</span>
             </div>
             {item.detail != null && (
-              <div className="mt-0.5 text-uikit-11 leading-4 text-uikit-muted">
+              <div
+                className={cn(
+                  "leading-4 text-uikit-muted",
+                  compact
+                    ? "ml-auto max-w-[50%] text-right text-uikit-10"
+                    : "mt-0.5 text-uikit-11",
+                )}
+              >
                 {item.detail}
               </div>
             )}

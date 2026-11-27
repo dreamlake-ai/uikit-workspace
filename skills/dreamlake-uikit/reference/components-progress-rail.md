@@ -5,6 +5,11 @@ stage has a 19px status node, a label to its right and optional detail beneath.
 A thin connector joins adjacent stages. The rail fills the width its parent gives
 it; this example uses 140px. Labels and detail wrap within that width.
 
+Use `compact` for a dense checklist in narrow content: small unframed state icons,
+labels and optional detail share each row, with 7px between rows and no connector.
+Detail aligns right and wraps when necessary. The caller chooses the presentation;
+compact mode preserves the same ordered stages and accessible state.
+
 ## Reported state
 
 The caller supplies every stage and its state. Completed stages show a green
@@ -28,6 +33,7 @@ Stable unique IDs preserve each stage's identity when its state changes.
 | ------------ | ----------------------------- | --------------------------------------------------------------------------------- |
 | `items`      | `readonly ProgressRailItem[]` | Ordered stages with unique `id`, `label`, optional `detail` and explicit `state`. |
 | `aria-label` | `string`                      | Required accessible name for the ordered list.                                    |
+| `compact`    | `boolean` (default `false`)   | Dense checklist with inline detail instead of a connected vertical rail.          |
 | `className`  | `string`                      | Additional classes on the list; width belongs to the parent.                      |
 
 `ProgressRailItem.state` is `complete`, `current`, `pending` or `error`.
