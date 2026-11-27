@@ -28,11 +28,34 @@ test("collection covers keep one action, readable front and motion preferences",
   await expect(well).toHaveCSS("overflow", "visible");
   const rear = stack.locator('[data-depth="2"]');
   const rest = await rear.evaluate((el) => getComputedStyle(el).transform);
-  const restingBounds = await rear.boundingBox();
+  const front = stack.locator('[data-depth="0"]');
+  const middle = stack.locator('[data-depth="1"]');
+  const restingBounds = await front.boundingBox();
+  const wellBounds = await well.boundingBox();
+  const wrapperBounds = await stack.boundingBox();
   await first.hover();
-  await page.waitForTimeout(300);
-  const expandedBounds = await rear.boundingBox();
-  expect(Math.abs(expandedBounds!.x - restingBounds!.x)).toBeGreaterThan(15);
+  await page.waitForTimeout(500);
+  const expandedBounds = await front.boundingBox();
+  expect(expandedBounds!.x).toBeLessThan(restingBounds!.x - 15);
+  expect(expandedBounds!.y + expandedBounds!.height / 2).toBeGreaterThan(
+    restingBounds!.y + restingBounds!.height / 2 + 15,
+  );
+  expect(await well.boundingBox()).toEqual(wellBounds);
+  expect(await stack.boundingBox()).toEqual(wrapperBounds);
+  await expect(well).toHaveCSS("transform", "none");
+  await expect(stack).toHaveCSS("transform", "none");
+  const transforms = await Promise.all(
+    [front, middle, rear].map((layer) =>
+      layer.evaluate((el) => {
+        const m = new DOMMatrixReadOnly(getComputedStyle(el).transform);
+        return { x: m.m41, y: m.m42, z: m.m43 };
+      }),
+    ),
+  );
+  expect(transforms[0].x).toBeLessThan(transforms[1].x);
+  expect(transforms[0].y).toBeGreaterThan(transforms[1].y);
+  expect(transforms[0].z).toBeGreaterThan(60);
+  expect(transforms[1].z).toBeGreaterThan(transforms[2].z);
   await expect(
     example
       .getByRole("button", { name: "Single environment 1 environment" })

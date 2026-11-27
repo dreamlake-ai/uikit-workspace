@@ -1,5 +1,9 @@
 # Release notes
 
+## 0.3.31 — 2026-11-27
+
+- Spread PreviewStack cards toward the bottom left, with the front cover springing outward in perspective. Keep the thumbnail well and stack wrapper fixed while only the individual cards move; preserve reduced motion, single-cover behavior and one navigation action.
+
 ## 0.3.30 — 2026-11-27
 
 - Refine StatusStackIcon with opaque pastel layers, subdued lower layers and closer centered two-category geometry. Add optional explicit running counts with amber layers; up to four categories remain within the icon bounds. Use a dominant red failure or amber running badge before the larger blue completion check; preserve exact counts and explicit completeness.

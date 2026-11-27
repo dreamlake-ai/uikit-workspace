@@ -44,8 +44,10 @@ the component.
 Use [PreviewStack](/components/preview-stack/) when covers represent the contents
 of a collection. Keep the representative front cover sharp and readable; at most
 two translucent, softly blurred covers sit behind it in an isolated perspective
-stack. Hover or keyboard focus lifts the front cover and pulls the rear covers
-apart in three dimensions. Keep the backing transparent and the thumbnail host
+stack. Hover or keyboard focus spreads the cards toward the bottom left, with
+the front cover springing furthest outward in three dimensions. Animate only the
+individual covers; the backing and thumbnail wrapper must not scale, translate or
+change bounds. Keep the backing transparent and the thumbnail host
 unclipped; use the `uikit-collection-icon--preview-stack` modifier in collection
 tiles. The fan extends beyond the resting footprint and stops for reduced motion. A single cover stays
 flat. This depth communicates a collection, not an extra modal or independent
