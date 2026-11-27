@@ -1,9 +1,14 @@
 {
-  "current": "0.3.25",
+  "current": "0.3.26",
   "aliases": {
     "latest": "https://uikit.dreamlake.ai"
   },
   "versions": [
+    {
+      "version": "0.3.26",
+      "url": "https://v-0-3-26.uikit.dreamlake.ai",
+      "date": "2026-11-27"
+    },
     {
       "version": "0.3.25",
       "url": "https://v-0-3-25.uikit.dreamlake.ai",
