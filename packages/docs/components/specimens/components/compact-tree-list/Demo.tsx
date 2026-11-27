@@ -118,6 +118,7 @@ export function Demo() {
                 compact
                 fillName
                 nameText={row.entry.title}
+                onClick={() => setSelected(row.entry.id)}
                 iconInteractive={!!row.entry.children}
                 icon={
                   row.entry.children ? (

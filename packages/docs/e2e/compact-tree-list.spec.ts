@@ -21,6 +21,23 @@ test("compact tree keeps selection, disclosure and native source navigation inde
     "line-height",
     "18px",
   );
+  const geometry = await accuracy.evaluate((row) => {
+    const bounds = row.getBoundingClientRect();
+    const elbow = row
+      .querySelector("[data-tree-elbow]")!
+      .getBoundingClientRect();
+    return {
+      left: elbow.left - bounds.left,
+      midpoint: elbow.bottom - bounds.top,
+    };
+  });
+  expect(geometry).toEqual({ left: 39, midpoint: 16 });
+  // Calibration is the final sibling: only the continuing ancestor keeps a trunk.
+  await expect(
+    example.locator(
+      '[data-demo-row="calibration"] [data-tree-elbow] + [data-tree-trunk]',
+    ),
+  ).toHaveCount(0);
   const source = accuracy.getByRole("link", { name: /Open source/ });
   await source.click();
   await expect(page).toHaveURL(/#recorded-source$/);
