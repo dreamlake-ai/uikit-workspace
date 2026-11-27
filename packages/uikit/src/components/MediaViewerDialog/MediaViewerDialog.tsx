@@ -1,6 +1,7 @@
 import { useEffect, useRef, type ReactNode, type RefObject } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
+import { TransportButton } from '../MediaTransport'
 
 export interface MediaViewerDialogProps {
   open?: boolean
@@ -11,6 +12,10 @@ export interface MediaViewerDialogProps {
   caption?: ReactNode
   /** Optional gallery rail; horizontal on narrow screens. */
   rail?: ReactNode
+  /**
+   * Controls beside Close. Use `TransportButton` so they match it; ink and
+   * its 5% hover wash resolve to the dark theme's values here, in either theme.
+   */
   actions?: ReactNode
   dismissible?: boolean
   initialFocus?: RefObject<HTMLElement | null>
@@ -164,31 +169,24 @@ function OpenMediaViewer({
             {caption}
           </div>
         )}
+        {/* Light ink for this cluster only: the backdrop is dark in every theme,
+            while the media itself keeps the app's own surface. */}
         <div
           onClick={(event) => event.stopPropagation()}
-          style={{ position: 'absolute', right: 16, top: 16, display: 'flex', gap: 8 }}
+          className="uikit-media-viewer-actions"
+          style={{
+            position: 'absolute',
+            right: 16,
+            top: 16,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 4,
+          }}
         >
           {actions}
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={!dismissible}
-            aria-label="Close"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: 36,
-              height: 36,
-              borderRadius: '50%',
-              border: 0,
-              cursor: dismissible ? 'pointer' : 'not-allowed',
-              background: 'rgba(255,255,255,0.12)',
-              color: 'rgba(255,255,255,0.92)',
-            }}
-          >
-            <X size={16} aria-hidden />
-          </button>
+          <TransportButton label="Close" onClick={onClose} disabled={!dismissible}>
+            <X size={16} strokeWidth={2} aria-hidden />
+          </TransportButton>
         </div>
       </div>
       {rail}

@@ -18,4 +18,6 @@ import source from '../../../components/specimens/components/media-viewer/MediaV
 
 Pass `open`, `onClose`, an accessible `title`, and the content as `children`. Stop click propagation on interactive content so clicking it does not dismiss the backdrop. Give expanded plots `width: 100%`, `height: 100%` and `minHeight: 0` so they resize with the viewport.
 
+Close is a [`TransportButton`](/components/media-transport): a quiet 30px square with a 6px radius, no fill at rest, 75% ink that turns full over a 5% wash on hover, the inset accent ring on keyboard focus, and a "Close" tooltip. It is disabled at 35% while `dismissible` is false. Put `TransportButton`s in `actions` to match it; they sit 4px apart, left of Close. Because the backdrop is dark in every theme, ink and its hover wash take the dark theme's values inside this cluster, so the controls stay legible over a light app. The media keeps the app's own surface.
+
 `caption`, `rail` and `actions` share the editor layout. `initialFocus` and `returnFocus` accept element refs. `dismissible={false}` keeps a pending attachment operation from being dismissed; it does not discard its draft. Escape and backdrop clicks dismiss the active viewer; native fullscreen retains Escape until fullscreen exits.
