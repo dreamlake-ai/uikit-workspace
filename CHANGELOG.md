@@ -1,5 +1,9 @@
 # Release notes
 
+## 0.3.23 — 2026-11-27
+
+- `ProgressRail` uses unframed accent-blue completion checks in both rail and compact presentations. Remove circular pending/current chrome; retain rail connectors, explicit error crosses, ordered state and current-step accessibility.
+
 ## 0.3.22 — 2026-11-27
 
 - `ProgressRail compact` reuses the dense checklist presentation: small unframed state icons, inline label/detail and no connector. Default rail layout and explicit accessible stage state are unchanged. The standard example compares both presentations using the same stages.

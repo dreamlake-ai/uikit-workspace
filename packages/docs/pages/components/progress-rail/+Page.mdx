@@ -11,7 +11,7 @@ import source from "../../../components/specimens/components/progress-rail/Demo.
 # ProgressRail
 
 Keep ordered process stages readable beside wider log or evidence panels. Each
-stage has a 19px status node, a label to its right and optional detail beneath.
+stage has a 19px unframed status slot, a label to its right and optional detail beneath.
 A thin connector joins adjacent stages. The rail fills the width its parent gives
 it; this example uses 140px. Labels and detail wrap within that width.
 
@@ -26,9 +26,10 @@ compact mode preserves the same ordered stages and accessible state.
 
 ## Reported state
 
-The caller supplies every stage and its state. Completed stages show a green
-check, the current stage an accent dot, pending stages a neutral outline, and
-an error stage a red cross. Completion describes this process stage, not an
+The caller supplies every stage and its state. Completed stages show an accent-blue
+check (`--uikit-accent`, `#23aaff` by default), and an error stage shows a red cross.
+Neither presentation adds circles or borders around status slots. Current stages
+use a medium-weight label; pending stages use muted labels, with empty icon slots. Completion describes this process stage, not an
 aggregate evaluation verdict. A finished job can still contain failed tests.
 
 Use at most one `current` or `error` stage for a single process; both mark the

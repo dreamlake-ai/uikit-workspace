@@ -97,8 +97,50 @@ it("switches to compact rows without losing stage identity, state or observed de
   );
   expect(host.querySelectorAll("time")).toHaveLength(1);
   expect(host.querySelector("button, a, [tabindex]")).toBeNull();
-  expect(host.querySelector(".lucide-circle")).not.toBeNull();
+  expect(host.querySelector(".lucide-circle")).toBeNull();
   render(items);
   expect(host.querySelector("ol")?.dataset.variant).toBe("rail");
   expect([...host.querySelectorAll("li")]).toEqual(rows);
 });
+
+it.each([false, true])(
+  "uses unframed blue checks without circular pending/current nodes (compact=%s)",
+  (compact) => {
+    act(() =>
+      root.render(
+        <ProgressRail
+          compact={compact}
+          aria-label="Progress"
+          items={[
+            { id: "done", label: "Matched", state: "complete" },
+            { id: "now", label: "Running", state: "current" },
+            { id: "next", label: "Collect", state: "pending" },
+            { id: "error", label: "Failed", state: "error" },
+          ]}
+        />,
+      ),
+    );
+    expect(host.querySelectorAll(".lucide-check")).toHaveLength(1);
+    expect(
+      host
+        .querySelector(".lucide-check")
+        ?.parentElement?.classList.contains("text-uikit-accent"),
+    ).toBe(true);
+    expect(host.querySelectorAll(".lucide-x")).toHaveLength(1);
+    expect(
+      host.querySelector(
+        '[data-state="pending"] svg, [data-state="current"] svg, .rounded-full',
+      ),
+    ).toBeNull();
+    for (const slot of host.querySelectorAll("li > span"))
+      expect(slot.classList.contains("border")).toBe(false);
+    expect(host.querySelectorAll("li > span.absolute")).toHaveLength(
+      compact ? 0 : 3,
+    );
+    expect(
+      host
+        .querySelector('[data-state="current"]')
+        ?.getAttribute("aria-current"),
+    ).toBe("step");
+  },
+);

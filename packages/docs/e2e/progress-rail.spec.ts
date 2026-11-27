@@ -64,6 +64,21 @@ test("progress rail stays readable at narrow widths without adding tab stops", a
     "0px",
   );
   await expect(compact.locator("li > span")).toHaveCount(5);
+  for (const stages of [list, compact]) {
+    await expect(stages.locator(".lucide-check").first()).toHaveCSS(
+      "color",
+      "rgb(35, 170, 255)",
+    );
+    await expect(stages.locator(".lucide-circle, .rounded-full")).toHaveCount(
+      0,
+    );
+    await expect(stages.locator("li > span").last()).toHaveCSS(
+      "border-top-width",
+      "0px",
+    );
+  }
+  await expect(list.locator("li > span.absolute")).toHaveCount(3);
+  await expect(compact.locator("li > span.absolute")).toHaveCount(0);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.evaluate(() =>
     document.documentElement.setAttribute("data-theme", "dark"),
@@ -77,6 +92,11 @@ test("progress rail stays readable at narrow widths without adding tab stops", a
     .getByRole("list", { name: "Collection progress" })
     .locator('[aria-current="step"]');
   await expect(error).toContainText("Evidence collection needs authorization");
+  await expect(error.locator(".lucide-x")).toBeVisible();
+  await expect(compact.locator(".lucide-check").first()).toHaveCSS(
+    "color",
+    "rgb(35, 170, 255)",
+  );
   expect(await error.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(
     true,
   );
