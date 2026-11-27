@@ -167,3 +167,35 @@ it("retains row DOM and follows grid geometry while ignoring hidden items", () =
     host.remove();
   }
 });
+
+it("keeps a one-column grid in tile presentation without replacing rows", () => {
+  (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
+  const host = document.createElement("div");
+  document.body.append(host);
+  const root = createRoot(host);
+  const render = (grid: boolean) =>
+    root.render(
+      <CollectionList columns={1} grid={grid}>
+        <CollectionRow
+          name="Scene.usdz"
+          icon={<span>icon</span>}
+          thumbnail={<img alt="Scene preview" />}
+        />
+      </CollectionList>,
+    );
+  try {
+    act(() => render(true));
+    const row = host.querySelector(".uikit-collection-row");
+    expect(host.querySelector('[data-columns="1"]')).not.toBeNull();
+    expect(host.querySelector('[data-presentation="tile"]')).not.toBeNull();
+    expect(host.querySelector("img")).not.toBeNull();
+    act(() => render(false));
+    expect(host.querySelector(".uikit-collection-row")).toBe(row);
+    expect(host.querySelector("[data-columns]")).toBeNull();
+    expect(host.querySelector('[data-presentation="tile"]')).toBeNull();
+    expect(host.querySelector("img")).toBeNull();
+  } finally {
+    act(() => root.unmount());
+    host.remove();
+  }
+});

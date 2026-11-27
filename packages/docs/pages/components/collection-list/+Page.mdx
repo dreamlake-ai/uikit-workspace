@@ -12,8 +12,9 @@ import {
   PinnedResourceIcons,
   CompactList,
   CompactGrid,
-} from '../../../components/specimens/components/collection-list/Demo'
-import source from '../../../components/specimens/components/collection-list/Demo.tsx?raw'
+  SingleColumnGrid,
+} from "../../../components/specimens/components/collection-list/Demo";
+import source from "../../../components/specimens/components/collection-list/Demo.tsx?raw";
 
 # CollectionList
 
@@ -151,3 +152,23 @@ on custom focusable rows and `data-collection-span` on section headers/status.
 <Preview source={source} filename="Demo.tsx">
   <CompactGrid />
 </Preview>
+
+## One-column preview grids
+
+Set `grid` when a responsive preview layout fits only one column. This preserves
+thumbnails, tile typography and arrow-key navigation while `columns={1}` alone
+keeps the compact list presentation. Entries stay mounted when switching.
+
+<Preview>
+  <SingleColumnGrid />
+</Preview>
+
+```tsx
+<CollectionList grid columns={columnsThatFit}>
+  <CollectionRow
+    name="Scene.usdz"
+    icon={<Boxes />}
+    thumbnail={<ScenePreview />}
+  />
+</CollectionList>
+```

@@ -413,3 +413,13 @@ export function CompactGrid() {
     </section>
   );
 }
+
+/** A large preview remains a tile when only one fits in the panel. */
+export function SingleColumnGrid() {
+  return (
+    <CollectionList grid columns={1} style={{ width: 280, maxWidth: "100%" }}>
+      <CollectionRow name="Scene.usdz" icon={<Boxes size={42} />} />
+      <CollectionRow name="Episode.mp4" icon={<Film size={42} />} />
+    </CollectionList>
+  );
+}
