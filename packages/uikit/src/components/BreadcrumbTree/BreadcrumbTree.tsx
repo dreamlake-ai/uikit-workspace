@@ -1,3 +1,4 @@
+import { useOutsideDismiss } from "../../lib/useOutsideDismiss";
 import { Spinner } from "../Spinner";
 import {
   useState,
@@ -439,17 +440,7 @@ export function BreadcrumbTree({
     columnsRef.current.scrollLeft = columnsRef.current.scrollWidth;
   }, [path.length, open, activeView]);
 
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: MouseEvent) => {
-      const target = e.target as Node;
-      if (wrapRef.current?.contains(target)) return;
-      if (panelRef.current?.contains(target)) return;
-      setOpen(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [open]);
+  useOutsideDismiss(open, [wrapRef, panelRef], () => setOpen(false));
 
   const observerRef = useRef<IntersectionObserver | null>(null);
   const sentinelRefs = useRef<Map<string, HTMLDivElement>>(new Map());

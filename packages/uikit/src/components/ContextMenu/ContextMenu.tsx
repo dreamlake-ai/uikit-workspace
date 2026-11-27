@@ -1,3 +1,4 @@
+import { useIframeDismiss } from "../../lib/useOutsideDismiss";
 import {
   type ComponentProps,
   type ReactElement,
@@ -105,7 +106,8 @@ export function ContextMenu({ onOpenChange, children }: ContextMenuProps) {
     ],
   });
 
-  const dismiss = useDismiss(context);
+  useIframeDismiss(open, [refs.domReference, refs.floating], () => setOpen(false));
+  const dismiss = useDismiss(context, { capture: { outsidePress: true } });
   const role = useRole(context, { role: "menu" });
   const listNav = useListNavigation(context, {
     listRef: elementsRef,

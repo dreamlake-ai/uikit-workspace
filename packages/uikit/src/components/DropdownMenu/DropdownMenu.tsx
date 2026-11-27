@@ -1,3 +1,4 @@
+import { useIframeDismiss } from "../../lib/useOutsideDismiss";
 import {
   useLayoutEffect,
   type ComponentProps,
@@ -128,7 +129,8 @@ function useMenuFloating(
     delay: { open: 60 },
     handleClose: safePolygon({ blockPointerEvents: true }),
   });
-  const dismiss = useDismiss(context);
+  useIframeDismiss(open, [refs.domReference, refs.floating], () => setOpen(false));
+  const dismiss = useDismiss(context, { capture: { outsidePress: true } });
   const role = useRole(context, { role: "menu" });
   const listNav = useListNavigation(context, {
     listRef: elementsRef,
