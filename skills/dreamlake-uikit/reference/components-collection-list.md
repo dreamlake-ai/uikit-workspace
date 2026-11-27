@@ -126,3 +126,8 @@ keeps the compact list presentation. Entries stay mounted when switching.
   />
 </CollectionList>
 ```
+
+
+Use `iconInteractive` when the leading icon contains a button. Decorative icons
+remain hidden from assistive technology by default; interactive icons stay
+announced and do not propagate clicks or keyboard actions to row navigation.

@@ -423,3 +423,29 @@ export function SingleColumnGrid() {
     </CollectionList>
   );
 }
+
+/** A status icon can narrow a collection without opening the containing row. */
+export function InteractiveIcon() {
+  const [filter, setFilter] = useState("Everyone");
+  return (
+    <section aria-label="Interactive collection icon">
+      <CollectionList>
+        <CollectionRow
+          iconInteractive
+          icon={
+            <button
+              aria-label="Filter by passed"
+              onClick={() => setFilter("Passed")}
+            >
+              ✓
+            </button>
+          }
+          name="GPU tests"
+          detail="main · 2 jobs"
+          meta="just now"
+        />
+      </CollectionList>
+      <output aria-live="polite">Filter: {filter}</output>
+    </section>
+  );
+}
