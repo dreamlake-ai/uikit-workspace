@@ -1,9 +1,17 @@
 import { useState } from "react";
-import { PreviewStack } from "@dreamlake/uikit";
+import {
+  CollectionLayoutProvider,
+  CollectionRowBody,
+  PreviewStack,
+} from "@dreamlake/uikit";
 
 function Scene({ variation }: { variation: number }) {
   return (
-    <svg viewBox="0 0 320 200" aria-hidden="true">
+    <svg
+      viewBox="0 0 320 200"
+      preserveAspectRatio="xMidYMid slice"
+      aria-hidden="true"
+    >
       <rect width="320" height="200" fill="#cbd0d1" />
       <path d="M0 122 154 55 320 124 170 200Z" fill="#8e989d" />
       <path d="m55 120 104-45 103 43-101 47Z" fill="#e1ded7" />
@@ -39,53 +47,60 @@ function Scene({ variation }: { variation: number }) {
 export function Demo() {
   const [opened, setOpened] = useState<string | null>(null);
   return (
-    <section aria-label="Preview stack example">
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns:
-            "repeat(auto-fit, minmax(min(100%, 180px), 1fr))",
-          gap: 20,
-        }}
+    <CollectionLayoutProvider value={2}>
+      <section
+        aria-label="Preview stack example"
+        style={{ padding: "32px 24px 0" }}
       >
-        {[
-          "Load plates into dish rack",
-          "Pick up the mug",
-          "Single environment",
-        ].map((title, index) => (
-          <button
-            type="button"
-            key={title}
-            onClick={() => setOpened(title)}
-            style={{
-              padding: 0,
-              border: 0,
-              background: "none",
-              color: "inherit",
-              textAlign: "left",
-              cursor: "pointer",
-            }}
-          >
-            <PreviewStack
-              previews={Array.from(
-                { length: index === 2 ? 1 : 3 },
-                (_, variation) => (
-                  <Scene key={variation} variation={variation + index} />
-                ),
-              )}
-            />
-            <span style={{ display: "block", marginTop: 8, fontSize: 13 }}>
-              {title}
-            </span>
-            <span style={{ display: "block", opacity: 0.55, fontSize: 12 }}>
-              {index === 2 ? "1 environment" : "198 episodes"}
-            </span>
-          </button>
-        ))}
-      </div>
-      <output aria-live="polite" style={{ display: "block", marginTop: 16 }}>
-        {opened ? `Opened: ${opened}` : "Choose a collection"}
-      </output>
-    </section>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns:
+              "repeat(auto-fit, minmax(min(100%, 180px), 1fr))",
+            gap: 20,
+          }}
+        >
+          {[
+            "Load plates into dish rack",
+            "Pick up the mug",
+            "Single environment",
+          ].map((title, index) => (
+            <button
+              type="button"
+              key={title}
+              onClick={() => setOpened(title)}
+              style={{
+                padding: 0,
+                border: 0,
+                background: "none",
+                color: "inherit",
+                textAlign: "left",
+                cursor: "pointer",
+              }}
+            >
+              <CollectionRowBody
+                classNames={{ icon: "uikit-collection-icon--preview-stack" }}
+                icon={null}
+                name={title}
+                detail={index === 2 ? "1 environment" : "198 episodes"}
+                thumbnail={
+                  <PreviewStack
+                    previews={Array.from(
+                      { length: index === 2 ? 1 : 3 },
+                      (_, variation) => (
+                        <Scene key={variation} variation={variation + index} />
+                      ),
+                    )}
+                  />
+                }
+              />
+            </button>
+          ))}
+        </div>
+        <output aria-live="polite" style={{ display: "block", marginTop: 16 }}>
+          {opened ? `Opened: ${opened}` : "Choose a collection"}
+        </output>
+      </section>
+    </CollectionLayoutProvider>
   );
 }

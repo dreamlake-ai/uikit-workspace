@@ -425,6 +425,15 @@
   opacity: 1;
   background: color-mix(in srgb, var(--ink) 4%, transparent);
 }
+/* A preview stack supplies its own cover surfaces and needs room to fan out. */
+.uikit-collection-line[data-presentation="tile"] .uikit-collection-icon--preview-stack {
+  overflow: visible;
+  border-radius: 0;
+  background: transparent;
+}
+.uikit-collection-icon--preview-stack > .uikit-preview-stack {
+  height: 100%;
+}
 .uikit-collection-line[data-presentation="tile"] .uikit-collection-title {
   display: block;
   width: 100%;

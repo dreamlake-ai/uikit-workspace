@@ -12,7 +12,8 @@ import source from "../../../components/specimens/components/preview-stack/Demo.
 
 Show what a folder or collection contains using a sharp representative cover, with
 up to two translucent, softly blurred covers behind it. The layers have perspective
-and a small hover or keyboard-focus fan. They remain still with reduced motion.
+and pull apart visibly in three dimensions on hover or keyboard focus: the front
+cover lifts while the rear covers fan left and right. They remain still with reduced motion.
 Keep collection stacks above ordinary entries, in the host's existing grid.
 
 <Preview source={source} filename="Demo.tsx">
@@ -48,7 +49,13 @@ action when covers are unavailable. Resolve cover URLs through the same authoriz
 asset path as ordinary previews, and do not download a whole scene for a cover.
 
 The stack fills its parent width with a 16:10 footprint, including space for its
-rear layers. Use the existing collection grid's sizing controls and scrolling;
+rear layers at rest. The stack has no background panel. Leave overflow visible
+around its host so the expanded covers can extend beyond that footprint. In a
+`CollectionRowBody`, set
+`classNames={{ icon: "uikit-collection-icon--preview-stack" }}` to remove the
+thumbnail well's background and clipping; ordinary file thumbnails keep their well.
+Keep the active collection above neighboring cards when its host establishes a
+stacking context. Use the existing collection grid's sizing controls and scrolling;
 do not put a second scroll area or a mini-grid inside the stack.
 
 | Prop        | Type          | Purpose                                             |
