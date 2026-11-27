@@ -114,6 +114,14 @@ test("one full-row highlight follows pointer and keyboard while groups only unfo
       );
     })
     .toBeLessThan(1);
+  await leaf.getByRole("button", { name: "Calibration", exact: true }).click();
+  await expect(slider).not.toHaveAttribute("data-ready");
+  await example
+    .getByRole("button", {
+      name: "Accuracy across the complete validation dataset",
+      exact: true,
+    })
+    .click();
   await group.click();
   await expect(group).toHaveAttribute("aria-expanded", "false");
   await expect(group).not.toHaveAttribute("aria-pressed");

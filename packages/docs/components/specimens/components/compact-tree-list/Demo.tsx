@@ -162,11 +162,12 @@ export function Demo() {
                     )
                   }
                   onFocusCapture={(event) => hover.track(event.currentTarget)}
-                  onClick={() =>
+                  onClick={() => {
+                    hover.track(null);
                     row.entry.children
                       ? toggle(row.entry.id)
-                      : setSelected(row.entry.id)
-                  }
+                      : setSelected(row.entry.id);
+                  }}
                   icon={
                     row.entry.children ? (
                       <Layers size={13} aria-hidden />
