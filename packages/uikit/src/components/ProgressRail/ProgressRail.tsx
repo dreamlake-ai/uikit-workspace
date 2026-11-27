@@ -1,5 +1,5 @@
 import { type ReactNode } from "react";
-import { Check, Circle, X } from "lucide-react";
+import { Check, X } from "lucide-react";
 import { cn } from "../../lib/utils";
 
 export interface ProgressRailItem {
@@ -18,10 +18,10 @@ export interface ProgressRailProps {
 }
 
 const nodeTone: Record<ProgressRailItem["state"], string> = {
-  complete: "border-uikit-tone-green/40 text-uikit-tone-green",
-  current: "border-uikit-accent text-uikit-accent",
-  pending: "border-uikit-ink-12 text-uikit-muted",
-  error: "border-uikit-tone-red/50 text-uikit-tone-red",
+  complete: "text-uikit-accent",
+  current: "text-uikit-accent",
+  pending: "text-uikit-muted",
+  error: "text-uikit-tone-red",
 };
 
 /** Passive ordered stages. The caller supplies state, detail and available width. */
@@ -61,7 +61,7 @@ export function ProgressRail({
               className={cn(
                 "absolute bottom-0 left-[9px] top-[19px] w-px",
                 item.state === "complete"
-                  ? "bg-uikit-tone-green/30"
+                  ? "bg-uikit-accent/30"
                   : "bg-uikit-ink-12",
               )}
             />
@@ -70,16 +70,12 @@ export function ProgressRail({
             aria-hidden="true"
             className={cn(
               "flex items-center justify-center",
-              compact ? "h-4 w-3" : "size-[19px] rounded-full border",
+              compact ? "h-4 w-3" : "size-[19px]",
               nodeTone[item.state],
             )}
           >
             {item.state === "complete" && <Check size={11} />}
             {item.state === "error" && <X size={11} />}
-            {compact && item.state === "pending" && <Circle size={11} />}
-            {item.state === "current" && (
-              <span className="size-[5px] rounded-full bg-current" />
-            )}
           </span>
           <div
             className={cn(
@@ -90,6 +86,7 @@ export function ProgressRail({
             <div
               className={cn(
                 compact ? "min-w-0 flex-1 leading-4" : "leading-[19px]",
+                item.state === "current" && "font-medium",
                 item.state === "pending"
                   ? "text-uikit-muted"
                   : "text-uikit-ink",
