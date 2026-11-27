@@ -32,6 +32,13 @@ Use a focusable trigger. Closing from a focused menu link (by selection or
 Escape) returns focus to the trigger before the retained exit panel becomes
 inert and hidden. Clicking another input keeps focus on that input.
 
+## Outside interaction
+
+Open Versions, then click the editor surface or inside the embedded preview.
+Both dismiss the menu even when the surface stops event propagation or lives
+in another document. Touch and pen presses follow the same behavior. Presses
+inside the menu or its trigger remain available to the menu.
+
 ## Behavior
 
 - **Wedge points at the chevron** — the panel's trigger-facing edge carries a wedge that
@@ -64,7 +71,9 @@ inert and hidden. Clicking another input keeps focus on that input.
   `overflow: hidden`, `transform`, or sticky containers, and follows the
   trigger as the page scrolls or resizes.
 - **Esc + outside-click dismiss** — pressing Escape or clicking outside both the
-  trigger and the panel closes the menu.
+  trigger and the panel closes the menu, including an editor that stops pointer
+  events or focus entering an embedded preview. A frame inside the menu remains
+  interactive. `dismissOnOutsideClick={false}` disables both outside behaviors.
 - **Controlled or uncontrolled** — pass `open` + `onOpenChange` for full
   control, or rely on `defaultOpen` and let the menu manage its own state.
 

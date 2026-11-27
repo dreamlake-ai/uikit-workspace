@@ -11,6 +11,7 @@ import { cn } from '../../lib/utils'
 import { useHoverSlider } from '../../lib/useHoverSlider'
 import { usePanelPresence } from '../../lib/usePanelPresence'
 import { useComposedRef } from '../../lib/useModalPresence'
+import { useOutsideDismiss } from '../../lib/useOutsideDismiss'
 
 /** Wedge side length in px, pre-rotation. */
 const ARROW_SIZE = 7
@@ -207,18 +208,7 @@ export function Menu({
     return () => document.removeEventListener('keydown', onKey)
   }, [open, dismissOnEsc]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Outside-click dismiss — must check both trigger and portaled panel.
-  useEffect(() => {
-    if (!open || !dismissOnOutsideClick) return
-    const onDown = (e: MouseEvent) => {
-      const target = e.target as Node
-      if (triggerRef.current?.contains(target)) return
-      if (panelRef.current?.contains(target)) return
-      setOpen(false)
-    }
-    document.addEventListener('mousedown', onDown)
-    return () => document.removeEventListener('mousedown', onDown)
-  }, [open, dismissOnOutsideClick]) // eslint-disable-line react-hooks/exhaustive-deps
+  useOutsideDismiss(open && dismissOnOutsideClick, [triggerRef, panelRef], () => setOpen(false))
 
   // Position is runtime-computed; everything else is class-driven.
   // `coords.top` is the offset from the anchoring viewport edge: `top` when

@@ -1,3 +1,4 @@
+import { useIframeDismiss } from "../../lib/useOutsideDismiss";
 import {
   type ComponentProps,
   type ReactElement,
@@ -117,7 +118,8 @@ export function Popover({
   });
 
   const click = useClick(context);
-  const dismiss = useDismiss(context);
+  useIframeDismiss(open, [refs.domReference, refs.floating], () => setOpen(false));
+  const dismiss = useDismiss(context, { capture: { outsidePress: true } });
   const role = useRole(context);
   const { getReferenceProps, getFloatingProps } = useInteractions([
     click,

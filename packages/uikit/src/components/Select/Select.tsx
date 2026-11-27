@@ -1,3 +1,4 @@
+import { useIframeDismiss } from "../../lib/useOutsideDismiss";
 import {
   useLayoutEffect,
   Children,
@@ -250,7 +251,8 @@ export function Select({
   });
 
   const click = useClick(context);
-  const dismiss = useDismiss(context);
+  useIframeDismiss(open, [refs.domReference, refs.floating], () => setOpen(false));
+  const dismiss = useDismiss(context, { capture: { outsidePress: true } });
   const role = useRole(context, { role: "listbox" });
   const listNav = useListNavigation(context, {
     listRef: elementsRef,
