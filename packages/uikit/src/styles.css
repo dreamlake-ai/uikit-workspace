@@ -1469,30 +1469,33 @@ html[data-theme="dark"] {
   inset: 12% 8% 0 0;
   overflow: hidden;
   border-radius: 5px;
-  background: var(--color-uikit-panel);
+  background: transparent;
   border: 1px solid color-mix(in srgb, var(--color-uikit-ink) 12%, transparent);
   box-shadow: 0 2px 5px rgb(0 0 0 / 10%);
-  transform-origin: 50% 100%;
-  transition: transform 180ms ease-out;
+  transform-origin: 50% 75%;
+  transition: transform 240ms cubic-bezier(.2,.7,.2,1), opacity 240ms ease-out;
 }
 .uikit-preview-stack-layer > * { width: 100%; height: 100%; }
 .uikit-preview-stack-layer img, .uikit-preview-stack-layer video { object-fit: cover; }
-.uikit-preview-stack-layer[data-depth="0"] { z-index: 3; }
+.uikit-preview-stack-layer[data-depth="0"] {
+  z-index: 3;
+  transform: translate3d(0, calc(var(--uikit-preview-fan) * -2%), calc(var(--uikit-preview-fan) * 36px)) rotateX(calc(var(--uikit-preview-fan) * -6deg)) rotateY(calc(var(--uikit-preview-fan) * -7deg));
+}
 .uikit-preview-stack-layer[data-depth="1"] {
   z-index: 2;
-  opacity: .75;
+  opacity: calc(.75 + var(--uikit-preview-fan) * .15);
   filter: blur(.35px);
   backdrop-filter: blur(8px);
-  transform: translate3d(calc(4% + var(--uikit-preview-fan) * 1%), calc(-6% - var(--uikit-preview-fan) * 1%), -12px) rotate(calc(2deg + var(--uikit-preview-fan) * 1deg));
+  transform: translate3d(calc(4% - var(--uikit-preview-fan) * 20%), calc(-6% - var(--uikit-preview-fan) * 16%), -12px) rotateX(calc(var(--uikit-preview-fan) * 12deg)) rotateY(calc(var(--uikit-preview-fan) * 14deg)) rotate(calc(2deg - var(--uikit-preview-fan) * 15deg));
 }
 .uikit-preview-stack-layer[data-depth="2"] {
   z-index: 1;
-  opacity: .45;
+  opacity: calc(.45 + var(--uikit-preview-fan) * .3);
   filter: blur(.6px);
   backdrop-filter: blur(12px);
-  transform: translate3d(calc(8% + var(--uikit-preview-fan) * 1%), calc(-12% - var(--uikit-preview-fan) * 1%), -24px) rotate(calc(4deg + var(--uikit-preview-fan) * 1deg));
+  transform: translate3d(calc(8% + var(--uikit-preview-fan) * 16%), calc(-12% - var(--uikit-preview-fan) * 16%), -24px) rotateX(calc(var(--uikit-preview-fan) * 15deg)) rotateY(calc(var(--uikit-preview-fan) * -18deg)) rotate(calc(4deg + var(--uikit-preview-fan) * 12deg));
 }
-.uikit-preview-stack[data-layers="1"] .uikit-preview-stack-layer { inset: 0; }
+.uikit-preview-stack[data-layers="1"] .uikit-preview-stack-layer { inset: 0; transform: none; }
 :is(button, a, [role="button"]):focus-visible .uikit-preview-stack { --uikit-preview-fan: 1; }
 @media (hover: hover) {
   :is(button, a, [role="button"]):hover .uikit-preview-stack { --uikit-preview-fan: 1; }

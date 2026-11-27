@@ -189,3 +189,12 @@ Use `iconInteractive` when the leading icon is a button. Its accessible name sta
 exposed and clicks or keyboard actions stay independent of row navigation.
 
 <InteractiveIcon />
+
+### Stacked collection previews
+
+For a folder containing several representative covers, pass a
+[PreviewStack](/components/preview-stack/) as `thumbnail` and set
+`classNames={{ icon: "uikit-collection-icon--preview-stack" }}` on
+`CollectionRowBody`. This shared modifier removes the gray thumbnail backing and
+clipping so the covers can pull apart on hover or keyboard focus. The surrounding
+collection action remains the single navigation target.

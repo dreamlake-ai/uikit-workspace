@@ -1,5 +1,9 @@
 # Release notes
 
+## 0.3.25 — 2026-11-27
+
+- Preview stacks use transparent backing and visibly pull apart in three dimensions on hover or keyboard focus. Add a shared collection thumbnail modifier that preserves overflow; retain sharp front covers, one navigation action, and static reduced-motion/single-cover states.
+
 ## 0.3.24 — 2026-11-27
 
 - Add compact collection rows and a documented virtualized tree-list composition using existing branch guides. Keep independent disclosure and source-link actions reachable in narrow rows, preserve native action-link navigation, and leave hierarchy/selection/inspectors with the host.
