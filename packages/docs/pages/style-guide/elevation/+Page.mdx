@@ -38,3 +38,14 @@ Component-internal stacking (the `ThemeToggle` puck, the `ZebraRunSpecimen`
 selection ring) uses small ints (`z-0` / `z-10` / `z-[1]` / `z-[2]`) inside its own
 `isolate` boundary. Those don't compose with the page ladder above — they're private to
 the component.
+
+## Collection preview depth
+
+Use [PreviewStack](/components/preview-stack/) when covers represent the contents
+of a collection. Keep the representative front cover sharp and readable; at most
+two translucent, softly blurred covers sit behind it in an isolated perspective
+stack. The small fan on the surrounding action's hover or keyboard focus stays
+within the cover footprint and stops for reduced motion. A single cover stays
+flat. This depth communicates a collection, not an extra modal or independent
+set of actions; navigation and the accessible name belong to one surrounding
+link or button.
