@@ -2,8 +2,10 @@
 
 Show what a folder or collection contains using a sharp representative cover, with
 up to two translucent, softly blurred covers behind it. The layers have perspective
-and pull apart visibly in three dimensions on hover or keyboard focus: the front
-cover lifts while the rear covers fan left and right. They remain still with reduced motion.
+and spread toward the bottom left on hover or keyboard focus. The front cover
+springs furthest outward in three dimensions, the middle cover follows, and the
+back cover stays near its resting position. The thumbnail well and stack wrapper
+keep exactly the same bounds: only the cards move. They remain still with reduced motion.
 Keep collection stacks above ordinary entries, in the host's existing grid.
 
 ## One action per collection
