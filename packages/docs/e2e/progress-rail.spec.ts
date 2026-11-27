@@ -6,10 +6,13 @@ test("progress rail stays readable at narrow widths without adding tab stops", a
   await page.goto("/components/progress-rail");
   await page.waitForLoadState("networkidle");
   const example = page.getByRole("region", { name: "Progress rail example" });
-  const list = example.getByRole("list", { name: "Evaluation progress" });
+  const list = example.getByRole("list", {
+    name: "Evaluation progress",
+    exact: true,
+  });
   await expect(list.getByRole("listitem")).toHaveCount(4);
   await expect(list.locator('[aria-current="step"]')).toContainText("Running");
-  await expect(example.locator("button, a, [tabindex]")).toHaveCount(0);
+  await expect(list.locator("button, a, [tabindex]")).toHaveCount(0);
   const node = list.locator('li > span[aria-hidden="true"]').last();
   await expect(node).toHaveCSS("width", "19px");
   await expect(node).toHaveCSS("height", "19px");
@@ -31,15 +34,36 @@ test("progress rail stays readable at narrow widths without adding tab stops", a
   await example.screenshot({
     path: testInfo.outputPath("progress-rail-after.png"),
   });
-  // Before this component, the same statuses use the existing inline stage layout.
-  const before = await page.addStyleTag({
-    content:
-      '[aria-label="Progress rail example"] ol { display:flex; flex-wrap:wrap; gap:8px; } [aria-label="Progress rail example"] li { display:block; padding:0; } [aria-label="Progress rail example"] li > span { display:none; }',
+  const compact = example.getByRole("list", {
+    name: "Compact evaluation progress",
   });
-  await example.screenshot({
-    path: testInfo.outputPath("progress-rail-before.png"),
+  await expect(compact).toHaveAttribute("data-variant", "compact");
+  const specimen = compact.locator("..");
+  await example.getByRole("button", { name: "Use rail", exact: true }).click();
+  await expect(compact).toHaveAttribute("data-variant", "rail");
+  await specimen.screenshot({
+    path: testInfo.outputPath("compact-before.png"),
   });
-  await before.evaluate((el) => el.remove());
+  await example
+    .getByRole("button", { name: "Use compact", exact: true })
+    .click();
+  await expect(compact).toHaveAttribute("data-variant", "compact");
+  await specimen.screenshot({ path: testInfo.outputPath("compact-after.png") });
+  const compactHeight = (await compact.boundingBox())!.height;
+  expect(compactHeight).toBeLessThan(120);
+  const time = compact.locator("time");
+  const active = compact.locator('[aria-current="step"]');
+  expect(
+    Math.abs(
+      (await time.locator("..").boundingBox())!.y -
+        (await active.boundingBox())!.y,
+    ),
+  ).toBeLessThan(2);
+  await expect(compact.locator("li > span").first()).toHaveCSS(
+    "border-top-width",
+    "0px",
+  );
+  await expect(compact.locator("li > span")).toHaveCount(5);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.evaluate(() =>
     document.documentElement.setAttribute("data-theme", "dark"),

@@ -71,3 +71,34 @@ it("updates the same stage to an error without retaining a completion check or o
   render([]);
   expect(host.children).toHaveLength(0);
 });
+
+it("switches to compact rows without losing stage identity, state or observed details", () => {
+  const items: ProgressRailItem[] = [
+    { id: "done", label: "Matched", state: "complete" },
+    {
+      id: "now",
+      label: "Running",
+      state: "current",
+      detail: <time>19:39:20</time>,
+    },
+    { id: "next", label: "Collect", state: "pending" },
+  ];
+  render(items);
+  const rows = [...host.querySelectorAll("li")];
+  act(() =>
+    root.render(
+      <ProgressRail compact aria-label="Run progress" items={items} />,
+    ),
+  );
+  expect([...host.querySelectorAll("li")]).toEqual(rows);
+  expect(host.querySelector("ol")?.dataset.variant).toBe("compact");
+  expect(host.querySelector('[aria-current="step"]')?.textContent).toBe(
+    "Running: current19:39:20",
+  );
+  expect(host.querySelectorAll("time")).toHaveLength(1);
+  expect(host.querySelector("button, a, [tabindex]")).toBeNull();
+  expect(host.querySelector(".lucide-circle")).not.toBeNull();
+  render(items);
+  expect(host.querySelector("ol")?.dataset.variant).toBe("rail");
+  expect([...host.querySelectorAll("li")]).toEqual(rows);
+});
