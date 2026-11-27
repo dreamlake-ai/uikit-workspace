@@ -1,5 +1,10 @@
 # Release notes
 
+## 0.3.26 — 2026-11-27
+
+- Compact tree lists reuse the standard moving hover highlight, expand group titles with trailing chevrons, and select leaves only. Suppress individual collection-row hover fills inside shared hover hosts. Export the existing TruncatedText helper for accessible title/chevron compositions.
+
+
 ## 0.3.25 — 2026-11-27
 
 - Preview stacks use transparent backing and visibly pull apart in three dimensions on hover or keyboard focus. Add a shared collection thumbnail modifier that preserves overflow; retain sharp front covers, one navigation action, and static reduced-motion/single-cover states.

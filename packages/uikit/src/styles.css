@@ -651,7 +651,7 @@ html[data-theme="dark"] {
    (the slider's and the row's) read darker than every other hover. Selection
    keeps its fill. Unlayered, so it wins over the rows' `hover:bg-*` utilities. */
 [data-uikit-hover-host]
-  :is([role="option"], [role^="menuitem"], button, a[href]):hover:not(
+  :is([role="option"], [role^="menuitem"], button, a[href], .uikit-collection-row):hover:not(
     [aria-selected="true"],
     [data-selected="true"],
     [aria-checked="true"],
