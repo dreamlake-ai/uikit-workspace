@@ -75,6 +75,9 @@ shape and mounted content are unchanged.
 width without changing their padding. The existing preferred width (170px by
 default) remains the maximum, with long labels ellipsized. Return true for an inactive
 Notes catalog tab and false when active to retain the normal selected width.
+`compactPanelLeading(leaf)` and `compactPanelTrailing(leaf)` place controls before
+and after each title, outside its tab button. Use the leading slot for an interactive
+connection indicator so selecting a tab and managing its connection remain separate actions.
 `compactPanelIcon(leaf)` makes that panel an icon-only tab while retaining its
 accessible label. `compactLeading` uses the existing TabRow leading slot for
 controls such as a subdued navigation menu; it keeps the row available even
@@ -161,6 +164,10 @@ reserves the toolbar's measured position plus a 4px gap, so removing a host head
 gutter gives that space back to the tabs. It does not cover background tabs with
 an oversized action container. Custom labels
 stay on one line and clip when they reach those controls.
+
+Use `renderTabStripLeading(leaf)` to put actions for the active leaf before the
+scrollable tab list. For example, a chat can place its History and New conversation
+buttons here on desktop and compact layouts.
 
 Use `renderTabTrailing(leaf)` for a copyable reference or other independent tab
 action. It follows the label and precedes the shared close inside the sticky

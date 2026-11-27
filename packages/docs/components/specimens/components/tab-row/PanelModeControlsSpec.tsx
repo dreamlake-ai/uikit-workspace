@@ -24,7 +24,7 @@ const modes = [
   { value: "files", label: "Files", icon: FolderTree },
 ];
 
-/** Multi-mode controls share the memo Vim toggle geometry and hover treatment. */
+/** Multi-mode controls share the memo Vim toggle geometry; three or more options keep a neutral track. */
 export function PanelModeControlsSpec() {
   const [mode, setMode] = useState("terminal");
   const [vim, setVim] = useState(false);
