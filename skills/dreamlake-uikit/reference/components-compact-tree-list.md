@@ -49,7 +49,7 @@ Touch pointer movement calls `hover.track(null)` because it represents scrolling
 Do not use the generic `pointerHandlers` for this composition: their button/link
 discovery would target the nested title or source control instead of the row.
 
-Clear the highlight on pointer leave, scroll, blur outside the host and structural
+Clear the highlight when selecting a leaf, on pointer leave, scroll, blur outside the host and structural
 changes such as expansion, filtering or resizing. The hook removes a tracked row
 that unmounts. Keep `data-selected={true}` and the existing selection fill on the
 selected leaf; the moving highlight steps aside on that row. The standard motion

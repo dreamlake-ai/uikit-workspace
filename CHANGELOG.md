@@ -1,5 +1,10 @@
 # Release notes
 
+## 0.3.27 — 2026-11-27
+
+- Clear the compact-tree example moving hover when selecting a leaf, and document this host responsibility so hover cannot persist beneath newly selected content.
+
+
 ## 0.3.26 — 2026-11-27
 
 - Compact tree lists reuse the standard moving hover highlight, expand group titles with trailing chevrons, and select leaves only. Suppress individual collection-row hover fills inside shared hover hosts. Export the existing TruncatedText helper for accessible title/chevron compositions.
