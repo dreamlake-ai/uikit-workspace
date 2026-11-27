@@ -42,8 +42,13 @@ separate hover background on every entry. This pointer/focus highlight is distin
 from the persistent selected leaf; it is not a second selection model.
 
 Create `const hover = useHoverSlider<HTMLDivElement>()`. Give the host `ref={hover.ref}`,
-`className="relative isolate"` and `data-uikit-hover-host`, and render
-`{hover.slider}` once inside it. Track the **whole CollectionRow** explicitly from
+`className="relative isolate overflow-clip"` and `data-uikit-hover-host`, and render
+`{hover.slider}` once inside it. Scope `overflow: clip` to this tree host: an
+inactive slider retains its last absolute bounds for animation, so a desktop-width
+box must not add horizontal overflow after the panel narrows. Clipping the host
+does not create another scroll container; the virtual list owns scrolling and
+portaled tooltips remain outside the clip. Keep focus indicators inside the row.
+Track the **whole CollectionRow** explicitly from
 `onPointerMove` and `onFocusCapture`, using `hover.track(event.currentTarget)`.
 Touch pointer movement calls `hover.track(null)` because it represents scrolling.
 Do not use the generic `pointerHandlers` for this composition: their button/link

@@ -145,3 +145,58 @@ test("one full-row highlight follows pointer and keyboard while groups only unfo
     "Selected entry: accuracy",
   );
 });
+
+test("inactive desktop hover geometry cannot overflow a narrow tree host", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto("/components/compact-tree-list");
+  const example = page.getByRole("region", { name: "Compact tree example" });
+  const row = example.locator(
+    '[data-demo-row="calibration"] .uikit-collection-row',
+  );
+  const slider = example.locator("[data-uikit-hover-slider]");
+  await row.hover();
+  await expect(slider).toHaveAttribute("data-ready", "");
+  const desktopWidth = await row.evaluate(
+    (el) => el.getBoundingClientRect().width,
+  );
+  await expect
+    .poll(async () =>
+      Math.abs(
+        (await slider.evaluate((el) => el.getBoundingClientRect().width)) -
+          desktopWidth,
+      ),
+    )
+    .toBeLessThan(0.1);
+  // The documentation frame clips independently. Exercise the reusable recipe
+  // in an unclipped parent, like the product's ordinary Tests panel.
+  await example.evaluate((el) => {
+    (el.closest(".dockit-preview") as HTMLElement).style.overflow = "visible";
+  });
+  await page.mouse.move(0, 0);
+  await expect(slider).not.toHaveAttribute("data-ready");
+  await page.setViewportSize({ width: 390, height: 844 });
+  const host = example.locator("[data-uikit-hover-host]");
+  await expect(host).toHaveCSS("overflow-x", "clip");
+  // The retained box remains large: host containment, not resetting animation state, fixes overflow.
+  expect(await slider.evaluate((el) => el.getBoundingClientRect().width)).toBe(
+    desktopWidth,
+  );
+  await expect
+    .poll(() =>
+      page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
+    )
+    .toBe(true);
+  const source = row.getByRole("link", { name: "Open source for Calibration" });
+  await source.focus();
+  await expect(source).toBeFocused();
+  await expect(source).toBeVisible();
+  await expect(slider).toHaveAttribute("data-ready", "");
+  const bounds = await row.boundingBox();
+  await expect
+    .poll(async () =>
+      Math.abs((await slider.boundingBox())!.width - bounds!.width),
+    )
+    .toBeLessThan(1);
+});

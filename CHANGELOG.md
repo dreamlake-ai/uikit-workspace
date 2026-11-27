@@ -1,5 +1,10 @@
 # Release notes
 
+## 0.3.28 — 2026-11-27
+
+- Contain retained moving-hover geometry inside the compact-tree example host across panel resizing. Document scoped overflow clipping without changing shared hover animation or selection semantics.
+
+
 ## 0.3.27 — 2026-11-27
 
 - Clear the compact-tree example moving hover when selecting a leaf, and document this host responsibility so hover cannot persist beneath newly selected content.

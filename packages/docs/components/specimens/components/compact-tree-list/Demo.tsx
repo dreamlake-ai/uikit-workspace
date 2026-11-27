@@ -104,7 +104,7 @@ export function Demo() {
       <div
         ref={hover.ref}
         data-uikit-hover-host=""
-        className="relative isolate"
+        className="relative isolate overflow-clip"
         style={{ width, maxWidth: "100%" }}
         onPointerLeave={() => hover.track(null)}
         onScrollCapture={() => hover.track(null)}
