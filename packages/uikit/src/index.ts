@@ -70,3 +70,5 @@ export {
 
 export { TruncatedText } from "./components/CollectionList/TruncatedText";
 export { StatusStackIcon, type StatusStackCounts, type StatusStackIconProps } from './components/StatusStackIcon';
+
+export { PdfView, type PdfViewProps } from "./components/PdfView";

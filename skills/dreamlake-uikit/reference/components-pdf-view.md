@@ -1,0 +1,22 @@
+# PdfView
+
+Fill the existing file tab with a PDF, without another title, card, border, or
+padding. File identity and contextual actions belong in the host tab row.
+
+The parent supplies a definite height. The browser owns document scrolling;
+avoid another scrolling wrapper. Native PDF support and fragment preferences
+vary by browser. Toolbar and navigation panes are requested hidden, with the
+page fitted to the available width. The browser still controls page margins.
+Browsers without an embedded PDF viewer get an Open PDF link, or the supplied
+fallback. The accessible object title identifies the document.
+
+The host owns authorization, loading and error states, size limits, cancellation,
+and Blob URL cleanup. For servers returning attachment disposition or a generic
+MIME type, read authorized bytes within a transport limit and provide an
+`application/pdf` Blob URL. Do not embed arbitrary HTML as a PDF.
+
+| Prop       | Type        | Purpose                              |
+| ---------- | ----------- | ------------------------------------ |
+| `src`      | `string`    | Authorized URL containing PDF bytes. |
+| `title`    | `string`    | Accessible document name.            |
+| `fallback` | `ReactNode` | Optional browser-support fallback.   |
