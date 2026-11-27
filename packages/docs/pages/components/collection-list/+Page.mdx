@@ -198,3 +198,10 @@ For a folder containing several representative covers, pass a
 `CollectionRowBody`. This shared modifier removes the gray thumbnail backing and
 clipping so the covers can pull apart on hover or keyboard focus. The surrounding
 collection action remains the single navigation target.
+
+### Moving hover for compact trees
+
+When composing compact tree rows, reuse `useHoverSlider` for one moving hover background.
+Mark its host `data-uikit-hover-host` to suppress individual row hover fills.
+The [compact tree example](/components/compact-tree-list) shows full-row tracking,
+group-primary expansion and persistent leaf-only selection.

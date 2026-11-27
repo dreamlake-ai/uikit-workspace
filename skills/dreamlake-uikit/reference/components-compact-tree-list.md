@@ -7,14 +7,20 @@ show only relationships supplied by the caller.
 
 ## Selection, disclosure and navigation are separate
 
-`CollectionRow` renders a `div`. Put a native primary button in `name`, an
-independent disclosure button in `icon` with `iconInteractive`, and a native
-source anchor in `actions`. The example stretches the primary button's hit area
-across the row; the interactive icon and actions stay above it. These controls
-are siblings, so there is no button inside a link or link inside a button.
-`aria-pressed` announces the selected primary entry and `aria-expanded` announces
-disclosure. Use actual recorded destinations for source links; a node ID alone
-does not establish a Source path or Dash run.
+`CollectionRow` renders a `div`. The first slot contains the entry icon: a group
+icon for groups, a recorded status icon for leaves. A group's primary button
+contains the truncated title followed immediately by a chevron and toggles
+expansion. The exported `TruncatedText` helper keeps the full-title tooltip on the text
+while the chevron stays visible beside it. Leaves have no chevron; their primary button selects the recorded entry
+for caller-owned details. Only leaves receive `aria-pressed`; groups expose
+`aria-expanded`. A separate native source anchor lives in `actions`.
+
+The row's `onClick` handles the primary action, including clicks on metadata.
+The primary button bubbles to that handler; do not attach the same toggle to both
+or it will toggle twice. Its stretched hit area stops below the independent
+source action. These controls are siblings, with no nested interactive elements.
+Use actual recorded destinations for source links; a node ID alone does not
+establish a Source path or Dash run.
 
 Compact rows retain icons and action controls when the panel narrows. Optional
 metadata may hide to leave room for the full primary target. The full title
@@ -27,6 +33,28 @@ Opening a source link does not select or disclose its row. Modified clicks retai
 the browser's native behavior. Add a product keyboard controller when needed;
 this composition is a list with buttons, not an ARIA tree with an invented
 keyboard model.
+
+## One moving hover highlight
+
+Reuse `useHoverSlider`, the same UIKit hook used by Sessions and menu-like panels.
+It paints one background that travels between rows, rather than flashing a
+separate hover background on every entry. This pointer/focus highlight is distinct
+from the persistent selected leaf; it is not a second selection model.
+
+Create `const hover = useHoverSlider<HTMLDivElement>()`. Give the host `ref={hover.ref}`,
+`className="relative isolate"` and `data-uikit-hover-host`, and render
+`{hover.slider}` once inside it. Track the **whole CollectionRow** explicitly from
+`onPointerMove` and `onFocusCapture`, using `hover.track(event.currentTarget)`.
+Touch pointer movement calls `hover.track(null)` because it represents scrolling.
+Do not use the generic `pointerHandlers` for this composition: their button/link
+discovery would target the nested title or source control instead of the row.
+
+Clear the highlight on pointer leave, scroll, blur outside the host and structural
+changes such as expansion, filtering or resizing. The hook removes a tracked row
+that unmounts. Keep `data-selected={true}` and the existing selection fill on the
+selected leaf; the moving highlight steps aside on that row. The standard motion
+and reduced-motion settings apply unchanged. Collection rows inside a hover host
+suppress their individual hover fills, so the moving background is painted once.
 
 ## Connections and virtualization
 

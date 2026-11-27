@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { Check, ChevronRight, ExternalLink } from "lucide-react";
+import { Check, ChevronRight, ExternalLink, Layers } from "lucide-react";
 import {
   CollectionList,
   CollectionRow,
   TreeBranchGuides,
+  TruncatedText,
   VirtualList,
+  useHoverSlider,
 } from "@dreamlake/uikit";
 
 type Entry = { id: string; title: string; children?: Entry[] };
@@ -67,11 +69,20 @@ function visibleRows(
 }
 
 export function Demo() {
+  const hover = useHoverSlider<HTMLDivElement>();
   const [width, setWidth] = useState(420);
   const [expanded, setExpanded] = useState(
     new Set(["suite", "quality", "batch"]),
   );
   const [selected, setSelected] = useState("accuracy");
+  const toggle = (id: string) => {
+    hover.track(null);
+    setExpanded((previous) => {
+      const next = new Set(previous);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
   const rows = visibleRows(entries, expanded);
   return (
     <section aria-label="Compact tree example" className="min-w-0 p-4">
@@ -84,101 +95,142 @@ export function Demo() {
           min={180}
           max={520}
           value={width}
-          onChange={(event) => setWidth(Number(event.target.value))}
+          onChange={(event) => {
+            hover.track(null);
+            setWidth(Number(event.target.value));
+          }}
         />
       </label>
-      <CollectionList
-        role="list"
-        aria-label="Recorded tests"
-        columns={1}
-        style={{ width, maxWidth: "100%", gap: 0 }}
+      <div
+        ref={hover.ref}
+        data-uikit-hover-host=""
+        className="relative isolate"
+        style={{ width, maxWidth: "100%" }}
+        onPointerLeave={() => hover.track(null)}
+        onScrollCapture={() => hover.track(null)}
+        onBlurCapture={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget))
+            hover.track(null);
+        }}
       >
-        <VirtualList
-          items={rows}
-          itemHeight={32}
-          height={224}
-          getItemKey={(row) => row.entry.id}
+        {hover.slider}
+        <CollectionList
+          role="list"
+          aria-label="Recorded tests"
+          columns={1}
+          style={{ width: "100%", gap: 0 }}
         >
-          {(row, _index, style) => (
-            <div
-              key={row.entry.id}
-              role="listitem"
-              data-demo-row={row.entry.id}
-              style={{ ...style, paddingLeft: row.depth * 20 }}
-            >
-              <TreeBranchGuides
-                ancestors={row.ancestors}
-                branch={row.depth > 0}
-                isLast={row.isLast}
-                step={20}
-                branchOffset={16}
-                style={{ left: 19 }}
-              />
-              <CollectionRow
-                compact
-                fillName
-                nameText={row.entry.title}
-                onClick={() => setSelected(row.entry.id)}
-                iconInteractive={!!row.entry.children}
-                icon={
-                  row.entry.children ? (
+          <VirtualList
+            items={rows}
+            itemHeight={32}
+            height={224}
+            getItemKey={(row) => row.entry.id}
+          >
+            {(row, _index, style) => (
+              <div
+                key={row.entry.id}
+                role="listitem"
+                data-demo-row={row.entry.id}
+                style={{ ...style, paddingLeft: row.depth * 20 }}
+              >
+                <TreeBranchGuides
+                  ancestors={row.ancestors}
+                  branch={row.depth > 0}
+                  isLast={row.isLast}
+                  step={20}
+                  branchOffset={16}
+                  style={{ left: 19 }}
+                />
+                <CollectionRow
+                  compact
+                  fillName
+                  nameText={row.entry.title}
+                  data-selected={
+                    (!row.entry.children && selected === row.entry.id) ||
+                    undefined
+                  }
+                  style={
+                    !row.entry.children && selected === row.entry.id
+                      ? { background: "var(--selected-bg)" }
+                      : undefined
+                  }
+                  onPointerMove={(event) =>
+                    hover.track(
+                      event.pointerType === "touch"
+                        ? null
+                        : event.currentTarget,
+                    )
+                  }
+                  onFocusCapture={(event) => hover.track(event.currentTarget)}
+                  onClick={() =>
+                    row.entry.children
+                      ? toggle(row.entry.id)
+                      : setSelected(row.entry.id)
+                  }
+                  icon={
+                    row.entry.children ? (
+                      <Layers size={13} aria-hidden />
+                    ) : (
+                      <Check
+                        size={13}
+                        aria-hidden
+                        className="text-uikit-accent"
+                      />
+                    )
+                  }
+                  name={
                     <button
                       type="button"
-                      aria-label={`Toggle ${row.entry.title}`}
-                      aria-expanded={expanded.has(row.entry.id)}
-                      className="relative inline-flex size-[18px] items-center justify-center rounded focus-visible:outline-2 focus-visible:outline-uikit-accent"
-                      onClick={() =>
-                        setExpanded((previous) => {
-                          const next = new Set(previous);
-                          next.has(row.entry.id)
-                            ? next.delete(row.entry.id)
-                            : next.add(row.entry.id);
-                          return next;
-                        })
+                      aria-label={row.entry.title}
+                      aria-pressed={
+                        row.entry.children
+                          ? undefined
+                          : selected === row.entry.id
                       }
+                      aria-expanded={
+                        row.entry.children
+                          ? expanded.has(row.entry.id)
+                          : undefined
+                      }
+                      className="inline-flex max-w-full items-center gap-1 text-left after:absolute after:inset-0 focus-visible:outline-2 focus-visible:outline-uikit-accent"
                     >
-                      <ChevronRight
-                        size={13}
-                        className={
-                          expanded.has(row.entry.id) ? "rotate-90" : ""
-                        }
-                      />
+                      <TruncatedText
+                        text={row.entry.title}
+                        className="block min-w-0"
+                      >
+                        {row.entry.title}
+                      </TruncatedText>
+                      {row.entry.children && (
+                        <ChevronRight
+                          size={13}
+                          aria-hidden
+                          className={`shrink-0 ${expanded.has(row.entry.id) ? "rotate-90" : ""}`}
+                        />
+                      )}
                     </button>
-                  ) : (
-                    <Check size={13} className="text-uikit-accent" />
-                  )
-                }
-                name={
-                  <button
-                    type="button"
-                    aria-pressed={selected === row.entry.id}
-                    className="block whitespace-nowrap text-left after:absolute after:inset-0 focus-visible:outline-2 focus-visible:outline-uikit-accent"
-                    onClick={() => setSelected(row.entry.id)}
-                  >
-                    {row.entry.title}
-                  </button>
-                }
-                meta={
-                  row.entry.children
-                    ? `${row.entry.children.length} entries`
-                    : "complete"
-                }
-                actions={
-                  !row.entry.children && (
-                    <a
-                      href="#recorded-source"
-                      aria-label={`Open source for ${row.entry.title}`}
-                      className="inline-flex size-[18px] items-center justify-center rounded focus-visible:outline-2 focus-visible:outline-uikit-accent"
-                    >
-                      <ExternalLink size={12} />
-                    </a>
-                  )
-                }
-              />
-            </div>
-          )}
-        </VirtualList>
-      </CollectionList>
+                  }
+                  meta={
+                    row.entry.children
+                      ? `${row.entry.children.length} entries`
+                      : "complete"
+                  }
+                  actions={
+                    !row.entry.children && (
+                      <a
+                        href="#recorded-source"
+                        aria-label={`Open source for ${row.entry.title}`}
+                        className="inline-flex size-[18px] items-center justify-center rounded focus-visible:outline-2 focus-visible:outline-uikit-accent"
+                      >
+                        <ExternalLink size={12} />
+                      </a>
+                    )
+                  }
+                />
+              </div>
+            )}
+          </VirtualList>
+        </CollectionList>
+      </div>
       <p role="status" className="mt-3 text-uikit-12">
         Selected entry: {selected}
       </p>

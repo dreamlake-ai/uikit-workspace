@@ -67,3 +67,5 @@ export {
   type ProgressRailItem,
   type ProgressRailProps,
 } from "./components/ProgressRail";
+
+export { TruncatedText } from "./components/CollectionList/TruncatedText";
