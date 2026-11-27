@@ -21,14 +21,14 @@ export function useIframeDismiss(
     if (!win) return;
     let timer: ReturnType<typeof setTimeout> | undefined;
     let frame = 0;
+    const isInside = (target: Element) =>
+      current.current.boundaries.some((boundary) =>
+        boundary.current?.contains(target),
+      );
     const checkFrame = () => {
       const target = doc.activeElement;
       if (target?.tagName !== "IFRAME") return;
-      if (
-        current.current.boundaries.some((boundary) =>
-          boundary.current?.contains(target),
-        )
-      ) {
+      if (isInside(target)) {
         // Moving directly between sibling frames does not blur the host again.
         // Observe only while focus is in an inside frame; never read its DOM.
         frame = win.requestAnimationFrame(checkFrame);
@@ -39,7 +39,15 @@ export function useIframeDismiss(
     const onBlur = () => {
       clearTimeout(timer);
       win.cancelAnimationFrame(frame);
-      // Browsers update activeElement after dispatching the window blur.
+      const target = doc.activeElement;
+      // Some browsers already expose the destination during blur. Keep that
+      // evidence: a responsive remount or rapid focus move can replace it
+      // with BODY before the deferred check runs.
+      if (target?.tagName === "IFRAME" && !isInside(target)) {
+        current.current.onDismiss();
+        return;
+      }
+      // Other browsers update activeElement after dispatching window blur.
       timer = setTimeout(checkFrame, 0);
     };
     win.addEventListener("blur", onBlur);

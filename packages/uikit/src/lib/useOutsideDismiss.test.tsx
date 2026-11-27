@@ -148,6 +148,19 @@ it("Menu does not close on window blur without an outside iframe", async () => {
   });
   expect(visiblePanel()).not.toBeNull();
 });
+it("Menu remembers an outside frame press when the frame disappears before the deferred focus check", async () => {
+  await render(menu());
+  await act(async () => {
+    const frame = document.createElement("iframe");
+    document.body.appendChild(frame);
+    frame.focus();
+    window.dispatchEvent(new Event("blur"));
+    frame.remove();
+    expect(document.activeElement).toBe(document.body);
+    await new Promise((resolve) => setTimeout(resolve, 5));
+  });
+  expect(visiblePanel()).toBeNull();
+});
 it("Menu respects dismissOnOutsideClick for both presses and frame focus", async () => {
   await render(menu({ dismissOnOutsideClick: false }));
   await act(async () =>
