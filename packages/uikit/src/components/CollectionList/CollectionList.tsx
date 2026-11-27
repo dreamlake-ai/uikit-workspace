@@ -17,99 +17,105 @@ import { TruncatedText } from "./TruncatedText";
 import "./CollectionList.css";
 
 const CollectionColumns = createContext(1);
+const CollectionGrid = createContext<boolean | null>(null);
 /** Share an explicit column count across collection groups without resizing their panel. */
 export const CollectionLayoutProvider = CollectionColumns.Provider;
 export const useCollectionColumns = () => useContext(CollectionColumns);
 
 /** Data, ordering, navigation and mutations belong to the caller.
  * `columns` stays exact even in narrow panels. Mark section headers/status with
- * data-collection-span to span the grid. Rows remain mounted when switching. */
+ * data-collection-span to span the grid. `grid` retains tile previews when an
+ * adaptive layout fits only one column. Rows remain mounted when switching. */
 export function CollectionList({
   children,
   className = "",
   columns: explicitColumns,
+  grid: explicitGrid,
   style,
   onKeyDown,
   ...props
-}: ComponentProps<"div"> & { columns?: number }) {
+}: ComponentProps<"div"> & { columns?: number; grid?: boolean }) {
   const inherited = useCollectionColumns();
   const columns = Math.max(1, Math.floor(explicitColumns ?? inherited));
+  const grid = explicitGrid ?? columns > 1;
   return (
     <CollectionLayoutProvider value={columns}>
-      <div
-        {...props}
-        className={`uikit-collection-list ${className}`}
-        data-columns={columns > 1 ? columns : undefined}
-        style={
-          {
-            ...style,
-            ...(columns > 1
-              ? {
-                  display: "grid",
-                  gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
-                }
-              : {}),
-          } as CSSProperties
-        }
-        onKeyDown={(event) => {
-          onKeyDown?.(event);
-          if (
-            event.defaultPrevented ||
-            columns === 1 ||
-            event.shiftKey ||
-            event.metaKey ||
-            event.ctrlKey ||
-            event.altKey
-          )
-            return;
-          if (
-            !["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(
-              event.key,
+      <CollectionGrid.Provider value={grid}>
+        <div
+          {...props}
+          className={`uikit-collection-list ${className}`}
+          data-columns={grid ? columns : undefined}
+          style={
+            {
+              ...style,
+              ...(grid
+                ? {
+                    display: "grid",
+                    gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
+                  }
+                : {}),
+            } as CSSProperties
+          }
+          onKeyDown={(event) => {
+            onKeyDown?.(event);
+            if (
+              event.defaultPrevented ||
+              !grid ||
+              event.shiftKey ||
+              event.metaKey ||
+              event.ctrlKey ||
+              event.altKey
             )
-          )
-            return;
-          const target = event.target as HTMLElement;
-          if (!target.matches("[data-collection-item]")) return;
-          const origin = target.getBoundingClientRect();
-          const horizontal =
-            event.key === "ArrowLeft" || event.key === "ArrowRight";
-          const sign =
-            event.key === "ArrowLeft" || event.key === "ArrowUp" ? -1 : 1;
-          const center = (r: DOMRect) => [
-            r.x + r.width / 2,
-            r.y + r.height / 2,
-          ];
-          const start = center(origin);
-          const candidates = Array.from(
-            event.currentTarget.querySelectorAll<HTMLElement>(
-              "[data-collection-item]",
-            ),
-          )
-            .filter(
-              (row) =>
-                row !== target &&
-                !row.closest("[inert]") &&
-                row.getClientRects().length,
+              return;
+            if (
+              !["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(
+                event.key,
+              )
             )
-            .map((row) => {
-              const c = center(row.getBoundingClientRect());
-              const forward =
-                (c[horizontal ? 0 : 1] - start[horizontal ? 0 : 1]) * sign;
-              const cross = Math.abs(
-                c[horizontal ? 1 : 0] - start[horizontal ? 1 : 0],
-              );
-              return { row, forward, score: forward + cross * 4 };
-            })
-            .filter(({ forward }) => forward > 1)
-            .sort((a, b) => a.score - b.score);
-          event.preventDefault();
-          event.stopPropagation();
-          candidates[0]?.row.focus({ preventScroll: true });
-          candidates[0]?.row.scrollIntoView?.({ block: "nearest" });
-        }}
-      >
-        {children}
-      </div>
+              return;
+            const target = event.target as HTMLElement;
+            if (!target.matches("[data-collection-item]")) return;
+            const origin = target.getBoundingClientRect();
+            const horizontal =
+              event.key === "ArrowLeft" || event.key === "ArrowRight";
+            const sign =
+              event.key === "ArrowLeft" || event.key === "ArrowUp" ? -1 : 1;
+            const center = (r: DOMRect) => [
+              r.x + r.width / 2,
+              r.y + r.height / 2,
+            ];
+            const start = center(origin);
+            const candidates = Array.from(
+              event.currentTarget.querySelectorAll<HTMLElement>(
+                "[data-collection-item]",
+              ),
+            )
+              .filter(
+                (row) =>
+                  row !== target &&
+                  !row.closest("[inert]") &&
+                  row.getClientRects().length,
+              )
+              .map((row) => {
+                const c = center(row.getBoundingClientRect());
+                const forward =
+                  (c[horizontal ? 0 : 1] - start[horizontal ? 0 : 1]) * sign;
+                const cross = Math.abs(
+                  c[horizontal ? 1 : 0] - start[horizontal ? 1 : 0],
+                );
+                return { row, forward, score: forward + cross * 4 };
+              })
+              .filter(({ forward }) => forward > 1)
+              .sort((a, b) => a.score - b.score);
+            event.preventDefault();
+            event.stopPropagation();
+            candidates[0]?.row.focus({ preventScroll: true });
+            candidates[0]?.row.scrollIntoView?.({ block: "nearest" });
+          }}
+        >
+          {children}
+        </div>
+      </CollectionGrid.Provider>
     </CollectionLayoutProvider>
   );
 }
@@ -162,7 +168,8 @@ export function CollectionRowBody({
   pinned,
   fillName,
 }: CollectionRowBodyProps) {
-  const tile = useCollectionColumns() > 1;
+  const columns = useCollectionColumns();
+  const tile = useContext(CollectionGrid) ?? columns > 1;
   return (
     <>
       <span
