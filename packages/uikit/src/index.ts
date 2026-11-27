@@ -61,3 +61,9 @@ export type {
 } from "./components/CollectionList";
 
 export type { CollectionIconProps } from "./components/CollectionList";
+
+export {
+  ProgressRail,
+  type ProgressRailItem,
+  type ProgressRailProps,
+} from "./components/ProgressRail";
