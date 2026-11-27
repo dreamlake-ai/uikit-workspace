@@ -3,7 +3,11 @@
 A panel anchored to a screen edge — for filters, details, or mobile menus.
 Compose `DrawerTrigger` + `DrawerContent` (with `DrawerHeader`, `DrawerTitle`,
 `DrawerDescription`, `DrawerFooter`) and an optional `DrawerClose`. Closes on Esc
-and backdrop click.
+and backdrop click. Set `managedFocus` on `DrawerContent` to keep keyboard focus
+inside the drawer and return it to the opener when closed. The example enables
+this behavior; `initialFocus` and `returnFocus` accept element refs when the
+default first control and opener are not the desired targets. Entry motion
+follows the drawer edge and respects reduced-motion preferences.
 
 `direction` (`top` / `bottom` / `left` / `right`, default `bottom`) sets the
 edge. Open state can be controlled (`open` + `onOpenChange`) or uncontrolled.
