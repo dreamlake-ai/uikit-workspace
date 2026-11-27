@@ -236,3 +236,52 @@ it("keeps interactive icons announced and separate from row activation", () => {
     act(() => root.unmount());
   }
 });
+
+it("keeps compact selection, disclosure and native source links independent", () => {
+  (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
+  const host = document.createElement("div");
+  document.body.append(host);
+  const root = createRoot(host);
+  const select = vi.fn(),
+    disclose = vi.fn(),
+    outer = vi.fn();
+  try {
+    act(() =>
+      root.render(
+        <CollectionRow
+          compact
+          onClick={outer}
+          iconInteractive
+          icon={
+            <button aria-label="Expand group" onClick={disclose}>
+              +
+            </button>
+          }
+          name={<button onClick={select}>Trial one</button>}
+          actions={<a href="#recorded-source">Source</a>}
+        />,
+      ),
+    );
+    expect(host.querySelector("[data-compact]")).not.toBeNull();
+    const link = host.querySelector("a")!;
+    // Inspect cancellation directly because the action deliberately stops bubbling.
+    const click = new MouseEvent("click", { bubbles: true, cancelable: true });
+    act(() => link.dispatchEvent(click));
+    expect(click.defaultPrevented).toBe(false);
+    expect(select).not.toHaveBeenCalled();
+    expect(outer).not.toHaveBeenCalled();
+    act(() =>
+      host
+        .querySelector<HTMLButtonElement>('[aria-label="Expand group"]')!
+        .click(),
+    );
+    expect(disclose).toHaveBeenCalledOnce();
+    expect(outer).not.toHaveBeenCalled();
+    act(() => host.querySelectorAll<HTMLButtonElement>("button")[1]!.click());
+    expect(select).toHaveBeenCalledOnce();
+    expect(host.querySelector("button button, button a, a button")).toBeNull();
+  } finally {
+    act(() => root.unmount());
+    host.remove();
+  }
+});

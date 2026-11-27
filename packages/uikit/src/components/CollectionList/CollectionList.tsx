@@ -182,6 +182,7 @@ export function CollectionRowBody({
         <span
           className={`uikit-collection-icon ${classNames.icon ?? ""}`}
           data-pinned={pinned || undefined}
+          data-interactive={iconInteractive || undefined}
           aria-hidden={pinned || iconInteractive ? undefined : true}
           onClick={
             iconInteractive ? (event) => event.stopPropagation() : undefined
@@ -241,7 +242,13 @@ export function CollectionRowBody({
             {actions && (
               <span
                 className={`uikit-collection-actions ${classNames.actions ?? ""}`}
-                onClickCapture={(event) => event.preventDefault()}
+                onClickCapture={(event) => {
+                  // Native action links own their destination; other actions must not
+                  // activate an enclosing row anchor. Propagation stays isolated below.
+                  const anchor = (event.target as Element).closest("a[href]");
+                  if (!anchor || !event.currentTarget.contains(anchor))
+                    event.preventDefault();
+                }}
                 onClick={(event) => event.stopPropagation()}
                 onKeyDown={(event) => event.stopPropagation()}
               >
@@ -277,12 +284,18 @@ export function CollectionRow({
   pinned,
   fillName,
   className = "",
+  compact = false,
   children,
   ...props
-}: CollectionRowBodyProps & HTMLAttributes<HTMLDivElement>) {
+}: CollectionRowBodyProps &
+  HTMLAttributes<HTMLDivElement> & {
+    /** Dense 32px rows when detail is omitted; interactive slots remain reachable at narrow widths. */
+    compact?: boolean;
+  }) {
   return (
     <div
       data-collection-item=""
+      data-compact={compact || undefined}
       {...props}
       className={`uikit-collection-row ${className}`}
     >
