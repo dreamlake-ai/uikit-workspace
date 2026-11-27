@@ -166,7 +166,7 @@ export const SlideToggle = forwardRef<HTMLButtonElement, SlideToggleProps>(
         }}
         title={title}
         aria-label={label ?? rest["aria-label"]}
-        aria-pressed={on}
+        aria-pressed={rest["aria-pressed"] ?? on}
         style={{
           position: "relative",
           width,

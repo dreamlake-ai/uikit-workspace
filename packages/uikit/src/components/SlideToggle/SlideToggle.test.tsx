@@ -52,6 +52,23 @@ it("does not activate or keep hover tint when disabled, including mid-hover", ()
   expect(toggle).not.toHaveBeenCalled();
 });
 
+it("honors explicit pressed semantics independently of the visual knob", () => {
+  const props = {
+    on: true,
+    onToggle: vi.fn(),
+    label: "Grid view",
+    left: { node: "Grid", w: 28 },
+    right: { node: "List", w: 28 },
+  };
+  act(() => root.render(<SlideToggle {...props} aria-pressed={false} />));
+  const button = container.querySelector("button")!;
+  expect(button.getAttribute("aria-pressed")).toBe("false");
+  expect(button.querySelector("div")!.style.left).toBe("30px");
+  act(() => root.render(<SlideToggle {...props} />));
+  expect(button.getAttribute("aria-pressed")).toBe("true");
+  expect(button.querySelector("div")!.style.left).toBe("30px");
+});
+
 it("forwards native button events, attributes and refs without taking over pointer gestures", () => {
   const ref = createRef<HTMLButtonElement>();
   const toggle = vi.fn();
