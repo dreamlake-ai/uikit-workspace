@@ -67,7 +67,10 @@ inert and hidden. Clicking another input keeps focus on that input.
 Open Versions, then click the editor surface or inside the embedded preview.
 Both dismiss the menu even when the surface stops event propagation or lives
 in another document. Touch and pen presses follow the same behavior. Presses
-inside the menu or its trigger remain available to the menu.
+inside the menu or its trigger remain available to the menu. Open the version
+channel selector: its options render in a separate portal, but selecting one
+keeps the parent menu open. Nested UIKit overlays and their embedded previews
+remain part of their parent menu; unrelated overlays still dismiss it.
 
 <Preview source={outsideSrc} filename="OutsideDismissSpec.tsx">
   <OutsideDismissSpec />

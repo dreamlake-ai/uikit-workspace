@@ -2,6 +2,49 @@ import { useEffect, useRef } from "react";
 
 type Boundary = { readonly current: Element | null };
 
+// An overlay's trigger and portalled surface form one interaction boundary.
+// Follow only surfaces anchored inside the current overlay, including nested
+// portals. Unrelated overlays remain outside; no event timing is involved.
+const overlays = new Set<{
+  current: { boundaries: readonly Boundary[] };
+}>();
+function isInside(
+  boundaries: readonly Boundary[],
+  targets: readonly EventTarget[],
+) {
+  const regions = new Set(
+    boundaries.flatMap((boundary) =>
+      boundary.current ? [boundary.current] : [],
+    ),
+  );
+  const pending = new Set(overlays);
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const overlay of pending) {
+      const nodes = overlay.current.boundaries.flatMap((boundary) =>
+        boundary.current ? [boundary.current] : [],
+      );
+      if (
+        !nodes.some((node) =>
+          [...regions].some((region) => region.contains(node)),
+        )
+      )
+        continue;
+      pending.delete(overlay);
+      nodes.forEach((node) => regions.add(node));
+      changed = true;
+    }
+  }
+  return targets.some((target) =>
+    [...regions].some(
+      (region) =>
+        target === region ||
+        (target instanceof Node && region.contains(target)),
+    ),
+  );
+}
+
 /** A press inside a frame never bubbles to its host document. Focus moving
  * into that frame is observable without reading the frame's document, even
  * when it is cross-origin. Keep an embedded frame inside the overlay usable. */
@@ -19,16 +62,15 @@ export function useIframeDismiss(
       document;
     const win = doc.defaultView;
     if (!win) return;
+    overlays.add(current);
     let timer: ReturnType<typeof setTimeout> | undefined;
     let frame = 0;
-    const isInside = (target: Element) =>
-      current.current.boundaries.some((boundary) =>
-        boundary.current?.contains(target),
-      );
+    const isInsideFrame = (target: Element) =>
+      isInside(current.current.boundaries, [target]);
     const checkFrame = () => {
       const target = doc.activeElement;
       if (target?.tagName !== "IFRAME") return;
-      if (isInside(target)) {
+      if (isInsideFrame(target)) {
         // Moving directly between sibling frames does not blur the host again.
         // Observe only while focus is in an inside frame; never read its DOM.
         frame = win.requestAnimationFrame(checkFrame);
@@ -43,7 +85,7 @@ export function useIframeDismiss(
       // Some browsers already expose the destination during blur. Keep that
       // evidence: a responsive remount or rapid focus move can replace it
       // with BODY before the deferred check runs.
-      if (target?.tagName === "IFRAME" && !isInside(target)) {
+      if (target?.tagName === "IFRAME" && !isInsideFrame(target)) {
         current.current.onDismiss();
         return;
       }
@@ -52,6 +94,7 @@ export function useIframeDismiss(
     };
     win.addEventListener("blur", onBlur);
     return () => {
+      overlays.delete(current);
       clearTimeout(timer);
       win.cancelAnimationFrame(frame);
       win.removeEventListener("blur", onBlur);
@@ -75,19 +118,7 @@ export function useOutsideDismiss(
       boundaries.find((boundary) => boundary.current)?.current?.ownerDocument ??
       document;
     const onPress = (event: Event) => {
-      const path = event.composedPath();
-      if (
-        current.current.boundaries.some(
-          (boundary) =>
-            boundary.current &&
-            path.some(
-              (target) =>
-                target === boundary.current ||
-                (target instanceof Node && boundary.current!.contains(target)),
-            ),
-        )
-      )
-        return;
+      if (isInside(current.current.boundaries, event.composedPath())) return;
       current.current.onDismiss();
     };
     doc.addEventListener("pointerdown", onPress, true);
