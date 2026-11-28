@@ -2,6 +2,7 @@ import {
   Menu,
   Select,
   SelectTrigger,
+  SelectValue,
   SelectContent,
   SelectItem,
 } from "@dreamlake/uikit";
@@ -18,7 +19,9 @@ export function OutsideDismissSpec() {
           Version 1
         </button>
         <Select defaultValue="latest">
-          <SelectTrigger aria-label="Version channel" />
+          <SelectTrigger aria-label="Version channel">
+            <SelectValue />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="latest">Latest</SelectItem>
             <SelectItem value="stable">Stable</SelectItem>
