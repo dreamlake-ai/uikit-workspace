@@ -1,4 +1,10 @@
-import { Menu } from "@dreamlake/uikit";
+import {
+  Menu,
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+} from "@dreamlake/uikit";
 
 /** Both surfaces consume input locally; the shared menu still dismisses. */
 export function OutsideDismissSpec() {
@@ -11,6 +17,13 @@ export function OutsideDismissSpec() {
         <button type="button" className="block px-2 py-2">
           Version 1
         </button>
+        <Select defaultValue="latest">
+          <SelectTrigger aria-label="Version channel" />
+          <SelectContent>
+            <SelectItem value="latest">Latest</SelectItem>
+            <SelectItem value="stable">Stable</SelectItem>
+          </SelectContent>
+        </Select>
       </Menu>
       <button
         type="button"

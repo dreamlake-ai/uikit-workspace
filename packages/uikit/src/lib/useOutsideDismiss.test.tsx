@@ -270,3 +270,73 @@ for (const outside of ["press", "frame"]) {
     expect(trigger.getAttribute("aria-expanded")).toBe("false");
   });
 }
+
+for (const nested of [false, true]) {
+  it(`Menu preserves a selection in ${nested ? "a second-level" : "a child"} portal and still dismisses outside`, async () => {
+    const select = vi.fn();
+    const child = (
+      <Select defaultOpen onValueChange={select}>
+        <SelectTrigger>Host</SelectTrigger>
+        <SelectContent>
+          <SelectItem value="atlas">Atlas</SelectItem>
+        </SelectContent>
+      </Select>
+    );
+    await render(
+      <Menu defaultOpen trigger={() => <button>Filters</button>}>
+        {nested ? (
+          <Menu defaultOpen trigger={() => <button>More filters</button>}>
+            {child}
+          </Menu>
+        ) : (
+          child
+        )}
+      </Menu>,
+    );
+    const option = document.querySelector<HTMLElement>('[role="option"]')!;
+    // Separate acts mimic separate browser events: a capture-phase dismissal
+    // must not unmount the option before its later click can select it.
+    for (const type of ["pointerdown", "mousedown", "mouseup", "click"])
+      await act(async () => {
+        option.dispatchEvent(new MouseEvent(type, { bubbles: true }));
+      });
+    expect(select).toHaveBeenCalledWith("atlas");
+    expect(document.querySelectorAll('[role="menu"]')).toHaveLength(
+      nested ? 2 : 1,
+    );
+    await act(async () => {
+      document
+        .querySelector("[data-outside]")!
+        .dispatchEvent(new MouseEvent("pointerdown", { bubbles: true }));
+    });
+    expect(visiblePanel()).toBeNull();
+  });
+}
+it("Menu dismisses for an unrelated portalled Select", async () => {
+  await render(
+    <>
+      {menu()}
+      {floating[2][1]}
+    </>,
+  );
+  await act(async () => {
+    document
+      .querySelector('[role="option"]')!
+      .dispatchEvent(new MouseEvent("pointerdown", { bubbles: true }));
+  });
+  expect(document.querySelector('[role="menu"]')).toBeNull();
+  expect(document.querySelector('[role="listbox"]')).not.toBeNull();
+});
+it("Menu keeps focus in a nested portalled frame and dismisses for an outside frame", async () => {
+  await render(
+    <Menu defaultOpen trigger={() => <button>Filters</button>}>
+      <Menu defaultOpen trigger={() => <button>Preview</button>}>
+        <iframe title="Nested preview" />
+      </Menu>
+    </Menu>,
+  );
+  await focusFrame("Nested preview");
+  expect(document.querySelectorAll('[role="menu"]')).toHaveLength(2);
+  await focusFrame("Outside preview");
+  expect(visiblePanel()).toBeNull();
+});
